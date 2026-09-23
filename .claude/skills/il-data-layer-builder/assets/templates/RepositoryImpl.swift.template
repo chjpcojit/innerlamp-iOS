@@ -1,0 +1,117 @@
+//
+//  IL{{Feature}}RepositoryImpl.swift
+//  InnerLamp
+//
+
+import Foundation
+
+/// Data-layer implementation of `IL{{Feature}}Repository`.
+///
+/// This is the **only** place a DTO may exist above `NetworkService`: it converts at the boundary
+/// (`IL{{Feature}}Mapper`) and hands Entities upward
+/// (`references/data_layer_architecture.md` §1). It owns the Endpoint and the Mapper; nothing else
+/// does.
+final class IL{{Feature}}RepositoryImpl: IL{{Feature}}Repository {
+
+    private let networkService: NetworkService
+
+    init(networkService: NetworkService) {
+        self.networkService = networkService
+    }
+
+    func {{actionName}}(_ entity: IL{{Feature}}Entity) async throws {
+        let dto = IL{{Feature}}Mapper.toDTO(entity)
+
+        do {
+            // Use the `responseType:` overload only when the success response carries something
+            // the app actually needs. For a 202/204-style response, use the no-body overload —
+            // do not invent a decodable type just to satisfy the first one
+            // (`references/data_layer_architecture.md` §5).
+            try await networkService.request(endpoint: {{Action}}Endpoint(
+                {{field}}: dto.{{field}}
+            ))
+        } catch let error as NetworkError {
+            // Never let a NetworkError escape upward — map it to a feature-specific case so the
+            // ViewModel's `catch IL{{Feature}}Error.xxx` branches keep working unchanged
+            // (`references/error_mapping.md`).
+            throw IL{{Feature}}Error.from(error)
+        }
+    }
+
+    // MARK: - Response-carrying variant
+    //
+    // When the response has a body worth decoding, the shape is:
+    //
+    // func {{actionName}}(_ entity: IL{{Feature}}Entity) async throws -> IL{{Feature}}Entity {
+    //     let dto = IL{{Feature}}Mapper.toDTO(entity)
+    //     do {
+    //         let response = try await networkService.request(
+    //             endpoint: {{Action}}Endpoint({{field}}: dto.{{field}}),
+    //             responseType: {{Action}}ResponseDTO.self
+    //         )
+    //         return IL{{Feature}}Mapper.toDomain(response)
+    //     } catch let error as NetworkError {
+    //         throw IL{{Feature}}Error.from(error)
+    //     }
+    // }
+}
+
+// MARK: - Persistence instead of HTTP
+//
+// When the job is persistence rather than HTTP — a token to the Keychain, a flag to UserDefaults,
+// a profile row to Core Data — the rule is the same one HTTP follows: **this type may only depend
+// on an abstraction, never on a concrete storage technology**
+// (`references/data_layer_architecture.md` §4).
+//
+// Ask one question: does a protocol hiding that backend already exist?
+//
+// 1. **Yes** — `KeychainService`, `UserDefaultsService` (`Core/Storage/`). There is no DTO, no
+//    Mapper and no Endpoint: the stored type *is* the format, so map Entity ↔ stored value
+//    directly here. Read `ILHomeUseCaseImpl(keychainService:)` and
+//    `ILOnboardingUseCaseImpl(userDefaultsService:)` before writing a third.
+//
+//    final class IL{{Feature}}RepositoryImpl: IL{{Feature}}Repository {
+//
+//        private let keychainService: KeychainService
+//
+//        init(keychainService: KeychainService) {
+//            self.keychainService = keychainService
+//        }
+//
+//        func {{actionName}}(_ entity: IL{{Feature}}Entity) async throws {
+//            do {
+//                try keychainService.save(entity.{{field}}, forKey: "{{key}}")
+//            } catch {
+//                throw IL{{Feature}}Error.{{storageFailureCase}}
+//            }
+//        }
+//    }
+//
+// 2. **No** — Core Data (`CoreDataStack` wraps `NSPersistentContainer`, it is not an entity
+//    abstraction), SQLite/GRDB/Realm, `FileManager`. Write
+//    `Data/DataSources/Local/IL{{Feature}}LocalDataSource.swift` first
+//    (see `assets/templates/DataSource.swift.template`), then inject **that** here. This file must
+//    not import the backend's framework — verify mechanically:
+//
+//      grep -n "import CoreData\|import SQLite3\|import Security" \
+//        InnerLamp/Data/Repositories/IL{{Feature}}RepositoryImpl.swift
+//
+//    A hit means the technology is named in a type whose only job is to not name it.
+//
+//    final class IL{{Feature}}RepositoryImpl: IL{{Feature}}Repository {
+//
+//        private let localDataSource: IL{{Feature}}LocalDataSource
+//
+//        init(localDataSource: IL{{Feature}}LocalDataSource) {
+//            self.localDataSource = localDataSource
+//        }
+//
+//        func {{actionName}}(_ entity: IL{{Feature}}Entity) async throws {
+//            do {
+//                try await localDataSource.{{actionName}}(entity)
+//            } catch {
+//                // The only job left here: Domain vocabulary for a storage failure.
+//                throw IL{{Feature}}Error.{{storageFailureCase}}
+//            }
+//        }
+//    }

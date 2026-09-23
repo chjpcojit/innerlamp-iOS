@@ -1,0 +1,655 @@
+openapi: 3.0.3
+info:
+  title: InnerLamp — identity (US-001 registration, US-002 login)
+  version: "3.9"
+  description: >
+    Contract for US-001's three routes (two-step registration: request-otp,
+    verify-otp, plus the shared resend-otp endpoint) and US-002's three routes
+    (login, refresh, logout). Source of truth is
+    services/appService/delivery/http/register_handler.go, login_handler.go and
+    errors.go; see docs/specs/features/onboarding/ and
+    docs/specs/features/login/ for the flows and acceptance criteria.
+
+    Every response that has a body uses one envelope (pkg/utils.ApiResponse,
+    docs/specs/features/api-response-envelope/): success is
+    {"success": true, "data": ...}; failure is {"success": false, "error":
+    {"code", "message", "type"}, "details"?} — see ApiErrorResponse. This also
+    covers 404 NOT_FOUND (no such path) and 405 METHOD_NOT_ALLOWED (wrong
+    method, with an Allow header), which no path below lists individually. A
+    500 INTERNAL_ERROR (a recovered panic or an infrastructure failure) is
+    listed on the paths where it can occur. Logout's success is the envelope
+    with no data: {"success": true}.
+
+    Every response also carries Access-Control-Allow-Origin/Methods/Headers
+    (pkg/middleware.CORS, docs/specs/features/http-middleware-wiring/). An
+    OPTIONS preflight against any path is answered by that middleware before
+    routing with 200 {"success": true} — the same envelope — so it is not
+    listed per path.
+servers:
+  - url: /v1
+
+paths:
+  /auth/register/request-otp:
+    post:
+      operationId: requestRegisterOTP
+      summary: Step 1 — submit the account payload and receive an OTP by SMS.
+      description: >
+        No users row is written here — the payload is held in
+        pending_registration until verify-otp succeeds (design.md's central
+        invariant). Public: no auth required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestOTPRequest'
+      responses:
+        '200':
+          description: OTP issued and sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestOTPResponse'
+        '400':
+          description: >
+            VALIDATION_ERROR for a malformed body (empty, bad JSON, unknown
+            field, trailing data, wrong Content-Type) or a format failure on
+            email / phone_number caught by the delivery validator — none of
+            these reach the use case. INVALID_EMAIL / INVALID_PHONE /
+            INVALID_PASSWORD are the use case's own checks (INVALID_PASSWORD
+            fires when the password is shorter than 8). The delivery validator
+            normally rejects a malformed email or phone first, so INVALID_PHONE
+            is only a defensive fallback here and INVALID_EMAIL surfaces only
+            where its rules are more permissive than the use case's.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '409':
+          description: >
+            PHONE_TAKEN (the phone already has an account) or EMAIL_TAKEN (the
+            email has an account, or is held by another phone's live pending
+            registration — AC6). A pending row for this same phone is NOT a
+            conflict: request-otp overwrites it so the caller can restart
+            (AC15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '413':
+          description: >
+            PAYLOAD_TOO_LARGE — the body exceeds the 1 MB decode limit
+            (pkg/utils.DecodeJSONBodyStrict). Rejected before the use case
+            runs; error.type is "business".
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: >
+            OTP_LOCKED (AC12 — too many wrong codes), OTP_RESEND_TOO_SOON (AC5
+            cooldown), or OTP_SEND_LIMITED (AC5 cap — request-otp and resend-otp
+            share one per-phone send counter). OTP_SEND_LIMITED carries
+            locked_until: sending unlocks when it passes, it is not permanent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '500':
+          description: >
+            SMS_SEND_FAILED — the OTP was persisted but the SMS provider
+            refused the send; or INTERNAL_ERROR — an infrastructure failure
+            (database, password hashing).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+  /auth/resend-otp:
+    post:
+      operationId: resendOTP
+      summary: Reissue an OTP for a purpose already in flight.
+      description: >
+        Shared across every OTP purpose declared in the otp_codes.purpose
+        CHECK constraint — US-001 implements only "register" and rejects the
+        rest with UNSUPPORTED_OTP_PURPOSE until US-002/US-003 wire in.
+        Public: no auth required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendOTPRequest'
+      responses:
+        '200':
+          description: A new OTP was issued and sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResendOTPResponse'
+        '400':
+          description: >
+            VALIDATION_ERROR for a malformed body or a format failure on
+            phone_number / purpose caught by the delivery validator;
+            OTP_INVALID (no pending registration — deliberately not 404, see
+            design.md flow 2 Step 2); PENDING_REGISTRATION_EXPIRED (the payload
+            is older than 24h); or UNSUPPORTED_OTP_PURPOSE (a purpose inside
+            the enum but other than "register" — an unknown purpose is rejected
+            by the validator as VALIDATION_ERROR). An expired or already-used
+            code is NOT an error here — resend issues a fresh one while the
+            payload is alive (AC15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '413':
+          description: >
+            PAYLOAD_TOO_LARGE — the body exceeds the 1 MB decode limit
+            (pkg/utils.DecodeJSONBodyStrict). Rejected before the use case
+            runs; error.type is "business".
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: >
+            OTP_LOCKED (AC12), OTP_RESEND_TOO_SOON (AC5 cooldown), or
+            OTP_SEND_LIMITED (AC5 cap). OTP_SEND_LIMITED is a temporary lock:
+            locked_until says when sending unlocks.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '500':
+          description: SMS_SEND_FAILED, or INTERNAL_ERROR for an infrastructure failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+  /auth/register/verify-otp:
+    post:
+      operationId: verifyRegisterOTP
+      summary: Step 2 — verify the OTP and create the account, already logged in.
+      description: >
+        Success creates users + user_sessions and deletes pending_registration
+        in one transaction (AC1/AC2/AC3/AC7). Public: no auth required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOTPRequest'
+      responses:
+        '201':
+          description: Account created; response carries the first session's tokens.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyOTPResponse'
+        '400':
+          description: >
+            VALIDATION_ERROR for a malformed body or a format failure on
+            phone_number / otp_code caught by the delivery validator;
+            OTP_INVALID (wrong code, or no pending registration — same code
+            either way, AC6-adjacent enumeration concern); OTP_EXPIRED (the 90s
+            code window closed); or PENDING_REGISTRATION_EXPIRED (the 24h
+            payload expired).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '409':
+          description: PHONE_TAKEN or EMAIL_TAKEN — lost the race at the final insert (AC6).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '413':
+          description: >
+            PAYLOAD_TOO_LARGE — the body exceeds the 1 MB decode limit
+            (pkg/utils.DecodeJSONBodyStrict). Rejected before the use case
+            runs; error.type is "business".
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: OTP_LOCKED (AC12) — 3 wrong codes in a row locks the number for 30 minutes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '500':
+          description: INTERNAL_ERROR — an infrastructure failure (database, token signing).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+  /auth/login:
+    post:
+      operationId: login
+      summary: Log in with phone number and password, binding a session to the device.
+      description: >
+        Public. The phone number is normalised to E.164 first, so 0901234567
+        and +84901234567 are one account. Wrong password, unknown number and a
+        number that exists only in pending_registration all return the same
+        401 INVALID_CREDENTIALS (AC2). Five consecutive failures lock the
+        number for 15 minutes (AC7): the fifth still answers 401, the next
+        request answers 429 even with the correct password. A device that logs
+        in again has its previous session revoked; other devices are untouched
+        (AC3/AC4). The access token carries the claim extra.sid (AC8).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Session created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: >
+            VALIDATION_ERROR (empty or malformed body, unknown field, data
+            after the JSON value, or a non-JSON Content-Type), INVALID_PHONE,
+            INVALID_PASSWORD (empty), or INVALID_DEVICE (missing device,
+            platform or device_model). None of these count as a failed attempt.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: INVALID_CREDENTIALS.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '413':
+          description: >
+            PAYLOAD_TOO_LARGE — the body exceeds the 1 MB decode limit
+            (pkg/utils.DecodeJSONBodyStrict). Rejected before the use case
+            runs; error.type is "business".
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: LOGIN_LOCKED — details.locked_until is when the lock lifts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '500':
+          description: INTERNAL_ERROR.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+  /auth/refresh:
+    post:
+      operationId: refreshToken
+      summary: Exchange a refresh token for a new access token and a new refresh token.
+      description: >
+        Public — the refresh token is the credential. Rotation: the presented
+        token stops working, and its session expiry slides forward by the
+        refresh-token lifetime (AC9). Presenting an already-rotated token
+        returns 401 and revokes that device's session (AC11). Sessions created
+        by US-001's verify-otp (no device) refresh like any other (AC12).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Rotated token pair.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+        '400':
+          description: >
+            VALIDATION_ERROR — empty or malformed body, unknown field, data
+            after the JSON value, or a non-JSON Content-Type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: >
+            REFRESH_TOKEN_INVALID — one code for a malformed, badly signed,
+            expired, already-rotated, revoked, wrong-type or unknown token, and
+            for a missing or empty refresh_token: the body still decodes, so a
+            blank credential is a 401 here, not a 400 (AC10).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '413':
+          description: >
+            PAYLOAD_TOO_LARGE — the body exceeds the 1 MB decode limit
+            (pkg/utils.DecodeJSONBodyStrict). Rejected before the use case
+            runs; error.type is "business".
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '500':
+          description: INTERNAL_ERROR.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+  /auth/logout:
+    post:
+      operationId: logout
+      summary: Revoke the session the access token belongs to.
+      description: >
+        Requires an access token (a refresh token is rejected as a bearer). The
+        session is taken from the token's extra.sid claim, never from the body.
+        Idempotent: an already-revoked or unknown session still returns 200
+        {"success": true} (AC13/AC14). An access token that carries no sid returns 401 (AC15).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Session revoked (or already gone). Envelope with no data.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: >
+            UNAUTHORIZED — no/invalid/expired token, a refresh token, or an
+            access token without a sid claim.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '500':
+          description: INTERNAL_ERROR.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RequestOTPRequest:
+      type: object
+      required: [email, password, phone_number]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          description: Checked server-side (AC7) even though the client also validates it.
+        phone_number:
+          type: string
+          description: >
+            Any shape IsValidPhone accepts (optional leading "+", 8-15 digits,
+            hand-typed separators). Normalized to E.164 server-side before
+            storage — "0901234567" and "+84901234567" collide on the same
+            account.
+          example: "0901234567"
+        dharma_name:
+          type: string
+          nullable: true
+        ordination_place:
+          type: string
+          nullable: true
+
+    RequestOTPData:
+      type: object
+      required: [message, expires_in_seconds, resend_after_seconds]
+      properties:
+        message:
+          type: string
+        expires_in_seconds:
+          type: integer
+          example: 90
+        resend_after_seconds:
+          type: integer
+          example: 60
+
+    ResendOTPRequest:
+      type: object
+      required: [phone_number, purpose]
+      properties:
+        phone_number:
+          type: string
+        purpose:
+          type: string
+          enum: [register, login, reset_password, verify_email]
+          description: US-001 only implements "register"; the other three return UNSUPPORTED_OTP_PURPOSE.
+
+    ResendOTPData:
+      type: object
+      required: [message, expires_in_seconds, resend_after_seconds, resend_remaining]
+      properties:
+        message:
+          type: string
+        expires_in_seconds:
+          type: integer
+          example: 90
+        resend_after_seconds:
+          type: integer
+          example: 60
+        resend_remaining:
+          type: integer
+          description: >
+            How many sends remain in the current cycle before OTP_SEND_LIMITED
+            (AC5: 3 counted sends after the free first one).
+          example: 2
+
+    VerifyOTPRequest:
+      type: object
+      required: [phone_number, otp_code]
+      properties:
+        phone_number:
+          type: string
+        otp_code:
+          type: string
+          pattern: '^[0-9]{6}$'
+          example: "111111"
+
+    VerifyOTPData:
+      type: object
+      required: [access_token, refresh_token, user]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+          description: >
+            Issued and stored (as a SHA-256 hash — never the raw token).
+            Exchangeable at POST /v1/auth/refresh (US-002).
+        user:
+          $ref: '#/components/schemas/User'
+
+    RequestOTPResponse:
+      description: >
+        The success envelope the service actually writes (pkg/utils.ApiResponse)
+        — the payload sits under data, not at the top level.
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/RequestOTPData'
+
+    ResendOTPResponse:
+      description: >
+        The success envelope the service actually writes (pkg/utils.ApiResponse)
+        — the payload sits under data, not at the top level.
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/ResendOTPData'
+
+    VerifyOTPResponse:
+      description: >
+        The success envelope the service actually writes (pkg/utils.ApiResponse)
+        — the payload sits under data, not at the top level.
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VerifyOTPData'
+
+    User:
+      type: object
+      required: [id, email, phone_number, created_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        phone_number:
+          type: string
+        dharma_name:
+          type: string
+          nullable: true
+        ordination_place:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    LoginRequest:
+      type: object
+      required: [phone_number, password, device]
+      properties:
+        phone_number:
+          type: string
+          example: "0901234567"
+        password:
+          type: string
+          description: Only checked for non-empty — the length floor is a registration rule.
+        device:
+          type: object
+          required: [platform, device_model]
+          description: >
+            What the client says about itself. The server adds ip_address and
+            user_agent from the request; sending them is rejected as an
+            unknown field.
+          properties:
+            platform:
+              type: string
+              example: ios
+            device_model:
+              type: string
+              example: iPhone 15
+            os_version:
+              type: string
+            app_version:
+              type: string
+            device_name:
+              type: string
+
+    LoginResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VerifyOTPData'
+
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    RefreshResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [access_token, refresh_token]
+          properties:
+            access_token:
+              type: string
+            refresh_token:
+              type: string
+              description: New on every call; the presented token is dead afterwards.
+
+    ApiErrorResponse:
+      description: >
+        The envelope the service actually writes (pkg/utils.ApiResponse) —
+        details sits beside error, not inside it.
+      type: object
+      required: [success, error]
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          required: [code, message, type]
+          properties:
+            code:
+              type: string
+              description: >
+                Shared by every route. US-001: VALIDATION_ERROR, PHONE_TAKEN,
+                EMAIL_TAKEN, INVALID_PHONE, INVALID_EMAIL, INVALID_PASSWORD,
+                OTP_INVALID, OTP_EXPIRED, PENDING_REGISTRATION_EXPIRED,
+                UNSUPPORTED_OTP_PURPOSE, OTP_LOCKED, OTP_RESEND_TOO_SOON,
+                OTP_SEND_LIMITED, SMS_SEND_FAILED. US-002: INVALID_DEVICE,
+                INVALID_CREDENTIALS, LOGIN_LOCKED, REFRESH_TOKEN_INVALID,
+                UNAUTHORIZED. Any route: PAYLOAD_TOO_LARGE, NOT_FOUND,
+                METHOD_NOT_ALLOWED, INTERNAL_ERROR.
+            message:
+              type: string
+            type:
+              type: string
+              enum: [validation, business, system]
+        details:
+          type: object
+          additionalProperties: true
+          description: >
+            Present only for some codes: {"field": ...} for INVALID_PHONE /
+            INVALID_EMAIL / INVALID_PASSWORD / INVALID_DEVICE and for a
+            decode-level VALIDATION_ERROR on a named field; one
+            field: failed-tag entry per broken field for a struct-validation
+            VALIDATION_ERROR; {"locked_until": "..."} for OTP_LOCKED /
+            OTP_SEND_LIMITED / LOGIN_LOCKED; {"retry_after_seconds": N} for
+            OTP_RESEND_TOO_SOON.

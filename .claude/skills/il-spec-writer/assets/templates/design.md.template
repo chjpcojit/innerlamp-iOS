@@ -1,0 +1,77 @@
+# Design — {{Feature}}
+
+Version: 1.0
+Last updated: {{date}}
+Status: <!-- one-line status, mirror requirements.md's Status line -->
+
+> See `changelog.md` in this folder for the version history of this spec.
+
+## Overview
+
+<!--
+2-4 sentences: architecture pattern used (MVVM-C + Clean Architecture per AGENTS.md), whether this
+is a cross-section navigation (owned by AppCoordinator) or scoped to one section's coordinator, and
+which existing feature it most closely follows as a shape reference (e.g. "matches the canonical
+Onboarding feature shape").
+-->
+
+## Layers & components
+
+<!--
+One row per file/component this feature owns or introduces. tasks.md's Phases are broken down
+directly from this table — every task must trace back to a row here. Mark anything not yet built
+as "not yet created" / "needs modification" (Prospective mode, or a pending part of Retroactive
+mode) rather than omitting it.
+-->
+
+| Layer | File | Responsibility |
+|---|---|---|
+| Domain / Entity | `Domain/Entities/IL{{Feature}}Entity.swift` | Pure business fields only. No UI-only state. |
+| Domain / UseCase | `Domain/UseCases/{{Feature}}/IL{{Feature}}UseCase.swift` | Validation rules, business logic. Any network/Repository-dependent method not yet backed by a real contract is a stub — see "Deliberately stubbed for now" below. |
+| Presentation / State | `Presentation/Scenes/{{Feature}}/IL{{Feature}}StateModel.swift` | UI-only state: field errors, loading flags, derived display values. No UIKit import. |
+| Presentation / ViewModel | `Presentation/Scenes/{{Feature}}/IL{{Feature}}ViewModel.swift` | `Input -> Output` per `ViewModelType`; owns `IL{{Feature}}NavEvent` publisher. |
+| Presentation / Coordinator | `Presentation/Scenes/{{Feature}}/IL{{Feature}}Coordinator.swift` | Pushes/presents `IL{{Feature}}ViewController`; forwards nav events to its parent coordinator. |
+| Presentation / ViewController | `Presentation/Scenes/{{Feature}}/IL{{Feature}}ViewController.swift` | `setupViews`/`setupConstraints`/`bindViewModel` per `BaseViewController`. |
+
+## Navigation flow
+
+<!--
+ASCII diagram of which coordinator owns this screen and where it's reached from / navigates to.
+See Docs/Specs/SignUp/design.md for the exact style to reuse.
+-->
+
+```
+<ParentCoordinator>
+  └─ show{{Feature}}() → IL{{Feature}}Coordinator
+       push IL{{Feature}}ViewController
+       (<action>) → <navEvent> → <destination>
+```
+
+## Step-by-step Flow — <!-- name the overall flow, e.g. "Full Registration" -->
+
+<!--
+MANDATORY whenever this feature's main action triggers 2+ sequential API/network calls, even if
+some of those calls belong to a different feature. See references/step_by_step_flow.md for the
+required per-step shape and a worked example. If this feature has only one API call total, this
+whole section may be omitted in favor of a shorter "Data flow" paragraph.
+
+Any step whose contract isn't confirmed yet gets an inline marker:
+  ⚠️ Not confirmed: <question> — <what it blocks>.
+-->
+
+```
+Step 1 — <name> (this feature)
+- Trigger:
+- Pre-condition:
+- API: <METHOD> <path> (<fields>)
+    - Success →
+    - Failure (<case>) →
+```
+
+## Deliberately stubbed for now (if applicable)
+
+<!--
+For any UseCase method that has no real network/Repository call yet (per the project's "never a
+guessed real implementation" rule), explain what's missing and point to the tasks.md Phase that
+tracks completing it. Delete this section if nothing is stubbed.
+-->

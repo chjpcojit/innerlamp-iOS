@@ -1,0 +1,45 @@
+//
+//  ILLunarCalendarCoordinator.swift
+//  InnerLamp
+//
+
+import UIKit
+import Combine
+
+/// Màn lá — không có delegate: `ILLunarCalendarNavEvent.close` chỉ pop màn và tự `finish()`,
+/// parent (`ILHomeCoordinator`) không cần phản ứng gì thêm.
+final class ILLunarCalendarCoordinator: Coordinator {
+
+    let navigationController: UINavigationController
+    var childCoordinators: [any Coordinator] = []
+    weak var parentCoordinator: (any Coordinator)?
+
+    private let container: DIContainer
+    private var cancellables = Set<AnyCancellable>()
+
+    init(
+        navigationController: UINavigationController,
+        container: DIContainer
+    ) {
+        self.navigationController = navigationController
+        self.container = container
+    }
+
+    func start() {
+        let viewModel = container.makeLunarCalendarViewModel()
+
+        viewModel.navigationEventPublisher
+            .sink { [weak self] event in
+                guard let self else { return }
+                switch event {
+                case .close:
+                    self.navigationController.popViewController(animated: true)
+                    self.finish()
+                }
+            }
+            .store(in: &cancellables)
+
+        let viewController = ILLunarCalendarViewController(viewModel: viewModel)
+        navigationController.pushViewController(viewController, animated: true)
+    }
+}

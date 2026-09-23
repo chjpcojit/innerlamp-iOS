@@ -1,0 +1,26 @@
+//
+//  IL{{Feature}}StateModel.swift
+//  InnerLamp
+//
+
+import Foundation
+
+/// UI state for the {{Feature}} screen — Presentation layer, owned and mutated exclusively by
+/// `IL{{Feature}}ViewModel`. No UIKit import, no business logic — `ViewController` only reads
+/// this to render, never validates or mutates it directly.
+///
+/// This is where all the "UI-shaped" fields that do NOT belong on `IL{{Feature}}Entity` live:
+/// - Input mirrors the user is currently typing (may be invalid/incomplete mid-edit)
+/// - Validation/error fields (`*Error: String?`)
+/// - Loading/in-flight flags (`isSubmitting`, `isVerifying`, ...)
+/// - Any computed, display-only formatting (hints, masks, `.localized` strings)
+///
+/// See `references/data_layer_boundaries.md` for the full Entity vs. StateModel vs. DTO split.
+struct IL{{Feature}}StateModel: Equatable {
+    // TODO: add fields representing everything the {{Feature}} screen needs to render, e.g.:
+    // var someFieldError: String?
+    // var isSubmitting: Bool = false
+    // var isSubmitEnabled: Bool { !isSubmitting }
+
+    static let initial = IL{{Feature}}StateModel()
+}

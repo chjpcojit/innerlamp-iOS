@@ -1,0 +1,29 @@
+//
+//  IL{{Feature}}Mapper.swift
+//  InnerLamp
+//
+
+import Foundation
+
+/// Converts between `IL{{Feature}}Entity` (Domain, pure business) and `IL{{Feature}}DTO` (Data,
+/// wire format) — field-for-field, in both directions.
+///
+/// Never touches `IL{{Feature}}StateModel`: Entity↔StateModel mapping is presentation-specific and
+/// lives in `IL{{Feature}}ViewModel`. Never lets a DTO escape upward past the Repository — the
+/// Repository's protocol speaks Entities only.
+///
+/// If this mapper ever needs to drop or ignore a field on either side, that is a signal a UI-only
+/// field leaked into the Entity or a business field is missing from the DTO — fix the source type
+/// instead of working around it here.
+enum IL{{Feature}}Mapper {
+    static func toDomain(_ dto: IL{{Feature}}{{Action}}ResponseDTO) -> IL{{Feature}}Entity {
+        // TODO: map each DTO field to its Entity counterpart.
+        IL{{Feature}}Entity.empty
+    }
+
+    static func toDTO(_ entity: IL{{Feature}}Entity) -> IL{{Feature}}{{Action}}RequestDTO {
+        // TODO: map each Entity field to its DTO counterpart. If the server expects snake_case in
+        // the request body, this is where explicit `CodingKeys` go (see the DTO template note).
+        IL{{Feature}}{{Action}}RequestDTO()
+    }
+}

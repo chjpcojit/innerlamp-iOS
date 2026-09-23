@@ -13,7 +13,18 @@
                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" xcode11CocoaTouchSystemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ILLaunchImage" translatesAutoresizingMaskIntoConstraints="NO" id="ilL-au-nch">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" name="ILDarkBackground"/>
+                        <constraints>
+                            <constraint firstItem="ilL-au-nch" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="ilc-01-lead"/>
+                            <constraint firstItem="ilL-au-nch" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" id="ilc-02-trai"/>
+                            <constraint firstItem="ilL-au-nch" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="ilc-03-top0"/>
+                            <constraint firstItem="ilL-au-nch" firstAttribute="bottom" secondItem="Ze5-6b-2t3" secondAttribute="bottom" id="ilc-04-bott"/>
+                        </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                 </viewController>
@@ -22,4 +33,10 @@
             <point key="canvasLocation" x="53" y="375"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="ILLaunchImage" width="440" height="956"/>
+        <namedColor name="ILDarkBackground">
+            <color red="0.0627451" green="0.05490196" blue="0.043137254" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
+    </resources>
 </document>

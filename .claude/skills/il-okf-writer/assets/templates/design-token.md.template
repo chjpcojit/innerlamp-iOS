@@ -1,0 +1,51 @@
+---
+type: {{Design Token | Component}}
+title: {{ILButton}}
+description: {{One sentence — what this token/component is for.}}
+resource: InnerLamp/Presentation/Common/DesignSystem/Components/ILButton.swift
+tags: [design-system, {{component | token}}]
+status: stable
+generated: { by: {{author}}, at: {{ISO8601}} }
+sources:
+  - path: InnerLamp/Presentation/Common/DesignSystem/Tokens/DESIGN_SYSTEM.md
+    kind: spec
+---
+
+# Summary
+
+{{What this component/token is, and the one canonical reason to reach for it.
+If a reader might reasonably use it where they should not, say so here — that is
+the highest-value sentence in this document.}}
+
+# API
+
+| Case / Property | Type | Notes |
+|---|---|---|
+| `.{{case}}` | {{}} | {{}} |
+
+{{For a token: the full value table (light/dark), and what it maps to. For a
+component: the variants, and the defaults a caller gets without configuring
+anything.}}
+
+# Usage
+
+```swift
+{{The shortest correct call site. Real code, copied from a real screen — not an
+idealised signature that does not compile.}}
+```
+
+# Rules
+
+- {{When to use it, and when to use the neighbouring component instead. Naming
+  the alternative is what makes the rule actionable.}}
+- {{Anything about dark mode, dynamic type, or accessibility that a caller must
+  not skip.}}
+
+# Consumers
+
+{{Which features use this today. This is what makes the concept worth
+maintaining — it is the blast radius for any change.}}
+
+# Related concepts
+
+{{Sibling components, and the tokens it is built from.}}

@@ -1,0 +1,27 @@
+//
+//  IL{{Feature}}Mapper.swift
+//  InnerLamp
+//
+
+import Foundation
+
+/// Converts between `IL{{Feature}}Entity` (Domain, pure business) and `IL{{Feature}}DTO` (Data,
+/// wire format) — field-for-field, in both directions. Never touches `IL{{Feature}}StateModel`;
+/// that Entity<->StateModel mapping belongs in `IL{{Feature}}ViewModel` instead (it's
+/// presentation-specific and changes with every UI tweak — see
+/// `references/data_layer_boundaries.md`).
+///
+/// If this mapper ever needs to drop/ignore a field on either side, that's a signal a UI-only
+/// field leaked into the Entity or a business field is missing from the DTO — fix the source
+/// type instead of papering over it here.
+enum IL{{Feature}}Mapper {
+    static func toDomain(_ dto: IL{{Feature}}DTO) -> IL{{Feature}}Entity {
+        // TODO: map each DTO field to its Entity counterpart.
+        IL{{Feature}}Entity.empty
+    }
+
+    static func toDTO(_ entity: IL{{Feature}}Entity) -> IL{{Feature}}DTO {
+        // TODO: map each Entity field to its DTO counterpart.
+        IL{{Feature}}DTO()
+    }
+}

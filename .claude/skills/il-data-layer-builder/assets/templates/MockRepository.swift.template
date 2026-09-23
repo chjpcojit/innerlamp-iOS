@@ -1,0 +1,55 @@
+//
+//  MockIL{{Feature}}Repository.swift
+//  InnerLampTests
+//
+
+import Foundation
+@testable import InnerLamp
+
+/// Test double for `IL{{Feature}}Repository`.
+///
+/// **Appended to `InnerLampTests/IL{{Feature}}ViewModelTests.swift`, not a separate file** — the
+/// project keeps each feature's mock alongside the tests that use it (see the existing
+/// `MockILSignUpUseCase` for the shape this follows).
+///
+/// This mock replaces the old `MockIL{{Feature}}UseCase`'s network-path responsibility. The point
+/// of this skill's change is that the tests now exercise the **real** `IL{{Feature}}UseCaseImpl`
+/// with this mock injected, so the error-mapping and Entity↔DTO conversion in the layer between
+/// are actually under test — not stubbed away
+/// (`references/testing_guide.md`).
+final class MockIL{{Feature}}Repository: IL{{Feature}}Repository {
+
+    // MARK: - Call recording
+    var {{actionName}}Called = false
+    var {{actionName}}CallCount = 0
+    var receivedEntity: IL{{Feature}}Entity?
+    var receivedEntities: [IL{{Feature}}Entity] = []
+
+    // MARK: - Stubbed outcomes
+    /// Set to make the next call throw. Leave `nil` for the success path.
+    var {{actionName}}Error: Error?
+    /// Set to make the next call return this. Leave `nil` when the method returns `Void`.
+    var {{actionName}}Result: IL{{Feature}}Entity?
+
+    func {{actionName}}(_ entity: IL{{Feature}}Entity) async throws {
+        {{actionName}}Called = true
+        {{actionName}}CallCount += 1
+        receivedEntity = entity
+        receivedEntities.append(entity)
+
+        if let error = {{actionName}}Error {
+            throw error
+        }
+    }
+
+    // MARK: - Convenience
+    /// Resets every recorder and stub — call from `setUp()` so tests stay independent.
+    func reset() {
+        {{actionName}}Called = false
+        {{actionName}}CallCount = 0
+        receivedEntity = nil
+        receivedEntities = []
+        {{actionName}}Error = nil
+        {{actionName}}Result = nil
+    }
+}

@@ -1,0 +1,68 @@
+---
+type: API Endpoint
+title: {{METHOD}} {{/path}}
+description: {{One sentence — what this endpoint does and which feature calls it.}}
+resource: InnerLamp/Core/Networking/Endpoints/{{Feature}}Endpoint.swift
+tags: [api, {{domain}}]
+status: draft
+generated: { by: {{author}}, at: {{ISO8601}} }
+sources:
+  - path: {{path to the contract source — a spec, a backend doc, an OpenAPI file}}
+    kind: {{spec | backend-doc | openapi}}
+---
+
+# Summary
+
+{{Which feature calls this, at which step of the flow, and what the user sees
+on success/failure. Link the feature concept: `[Sign Up](/features/signup.md)`.}}
+
+> ⚠️ **Contract status**: {{Either "Confirmed against <source> on <date>." or
+> "Not confirmed — this endpoint shape is inferred from the client stub and must
+> be re-checked against the backend before the feature is promoted to stable."}}
+
+# Request
+
+```
+{{METHOD}} {{/path}}
+```
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| {{field}} | {{String}} | {{yes}} | {{constraint, format, source of the value}} |
+
+**Headers**: {{Authorization bearer, locale, idempotency key — whatever the
+backend actually requires. Say "none beyond the default `NetworkService`
+headers" if that is the truth.}}
+
+# Response
+
+## Success
+
+```json
+{{The real envelope, not a guessed one. If `APIEnvelope` wraps it, show the
+wrapper too — that is the part a reader will otherwise get wrong.}}
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| {{field}} | {{String}} | {{}} |
+
+## Error cases
+
+| Case | Trigger | Client mapping |
+|---|---|---|
+| {{409}} | {{phone already registered}} | `IL{{Feature}}Error.{{case}}` |
+
+# Call sites
+
+| Layer | File | Notes |
+|---|---|---|
+| Endpoint | `Core/Networking/Endpoints/{{Feature}}Endpoint.swift` | {{}} |
+| Repository | `Data/Repositories/{{Feature}}/IL{{Feature}}RepositoryImpl.swift` | {{}} |
+| UseCase | `Domain/UseCases/{{Feature}}/IL{{Feature}}UseCase.swift` | {{}} |
+
+# Related concepts
+
+{{Feature concepts that call this endpoint, and sibling endpoints in the same
+flow. Spell out the sequence — this is the one place a multi-call flow is
+visible in full.}}

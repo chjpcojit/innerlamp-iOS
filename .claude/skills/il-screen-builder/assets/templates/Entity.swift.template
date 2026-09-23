@@ -1,0 +1,24 @@
+//
+//  IL{{Feature}}Entity.swift
+//  InnerLamp
+//
+
+import Foundation
+
+/// Pure business entity for {{Feature}} — Domain layer only.
+///
+/// Hard rule: this type holds ONLY fields with real business meaning (what the server/local
+/// storage actually cares about). It must NEVER contain:
+/// - UI-only fields: `*Error` / `*ErrorMessage`, `isSubmitting`, `isLoading`, `isPasswordVisible`
+/// - Display-only formatting: localized strings (`.localized`), hint text, masked/formatted
+///   variants meant only for showing on screen
+///
+/// All of the above belongs in `IL{{Feature}}StateModel`
+/// (`Presentation/Scenes/{{Feature}}/IL{{Feature}}StateModel.swift`) instead — see
+/// `references/data_layer_boundaries.md`.
+struct IL{{Feature}}Entity: Equatable {
+    // TODO: add only fields with real business meaning, e.g. the pieces of data this feature
+    // reads/writes via its UseCase and/or sends to the server through IL{{Feature}}DTO.
+
+    static let empty = IL{{Feature}}Entity()
+}

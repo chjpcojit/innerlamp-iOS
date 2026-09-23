@@ -1,0 +1,52 @@
+---
+type: UseCase
+title: {{Title}}
+description: {{One sentence — the business action this UseCase performs.}}
+resource: InnerLamp/Domain/UseCases/{{Feature}}/IL{{Feature}}UseCase.swift
+tags: [domain, usecase]
+status: draft
+generated: { by: {{author}}, at: {{ISO8601}} }
+sources:
+  - path: {{}}
+    kind: {{}}
+---
+
+# Summary
+
+{{The business action, in one paragraph, described by what it guarantees rather
+than by which methods it delegates to. Name the features that call it.}}
+
+# Interface
+
+| Member | Signature | Behaviour |
+|---|---|---|
+| `{{method}}` | `{{func send(...) async throws -> X}}` | {{what it returns, what it throws}} |
+
+{{Where this is a protocol with an `Impl`, say which is the real one and where
+the Impl is registered in `DIContainer` — a reader hunting for behaviour will
+otherwise read the protocol and stop.}}
+
+# Business rules
+
+{{The rules that live here rather than in the ViewModel or the ViewController.
+This is the section that justifies the UseCase existing — if it is empty, the
+layer may be a pass-through and that is worth stating plainly.}}
+
+# Dependencies
+
+| Dependency | Injected via | Notes |
+|---|---|---|
+| `{{ILXRepository}}` | `init` | {{}} |
+
+# Stub status
+
+{{For each method that is not fully implemented, state it exactly:
+"`sendVerificationCode` is a one-line `print("TODO: ...")` stub — it makes no
+network call and does not fake a Repository call either (per the project's
+'never a guessed real implementation' rule)." Delete this section only when
+every method is real.}}
+
+# Related concepts
+
+{{The entity it consumes, the endpoint it ultimately reaches, and the feature
+concepts that call it.}}

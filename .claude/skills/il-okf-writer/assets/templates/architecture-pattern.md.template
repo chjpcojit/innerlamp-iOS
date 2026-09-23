@@ -1,0 +1,49 @@
+---
+type: Architecture Pattern
+title: {{Title}}
+description: {{One sentence — the pattern and the problem it solves.}}
+resource: InnerLamp/Core/Base/
+tags: [architecture]
+status: stable
+generated: { by: {{author}}, at: {{ISO8601}} }
+sources:
+  - path: InnerLamp/Core/Base/README.md
+    kind: implementation-notes
+---
+
+# Summary
+
+{{The pattern in 2-3 sentences: what problem it solves, and the one rule a
+contributor must follow to stay consistent with it. Architecture concepts are
+written once and rarely updated — optimise for a reader who will never read the
+source, not for changelog accuracy.}}
+
+# The rule
+
+{{The single non-negotiable. E.g. "a ViewController must not call
+`pushViewController` directly; all navigation goes through a Coordinator." State
+the rule imperatively, then one sentence on why it exists — the why is what
+stops the next contributor from making a locally reasonable exception.}}
+
+# Shape
+
+```
+{{ASCII diagram of the moving parts and the direction of calls. Reuse the
+diagram style from Core/Base/README.md so the two read as one document.}}
+```
+
+# Canonical example
+
+{{Point at the single most representative real implementation by path, and say
+why it is representative. If a feature deviates, name it and say whether the
+deviation is deliberate or drift.}}
+
+# Common mistakes
+
+- {{The mistake, and the symptom that reveals it. E.g. "forgetting
+  `removeChild(_:)` — the coordinator is retained after `finish()` and its
+  callbacks fire into a dead flow."}}
+
+# Related concepts
+
+{{Other architecture concepts this one depends on or is easily confused with.}}

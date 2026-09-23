@@ -1,0 +1,92 @@
+//
+//  IL{{Feature}}ViewModel.swift
+//  InnerLamp
+//
+
+import Foundation
+import Combine
+
+enum IL{{Feature}}NavEvent: Equatable {
+    // TODO: one case per navigation event this screen can trigger, e.g.:
+    // case goToNext
+    // case goBack
+}
+
+protocol IL{{Feature}}ViewModelProtocol: ViewModelType {
+    /// Independent of `transform(input:)` — the owning `IL{{Feature}}Coordinator` subscribes to
+    /// this directly in `start()`, before the ViewController exists (see
+    /// references/coordinator_navigation_rules.md).
+    var navigationEventPublisher: AnyPublisher<IL{{Feature}}NavEvent, Never> { get }
+}
+
+final class IL{{Feature}}ViewModel: IL{{Feature}}ViewModelProtocol {
+
+    // MARK: - Input / Output
+    struct Input {
+        let viewDidLoad: AnyPublisher<Void, Never>
+        // TODO: add one Publisher per user action/trigger, e.g.:
+        // let someActionTapped: AnyPublisher<Void, Never>
+    }
+
+    struct Output {
+        let state: AnyPublisher<ViewState<IL{{Feature}}StateModel>, Never>
+    }
+
+    // MARK: - Properties
+    var navigationEventPublisher: AnyPublisher<IL{{Feature}}NavEvent, Never> {
+        navigationEventSubject.eraseToAnyPublisher()
+    }
+
+    private let navigationEventSubject = PassthroughSubject<IL{{Feature}}NavEvent, Never>()
+    private let stateSubject: CurrentValueSubject<ViewState<IL{{Feature}}StateModel>, Never>
+    private var currentState: IL{{Feature}}StateModel
+    private let useCase: IL{{Feature}}UseCase
+    private var cancellables = Set<AnyCancellable>()
+
+    // MARK: - Initializer
+    init(useCase: IL{{Feature}}UseCase) {
+        self.useCase = useCase
+        let initialState = useCase.getInitialState()
+        self.currentState = initialState
+        self.stateSubject = CurrentValueSubject(.success(initialState))
+    }
+
+    // MARK: - Transform
+    func transform(input: Input) -> Output {
+        input.viewDidLoad
+            .sink { [weak self] _ in self?.handleViewDidLoad() }
+            .store(in: &cancellables)
+
+        // TODO: subscribe each Input publisher added above to its matching private handle*()
+        // method, the same way viewDidLoad is wired above.
+
+        return Output(state: stateSubject.eraseToAnyPublisher())
+    }
+
+    // MARK: - Actions
+    // TODO: replace with real handle*() methods for this screen's actions, each subscribed from
+    // `transform(input:)` above — following the OnboardingViewModel pattern (see
+    // references/mvvm_pattern.md), adapted to send onto `stateSubject`/`navigationEventSubject`
+    // instead of calling a callback.
+    private func handleViewDidLoad() {
+        currentState = useCase.getInitialState()
+        stateSubject.send(.success(currentState))
+    }
+
+    // TODO: template for an action that calls an `async throws` UseCase method (network or local
+    // persistence) — delete this if the screen has no such action, or rename/duplicate per
+    // real action. Never invent an API contract the UseCase doesn't already implement — see
+    // references/mvvm_pattern.md.
+    private func handleAction() {
+        stateSubject.send(.loading)
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await self.useCase.handleAction()
+                self.stateSubject.send(.success(self.currentState))
+            } catch {
+                self.stateSubject.send(.failure(error))
+            }
+        }
+    }
+}

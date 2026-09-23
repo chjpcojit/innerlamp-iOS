@@ -1,0 +1,74 @@
+---
+type: Feature
+title: {{Title}}
+description: {{One sentence — what the screen does, from the user's perspective.}}
+resource: InnerLamp/Presentation/Scenes/{{Feature}}/
+tags: [{{tag1}}, {{tag2}}, mvvm-c]
+status: draft
+generated: { by: {{author}}, at: {{ISO8601}} }
+sources:
+  - path: Docs/Specs/{{Feature}}/requirements.md
+    kind: spec
+  - path: InnerLamp/Presentation/Scenes/{{Feature}}/README.md
+    kind: implementation-notes
+---
+
+# Summary
+
+{{2-4 sentences: entry point (which screen reaches this one), what the user
+provides, what happens on success, what happens on failure.}}
+
+**Current limitation**: {{the one thing a reader must know is not real yet —
+e.g. "the network call is not wired to a real backend". Delete this line only
+when there is genuinely no stub left.}}
+
+# Architecture
+
+{{MVVM-C + Clean Architecture, and how cross-section navigation is owned —
+AppCoordinator vs a parent feature coordinator. Say which, don't hedge.}}
+
+| Layer | Type | File |
+|---|---|---|
+| Domain / Entity | Domain Entity | `Domain/Entities/IL{{Feature}}Entity.swift` — {{what it holds}} |
+| Domain / UseCase | UseCase | `Domain/UseCases/{{Feature}}/IL{{Feature}}UseCase.swift` — {{what it does}} |
+| Presentation / State | State Model | `Presentation/Scenes/{{Feature}}/IL{{Feature}}StateModel.swift` — {{UI-only, no UIKit import}} |
+| Presentation / ViewModel | ViewModel | `Presentation/Scenes/{{Feature}}/IL{{Feature}}ViewModel.swift` — `Input -> Output` per `ViewModelType` |
+| Presentation / Coordinator | Coordinator | `Presentation/Scenes/{{Feature}}/IL{{Feature}}Coordinator.swift` |
+| Presentation / ViewController | ViewController | `Presentation/Scenes/{{Feature}}/IL{{Feature}}ViewController.swift` |
+
+{{Design System components this feature introduces or reuses — name them. If it
+introduces new ones, they also deserve their own concept under design-system/.}}
+
+# Navigation
+
+```
+AppCoordinator
+  └─ show{{Feature}}() → IL{{Feature}}Coordinator
+       push IL{{Feature}}ViewController
+       (tap "{{button}}") → {{delegateMethod}}({{payload}})
+            → AppCoordinator.show{{Next}}()
+       (submit succeeds) → {{feature}}DidFinish → finish()
+```
+
+# Validation rules
+
+{{One bullet per validated field: required or not, the exact rule, and whether
+it recomputes on keystroke or only on submit. Delete this section if the screen
+has no user input.}}
+
+# Pending work
+
+{{Bulleted list of what is stubbed, unwired, or missing — with the file:line-ish
+location of the stub and what would replace it. Each item should be checkable
+later; "promote to stable once X lands" belongs at the end of this section.}}
+
+# Known gaps vs. design
+
+{{Where the shipped behavior differs from Docs/Specs/{{Feature}}/design.md.
+Delete if there are none — an empty section is worse than no section.}}
+
+# Related concepts
+
+{{Markdown links to sibling concepts: `[Login](/features/login.md)`. If a
+related feature has no concept yet, say so explicitly rather than linking to a
+file that does not exist.}}

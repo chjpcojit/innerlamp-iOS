@@ -1,0 +1,96 @@
+//
+//  IL{{Feature}}ViewModelTests.swift
+//  InnerLampTests
+//
+
+import XCTest
+import Combine
+@testable import InnerLamp
+
+final class IL{{Feature}}ViewModelTests: XCTestCase {
+
+    private var mockUseCase: MockIL{{Feature}}UseCase!
+    private var sut: IL{{Feature}}ViewModel!
+    private var cancellables: Set<AnyCancellable>!
+
+    override func setUp() {
+        super.setUp()
+        mockUseCase = MockIL{{Feature}}UseCase()
+        sut = IL{{Feature}}ViewModel(useCase: mockUseCase)
+        cancellables = []
+    }
+
+    override func tearDown() {
+        cancellables = nil
+        sut = nil
+        mockUseCase = nil
+        super.tearDown()
+    }
+
+    func test_initialState_matchesUseCaseDefault() {
+        let viewDidLoadSubject = PassthroughSubject<Void, Never>()
+        let output = sut.transform(input: .init(viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher()))
+
+        var receivedState: IL{{Feature}}StateModel?
+        output.state
+            .sink { state in
+                if case .success(let model) = state { receivedState = model }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+
+        XCTAssertNotNil(receivedState)
+        // TODO: assert the real default fields, e.g.:
+        // XCTAssertEqual(receivedState?.someField, expectedDefault)
+    }
+
+    // TODO: one test per handle*() method added to IL{{Feature}}ViewModel, following the
+    // OnboardingViewModelTests pattern but driving the action through its Input publisher and
+    // asserting on `output.state` / `sut.navigationEventPublisher`, e.g.:
+    //
+    // func test_someActionTapped_updatesStateAndCallsUseCase() {
+    //     let someActionTapped = PassthroughSubject<Void, Never>()
+    //     let output = sut.transform(input: .init(
+    //         viewDidLoad: Empty().eraseToAnyPublisher(),
+    //         someActionTapped: someActionTapped.eraseToAnyPublisher()
+    //     ))
+    //     var receivedState: IL{{Feature}}StateModel?
+    //     output.state
+    //         .sink { if case .success(let model) = $0 { receivedState = model } }
+    //         .store(in: &cancellables)
+    //
+    //     someActionTapped.send(())
+    //
+    //     XCTAssertTrue(mockUseCase.someMethodCalled)
+    //     XCTAssertEqual(receivedState?.someField, expectedValue)
+    // }
+    //
+    // For an action that navigates instead of updating state:
+    //
+    // func test_someActionTapped_firesNavigationEvent() {
+    //     var receivedEvent: IL{{Feature}}NavEvent?
+    //     sut.navigationEventPublisher
+    //         .sink { receivedEvent = $0 }
+    //         .store(in: &cancellables)
+    //     // trigger the action's Input publisher, then:
+    //     XCTAssertEqual(receivedEvent, .someExpectedEvent)
+    // }
+}
+
+// MARK: - Mock IL{{Feature}}UseCase
+final class MockIL{{Feature}}UseCase: IL{{Feature}}UseCase {
+    var getInitialStateCalled = false
+    // TODO: add one `*Called` flag (and captured-args property, if relevant) per method on
+    // IL{{Feature}}UseCase, mirroring MockOnboardingUseCase in OnboardingViewModelTests.swift.
+
+    func getInitialState() -> IL{{Feature}}StateModel {
+        getInitialStateCalled = true
+        return IL{{Feature}}StateModel.initial
+    }
+
+    var handleActionCalled = false
+    func handleAction() async throws {
+        handleActionCalled = true
+    }
+}

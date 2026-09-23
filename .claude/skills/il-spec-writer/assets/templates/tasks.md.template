@@ -1,0 +1,70 @@
+# Tasks — {{Feature}}
+
+Version: 1.0
+Last updated: {{date}}
+Status: <!-- one-line status, mirror requirements.md/design.md's Status line -->
+
+> See `changelog.md` in this folder for the version history of this spec.
+
+<!--
+Every item below must trace back to a row in design.md's "Layers & components" table or a step in
+its "Step-by-step Flow" section — do not invent a task that isn't grounded in design.md.
+Never check `[x]` an item unless it is verified as actually implemented in the codebase.
+-->
+
+## Phase 1 — UI (static layout, mock state)
+
+- [ ] Create `IL{{Feature}}ViewController` extending `BaseViewController`
+- [ ] `setupViews()`: add subviews per design handoff
+- [ ] `setupConstraints()`: Auto Layout per design tokens
+- [ ] `bindViewModel()`: wire UI actions to `Input`, render `Output.state`
+- [ ] Visual QA against the design reference (Figma / prototype file — see design.md)
+
+## Phase 2 — Logic (Domain + real behavior)
+
+- [ ] Create `IL{{Feature}}Entity` (pure business fields only)
+- [ ] Create `IL{{Feature}}StateModel` (Presentation-side UI state, no UIKit import)
+- [ ] Create `IL{{Feature}}UseCase` / `IL{{Feature}}UseCaseImpl`:
+      <!-- list concrete validation/business methods; mark any network-dependent method
+      "— stub only" if no confirmed backend contract exists yet -->
+- [ ] Create `IL{{Feature}}ViewModel` (`Input -> Output`, `IL{{Feature}}NavEvent`)
+- [ ] Create `IL{{Feature}}Coordinator` + delegate protocol
+- [ ] Wire `DIContainer.make{{Feature}}UseCase/ViewModel/Coordinator`
+- [ ] Wire the parent coordinator's `show{{Feature}}()` + delegate conformance
+- [ ] Unit tests: `InnerLampTests/IL{{Feature}}ViewModelTests.swift`, mocking
+      `IL{{Feature}}UseCase` directly
+
+## Phase 3 — API integration (pending, blocks feature completion)
+
+<!--
+Only include this phase if design.md's Step-by-step Flow (or Data flow) names at least one API
+call not yet backed by a real contract. Otherwise delete this phase.
+-->
+
+- [ ] Define the API contract with the backend team — request/response shape, error cases
+      <!-- reference the exact endpoint from design.md's Step-by-step Flow -->
+- [ ] Create `IL{{Feature}}DTO` + `IL{{Feature}}Mapper` (only once the contract above is confirmed
+      — never created speculatively "for later")
+- [ ] Create the `Endpoint` conformance (`Core/Networking/`)
+- [ ] Create `IL{{Feature}}Repository` protocol + implementation wrapping `NetworkService`
+- [ ] Inject the repository into `IL{{Feature}}UseCaseImpl.init`
+- [ ] Replace the stubbed UseCase method body with the real repository call
+- [ ] Map network/HTTP errors to feature-specific error cases
+- [ ] Update `IL{{Feature}}ViewModelTests` + add a mock repository to cover real success/failure
+      paths
+- [ ] Manual test against a real/staging backend once available
+
+## Phase 4 — Documentation
+
+- [ ] `InnerLamp/Presentation/Scenes/{{Feature}}/README.md` (implementation notes, design
+      comparison table, changelog)
+- [ ] `Docs/Knowledge/features/{{featureLower}}.md` (OKF concept) — hold off until this feature's
+      API integration (if any) lands, so the concept describes real end-to-end behavior instead of
+      a stub. See `Docs/Specs/OKF.md`.
+
+## Deferred (separate feature, not blocking {{Feature}})
+
+<!-- Anything named in requirements.md's "Out of scope" section that has its own tracked work
+elsewhere (a different feature's spec), for cross-reference only. -->
+
+-

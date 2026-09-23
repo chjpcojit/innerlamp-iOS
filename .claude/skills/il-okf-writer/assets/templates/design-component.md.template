@@ -1,0 +1,79 @@
+---
+type: Design Component
+title: {{ComponentName}}
+description: {{OneLine — what the component looks like on screen and when a developer reaches for it.}}
+resource: InnerLamp/Presentation/Common/DesignSystem/Components/{{ComponentName}}.swift
+tags: [design-system, component, {{tag3}}]
+status: {{draft|stable}}
+generated: { by: claude-code, at: {{YYYY-MM-DDTHH:MM:SS+07:00}} }
+sources:
+  - path: InnerLamp/Presentation/Common/DesignSystem/Tokens/DESIGN_SYSTEM.md
+    kind: design-spec
+  - path: InnerLamp/Presentation/Common/DesignSystem/Components/{{ComponentName}}.swift
+    kind: implementation
+---
+
+# Summary
+
+{{Two or four sentences: what this component renders, the visual role it plays in the InnerLamp
+look, and the concrete situation a developer should reach for it instead of hand-rolling a UIView.
+Name the design-system rule it enforces (e.g. "the only sanctioned primary-CTA shape").}}
+
+# Public API
+
+| Member | Type | Purpose |
+|---|---|---|
+| `{{member1}}` | `{{Type}}` | {{What it sets / returns.}} |
+| `{{member2}}` | `{{Type}}` | {{What it sets / returns.}} |
+| `{{variantEnum}}` | `enum` | {{The visual variants this component supports.}} |
+
+{{Keep this table to the members a caller actually touches. Private layout helpers and internal
+subviews belong in the code, not here — this is a contract, not a mirror of the file.}}
+
+# Variants
+
+{{One row per supported variant. If the component has an enum of styles, this is where each case's
+visual difference is stated in words, so a reader can pick a variant without opening the source.}}
+
+| Variant | When to use |
+|---|---|
+| `.{{case1}}` | {{Context.}} |
+| `.{{case2}}` | {{Context.}} |
+
+# Design tokens consumed
+
+{{Which ILColors / ILTypography / ILMetrics entries this component reads. This is what makes the
+component theme-correct and what a reader must preserve if they edit it — list only tokens the
+component actually references.}}
+
+- `ILColors.{{token}}` — {{where it is applied}}
+- `ILTypography.{{preset}}` — {{which label}}
+- `ILMetrics.{{metric}}` — {{spacing/radius/height}}
+
+# Usage
+
+```swift
+{{A short, real snippet — the initializer plus any configuration a caller must remember to set.
+Prefer a snippet copied from an actual call site over an invented one.}}
+```
+
+# Constraints
+
+{{Rules that are not obvious from the signature: what the component deliberately does NOT do, which
+constraints on its use keep the design system consistent, and any known limitation. State the
+reason, not just the rule — a reader who understands why will not "fix" it into a bug.}}
+
+- {{e.g. "Does not size itself; the caller must pin height, because the same view is reused inside
+  both a fixed toolbar and a flexible sheet."}}
+- {{e.g. "Accessibility label is not set internally — always set it at the call site."}}
+
+# Known gaps
+
+{{Anything the component does not yet handle, if review surfaced it. Delete this section when the
+component is complete — an empty heading reads as unfinished work rather than a clean state.}}
+
+# Related concepts
+
+- {{[sibling component](/design-system/components/{{other}}.md) — how it differs, or when to prefer
+  it.}}
+- {{DESIGN_SYSTEM.md — the source spec this component implements.}}

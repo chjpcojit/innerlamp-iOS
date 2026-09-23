@@ -1,0 +1,30 @@
+//
+//  IL{{Feature}}DTO.swift
+//  InnerLamp
+//
+
+import Foundation
+
+/// Wire format for {{Feature}} — Data layer. Field names and types match the **confirmed** server
+/// contract, not `IL{{Feature}}Entity`'s shape.
+///
+/// Decoding is automatic: the shared `JSONDecoder` uses `.convertFromSnakeCase`, so a server field
+/// `phone_number` is declared here as `phoneNumber` — never add `CodingKeys` to undo that.
+/// Encoding is NOT configured, so if the server expects snake_case on the way *out*, map it with
+/// explicit `CodingKeys` on the request DTO. See `references/data_layer_architecture.md` §5.
+///
+/// One type per wire shape. When the contract distinguishes request from response, split into
+/// `IL{{Feature}}{{Action}}RequestDTO` / `...ResponseDTO` rather than one type with optionals.
+struct IL{{Feature}}{{Action}}RequestDTO: Encodable {
+    // TODO: fields exactly matching the confirmed request contract — types must match the wire
+    // format (an ISO-8601 date is a `Date`; a Unix timestamp or `yyyy-MM-dd` string is `Int`/`String`
+    // and the Mapper converts, never a custom decoder here).
+}
+
+struct IL{{Feature}}{{Action}}ResponseDTO: Decodable {
+    // TODO: fields exactly matching the confirmed success response.
+    //
+    // Omit this type entirely if the success response carries nothing the app uses — call
+    // `networkService.request(endpoint:)` (the non-decoding overload) instead of inventing a type
+    // to satisfy the generic one.
+}

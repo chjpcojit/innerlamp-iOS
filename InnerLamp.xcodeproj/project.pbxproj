@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		56C5249ED3FF5CAF33ECD0A3 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = CE34DAB67E3E66D52A62DD65 /* Sentry */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		3F39AA3B305165790008341C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -33,7 +37,23 @@
 		3F39AA4C305165790008341C /* Exceptions for "InnerLamp" folder in "InnerLamp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Core/Base/README.md,
+				Core/Localization/README.md,
+				Core/Logging/README.md,
+				Core/Storage/README.md,
 				Info.plist,
+				Presentation/Scenes/ForgotPassword/README.md,
+				Presentation/Scenes/Home/README.md,
+				Presentation/Scenes/Library/README.md,
+				Presentation/Scenes/Login/README.md,
+				Presentation/Scenes/LunarCalendar/README.md,
+				Presentation/Scenes/Mala/README.md,
+				Presentation/Scenes/Onboarding/README.md,
+				Presentation/Scenes/Otp/README.md,
+				Presentation/Scenes/Profile/README.md,
+				Presentation/Scenes/Sangha/README.md,
+				Presentation/Scenes/SignUp/README.md,
+				Presentation/Scenes/Splash/README.md,
 			);
 			target = 3F39AA20305165770008341C /* InnerLamp */;
 		};
@@ -65,6 +85,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				56C5249ED3FF5CAF33ECD0A3 /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +146,7 @@
 			);
 			name = InnerLamp;
 			packageProductDependencies = (
+				CE34DAB67E3E66D52A62DD65 /* Sentry */,
 			);
 			productName = InnerLamp;
 			productReference = 3F39AA21305165770008341C /* InnerLamp.app */;
@@ -147,8 +169,6 @@
 				3F39AA3D305165790008341C /* InnerLampTests */,
 			);
 			name = InnerLampTests;
-			packageProductDependencies = (
-			);
 			productName = InnerLampTests;
 			productReference = 3F39AA3A305165790008341C /* InnerLampTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -170,8 +190,6 @@
 				3F39AA47305165790008341C /* InnerLampUITests */,
 			);
 			name = InnerLampUITests;
-			packageProductDependencies = (
-			);
 			productName = InnerLampUITests;
 			productReference = 3F39AA44305165790008341C /* InnerLampUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -184,7 +202,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2660;
-				LastUpgradeCheck = 2660;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					3F39AA20305165770008341C = {
 						CreatedOnToolsVersion = 26.6;
@@ -208,6 +226,9 @@
 			);
 			mainGroup = 3F39AA18305165770008341C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F31C8A6C35B7F142D1E2D463 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3F39AA22305165770008341C /* Products */;
 			projectDirPath = "";
@@ -297,6 +318,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -329,6 +351,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -405,6 +428,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -462,6 +486,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -591,6 +616,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F31C8A6C35B7F142D1E2D463 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		CE34DAB67E3E66D52A62DD65 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F31C8A6C35B7F142D1E2D463 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 3F39AA19305165770008341C /* Project object */;
 }

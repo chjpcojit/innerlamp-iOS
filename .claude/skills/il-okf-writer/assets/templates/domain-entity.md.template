@@ -1,0 +1,51 @@
+---
+type: Domain Entity
+title: {{Title}}
+description: {{One sentence — what this model represents in the business domain.}}
+resource: InnerLamp/Domain/Entities/IL{{Feature}}Entity.swift
+tags: [domain, entity]
+status: draft
+generated: { by: {{author}}, at: {{ISO8601}} }
+sources:
+  - path: {{}}
+    kind: {{}}
+---
+
+# Summary
+
+{{What real-world thing this entity represents, and which features consume it.
+An entity is shared vocabulary — say who else depends on it, because that is
+what makes changing it expensive.}}
+
+# Fields
+
+| Field | Type | Notes |
+|---|---|---|
+| `{{name}}` | `{{String}}` | {{what it means, and any invariant (non-empty after trimming, E.164, ...)}} |
+
+{{If any field's meaning is only discoverable from a Mapper, say so here and
+link the Mapper — the type alone will mislead the next reader.}}
+
+# Invariants
+
+{{Rules that must hold for every instance — not validation the UI performs, but
+what makes the entity well-formed. If there are none, say "None enforced today"
+rather than deleting the section, since its absence is itself information.}}
+
+# Where it flows
+
+```
+{{Feature}}ViewController/ViewModel
+   → IL{{Feature}}UseCase          (validates, uses as input)
+   → ILAuthRepository              (passes to the network layer)
+   → IL{{Feature}}DTO              (mapped, field-for-field or otherwise)
+```
+
+{{Call out any mismatch between the entity and the DTO explicitly — a field the
+entity drops, a value the mapper reformats. That mismatch is a bug factory and
+the single most valuable thing this concept can record.}}
+
+# Related concepts
+
+{{Entities this one is composed of or confused with, plus the UseCase concepts
+that operate on it.}}

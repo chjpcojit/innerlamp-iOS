@@ -1,0 +1,108 @@
+//
+//  IL{{Feature}}{{Backend}}DataSource.swift
+//  InnerLamp
+//
+
+import {{BackendFramework}}
+import Foundation
+
+/// Storage access for {{Feature}}'s {{backend}} record.
+///
+/// Create this file **only when `references/data_layer_architecture.md` §4.1 says so** — i.e. the
+/// backend has no existing abstraction in `Core/`. When `KeychainService` / `UserDefaultsService` /
+/// `NetworkService` already covers the job, inject *that* instead and delete this template; an extra
+/// wrapper with nothing to hide is abstraction tax with none of the abstraction.
+///
+/// The point of this type is the import at the top: everything that is actually {{backend}} lives
+/// here — the query, the stored-record type, the transaction — so `Data/Repositories/` needs no
+/// `import {{BackendFramework}}` at all. The repository's remaining job is deciding which source to
+/// use and translating storage failures into `IL{{Feature}}Error` (§4.2).
+///
+/// Entity in, entity out, same as the repository protocol: the storage shape is this layer's
+/// business. If the record type is not safe to hand out (a queue-bound `NSManagedObject`, a
+/// file handle), the transaction is opened *here* and closed over the mapping, so nothing unsafe
+/// ever escapes.
+nonisolated protocol IL{{Feature}}{{Backend}}DataSource {
+
+    /// {{One-line description in Domain terms — e.g. "The stored user, or nil when the store is
+    /// empty."}}
+    func fetch{{Feature}}() async throws -> IL{{Feature}}Entity?
+
+    /// Writes `entity` as *the* stored record, updating the existing one when there is one.
+    func save{{Feature}}(_ entity: IL{{Feature}}Entity) async throws
+
+    /// Removes the stored record. No-op when there is none.
+    func delete{{Feature}}() async throws
+}
+
+// MARK: - Core Data worked example
+//
+// The shape below is what this repo's Core Data backend looks like today (see the real
+// `ILUserLocalDataSource.swift`). **The protocol above is the fixed part; this implementation is
+// not** — swap the body for whatever the backend actually needs. The invariants that carry across
+// every backend are:
+//
+//   1. The framework types stay in this file. If a future `RepositoryImpl` needs
+//      `import {{BackendFramework}}` to compile, this type failed at its one job.
+//   2. The transaction — not the caller — decides when the write lands. `performBackgroundTask`
+//      here saves if the block left changes behind and rolls back if it threw, so `save` is
+//      all-or-nothing without the Repository knowing that.
+//   3. Nothing unsafe is returned. A `NSManagedObject` is queue-bound to the context that made it;
+//      the context is therefore captured here and the mapping runs inside it, so only the
+//      `struct` Entity crosses back out.
+//
+// `nonisolated` when the backend is consumed off the main actor — otherwise
+// `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` pins every member to the main actor. Drop it for a
+// backend that genuinely belongs on the main actor.
+
+nonisolated final class IL{{Feature}}{{Backend}}DataSourceImpl: IL{{Feature}}{{Backend}}DataSource {
+
+    private let stack: {{BackendWrapper}}
+
+    init(stack: {{BackendWrapper}}) {
+        self.stack = stack
+    }
+
+    func fetch{{Feature}}() async throws -> IL{{Feature}}Entity? {
+        try await stack.performBackgroundTask { context in
+            try Self.fetchRecord(in: context).map(Self.makeEntity(from:))
+        }
+    }
+
+    func save{{Feature}}(_ entity: IL{{Feature}}Entity) async throws {
+        try await stack.performBackgroundTask { context in
+            // Upsert: reuse the existing record when there is one so a second save updates it
+            // instead of inserting a duplicate.
+            let record = try Self.fetchRecord(in: context) ?? {{RecordType}}(context: context)
+            Self.apply(entity, to: record)
+        }
+    }
+
+    func delete{{Feature}}() async throws {
+        try await stack.performBackgroundTask { context in
+            try Self.fetchRecord(in: context).map(context.delete)
+        }
+    }
+
+    // MARK: - Query
+
+    private static func fetchRecord(in context: NSManagedObjectContext) throws -> {{RecordType}}? {
+        let request = NSFetchRequest<{{RecordType}}>(entityName: {{RecordType}}.entityName)
+        request.fetchLimit = 1
+        return try context.fetch(request).first
+    }
+
+    // MARK: - Mapping
+
+    private static func apply(_ entity: IL{{Feature}}Entity, to record: {{RecordType}}) {
+        record.{{field}} = entity.{{field}}
+        // ... one line per field, field for field
+    }
+
+    private static func makeEntity(from record: {{RecordType}}) -> IL{{Feature}}Entity {
+        IL{{Feature}}Entity(
+            {{field}}: record.{{field}}
+            // ... one line per field, field for field
+        )
+    }
+}

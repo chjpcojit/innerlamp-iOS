@@ -1,0 +1,55 @@
+//
+//  {{Action}}Endpoint.swift
+//  InnerLamp
+//
+
+import Foundation
+
+/// One server call — `{{method}} {{path}}`.
+///
+/// Naming: `<Action>Endpoint`, **no `IL` prefix** — the deliberate exception to the project's
+/// `IL` rule, matching `LocalizationVersionEndpoint` / `LocalizationContentEndpoint`
+/// (`Core/Localization/LocalizationEndpoint.swift`). An Endpoint describes one server call, not a
+/// feature scene type; see `references/naming_and_placement.md` §4.
+///
+/// Placement: `Data/DataSources/Remote/` — never `Core/Networking/`, which is fixed infrastructure
+/// this skill must not write to.
+///
+/// Do NOT re-set `Content-Type` / `Accept` / `X-Session-ID` / `X-Correlation-ID` in `headers` —
+/// `Endpoint.buildURLRequest()` already applies all four. Add only what the contract requires on
+/// top of that (e.g. `Authorization: Bearer <token>`).
+struct {{Action}}Endpoint: Endpoint {
+
+    /// Request fields, exactly the names and types in the confirmed contract — never a field the
+    /// contract doesn't have. A required field is `let` with no default; a genuinely optional one
+    /// gets a default and the contract must say so.
+    let {{field}}: {{Type}}
+
+    var baseURL: String { APIConfig.serverBaseURL }
+    var path: String { "{{path}}" }
+    var method: HTTPMethod { .{{method}} }
+
+    // Query parameters — delete this whole block when the contract has none.
+    // var queryParameters: [String: String]? {
+    //     ["{{key}}": "\({{value}})"]
+    // }
+
+    // Extra headers beyond the four `buildURLRequest()` already sets — delete when none.
+    // var headers: [String: String]? {
+    //     ["Authorization": "Bearer \(token)"]
+    // }
+
+    /// Encoded request body.
+    ///
+    /// Note the asymmetry documented in `references/data_layer_architecture.md` §5: **decoding** is
+    /// configured (`.convertFromSnakeCase` + `.iso8601`), **encoding is not** — `JSONEncoder()`
+    /// defaults apply. If the server expects snake_case on the way out, declare `CodingKeys`
+    /// explicitly here. Do not assume the encode side mirrors the decode side; take it from the
+    /// contract.
+    var body: Data? {
+        let payload = {{Action}}RequestDTO(
+            {{field}}: {{field}}
+        )
+        return try? JSONEncoder().encode(payload)
+    }
+}

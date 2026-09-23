@@ -1,0 +1,31 @@
+//
+//  IL{{Feature}}Repository.swift
+//  InnerLamp
+//
+
+import Foundation
+
+/// Domain-layer contract for {{Feature}}'s data access.
+///
+/// **Expressed in Domain terms only — `IL{{Feature}}Entity` in, `IL{{Feature}}Entity` out.** No
+/// `IL{{Feature}}DTO` may appear in this file or anywhere else under `Domain/`: the wire format is
+/// a Data-layer detail that stops at the Repository boundary
+/// (`references/data_layer_architecture.md` §1). No `IL{{Feature}}StateModel` either — that type
+/// belongs to Presentation and never travels below the ViewModel.
+///
+/// Every method is `async throws`. The implementation lives in
+/// `Data/Repositories/IL{{Feature}}RepositoryImpl.swift`; nothing outside `DIContainer` may
+/// instantiate it.
+protocol IL{{Feature}}Repository {
+
+    /// {{One-line description of what this call does, in Domain terms — e.g. "Sends the
+    /// verification code for this signup attempt."}}
+    ///
+    /// Throws a `IL{{Feature}}Error` case (see `references/error_mapping.md`) — never a raw
+    /// `NetworkError`, which is a Core transport detail the layers above do not know about.
+    func {{actionName}}(_ entity: IL{{Feature}}Entity) async throws
+
+    // Add one method per server call / persistence operation. Keep each one at a single
+    // responsibility — do not bundle two calls behind one method, even when a flow always runs
+    // them back to back; the UseCase is where sequencing belongs.
+}

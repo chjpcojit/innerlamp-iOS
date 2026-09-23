@@ -1,0 +1,53 @@
+//
+//  IL{{Feature}}Coordinator.swift
+//  InnerLamp
+//
+
+import UIKit
+import Combine
+
+// TODO: one func per navigation event this flow can produce (see IL{{Feature}}NavEvent in the ViewModel).
+protocol IL{{Feature}}CoordinatorDelegate: AnyObject {
+    // func {{featureLower}}DidRequestSomething(_ coordinator: IL{{Feature}}Coordinator)
+}
+
+final class IL{{Feature}}Coordinator: Coordinator {
+
+    let navigationController: UINavigationController
+    var childCoordinators: [any Coordinator] = []
+    weak var parentCoordinator: (any Coordinator)?
+    weak var delegate: IL{{Feature}}CoordinatorDelegate?
+
+    private let container: DIContainer
+    private var cancellables = Set<AnyCancellable>()
+
+    init(
+        navigationController: UINavigationController,
+        container: DIContainer
+    ) {
+        self.navigationController = navigationController
+        self.container = container
+    }
+
+    func start() {
+        let viewModel = container.make{{Feature}}ViewModel()
+
+        viewModel.navigationEventPublisher
+            .sink { [weak self] event in
+                guard let self else { return }
+                switch event {
+                // TODO: match IL{{Feature}}NavEvent cases, call self.delegate?...(self) and/or push
+                // further screens on self.navigationController, then self.finish() when the flow ends.
+                default:
+                    break
+                }
+            }
+            .store(in: &cancellables)
+
+        let viewController = IL{{Feature}}ViewController(viewModel: viewModel)
+        // Use pushViewController for a screen inside an existing stack,
+        // or setViewControllers([viewController], animated:) to replace the stack root
+        // (see OnboardingCoordinator for the replace-root pattern).
+        navigationController.pushViewController(viewController, animated: true)
+    }
+}
