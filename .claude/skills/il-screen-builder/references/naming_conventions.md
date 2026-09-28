@@ -18,7 +18,7 @@ Anything added to `Presentation/Common/DesignSystem/Components/` or
 `Presentation/Common/DesignSystem/Tokens/` — no feature name baked in, since it must work for any
 screen:
 
-- `ILButton`, `ILField`, `ILRow`, `ILChip`, `ILHeaderView`, `ILAvatarView`, `ILStateView`,
+- `ILButton`, `ILField`, `ILRow`, `ILChip`, `ILNavBar`, `ILAvatarView`, `ILStateView`,
   `ILBottomNavBar`, `ILSettingRow`, `ILColors`, `ILTypography`, `ILMetrics`
 
 `<Kind>` is the UIKit role (`View`, `Button`, `Row`, `Chip`, `Bar`, ...). Example: a new reusable

@@ -31,8 +31,8 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
     private let loginPromptTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
-    private lazy var headerView: ILHeaderView = {
-        let view = ILHeaderView(title: "signup.header.title".localized)
+    private lazy var headerView: ILNavBar = {
+        let view = ILNavBar(title: "signup.header.title".localized)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -330,8 +330,9 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
         )
         let output = viewModel.transform(input: input)
 
+        // No `.receive(on: DispatchQueue.main)`: state is already sent on main (MainActor default),
+        // and deferring it renders the first state only after the appear transition has run.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 

@@ -120,6 +120,9 @@ public final class ILCodeInputView: UIControl, UIKeyInput {
 
         addTarget(self, action: #selector(handleTap), for: .touchUpInside)
         refreshBoxes()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILCodeInputView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     private func refreshBoxes() {
@@ -144,9 +147,7 @@ public final class ILCodeInputView: UIControl, UIKeyInput {
 
     // `layer.borderColor` là CGColor tĩnh, không tự đảo theo trait — refresh thủ công
     // khi hệ thống đổi light/dark (ink/gold/rose giờ có biến thể dark).
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         refreshBoxes()
     }
 

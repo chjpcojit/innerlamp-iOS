@@ -50,6 +50,7 @@ Tất cả màu sắc được định nghĩa trong [`ILColors.swift`](file:///U
 | `goldBorder` | `rgba` (0.45 của `gold`) | Viền vòng đèn |
 | `border` | `rgba(34,30,25, 0.08)` | Viền thẻ tiêu chuẩn |
 | `borderStrong` | `rgba(34,30,25, 0.18)` | Viền nút ghost, input active |
+| `borderSoft` | `rgba(34,30,25, 0.06)` | Hairline under a sticky header strip (`--il-ink-06`) |
 | `borderDark` | `rgba(242,235,221, 0.08)` | Viền thẻ trên nền tối |
 | `borderDarkStrong` | `rgba(242,235,221, 0.16)` | Viền nút trên nền tối |
 
@@ -152,8 +153,9 @@ rowTitle.font = ILTypography.rowTitle // Be Vietnam Pro 14pt Medium
 - Hàng danh sách (`ILRow`): `72px`
 - Ô biểu tượng (`IconTile`): `44x44px`
 - Thanh điều hướng đáy (`ILBottomNavBar`): `110px` (gồm safe area)
-- Thanh tiêu đề (`ILHeaderView`): `48px`
 - Ô nhập số OTP (`otpDigitBoxHeight`): `58px`
+- Ảnh đèn Onboarding intro (`onboardingLampSize`): `114x160px` — `ILIcons.onboardingLamp`
+- Ảnh đèn header Đăng nhập (`loginLampSize`): `40x56px` — `ILIcons.onboardingLamp`
 
 ### 4.4. Đổ bóng (`ILMetrics.Shadow`)
 
@@ -248,18 +250,20 @@ setting.onSwitchToggled = { isOn in
 }
 ```
 
-### 5.6. [`ILHeaderView`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILHeaderView.swift)
-Thanh tiêu đề màn hình, hỗ trợ nút Back (`‹`) hoặc Close (`✕`), tiêu đề, phụ đề và nút hành động bên phải.
+### 5.6. [`ILNavBar`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILNavBar.swift)
+Thanh tiêu đề dùng chung (theo `IL-NavBar.dc.html`): chip back tròn 38px bên trái, tiêu đề + phụ đề căn giữa, nút hành động pill và/hoặc nút ✕ bên phải. Hỗ trợ `isDark` cho màn hero luôn tối.
 
 ```swift
-let header = ILHeaderView(title: "Cài đặt", rightActionTitle: "Lưu")
-header.onBack = { [weak self] in
-    self?.navigationController?.popViewController(animated: true)
-}
-header.onAction = {
-    // Lưu cài đặt
-}
+let nav = ILNavBar(title: "settings.header.title".localized, rightActionTitle: "Lưu")
+nav.onBack = { [weak self] in self?.navigationController?.popViewController(animated: true) }
+nav.onAction = { [weak self] in self?.save() }
+
+// Modal (nút ✕ thay cho back)
+let modalNav = ILNavBar(title: "Tiêu đề", showBack: false, showClose: true)
+modalNav.onClose = { [weak self] in self?.dismiss(animated: true) }
 ```
+
+> `ILHeaderView` (header cũ, nút `‹`/`✕` dạng chữ) đã bị xoá sau khi di trú toàn bộ màn phụ sang `ILNavBar`.
 
 ### 5.7. [`ILAvatarView`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILAvatarView.swift)
 Avatar đại diện dạng chữ cái viết tắt với các tone màu và tự động tính cỡ chữ theo đường kính (24–96px).
@@ -325,10 +329,99 @@ ILAlertPresenter.shared.show(
 )
 ```
 
+### 5.11. Loading placeholders — [`ILSkeletonLoadingView`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILSkeletonLoadingView.swift) & [`ILLoadMoreFooterView`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILLoadMoreFooterView.swift)
+From the design handoff's `loading` screen and the paginated "arts" list. Per the handoff: use the skeleton for the **first load** of library/detail content; use `ILButton.buttonState = .loading` for submit actions; use the footer for loading the next page of a list.
+
+| Component | Looks like | API |
+|---|---|---|
+| `ILSkeletonLoadingView` | Pulsing lamp + "Đang thắp đèn…", then title bar, hero block, 2 tiles, 4 rows — `ilpulse` (opacity .55 ↔ .95, 1.6s), staggered | `setLoading(_:animated:)`, `caption` |
+| `ILLoadMoreFooterView` | 14pt gold spinner (0.9s/turn) + "Đang tải thêm…", or "Bạn đã xem hết" | `state = .hidden / .loading / .end`, `loadingText`, `endText` |
+
+Rules:
+- Overlay the skeleton on the **content area only** (pin it to the scroll view, below the header) so Back stays reachable while loading.
+- Drive it from `ViewState`: `.loading` → `setLoading(true)`; `.success`/`.failure` → `setLoading(false)`. Wired in `ILLibraryViewController` and `ILArticleViewController`.
+- Animations start only once the view is in a window, survive app background/foreground, and fall back to a static opacity when Reduce Motion is on.
+- Tokens: `ILColors.Skeleton.*`, `ILMetrics.Skeleton.*`. Copy: `loading.caption`, `loading.more`, `loading.end`.
+
+```swift
+private lazy var skeletonView = ILSkeletonLoadingView()
+
+private func render(state: ViewState<ILLibraryStateModel>) {
+    switch state {
+    case .idle: break
+    case .loading: skeletonView.setLoading(true)
+    case .success(let model): skeletonView.setLoading(false); updateUI(with: model)
+    case .failure: skeletonView.setLoading(false)
+    }
+}
+```
+
 ---
 
 ## 6. Quy Tắc Dành Cho AI & Lập Trình Viên
 
-1. **Luôn sử dụng Tokens**: Không tự ý hardcode mã màu Hex (`#...`) hoặc cỡ chữ (`UIFont.systemFont(ofSize: ...)`) trong các ViewController/Views mới. Luôn gọi qua `ILColors.*`, `ILTypography.*`, `ILMetrics.*`.
+1. **Luôn sử dụng Tokens**: Không tự ý hardcode mã màu Hex (`#...`), cỡ chữ (`UIFont.systemFont(ofSize: ...)`) hoặc tên ảnh (`UIImage(named: "...")`) trong các ViewController/Views mới. Luôn gọi qua `ILColors.*`, `ILTypography.*`, `ILMetrics.*`, `ILIcons.*`.
 2. **Kế thừa Base Components**: Khi dựng màn hình mới từ 44 màn hình mẫu trong `design_handoff_innerlamp/README.md`, ưu tiên lắp ráp từ 9 thành phần trên.
 3. **Hỗ trợ Dark Theme**: Khi làm việc với màn hình thiền (`session`), trình phát (`player`) hoặc chế độ tối, truyền `isDark = true` cho các component tương ứng.
+
+---
+
+## 7. Icons (`ILIcons` + `Assets.xcassets/Icons`)
+
+Reusable raster icons live in `Assets.xcassets/Icons/` as `.imageset` folders and are exposed
+through the [`ILIcons`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Tokens/ILIcons.swift)
+token enum — the **only** place allowed to call `UIImage(named:)`. Screens/views always use
+`ILIcons.*`; do **not** redraw an icon in code (`CAShapeLayer` / `UIBezierPath`) when a matching
+asset already exists.
+
+### 7.1. Naming Convention
+
+```
+<context>_<subject>[_<state>]
+```
+
+| Segment | Meaning | Example |
+|---|---|---|
+| `context` | UI surface / screen the icon belongs to | `tab`, `onboarding` |
+| `subject` | What the icon depicts (lowercase `snake_case`) | `lamp`, `bell` |
+| `state` | Optional visual variant: `filled` (solid) vs `outline` (stroked) | `tab_lamp_filled` |
+
+### 7.2. Existing Icons
+
+| Token | Asset | Type | @1x size | Notes |
+|---|---|---|---|---|
+| `ILIcons.onboardingLamp` | `onboarding_lamp` | full-color illustration | 114×160 | Lamp + glow — Onboarding intro, Login header |
+| `ILIcons.tabLampFilled` | `tab_lamp_filled` | monochrome template (black) | 28×28 | Flame + lotus pedestal, solid — bottom-nav center lamp (normal) |
+| `ILIcons.tabLampOutline` | `tab_lamp_outline` | monochrome template (black) | 28×28 | Flame + lotus pedestal, stroked — bottom-nav center lamp (highlighted) |
+
+Token naming: the asset name in `lowerCamelCase` (`tab_lamp_filled` → `tabLampFilled`).
+
+### 7.3. Loading & Tinting
+
+The rendering mode is baked into the token, never set at the call site:
+
+- **Full-color** tokens (declared via `illustration(_:)`, e.g. `onboardingLamp`) use
+  `.alwaysOriginal` — render as-is, do **not** tint.
+- **Template** tokens (declared via `template(_:)`, e.g. `tabLampFilled` / `tabLampOutline`) use
+  `.alwaysTemplate` — tint via `tintColor` with an `ILColors` constant so they follow the theme.
+
+```swift
+// Full-color illustration — render as-is
+imageView.image = ILIcons.onboardingLamp
+
+// Template icon — tintable
+imageView.image = ILIcons.tabLampFilled
+imageView.tintColor = ILColors.lampFlameDark
+```
+
+### 7.4. Rules
+
+1. **Reuse first**: search `Assets.xcassets/Icons/` for a fitting icon before adding a new one.
+2. **No code-drawn duplicates**: prefer the asset over a hand-drawn `CAShapeLayer`/`UIBezierPath`
+   when the same icon already exists as an asset. (The four non-lamp tab icons in `ILBottomNavBar`
+   are still code-drawn via `ILTabIconView` — migrate them to assets if assets are ever provided.)
+3. **Always via token**: adding an icon = add the `.imageset` **and** one constant in `ILIcons`
+   (`template(_:)` or `illustration(_:)`) + a row in §7.2. A missing asset `fatalError`s at
+   launch in debug, so a typo is caught immediately.
+4. A new icon ships `@1x/@2x/@3x` PNGs **and** a valid `Contents.json`. `.gitignore` matches
+   `*.json`, so force-track the `Contents.json` with `git add -f` to make sure it is committed.

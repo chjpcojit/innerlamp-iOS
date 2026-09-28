@@ -50,9 +50,16 @@ final class ILMainTabCoordinator: Coordinator {
             animated: false
         )
 
-        // TODO: nút Đèn giữa bar (`tabBarController.onLampTapped`) — chưa có luồng Đèn.
+        // Nút Đèn giữa bar — mở màn Chuẩn bị thiền (modal full-screen).
+        tabBarController.onLampTapped = { [weak self] in self?.showMeditationSetup() }
 
         navigationController.setNavigationBarHidden(true, animated: false)
         navigationController.setViewControllers([tabBarController], animated: true)
+    }
+
+    private func showMeditationSetup() {
+        let coordinator = container.makeMeditationSetupCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
     }
 }

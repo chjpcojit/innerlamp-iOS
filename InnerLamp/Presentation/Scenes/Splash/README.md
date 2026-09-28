@@ -15,6 +15,11 @@ delay to give the lamp breathe/flicker animation time to run. Owned top-level by
 `AppCoordinator` (`start()` calls `showSplash()` before anything else); currently always routes
 to `Onboarding` next (`isOnboardingCompleted()` check is stubbed out, see Known gaps).
 
+Themed (light/dark) via the `--il-spl-*` token family from the design handoff: the radial
+backdrop, lamp ring/halo, ripple rings, light rays, wordmark and tagline all resolve against the
+current `UITraitCollection` (so they honor the Sáng / Tối / Theo máy choice from `ThemeService`).
+The flame and ember colors stay fixed, matching the prototype's constant gold flame.
+
 ## Status
 
 | Layer | File | Status | Notes |
@@ -39,7 +44,7 @@ to `Onboarding` next (`isOnboardingCompleted()` check is stubbed out, see Known 
   `useCase.isOnboardingCompleted()` branch (→ `.goToMain` when onboarding is already done) is
   written but commented out. Left as-is since flipping it is a product decision, not something
   this pass should silently change.
-- `ILSplashBrandBackdropView` (dark radial + top glow), `ILSplashAmbienceView` (ripple + ray),
+- `ILSplashBrandBackdropView` (themed radial + top glow), `ILSplashAmbienceView` (ripple + ray),
   `ILSplashEmberFieldView`, `ILSplashWordmarkLabel` and the lamp breathe/flicker timing stay
   Splash-specific (`Presentation/Scenes/Splash/Views/`) rather than promoted to `DesignSystem` —
   visually similar treatments exist elsewhere (e.g. Onboarding's intro step) but aren't
@@ -52,6 +57,16 @@ to `Onboarding` next (`isOnboardingCompleted()` check is stubbed out, see Known 
 
 ## Changelog
 
+- 2026-09-25 — added light mode. Backdrop/glow/ripple/ray/wordmark/tagline/lamp ring now use the
+  themed `--il-spl-*` token family (new `ILSplash*` color assets + `ILColors` constants, all with
+  light/dark variants) and refresh on `traitCollectionDidChange`; added `ILLampGlowView.Style.splash`
+  (theme-aware ring/halo, fixed gold flame). The always-dark `goldRipple*`/`goldRay*` constants were
+  removed (superseded by the themed `splashRing*`/`splashRay*`).
+- 2026-09-25 — the static iOS launch screen (`Base.lproj/LaunchScreen.storyboard`) now adapts to
+  light/dark too: `ILLaunchImage` image set gained an appearance variant (`Any` = light,
+  `Dark` = dark) and the backdrop uses the dynamic `ILSplashBackground` named color. The launch
+  screen follows the **system** appearance (no app-theme override can run that early), matching
+  `Docs/design_handoff_innerlamp/launch/README.md`.
 - 2026-09-14 — migrated ViewModel/ViewController/Coordinator from the legacy closure-based
   (`onNavigationEvent`, `handleViewDidLoad(onState:)`) shape to the Combine `Input`/`Output` +
   `navigationEventPublisher` pattern; renamed all types to the `IL` prefix

@@ -79,11 +79,12 @@ public final class ILStatProgressCardView: UIView {
             progressBar.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             progressBar.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -18)
         ])
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILStatProgressCardView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         layer.borderColor = ILColors.border.cgColor
     }
 }

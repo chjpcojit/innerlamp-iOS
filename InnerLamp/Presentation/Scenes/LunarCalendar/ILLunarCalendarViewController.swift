@@ -25,7 +25,7 @@ final class ILLunarCalendarViewController: BaseViewController {
         return container
     }()
 
-    private lazy var headerView = ILHeaderView(isCloseButton: true, isBackButtonHidden: false)
+    private lazy var headerView = ILNavBar(showBack: false, showClose: true)
 
     private lazy var headerDivider: UIView = {
         let divider = UIView()
@@ -45,6 +45,14 @@ final class ILLunarCalendarViewController: BaseViewController {
     private lazy var pagerBarView = ILLunarCalendarPagerBarView()
 
     private lazy var carouselView = ILLunarCalendarMonthCarouselView()
+
+    private lazy var legendStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.spacing = 16
+        stack.alignment = .center
+        return stack
+    }()
 
     private lazy var dayInfoCardView = ILLunarCalendarDayInfoCardView()
 
@@ -83,8 +91,7 @@ final class ILLunarCalendarViewController: BaseViewController {
         super.setupViews()
         view.backgroundColor = ILColors.canvas
 
-        headerView.onBack = { [weak self] in self?.closeTappedSubject.send(()) }
-        headerView.accessibilityLabel = "lunarCalendar.close".localized
+        headerView.onClose = { [weak self] in self?.closeTappedSubject.send(()) }
         headerContainer.addSubview(headerView)
         headerContainer.addSubview(headerDivider)
 
@@ -96,7 +103,7 @@ final class ILLunarCalendarViewController: BaseViewController {
         carouselView.onPageChanged = { [weak self] page in self?.pageChangedSubject.send(page) }
         carouselView.onDayTap = { [weak self] id in self?.dayTappedSubject.send(id) }
 
-        [pagerBarView, carouselView, dayInfoCardView, upcomingStack].forEach(contentView.addSubview)
+        [pagerBarView, carouselView, legendStack, dayInfoCardView, upcomingStack].forEach(contentView.addSubview)
         scrollView.addSubview(contentView)
 
         view.addSubview(scrollView)
@@ -106,7 +113,7 @@ final class ILLunarCalendarViewController: BaseViewController {
     override func setupConstraints() {
         super.setupConstraints()
         [headerContainer, headerView, headerDivider, scrollView, contentView,
-         pagerBarView, carouselView, dayInfoCardView, upcomingStack].forEach {
+         pagerBarView, carouselView, legendStack, dayInfoCardView, upcomingStack].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
 
@@ -147,7 +154,10 @@ final class ILLunarCalendarViewController: BaseViewController {
             carouselView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             carouselView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 
-            dayInfoCardView.topAnchor.constraint(equalTo: carouselView.bottomAnchor, constant: ILMetrics.groupSpacing),
+            legendStack.topAnchor.constraint(equalTo: carouselView.bottomAnchor, constant: ILMetrics.rowSpacing),
+            legendStack.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+
+            dayInfoCardView.topAnchor.constraint(equalTo: legendStack.bottomAnchor, constant: ILMetrics.groupSpacing),
             dayInfoCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
             dayInfoCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
 
@@ -171,8 +181,9 @@ final class ILLunarCalendarViewController: BaseViewController {
         )
         let output = viewModel.transform(input: input)
 
+        // No `.receive(on: DispatchQueue.main)`: state is already sent on main (MainActor default),
+        // and deferring it renders the first state only after the appear transition has run.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 
@@ -200,11 +211,51 @@ final class ILLunarCalendarViewController: BaseViewController {
         carouselView.months = model.months
         carouselView.scroll(toPage: model.currentPage, animated: true)
 
+        rebuildLegend(model.legend)
+
         dayInfoCardView.eyebrowText = model.heroEyebrowText
         dayInfoCardView.titleText = model.heroTitle
         dayInfoCardView.bodyText = model.heroBody
 
         rebuildUpcoming(model.upcoming)
+    }
+
+    private func rebuildLegend(_ items: [ILLunarCalendarLegendModel]) {
+        legendStack.arrangedSubviews.forEach {
+            legendStack.removeArrangedSubview($0)
+            $0.removeFromSuperview()
+        }
+        for item in items {
+            legendStack.addArrangedSubview(makeLegendItem(item))
+        }
+    }
+
+    private func makeLegendItem(_ item: ILLunarCalendarLegendModel) -> UIView {
+        let dot = UIView()
+        dot.backgroundColor = dotColor(for: item.dotKind)
+        dot.layer.cornerRadius = 3
+        dot.translatesAutoresizingMaskIntoConstraints = false
+        dot.widthAnchor.constraint(equalToConstant: 6).isActive = true
+        dot.heightAnchor.constraint(equalToConstant: 6).isActive = true
+
+        let label = UILabel()
+        label.font = ILTypography.caption
+        label.textColor = ILColors.inkTertiary
+        label.text = item.text
+
+        let itemStack = UIStackView(arrangedSubviews: [dot, label])
+        itemStack.axis = .horizontal
+        itemStack.spacing = 6
+        itemStack.alignment = .center
+        return itemStack
+    }
+
+    private func dotColor(for kind: ILLunarCalendarDayDotKind) -> UIColor {
+        switch kind {
+        case .newMoonFullMoon: return ILColors.goldBright
+        case .hoangDao: return ILColors.auspicious
+        case .hacDao: return ILColors.inauspicious
+        }
     }
 
     private func rebuildUpcoming(_ items: [ILLunarCalendarUpcomingModel]) {

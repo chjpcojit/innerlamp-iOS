@@ -98,6 +98,9 @@ public final class ILStatStreakCardView: UIView {
         ])
 
         rebuildWeekBars()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILStatStreakCardView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     private func rebuildWeekBars() {
@@ -113,9 +116,7 @@ public final class ILStatStreakCardView: UIView {
         }
     }
 
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         layer.borderColor = ILColors.border.cgColor
     }
 }

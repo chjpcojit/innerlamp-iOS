@@ -25,6 +25,17 @@ public final class ILBottomNavBar: UIView {
             case .me: return "Tôi"
             }
         }
+
+        /// Icon SVG của tab trong `IL-BottomNav.dc.html`. `.lamp` không có icon (nút Đèn riêng).
+        var iconKind: ILTabIconView.Kind {
+            switch self {
+            case .home: return .home
+            case .lib: return .lib
+            case .sangha: return .sangha
+            case .me: return .me
+            case .lamp: return .home
+            }
+        }
     }
     
     // MARK: - Properties
@@ -43,10 +54,9 @@ public final class ILBottomNavBar: UIView {
     private let contentStack = UIStackView()
     
     private var tabButtons: [Tab: UIControl] = [:]
-    private var iconViews: [Tab: UIView] = [:]
+    private var iconViews: [Tab: ILTabIconView] = [:]
     private var labelViews: [Tab: UILabel] = [:]
     private let lampButton = UIButton(type: .custom)
-    private let lampFlame = ILLampFlameView()
     
     // MARK: - Initializer
     public init(activeTab: Tab = .home) {
@@ -66,9 +76,7 @@ public final class ILBottomNavBar: UIView {
 
     // Gradient (CAGradientLayer.colors) và layer.borderColor là CGColor tĩnh, không tự
     // đảo theo trait — refresh thủ công khi hệ thống đổi light/dark.
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         updateGradient()
         updateActiveState()
     }
@@ -95,6 +103,9 @@ public final class ILBottomNavBar: UIView {
         setupTabs()
         updateGradient()
         updateActiveState()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILBottomNavBar, _) in
+            view.applyColorAppearanceChange()
+        }
     }
     
     private func setupTabs() {
@@ -107,10 +118,11 @@ public final class ILBottomNavBar: UIView {
                 lampButton.layer.cornerRadius = 24.0
                 lampButton.addTarget(self, action: #selector(handleTabTap(_:)), for: .touchUpInside)
                 lampButton.tag = Tab.allCases.firstIndex(of: .lamp) ?? 2
+                // Icon template — bản đặc khi thường, bản nét khi đang nhấn; màu theo `tintColor`.
+                lampButton.setImage(ILIcons.tabLampFilled, for: .normal)
+                lampButton.setImage(ILIcons.tabLampOutline, for: .highlighted)
+                lampButton.accessibilityLabel = "Đèn thiền"
                 
-                lampFlame.translatesAutoresizingMaskIntoConstraints = false
-                
-                lampButton.addSubview(lampFlame)
                 lampContainer.addSubview(lampButton)
                 
                 // Nút 48×48 nổi ở giữa; đáy nút trùng đáy nhãn các tab còn lại
@@ -120,12 +132,7 @@ public final class ILBottomNavBar: UIView {
                     lampButton.widthAnchor.constraint(equalToConstant: 48),
                     lampButton.heightAnchor.constraint(equalToConstant: 48),
                     lampButton.topAnchor.constraint(equalTo: lampContainer.topAnchor),
-                    lampButton.bottomAnchor.constraint(equalTo: lampContainer.bottomAnchor, constant: -4),
-                    
-                    lampFlame.centerXAnchor.constraint(equalTo: lampButton.centerXAnchor),
-                    lampFlame.centerYAnchor.constraint(equalTo: lampButton.centerYAnchor),
-                    lampFlame.widthAnchor.constraint(equalToConstant: 14),
-                    lampFlame.heightAnchor.constraint(equalToConstant: 20)
+                    lampButton.bottomAnchor.constraint(equalTo: lampContainer.bottomAnchor, constant: -4)
                 ])
                 
                 contentStack.addArrangedSubview(lampContainer)
@@ -137,23 +144,11 @@ public final class ILBottomNavBar: UIView {
             itemControl.tag = Tab.allCases.firstIndex(of: tab) ?? 0
             itemControl.addTarget(self, action: #selector(handleTabTap(_:)), for: .touchUpInside)
             
-            let iconContainer = UIView()
-            iconContainer.translatesAutoresizingMaskIntoConstraints = false
-            iconContainer.isUserInteractionEnabled = false
-            iconContainer.layer.borderWidth = 1.6
-            
-            switch tab {
-            case .home:
-                iconContainer.layer.cornerRadius = 5.0
-            case .lib:
-                iconContainer.layer.cornerRadius = 2.0
-            case .sangha:
-                iconContainer.layer.cornerRadius = 9.0
-            case .me:
-                iconContainer.layer.cornerRadius = 9.0
-            default:
-                break
-            }
+            // Icon SVG 22×22 theo `IL-BottomNav.dc.html` — vẽ bằng CAShapeLayer (nét 1.6, bo tròn),
+            // không còn là khung vuông bo placeholder.
+            let iconView = ILTabIconView(kind: tab.iconKind)
+            iconView.translatesAutoresizingMaskIntoConstraints = false
+            iconView.isUserInteractionEnabled = false
             
             let label = UILabel()
             label.translatesAutoresizingMaskIntoConstraints = false
@@ -162,9 +157,9 @@ public final class ILBottomNavBar: UIView {
             label.textAlignment = .center
             label.text = tab.title
             
-            let itemStack = UIStackView(arrangedSubviews: [iconContainer, label])
+            let itemStack = UIStackView(arrangedSubviews: [iconView, label])
             itemStack.axis = .vertical
-            itemStack.spacing = 5
+            itemStack.spacing = 4
             itemStack.alignment = .center
             itemStack.isUserInteractionEnabled = false
             itemStack.translatesAutoresizingMaskIntoConstraints = false
@@ -172,8 +167,8 @@ public final class ILBottomNavBar: UIView {
             itemControl.addSubview(itemStack)
             
             NSLayoutConstraint.activate([
-                iconContainer.widthAnchor.constraint(equalToConstant: tab == .lib ? 16 : 18),
-                iconContainer.heightAnchor.constraint(equalToConstant: 18),
+                iconView.widthAnchor.constraint(equalToConstant: 22),
+                iconView.heightAnchor.constraint(equalToConstant: 22),
                 
                 itemStack.centerXAnchor.constraint(equalTo: itemControl.centerXAnchor),
                 itemStack.bottomAnchor.constraint(equalTo: itemControl.bottomAnchor, constant: -4),
@@ -181,7 +176,7 @@ public final class ILBottomNavBar: UIView {
             ])
             
             tabButtons[tab] = itemControl
-            iconViews[tab] = iconContainer
+            iconViews[tab] = iconView
             labelViews[tab] = label
             
             contentStack.addArrangedSubview(itemControl)
@@ -199,23 +194,34 @@ public final class ILBottomNavBar: UIView {
     }
 
     private func updateActiveState() {
-        let activeColor = ILColors.ink
+        // Màu theo `renderVals()` của `IL-BottomNav.dc.html`:
+        // - nét active: `--il-ink` ở sáng, `#D9963C` (goldBright) ở tối
+        // - nét inactive: `--il-ink` alpha 0.40 (asset tự đảo nên dùng chung cả 2 chế độ)
+        // - fill nhẹ khi active: `--il-ink-12` ở sáng, `rgba(217,150,60,.22)` ở tối
+        let activeColor = isDark ? ILColors.goldBright : ILColors.ink
         let inactiveColor = ILColors.ink.withAlphaComponent(0.40)
+        let activeFill = isDark
+            ? ILColors.goldBright.withAlphaComponent(0.22)
+            : ILColors.ink.withAlphaComponent(0.12)
         
         for tab in Tab.allCases where tab != .lamp {
             let isCurrent = tab == activeTab
             let color = isCurrent ? activeColor : inactiveColor
             
-            iconViews[tab]?.layer.borderColor = color.cgColor
+            iconViews[tab]?.strokeColor = color
+            iconViews[tab]?.fillColor = isCurrent ? activeFill : nil
             labelViews[tab]?.textColor = color
         }
         
-        // Lamp button — nền và bóng đổi theo theme; ngọn lửa tự cập nhật màu theo trait.
+        // Lamp button — nền, bóng và màu icon đổi theo theme
+        // (sáng: đèn vàng trên nền mực; tối: đèn sẫm trên nền vàng).
         if isDark {
             lampButton.backgroundColor = ILColors.goldBright
+            lampButton.tintColor = ILColors.lampFlameDark
             ILMetrics.shadowLampDark.apply(to: lampButton.layer)
         } else {
             lampButton.backgroundColor = ILColors.ink
+            lampButton.tintColor = ILColors.goldBright
             ILMetrics.shadowLampLight.apply(to: lampButton.layer)
         }
     }
@@ -230,41 +236,45 @@ public final class ILBottomNavBar: UIView {
     }
 }
 
-// MARK: - Lamp Flame
+// MARK: - Tab Icon
 
-/// Ngọn lửa bên trong nút Đèn ở giữa `ILBottomNavBar`.
-///
-/// Hình dạng lấy đúng theo `IL-BottomNav.dc.html`
-/// (`border-radius: 50% 50% 45% 45% / 62% 62% 38% 38%`): nửa elip phía trên nối hai góc
-/// dưới bo elip nhỏ hơn — không phải hình bầu dục bo đều. Màu: chế độ sáng là gradient dọc
-/// `#F3C673 → #D9963C`, chế độ tối là màu đặc `#1A1611` (bấc đèn trên nền vàng).
-final class ILLampFlameView: UIView {
+/// Icon vector 22×22 cho từng tab — dựng lại đúng các path SVG trong `IL-BottomNav.dc.html`
+/// (viewBox 24×24, nét 1.6 bo tròn). Một layer stroke vẽ toàn bộ nét; một layer fill tô các
+/// phần "đặc" (cửa mái chùa, trang sách, đầu người) — chỉ khi tab active.
+final class ILTabIconView: UIView {
 
-    private enum Layout {
-        /// Hệ số Bezier xấp xỉ ¼ elip.
-        static let kappa: CGFloat = 0.5523
-        /// Tâm bo góc trên / đỉnh bo góc dưới (theo chiều cao).
-        static let upperCenterY: CGFloat = 0.62
-        static let topRadiusX: CGFloat = 0.50
-        static let topRadiusY: CGFloat = 0.62
-        static let bottomRadiusX: CGFloat = 0.45
-        static let bottomRadiusY: CGFloat = 0.38
+    enum Kind {
+        case home, lib, sangha, me
     }
 
-    private let gradientLayer = CAGradientLayer()
-    private let shapeMask = CAShapeLayer()
+    /// Màu nét outline. Gán lại khi đổi theme / trạng thái active.
+    var strokeColor: UIColor = .clear {
+        didSet { strokeLayer.strokeColor = strokeColor.cgColor }
+    }
 
-    override init(frame: CGRect = .zero) {
-        super.init(frame: frame)
+    /// Màu tô phần đặc; `nil` = chỉ vẽ nét (tab inactive).
+    var fillColor: UIColor? {
+        didSet { fillLayer.fillColor = fillColor?.cgColor }
+    }
+
+    private let kind: Kind
+    private let strokeLayer = CAShapeLayer()
+    private let fillLayer = CAShapeLayer()
+
+    init(kind: Kind) {
+        self.kind = kind
+        super.init(frame: .zero)
         isUserInteractionEnabled = false
         backgroundColor = .clear
 
-        gradientLayer.startPoint = CGPoint(x: 0.5, y: 0.0)
-        gradientLayer.endPoint = CGPoint(x: 0.5, y: 1.0)
-        gradientLayer.mask = shapeMask
-        layer.addSublayer(gradientLayer)
+        strokeLayer.fillColor = nil
+        strokeLayer.lineWidth = 1.6
+        strokeLayer.lineCap = .round
+        strokeLayer.lineJoin = .round
+        layer.addSublayer(strokeLayer)
 
-        updateColors()
+        fillLayer.strokeColor = nil
+        layer.addSublayer(fillLayer)
     }
 
     required init?(coder: NSCoder) {
@@ -273,73 +283,165 @@ final class ILLampFlameView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        gradientLayer.frame = bounds
-        shapeMask.frame = bounds
-        shapeMask.path = Self.flamePath(in: bounds).cgPath
+        strokeLayer.frame = bounds
+        fillLayer.frame = bounds
+
+        // Path soạn trong không gian 24×24 như viewBox SVG; scale vào bounds 22×22.
+        let scale = bounds.width / 24
+        let transform = CGAffineTransform(scaleX: scale, y: scale)
+
+        let stroke = Self.strokePath(for: kind)
+        stroke.apply(transform)
+        strokeLayer.path = stroke.cgPath
+
+        let fill = Self.fillPath(for: kind)
+        fill.apply(transform)
+        fillLayer.path = fill.cgPath
     }
 
-    // `CAGradientLayer.colors` là CGColor tĩnh, không tự đảo theo trait — refresh thủ công.
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
-        updateColors()
-    }
+    // MARK: - Path builders (24×24 design space)
 
-    private func updateColors() {
-        if traitCollection.userInterfaceStyle == .dark {
-            let wick = ILColors.lampFlameDark.cgColor
-            gradientLayer.colors = [wick, wick]
-        } else {
-            gradientLayer.colors = [ILColors.goldSoft.cgColor, ILColors.goldBright.cgColor]
-        }
-    }
-
-    /// Đường bao ngọn lửa trong `rect`, dựng theo tỉ lệ bo góc của prototype.
-    private static func flamePath(in rect: CGRect) -> UIBezierPath {
-        let width = rect.width
-        let height = rect.height
-        let kappa = Layout.kappa
-
-        let centerY = Layout.upperCenterY * height
-        let topRadiusX = Layout.topRadiusX * width
-        let topRadiusY = Layout.topRadiusY * height
-        let bottomRadiusX = Layout.bottomRadiusX * width
-        let bottomRadiusY = Layout.bottomRadiusY * height
-
-        let topCenter = CGPoint(x: width / 2, y: 0)
-        let rightUpper = CGPoint(x: width, y: centerY)
-        let rightLower = CGPoint(x: width - bottomRadiusX, y: height)
-        let leftLower = CGPoint(x: bottomRadiusX, y: height)
-        let leftUpper = CGPoint(x: 0, y: centerY)
-
+    /// Toàn bộ nét outline của icon — nhiều subpath trong một `UIBezierPath`.
+    private static func strokePath(for kind: Kind) -> UIBezierPath {
         let path = UIBezierPath()
-        path.move(to: leftUpper)
-        // Nửa elip trên: (0, centerY) → đỉnh → (width, centerY).
-        path.addCurve(
-            to: topCenter,
-            controlPoint1: CGPoint(x: leftUpper.x, y: centerY - kappa * topRadiusY),
-            controlPoint2: CGPoint(x: topCenter.x - kappa * topRadiusX, y: topCenter.y)
-        )
-        path.addCurve(
-            to: rightUpper,
-            controlPoint1: CGPoint(x: topCenter.x + kappa * topRadiusX, y: topCenter.y),
-            controlPoint2: CGPoint(x: rightUpper.x, y: centerY - kappa * topRadiusY)
-        )
-        // Góc dưới phải.
-        path.addCurve(
-            to: rightLower,
-            controlPoint1: CGPoint(x: rightUpper.x, y: centerY + kappa * bottomRadiusY),
-            controlPoint2: CGPoint(x: rightLower.x + kappa * bottomRadiusX, y: height)
-        )
-        // Đáy.
-        path.addLine(to: leftLower)
-        // Góc dưới trái.
-        path.addCurve(
-            to: leftUpper,
-            controlPoint1: CGPoint(x: leftLower.x - kappa * bottomRadiusX, y: height),
-            controlPoint2: CGPoint(x: leftUpper.x, y: centerY + kappa * bottomRadiusY)
-        )
-        path.close()
+        switch kind {
+        case .home:
+            // Mái chùa: đỉnh + mái cong + tường + cửa vòm.
+            path.move(to: CGPoint(x: 12, y: 2.5))
+            path.addLine(to: CGPoint(x: 12, y: 4.5))
+
+            path.move(to: CGPoint(x: 4, y: 11.5))
+            path.addCurve(
+                to: CGPoint(x: 12, y: 5),
+                controlPoint1: CGPoint(x: 7, y: 10.5),
+                controlPoint2: CGPoint(x: 9.5, y: 8.2)
+            )
+            path.addCurve(
+                to: CGPoint(x: 20, y: 11.5),
+                controlPoint1: CGPoint(x: 14.5, y: 8.2),
+                controlPoint2: CGPoint(x: 17, y: 10.5)
+            )
+
+            path.move(to: CGPoint(x: 6, y: 11))
+            path.addLine(to: CGPoint(x: 6, y: 20))
+            path.addLine(to: CGPoint(x: 18, y: 20))
+            path.addLine(to: CGPoint(x: 18, y: 11))
+
+            doorPath(in: path)
+
+        case .lib:
+            // Kinh sách mở: bìa mở hai bên + gáy giữa.
+            bookPath(in: path)
+            path.move(to: CGPoint(x: 12, y: 6.5))
+            path.addLine(to: CGPoint(x: 12, y: 19.5))
+
+        case .sangha:
+            // Người trong nhóm: thân + đầu lớn ở giữa, hai người nhỏ hai bên.
+            path.move(to: CGPoint(x: 6, y: 20))
+            path.addCurve(
+                to: CGPoint(x: 12, y: 14),
+                controlPoint1: CGPoint(x: 6, y: 16.5),
+                controlPoint2: CGPoint(x: 8.7, y: 14)
+            )
+            path.addCurve(
+                to: CGPoint(x: 18, y: 20),
+                controlPoint1: CGPoint(x: 15.3, y: 14),
+                controlPoint2: CGPoint(x: 18, y: 16.5)
+            )
+            path.append(UIBezierPath(ovalIn: CGRect(x: 9, y: 4.5, width: 6, height: 6)))
+
+            path.append(UIBezierPath(ovalIn: CGRect(x: 2.9, y: 8.1, width: 3.8, height: 3.8)))
+            path.append(UIBezierPath(ovalIn: CGRect(x: 17.3, y: 8.1, width: 3.8, height: 3.8)))
+
+            path.move(to: CGPoint(x: 2, y: 18.5))
+            path.addCurve(
+                to: CGPoint(x: 5, y: 14.5),
+                controlPoint1: CGPoint(x: 2, y: 16.5),
+                controlPoint2: CGPoint(x: 3.2, y: 14.9)
+            )
+            path.move(to: CGPoint(x: 22, y: 18.5))
+            path.addCurve(
+                to: CGPoint(x: 19, y: 14.5),
+                controlPoint1: CGPoint(x: 22, y: 16.5),
+                controlPoint2: CGPoint(x: 20.8, y: 14.9)
+            )
+
+        case .me:
+            // Người: đầu + vai/thân.
+            path.append(UIBezierPath(ovalIn: CGRect(x: 8.4, y: 4.4, width: 7.2, height: 7.2)))
+            path.move(to: CGPoint(x: 4.5, y: 20.5))
+            path.addCurve(
+                to: CGPoint(x: 12, y: 14),
+                controlPoint1: CGPoint(x: 5.3, y: 16.5),
+                controlPoint2: CGPoint(x: 8.3, y: 14)
+            )
+            path.addCurve(
+                to: CGPoint(x: 19.5, y: 20.5),
+                controlPoint1: CGPoint(x: 15.7, y: 14),
+                controlPoint2: CGPoint(x: 18.7, y: 16.5)
+            )
+        }
         return path
+    }
+
+    /// Phần "đặc" được tô khi active (fill nhẹ) — chỉ gồm các subpath có `fill` trong SVG.
+    private static func fillPath(for kind: Kind) -> UIBezierPath {
+        let path = UIBezierPath()
+        switch kind {
+        case .home:
+            doorPath(in: path)
+            path.close()
+        case .lib:
+            bookPath(in: path)
+            path.close()
+        case .sangha:
+            path.append(UIBezierPath(ovalIn: CGRect(x: 9, y: 4.5, width: 6, height: 6)))
+        case .me:
+            path.append(UIBezierPath(ovalIn: CGRect(x: 8.4, y: 4.4, width: 7.2, height: 7.2)))
+        }
+        return path
+    }
+
+    // MARK: - Shared subpaths
+
+    /// Cửa vòm mái chùa (`M10 20v-4.5a2 2 0 0 1 4 0V20`) — bo tròn phía trên.
+    private static func doorPath(in path: UIBezierPath) {
+        path.move(to: CGPoint(x: 10, y: 20))
+        path.addLine(to: CGPoint(x: 10, y: 15.5))
+        path.addArc(
+            withCenter: CGPoint(x: 12, y: 15.5),
+            radius: 2,
+            startAngle: .pi,
+            endAngle: 2 * .pi,
+            clockwise: true
+        )
+        path.addLine(to: CGPoint(x: 14, y: 20))
+    }
+
+    /// Bìa sách mở (`M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5...z`).
+    private static func bookPath(in path: UIBezierPath) {
+        path.move(to: CGPoint(x: 12, y: 6.5))
+        path.addCurve(
+            to: CGPoint(x: 3.5, y: 5),
+            controlPoint1: CGPoint(x: 10, y: 5),
+            controlPoint2: CGPoint(x: 7, y: 4.5)
+        )
+        path.addLine(to: CGPoint(x: 3.5, y: 18))
+        path.addCurve(
+            to: CGPoint(x: 12, y: 19.5),
+            controlPoint1: CGPoint(x: 7, y: 17.5),
+            controlPoint2: CGPoint(x: 10, y: 18)
+        )
+        path.addCurve(
+            to: CGPoint(x: 20.5, y: 18),
+            controlPoint1: CGPoint(x: 14, y: 18),
+            controlPoint2: CGPoint(x: 17, y: 17.5)
+        )
+        path.addLine(to: CGPoint(x: 20.5, y: 5))
+        path.addCurve(
+            to: CGPoint(x: 12, y: 6.5),
+            controlPoint1: CGPoint(x: 17, y: 4.5),
+            controlPoint2: CGPoint(x: 14, y: 5)
+        )
     }
 }

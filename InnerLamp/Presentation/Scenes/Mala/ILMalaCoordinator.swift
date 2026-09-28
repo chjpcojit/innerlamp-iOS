@@ -7,7 +7,7 @@ import UIKit
 import Combine
 
 /// Màn lá — không có delegate: `ILMalaNavEvent.goBack` chỉ pop màn và tự `finish()`, parent
-/// (`ILHomeCoordinator`) không cần phản ứng gì thêm.
+/// (`ILHomeCoordinator` / `ILDeityCoordinator`) không cần phản ứng gì thêm.
 final class ILMalaCoordinator: Coordinator {
 
     let navigationController: UINavigationController
@@ -15,18 +15,21 @@ final class ILMalaCoordinator: Coordinator {
     weak var parentCoordinator: (any Coordinator)?
 
     private let container: DIContainer
+    private let mantraText: String?
     private var cancellables = Set<AnyCancellable>()
 
     init(
         navigationController: UINavigationController,
-        container: DIContainer
+        container: DIContainer,
+        mantraText: String? = nil
     ) {
         self.navigationController = navigationController
         self.container = container
+        self.mantraText = mantraText
     }
 
     func start() {
-        let viewModel = container.makeMalaViewModel()
+        let viewModel = container.makeMalaViewModel(mantraText: mantraText)
 
         viewModel.navigationEventPublisher
             .sink { [weak self] event in

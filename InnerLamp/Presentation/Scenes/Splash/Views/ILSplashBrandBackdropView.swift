@@ -5,11 +5,9 @@
 
 import UIKit
 
-/// Nền màn Splash: radial tối `#2A241C → #100E0B` cộng một quầng sáng vàng phía trên.
-///
-/// Màn Splash **luôn tối** theo design handoff (nằm trong nhóm màn không đi qua token `--il-*`
-/// theo theme), nên nền ở đây lấy thẳng cặp `darkBackgroundTop`/`darkBackground` và **không**
-/// đảo màu theo light/dark — khác các màn dùng `canvasWarm` như Login/Onboarding.
+/// Nền màn Splash: radial `#FFFCF4 → #F0E6D4` ở light / `#2A241C → #100E0B` ở dark, cộng
+/// một quầng sáng vàng phía trên. Đi qua bộ token `--il-spl-bg`/`--il-spl-glow` của design
+/// handoff nên đảo màu theo light/dark (khác các màn `canvasWarm` như Login/Onboarding).
 final class ILSplashBrandBackdropView: UIView {
 
     // MARK: - Spec
@@ -55,31 +53,25 @@ final class ILSplashBrandBackdropView: UIView {
         translatesAutoresizingMaskIntoConstraints = false
         isUserInteractionEnabled = false
 
-        // radial-gradient(circle at 50% 42%, #2A241C, #100E0B 72%)
+        // radial-gradient(circle at 50% 42%, var(--il-spl-bg), …) — đổi theo light/dark.
         backgroundGradientLayer.type = .radial
-        backgroundGradientLayer.colors = [
-            ILColors.darkBackgroundTop.cgColor,
-            ILColors.darkBackground.cgColor
-        ]
         backgroundGradientLayer.locations = [0.0, Metrics.gradientEndLocation]
         backgroundGradientLayer.startPoint = CGPoint(x: 0.5, y: Metrics.gradientCenterYRatio)
         backgroundGradientLayer.endPoint = CGPoint(x: 1.0, y: 1.0)
         layer.insertSublayer(backgroundGradientLayer, at: 0)
 
-        // radial-gradient(circle, rgba(217,150,60,.26), transparent 62%)
+        // radial-gradient(circle, var(--il-spl-glow), transparent 62%)
         topGlowView.translatesAutoresizingMaskIntoConstraints = false
         topGlowView.isUserInteractionEnabled = false
         topGlowView.backgroundColor = .clear
         topGlowGradientLayer.type = .radial
-        topGlowGradientLayer.colors = [
-            ILColors.goldGlowStrong.cgColor,
-            ILColors.goldGlowClear.cgColor
-        ]
         topGlowGradientLayer.locations = [0.0, Metrics.glowEndLocation]
         topGlowGradientLayer.startPoint = CGPoint(x: 0.5, y: 0.5)
         topGlowGradientLayer.endPoint = CGPoint(x: 1.0, y: 1.0)
         topGlowView.layer.addSublayer(topGlowGradientLayer)
         addSubview(topGlowView)
+
+        updateColors()
 
         NSLayoutConstraint.activate([
             topGlowView.centerXAnchor.constraint(equalTo: centerXAnchor),
@@ -92,6 +84,9 @@ final class ILSplashBrandBackdropView: UIView {
             topGlowView.widthAnchor.constraint(equalToConstant: Metrics.glowSize),
             topGlowView.heightAnchor.constraint(equalToConstant: Metrics.glowSize)
         ])
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILSplashBrandBackdropView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     // MARK: - Layout
@@ -102,6 +97,24 @@ final class ILSplashBrandBackdropView: UIView {
         backgroundGradientLayer.frame = bounds
         topGlowGradientLayer.frame = topGlowView.bounds
         CATransaction.commit()
+    }
+
+    private func applyColorAppearanceChange() {
+        updateColors()
+    }
+
+    /// `CAGradientLayer.colors` không tự đảo theo trait — resolve thủ công theo appearance
+    /// hiện tại của view (window đã áp `overrideUserInterfaceStyle` nên `traitCollection` phản
+    /// ánh đúng lựa chọn Sáng/Tối/Theo máy).
+    private func updateColors() {
+        backgroundGradientLayer.colors = [
+            ILColors.splashBackgroundTop.resolvedColor(with: traitCollection).cgColor,
+            ILColors.splashBackground.resolvedColor(with: traitCollection).cgColor
+        ]
+        topGlowGradientLayer.colors = [
+            ILColors.splashGlow.resolvedColor(with: traitCollection).cgColor,
+            ILColors.goldGlowClear.cgColor
+        ]
     }
 
     // MARK: - Animations

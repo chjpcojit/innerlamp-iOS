@@ -2,21 +2,26 @@
 //  ILHomeLunarHeroCardView.swift
 //  InnerLamp
 //
+//  Created by ChjpCoj on 11/9/26.
+//
 
 import UIKit
 
-/// Thẻ âm lịch lớn Trang chủ: nền tối + vầng sáng vàng, ngày dương ở đỉnh, ngày/tháng/năm âm cỡ
-/// lớn, câu kinh trích trong ngày ở đáy. Riêng cho Trang chủ (không màn nào khác dùng bố cục
+/// Thẻ âm lịch lớn Trang chủ: nền gradient ấm + vầng sáng vàng, ngày dương ở đỉnh, ngày/tháng/năm
+/// âm cỡ lớn, câu kinh trích trong ngày ở đáy. Riêng cho Trang chủ (không màn nào khác dùng bố cục
 /// này) nên nằm ở `Scenes/Home`, không phải component dùng chung.
 ///
-/// Chưa có ảnh tượng Phật thật (`image-slot` trong design handoff) — dùng gradient tối thay thế,
-/// khớp ghi chú "Ảnh chùa/sự kiện hiện là gradient tối; cần ảnh thật từ phía sản phẩm" ở README
-/// design handoff.
+/// Đổi theo light/dark qua bộ `--il-hero-*` trong design handoff: nền `--il-sunk2 → --il-tint`,
+/// overlay `--il-hero-ov`, chữ `--il-hero-ink / -ink2 / -sub`, nhấn `--il-hero-acc / -acc2`.
+///
+/// Chưa có ảnh tượng Phật thật (`image-slot` trong design handoff) — overlay wash hiện đặt trên
+/// gradient nền (thay cho ảnh), khớp ghi chú "Ảnh chùa/sự kiện hiện là gradient tối; cần ảnh thật
+/// từ phía sản phẩm" ở README design handoff.
 final class ILHomeLunarHeroCardView: UIControl {
 
     // MARK: - Properties
     var eyebrowText: String = "" {
-        didSet { eyebrowLabel.attributedText = ILTypography.makeEyebrow(text: eyebrowText, color: ILColors.goldBright.withAlphaComponent(0.95)) }
+        didSet { applyEyebrow() }
     }
 
     var solarLabel: String = "" {
@@ -47,6 +52,7 @@ final class ILHomeLunarHeroCardView: UIControl {
 
     // MARK: - UI Elements
     private let gradientLayer = CAGradientLayer()
+    private let overlayLayer = CAGradientLayer()
     private let glowLayer = CAGradientLayer()
 
     private let solarLabelView = UILabel()
@@ -71,6 +77,7 @@ final class ILHomeLunarHeroCardView: UIControl {
     override func layoutSubviews() {
         super.layoutSubviews()
         gradientLayer.frame = bounds
+        overlayLayer.frame = bounds
         glowLayer.frame = CGRect(x: bounds.width - 150, y: -70, width: 220, height: 220)
         glowLayer.cornerRadius = 110
     }
@@ -80,7 +87,7 @@ final class ILHomeLunarHeroCardView: UIControl {
         layer.cornerRadius = ILMetrics.radiusCardLarge + 2
         clipsToBounds = true
 
-        gradientLayer.colors = [ILColors.darkBackgroundTop.cgColor, ILColors.darkBackground.cgColor]
+        // Nền container `linear-gradient(170deg, --il-sunk2, --il-tint)` — đổi theo light/dark.
         gradientLayer.startPoint = CGPoint(x: 0.2, y: 0)
         gradientLayer.endPoint = CGPoint(x: 0.8, y: 1)
         layer.insertSublayer(gradientLayer, at: 0)
@@ -91,15 +98,26 @@ final class ILHomeLunarHeroCardView: UIControl {
         glowLayer.endPoint = CGPoint(x: 1, y: 1)
         layer.insertSublayer(glowLayer, above: gradientLayer)
 
+        // Overlay `--il-hero-ov` (wash đổi theo light/dark) — nằm trên cùng, dưới các label.
+        overlayLayer.startPoint = CGPoint(x: 0.5, y: 0)
+        overlayLayer.endPoint = CGPoint(x: 0.5, y: 1)
+        overlayLayer.locations = [0.0, 0.58, 1.0]
+        layer.insertSublayer(overlayLayer, above: glowLayer)
+
+        applyGradients()
+
         solarLabelView.font = ILTypography.bodySmallMedium
-        solarLabelView.textColor = ILColors.inkOnDark
+        solarLabelView.textColor = ILColors.heroInk
         solarLabelView.numberOfLines = 1
 
-        eyebrowDot.backgroundColor = ILColors.goldBright
-        eyebrowDot.layer.cornerRadius = 6
+        eyebrowDot.layer.cornerRadius = 7
         eyebrowDot.layer.borderWidth = 1
-        eyebrowDot.layer.borderColor = ILColors.goldBright.withAlphaComponent(0.55).cgColor
         eyebrowDot.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            eyebrowDot.widthAnchor.constraint(equalToConstant: 14),
+            eyebrowDot.heightAnchor.constraint(equalToConstant: 14)
+        ])
+        applyEyebrowDot()
 
         eyebrowLabel.numberOfLines = 1
 
@@ -109,15 +127,15 @@ final class ILHomeLunarHeroCardView: UIControl {
         eyebrowRow.alignment = .center
 
         lunarDayLabel.font = ILTypography.lora(size: 52)
-        lunarDayLabel.textColor = ILColors.inkOnDark
+        lunarDayLabel.textColor = ILColors.heroInk
         lunarDayLabel.numberOfLines = 1
 
         lunarMonthLabelView.font = ILTypography.lora(size: 17)
-        lunarMonthLabelView.textColor = ILColors.inkOnDarkVariant
+        lunarMonthLabelView.textColor = ILColors.heroInk2
         lunarMonthLabelView.numberOfLines = 1
 
         lunarYearLabelView.font = ILTypography.bodySmall
-        lunarYearLabelView.textColor = ILColors.inkOnDarkTertiary
+        lunarYearLabelView.textColor = ILColors.heroSub
         lunarYearLabelView.numberOfLines = 1
 
         verseStack.axis = .vertical
@@ -126,7 +144,7 @@ final class ILHomeLunarHeroCardView: UIControl {
         verseStack.isUserInteractionEnabled = false
 
         verseSourceLabel.font = verseSourceFont
-        verseSourceLabel.textColor = ILColors.inkOnDarkMuted
+        verseSourceLabel.textColor = ILColors.heroSub
         verseSourceLabel.textAlignment = .center
         verseSourceLabel.numberOfLines = 1
 
@@ -164,6 +182,9 @@ final class ILHomeLunarHeroCardView: UIControl {
         addTarget(self, action: #selector(handleTouchDown), for: [.touchDown, .touchDragEnter])
         addTarget(self, action: #selector(handleTouchUp), for: [.touchUpInside, .touchCancel, .touchDragExit])
         addTarget(self, action: #selector(handleTapAction), for: .touchUpInside)
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILHomeLunarHeroCardView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     /// Lora 12 nghiêng — không có preset sẵn khớp size này trong `ILTypography`, cùng cách
@@ -184,7 +205,7 @@ final class ILHomeLunarHeroCardView: UIControl {
             label.attributedText = ILTypography.makeAttributedString(
                 text: line,
                 font: ILTypography.lora(size: 18.5),
-                color: ILColors.inkOnDark,
+                color: ILColors.heroInk,
                 lineHeightMultiple: 1.4,
                 alignment: .center
             )
@@ -194,10 +215,35 @@ final class ILHomeLunarHeroCardView: UIControl {
         }
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
-        eyebrowDot.layer.borderColor = ILColors.goldBright.withAlphaComponent(0.55).cgColor
+    /// `CAGradientLayer` màu là CGColor tĩnh, không tự đảo theo trait — resolve lại khi hệ thống
+    /// đổi light/dark (`--il-sunk2`/`--il-tint`/`--il-hero-ov` đều có hai biến thể).
+    private func applyGradients() {
+        let trait = traitCollection
+        gradientLayer.colors = [
+            ILColors.sunk2.resolvedColor(with: trait).cgColor,
+            ILColors.tint.resolvedColor(with: trait).cgColor
+        ]
+        overlayLayer.colors = [
+            ILColors.heroOverlayStart.resolvedColor(with: trait).cgColor,
+            ILColors.heroOverlayMid.resolvedColor(with: trait).cgColor,
+            ILColors.heroOverlayEnd.resolvedColor(with: trait).cgColor
+        ]
+    }
+
+    private func applyEyebrow() {
+        eyebrowLabel.attributedText = ILTypography.makeEyebrow(text: eyebrowText, color: ILColors.heroAccent)
+    }
+
+    private func applyEyebrowDot() {
+        eyebrowDot.backgroundColor = ILColors.heroAccent
+        eyebrowDot.layer.borderColor = ILColors.heroAccentBorder.cgColor
+    }
+
+    private func applyColorAppearanceChange() {
+        applyGradients()
+        applyEyebrow()
+        applyEyebrowDot()
+        rebuildVerse()
     }
 
     @objc private func handleTouchDown() {

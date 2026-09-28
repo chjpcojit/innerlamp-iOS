@@ -13,6 +13,9 @@ final class ILLunarCalendarMonthCarouselView: UIView {
     // MARK: - Layout constants
     private static let cardWidthRatio: CGFloat = 0.86
     private static let cardSpacing: CGFloat = 12
+    /// Minimum horizontal swipe velocity (pt/s) counted as a "flip to the next month" — prevents a
+    /// fast but short-range swipe from rounding back to the current page and jittering.
+    private static let pageVelocityThreshold: CGFloat = 0.2
     private static let cellReuseID = "ILLunarCalendarMonthCell"
 
     // MARK: - Properties
@@ -154,7 +157,9 @@ extension ILLunarCalendarMonthCarouselView: UICollectionViewDelegate {
         onPageChanged?(page)
     }
 
-    /// Snap từng tháng: tối đa 1 trang mỗi lần vuốt, dù vận tốc lớn.
+    /// Snap one month at a time, max 1 page per swipe. Velocity takes priority — a fast swipe over a
+    /// small range still flips to the adjacent month, instead of letting `page(forOffset:)` round the
+    /// projected offset back to the current page (which made content slide a little then snap back).
     func scrollViewWillEndDragging(
         _ scrollView: UIScrollView,
         withVelocity velocity: CGPoint,
@@ -162,9 +167,18 @@ extension ILLunarCalendarMonthCarouselView: UICollectionViewDelegate {
     ) {
         guard pitch > 0 else { return }
         let current = page(forOffset: scrollView.contentOffset.x)
-        let projected = page(forOffset: targetContentOffset.pointee.x)
-        let target = min(max(projected, current - 1), current + 1)
-        targetContentOffset.pointee.x = CGFloat(min(max(target, 0), max(months.count - 1, 0))) * pitch
+
+        let target: Int
+        if velocity.x > Self.pageVelocityThreshold {
+            target = current + 1
+        } else if velocity.x < -Self.pageVelocityThreshold {
+            target = current - 1
+        } else {
+            target = page(forOffset: targetContentOffset.pointee.x)
+        }
+
+        let clamped = min(max(target, 0), max(months.count - 1, 0))
+        targetContentOffset.pointee.x = CGFloat(clamped) * pitch
     }
 
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {

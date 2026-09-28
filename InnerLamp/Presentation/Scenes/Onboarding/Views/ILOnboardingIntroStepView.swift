@@ -12,27 +12,12 @@ import UIKit
 final class ILOnboardingIntroStepView: UIView {
 
     // MARK: - UI Elements
-    private lazy var lampFlame: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerRadius = 9.0
-        view.backgroundColor = ILColors.goldBright
-        view.layer.shadowColor = ILColors.goldBright.cgColor
-        view.layer.shadowOpacity = 0.85
-        view.layer.shadowRadius = 13.0
-        view.layer.shadowOffset = .zero
-        return view
-    }()
-
-    private lazy var lampCircle: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerRadius = 52.0
-        view.layer.borderWidth = 1
-        view.layer.borderColor = ILColors.goldBorder.cgColor
-        view.backgroundColor = ILColors.goldGlow
-        view.addSubview(lampFlame)
-        return view
+    /// Ảnh minh họa đèn + quầng sáng (full-color, không tô màu).
+    private lazy var lampImageView: UIImageView = {
+        let imageView = UIImageView(image: ILIcons.onboardingLamp)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.contentMode = .scaleAspectFit
+        return imageView
     }()
 
     private lazy var titleLabel: UILabel = {
@@ -73,8 +58,8 @@ final class ILOnboardingIntroStepView: UIView {
         stack.alignment = .leading
         stack.spacing = 0
         stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.addArrangedSubview(lampCircle)
-        stack.setCustomSpacing(22, after: lampCircle)
+        stack.addArrangedSubview(lampImageView)
+        stack.setCustomSpacing(22, after: lampImageView)
         stack.addArrangedSubview(titleLabel)
         stack.setCustomSpacing(12, after: titleLabel)
         stack.addArrangedSubview(subtitleItalicLabel)
@@ -98,12 +83,8 @@ final class ILOnboardingIntroStepView: UIView {
         addSubview(contentStack)
 
         NSLayoutConstraint.activate([
-            lampCircle.widthAnchor.constraint(equalToConstant: 104),
-            lampCircle.heightAnchor.constraint(equalToConstant: 104),
-            lampFlame.centerXAnchor.constraint(equalTo: lampCircle.centerXAnchor),
-            lampFlame.bottomAnchor.constraint(equalTo: lampCircle.bottomAnchor, constant: -24),
-            lampFlame.widthAnchor.constraint(equalToConstant: 18),
-            lampFlame.heightAnchor.constraint(equalToConstant: 26),
+            lampImageView.widthAnchor.constraint(equalToConstant: ILMetrics.onboardingLampSize.width),
+            lampImageView.heightAnchor.constraint(equalToConstant: ILMetrics.onboardingLampSize.height),
 
             contentStack.leadingAnchor.constraint(equalTo: leadingAnchor),
             contentStack.trailingAnchor.constraint(equalTo: trailingAnchor),

@@ -72,6 +72,6 @@ final class ILSplashViewModel: ILSplashViewModelProtocol {
 
     /// Quyết định điểm đến kế tiếp sau khi màn Splash chạy xong.
     private func handleSplashFinished() {
-        navigationEventSubject.send(.goToMain) // TEMP DEBUG — revert
+        navigationEventSubject.send(.goToOnboarding) // TEMP DEBUG — revert
     }
 }

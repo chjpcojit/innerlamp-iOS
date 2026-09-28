@@ -10,6 +10,7 @@ import Combine
 final class ILMalaViewModelTests: XCTestCase {
 
     private var mockUseCase: MockILMalaUseCase!
+    private var mockSoundPlayer: MockILPracticeSoundPlayer!
     private var sut: ILMalaViewModel!
     private var cancellables: Set<AnyCancellable>!
 
@@ -22,7 +23,8 @@ final class ILMalaViewModelTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockUseCase = MockILMalaUseCase()
-        sut = ILMalaViewModel(useCase: mockUseCase)
+        mockSoundPlayer = MockILPracticeSoundPlayer()
+        sut = ILMalaViewModel(useCase: mockUseCase, soundPlayer: mockSoundPlayer)
         cancellables = []
 
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
@@ -41,6 +43,7 @@ final class ILMalaViewModelTests: XCTestCase {
         backTappedSubject = nil
         sut = nil
         mockUseCase = nil
+        mockSoundPlayer = nil
         super.tearDown()
     }
 
@@ -67,7 +70,7 @@ final class ILMalaViewModelTests: XCTestCase {
 
     func test_initialState_matchesUseCaseDefaultAndStaticLabels() {
         mockUseCase.stubEntity = ILMalaEntity(count: 27, goal: 108, completedRounds: 2)
-        sut = ILMalaViewModel(useCase: mockUseCase)
+        sut = ILMalaViewModel(useCase: mockUseCase, soundPlayer: mockSoundPlayer)
         let box = observeState(sut.transform(input: makeInput()))
 
         viewDidLoadSubject.send(())
@@ -89,6 +92,7 @@ final class ILMalaViewModelTests: XCTestCase {
         beadAdvancedSubject.send(())
 
         XCTAssertTrue(mockUseCase.advanceBeadCalled)
+        XCTAssertTrue(mockSoundPlayer.playBeadCalled)
         XCTAssertEqual(box.latest?.count, 1)
         XCTAssertNil(box.latest?.milestone)
     }
@@ -106,7 +110,7 @@ final class ILMalaViewModelTests: XCTestCase {
     func test_beadAdvanced_completingRound_updatesHeaderSubtitle() {
         mockUseCase.stubEntity = ILMalaEntity(count: 107, goal: 108, completedRounds: 2)
         mockUseCase.stubMilestone = .roundComplete
-        sut = ILMalaViewModel(useCase: mockUseCase)
+        sut = ILMalaViewModel(useCase: mockUseCase, soundPlayer: mockSoundPlayer)
         let box = observeState(sut.transform(input: makeInput()))
 
         viewDidLoadSubject.send(())
@@ -115,6 +119,8 @@ final class ILMalaViewModelTests: XCTestCase {
         XCTAssertEqual(box.latest?.count, 108)
         XCTAssertEqual(box.latest?.headerSubtitle, String(format: "mala.header.roundsFormat".localized, 3))
         XCTAssertEqual(box.latest?.milestone, .roundComplete)
+        XCTAssertTrue(mockSoundPlayer.playBeadCalled)
+        XCTAssertTrue(mockSoundPlayer.playBellCalled)
     }
 
     func test_resetTapped_resetsCountAndClearsMilestone() {

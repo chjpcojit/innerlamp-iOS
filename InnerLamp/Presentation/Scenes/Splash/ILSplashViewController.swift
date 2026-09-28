@@ -11,7 +11,7 @@ import Combine
 ///
 /// Bố cục bám sát `isSplash` của design handoff: khối giữa (vòng đèn → wordmark → slogan) được
 /// canh giữa màn theo kiểu flexbox, còn quầng sáng / ripple / tia sáng / hàng chấm neo theo tỉ lệ
-/// chiều cao màn. Màn này **luôn tối**, không đi qua token theme.
+/// chiều cao màn. Màn này đi qua bộ token `--il-spl-*` nên đảo màu theo light/dark.
 final class ILSplashViewController: BaseViewController {
 
     // MARK: - Spec
@@ -50,7 +50,7 @@ final class ILSplashViewController: BaseViewController {
     // MARK: - UI Elements
     private let backdropView = ILSplashBrandBackdropView()
     private let ambienceView = ILSplashAmbienceView()
-    private let lampGlowView = ILLampGlowView(diameter: Metrics.lampDiameter, style: .onDark)
+    private let lampGlowView = ILLampGlowView(diameter: Metrics.lampDiameter, style: .splash)
     private let emberFieldView = ILSplashEmberFieldView()
     private let wordmarkLabel = ILSplashWordmarkLabel(text: "splash.wordmark".localized)
     private let loadingIndicatorView = ILSplashLoadingIndicatorView()
@@ -58,7 +58,7 @@ final class ILSplashViewController: BaseViewController {
     private let taglineLabel: UILabel = {
         let label = UILabel()
         label.font = ILTypography.splashTagline.italic()
-        label.textColor = ILColors.inkOnDarkTagline
+        label.textColor = ILColors.splashInkSub
         label.textAlignment = .center
         label.numberOfLines = 0
         label.text = "splash.tagline".localized
@@ -176,8 +176,9 @@ final class ILSplashViewController: BaseViewController {
         )
         let output = viewModel.transform(input: input)
 
+        // No `.receive(on: DispatchQueue.main)`: state is already sent on main (MainActor default),
+        // and deferring it renders the first state only after the appear transition has run.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 

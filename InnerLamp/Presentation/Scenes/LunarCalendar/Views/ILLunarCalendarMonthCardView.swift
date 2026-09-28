@@ -82,10 +82,12 @@ final class ILLunarCalendarMonthCardView: UIView {
             gridStack.trailingAnchor.constraint(equalTo: weekdayRow.trailingAnchor),
             gridBottom
         ])
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILLunarCalendarMonthCardView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
+    private func applyColorAppearanceChange() {
         layer.borderColor = ILColors.border.resolvedColor(with: traitCollection).cgColor
     }
 
@@ -163,13 +165,15 @@ private final class ILLunarCalendarBlankCellView: UIView {
     }
 }
 
-/// 1 ô ngày: số dương + số âm, nền đổi theo chọn/hôm nay/ngày trai.
+/// 1 ô ngày: số dương + số âm + chấm màu (Hoàng đạo/Hắc đạo/Rằm·Mùng Một), nền đổi theo
+/// chọn/hôm nay/ngày trai.
 private final class ILLunarCalendarDayCellView: UIControl {
 
     var onTap: (() -> Void)?
 
     private let solarLabel = UILabel()
     private let lunarLabel = UILabel()
+    private let dot = UIView()
 
     init(day: ILLunarCalendarDayModel) {
         super.init(frame: .zero)
@@ -202,7 +206,10 @@ private final class ILLunarCalendarDayCellView: UIControl {
         lunarLabel.textColor = day.isSelected ? ILColors.canvasOnInkSecondary : ILColors.link
         lunarLabel.text = day.lunarText
 
-        let stack = UIStackView(arrangedSubviews: [solarLabel, lunarLabel])
+        dot.backgroundColor = dotColor(for: day.dotKind, isSelected: day.isSelected)
+        dot.layer.cornerRadius = 2
+
+        let stack = UIStackView(arrangedSubviews: [solarLabel, lunarLabel, dot])
         stack.axis = .vertical
         stack.alignment = .center
         stack.spacing = 1
@@ -212,6 +219,8 @@ private final class ILLunarCalendarDayCellView: UIControl {
 
         NSLayoutConstraint.activate([
             heightAnchor.constraint(equalTo: widthAnchor),
+            dot.widthAnchor.constraint(equalToConstant: 4),
+            dot.heightAnchor.constraint(equalToConstant: 4),
             stack.centerXAnchor.constraint(equalTo: centerXAnchor),
             stack.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
@@ -221,6 +230,15 @@ private final class ILLunarCalendarDayCellView: UIControl {
         accessibilityTraits = day.isSelected ? [.button, .selected] : .button
 
         addTarget(self, action: #selector(handleTap), for: .touchUpInside)
+    }
+
+    /// Màu chấm theo loại ngày — biến thể sáng (onDark) dùng khi ô đang chọn (nền mực tối).
+    private func dotColor(for kind: ILLunarCalendarDayDotKind, isSelected: Bool) -> UIColor {
+        switch kind {
+        case .newMoonFullMoon: return isSelected ? ILColors.goldOnDark : ILColors.goldBright
+        case .hoangDao: return isSelected ? ILColors.auspiciousOnDark : ILColors.auspicious
+        case .hacDao: return isSelected ? ILColors.inauspiciousOnDark : ILColors.inauspicious
+        }
     }
 
     @objc private func handleTap() {

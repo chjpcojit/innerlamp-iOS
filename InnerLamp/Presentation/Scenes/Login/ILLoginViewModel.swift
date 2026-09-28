@@ -15,6 +15,8 @@ enum ILLoginNavEvent: Equatable {
     case goToForgotPassword
     /// Đăng nhập thành công — sang luồng chính (Home, chưa có trong scope hiện tại).
     case didLoginSuccessfully
+    /// Người dùng bấm "Xem trước, đăng nhập sau" — vào luồng chính không cần đăng nhập.
+    case goToGuestPreview
 }
 
 protocol ILLoginViewModelProtocol: ViewModelType {
@@ -36,6 +38,7 @@ final class ILLoginViewModel: ILLoginViewModelProtocol {
         let backTapped: AnyPublisher<Void, Never>
         let signupTapped: AnyPublisher<Void, Never>
         let forgotPasswordTapped: AnyPublisher<Void, Never>
+        let guestPreviewTapped: AnyPublisher<Void, Never>
     }
 
     struct Output {
@@ -99,6 +102,10 @@ final class ILLoginViewModel: ILLoginViewModelProtocol {
 
         input.forgotPasswordTapped
             .sink { [weak self] _ in self?.navigationEventSubject.send(.goToForgotPassword) }
+            .store(in: &cancellables)
+
+        input.guestPreviewTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.goToGuestPreview) }
             .store(in: &cancellables)
 
         return Output(state: stateSubject.eraseToAnyPublisher())

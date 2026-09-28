@@ -88,7 +88,13 @@ final class ILLunarCalendarUseCaseImpl: ILLunarCalendarUseCase {
                 lunarDay: lunar.day,
                 lunarMonth: lunar.month,
                 isLunarLeapMonth: lunar.isLeapMonth,
-                category: Self.category(forLunarDay: lunar.day)
+                category: Self.category(forLunarDay: lunar.day),
+                isHoangDao: ILLunarCalendar.isHoangDao(
+                    solarDay: day,
+                    solarMonth: month,
+                    solarYear: year,
+                    lunarMonth: lunar.month
+                )
             )
         }
 

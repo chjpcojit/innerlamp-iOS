@@ -24,9 +24,21 @@ enum ILHomeSessionGlyph: Equatable {
     case dot
 }
 
+/// Loại thực hành của 1 hàng "Thời khóa gợi ý" — quyết định màn đích khi chạm (khớp `on-tap` trong
+/// design handoff: `goSetup` / `goReader` / `goOffer`).
+enum ILHomeSessionKind: Equatable {
+    /// Thiền — mở màn Chuẩn bị thiền (`setup`).
+    case meditation
+    /// Tụng kinh — màn Đọc kinh (`reader`).
+    case sutra
+    /// Cúng dường đèn — màn Cúng dường (`offer`).
+    case offering
+}
+
 /// 1 mục trong danh sách "Thời khóa gợi ý" — dữ liệu nội dung (catalog), không phải UI state.
 struct ILHomeSuggestedSessionEntity: Equatable, Identifiable {
     let id: String
+    let kind: ILHomeSessionKind
     let title: String
     let subtitle: String
     let trailingText: String
@@ -41,14 +53,37 @@ struct ILHomeQuoteEntity: Equatable {
     var source: String = ""
 }
 
+extension ILHomeQuoteEntity {
+    /// Display form of a catalog quote, shared by the Home hero card and the Lunar Day Detail screen.
+    /// Source reads "— Kinh Pháp Cú (Dhammapada), câu 5".
+    init(quote: ILSutraQuoteEntity) {
+        self.init(
+            // The catalog stores each verse as one flat string — restore its 4 poetic lines.
+            lines: ILSutraVerseLineSplitter.lines(from: quote.content),
+            source: String(format: "home.lunar.verse.sourceFormat".localized, quote.sutraName, quote.verseNumber)
+        )
+    }
+}
+
 /// 1 ngày trong dải lịch tuần Trang chủ — ngày dương + số ngày âm tương ứng, tính bằng
-/// `ILLunarCalendar` (không phải nội dung tĩnh).
+/// `ILLunarCalendar` (không phải nội dung tĩnh). `lunarMonth` dùng để hiển thị "1/9" cho Mùng 1,
+/// `isHoangDao` để chấm xanh (Hoàng đạo) hay đỏ (Hắc đạo); Rằm/Mùng Một luôn chấm vàng.
 struct ILHomeWeekDayEntity: Equatable, Identifiable {
     let id: String
     let date: Date
     let solarDay: Int
     let lunarDay: Int
+    let lunarMonth: Int
+    let isHoangDao: Bool
     let isToday: Bool
+}
+
+/// 1 trang (tuần) trong dải lịch tuần Trang chủ — 5 tuần (2 trước, hiện tại, 2 sau), `label` là
+/// khoảng tháng ("Tháng 9 – Tháng 10, 2026").
+struct ILHomeWeekPageEntity: Equatable, Identifiable {
+    let id: String
+    let label: String
+    let days: [ILHomeWeekDayEntity]
 }
 
 /// Ngày âm lịch hôm nay hiển thị ở thẻ âm lịch lớn Trang chủ (ngày/tháng/năm âm tính bằng
@@ -85,6 +120,47 @@ struct ILHomeEventMonthEntity: Equatable, Identifiable {
     let events: [ILHomeEventItemEntity]
 }
 
+/// 1 ảnh trong khối "Ảnh chùa đẹp" ở Trang chủ. Hiện chỉ cần danh tính (`id`) để biểu thị số
+/// ảnh có trong catalog — tiêu đề/địa điểm chỉ dùng ở màn `photos` (gallery) chưa build, sẽ nới
+/// rộng field khi có màn đó (xem TODO ở `ILHomeUseCaseImpl`).
+struct ILHomePhotoEntity: Equatable, Identifiable {
+    let id: String
+}
+
+/// 1 chùa trong carousel "Chùa Việt Nam" — nội dung catalog (tên, địa chỉ, vùng miền, ghi chú),
+/// chưa có API chùa thật (xem TODO ở `ILHomeUseCaseImpl`).
+struct ILHomeTempleEntity: Equatable, Identifiable {
+    let id: String
+    let name: String
+    let place: String
+    let region: String
+    let note: String
+}
+
+/// 1 bài viết trong danh sách "Bài viết Phật pháp hay" — nội dung catalog. `readMinutes` là dữ
+/// liệu (số phút đọc); chuỗi "… phút đọc" do `ILHomeViewModel` format khi map sang StateModel.
+struct ILHomeArticleEntity: Equatable, Identifiable {
+    let id: String
+    let category: String
+    let title: String
+    let author: String
+    let readMinutes: Int
+}
+
+/// 1 vị Phật / Bồ Tát trong carousel "Thư viện Phật & Bồ Tát" ở Trang chủ — bản tóm tắt catalog
+/// (danh xưng, loại, hiệu tôn, đức hạnh, ngày vía chính). Dữ liệu đầy đủ nằm trên `ILDeityEntity`
+/// (màn chi tiết `Deity`), `ILHomeUseCase` map từ `ILDeityUseCase.getAllDeities()`.
+struct ILHomeDeityEntity: Equatable, Identifiable {
+    let id: String
+    let kind: ILDeityKind
+    let name: String
+    let honorific: String
+    let virtue: String
+    /// Ngày vía chính theo âm lịch (ngày đản sinh / "Vía" nếu có, ngược lại là ngày lễ đầu tiên
+    /// trong catalog). `nil` khi catalog không có ngày lễ nào.
+    let memorialDay: ILDeityMemorialDayEntity?
+}
+
 /// Pure business entity cho màn Trang chủ — Domain layer only.
 ///
 /// Chỉ chứa dữ liệu có ý nghĩa nghiệp vụ thực sự (tên hiển thị, lịch tuần/âm lịch, câu kinh
@@ -98,7 +174,11 @@ struct ILHomeEntity: Equatable {
     /// là nơi áp fallback "khách" và format câu chào.
     var displayName: String = ""
 
-    var weekDays: [ILHomeWeekDayEntity] = []
+    /// 5 trang tuần quanh tuần hiện tại (mỗi trang 7 ngày Thứ Hai → Chủ nhật).
+    var weekPages: [ILHomeWeekPageEntity] = []
+    /// id ngày đang chọn trong dải lịch tuần (mặc định hôm nay) — quyết định ô tô đậm + thẻ âm
+    /// lịch lớn.
+    var selectedDayID: String = ""
     var lunarDate: ILHomeLunarDateEntity = ILHomeLunarDateEntity()
     var eventMonths: [ILHomeEventMonthEntity] = []
 
@@ -114,6 +194,12 @@ struct ILHomeEntity: Equatable {
     var malaMantraText: String = ""
 
     var suggestedSessions: [ILHomeSuggestedSessionEntity] = []
+
+    var photos: [ILHomePhotoEntity] = []
+    var temples: [ILHomeTempleEntity] = []
+    var articles: [ILHomeArticleEntity] = []
+    /// Carousel "Thư viện Phật & Bồ Tát" — bản tóm tắt map từ `ILDeityUseCase.getAllDeities()`.
+    var deities: [ILHomeDeityEntity] = []
 
     static let empty = ILHomeEntity()
 }

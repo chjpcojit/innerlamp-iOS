@@ -108,6 +108,9 @@ final class ILErrorSheetViewController: ILAlertModalViewController {
             contentStack.setCustomSpacing(ILMetrics.groupSpacing, after: messageLabel)
         }
         sheetView.addSubview(contentStack)
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILErrorSheetViewController, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     /// Glyph is left-aligned in the design, so it sits in a row instead of stretching.
@@ -193,9 +196,7 @@ final class ILErrorSheetViewController: ILAlertModalViewController {
         ).cgPath
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         applyShadow()
     }
 

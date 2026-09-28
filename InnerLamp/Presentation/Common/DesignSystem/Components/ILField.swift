@@ -172,6 +172,9 @@ public final class ILField: UIView, UITextFieldDelegate {
         updateCounter()
         updateAppearance()
         updateTopStackVisibility()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILField, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     /// Ẩn hàng nhãn khi không có `label`/`maxCount` — tránh khoảng trống rỗng phía trên ô nhập
@@ -266,9 +269,7 @@ public final class ILField: UIView, UITextFieldDelegate {
     // `layer.borderColor` là CGColor tĩnh (surface/ink/gold/rose/green giờ có biến thể
     // dark) nên không tự đảo theo trait như `backgroundColor`/`textColor` — refresh
     // thủ công khi hệ thống đổi light/dark.
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         updateAppearance()
     }
 

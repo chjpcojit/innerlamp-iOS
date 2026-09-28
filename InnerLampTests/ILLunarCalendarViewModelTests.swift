@@ -101,6 +101,23 @@ final class ILLunarCalendarViewModelTests: XCTestCase {
         XCTAssertEqual(ordinary?.isFastDay, false)
     }
 
+    func test_viewDidLoad_mapsDotKindHoangDaoHacDaoAndLegend() {
+        let latest = observeLatestState()
+
+        viewDidLoadSubject.send(())
+
+        let days = latest()?.months.first?.days ?? []
+        // Rằm / Mùng Một → chấm vàng, bất kể cờ Hoàng đạo.
+        XCTAssertEqual(days.first { $0.id == "2024-02-10" }?.dotKind, .newMoonFullMoon)
+        XCTAssertEqual(days.first { $0.id == "2024-02-24" }?.dotKind, .newMoonFullMoon)
+        // Hoàng đạo → chấm xanh; Hắc đạo → chấm đỏ.
+        XCTAssertEqual(days.first { $0.id == "2024-02-17" }?.dotKind, .hoangDao)
+        XCTAssertEqual(days.first { $0.id == "2024-02-11" }?.dotKind, .hacDao)
+
+        // Bảng chú thích đủ 3 mục, thứ tự Hoàng đạo / Hắc đạo / Rằm·Mùng Một.
+        XCTAssertEqual(latest()?.legend.map(\.dotKind), [.hoangDao, .hacDao, .newMoonFullMoon])
+    }
+
     func test_viewDidLoad_showsUpcomingSpecialDaysFromUseCase() {
         let latest = observeLatestState()
 
@@ -168,8 +185,21 @@ final class ILLunarCalendarViewModelTests: XCTestCase {
         XCTAssertEqual(latest()?.heroCategory, .fullMoon)
     }
 
+    func test_dayTapped_doesNotEmitNavigationEvent() {
+        _ = sut.transform(input: makeInput())
+        var receivedEvent: ILLunarCalendarNavEvent?
+        sut.navigationEventPublisher
+            .sink { receivedEvent = $0 }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        dayTappedSubject.send("2024-02-24")
+
+        XCTAssertNil(receivedEvent)
+    }
+
     func test_dayTapped_onAlreadySelectedDay_doesNotCallUseCase() {
-        _ = observeLatestState()
+        _ = sut.transform(input: makeInput())
         viewDidLoadSubject.send(())
 
         dayTappedSubject.send("2024-02-10")
@@ -197,16 +227,26 @@ final class MockILLunarCalendarUseCase: ILLunarCalendarUseCase {
     var getInitialStateCalled = false
     var selectedDayIDs: [String] = []
 
-    private static func makeDay(_ id: String, solar: Int, lunar: Int, month: Int, category: ILLunarCalendarDayCategory) -> ILLunarCalendarDayEntity {
+    private static func makeDay(_ id: String, solar: Int, lunar: Int, month: Int, category: ILLunarCalendarDayCategory, isHoangDao: Bool = false) -> ILLunarCalendarDayEntity {
         ILLunarCalendarDayEntity(
             id: id,
-            date: Date(timeIntervalSince1970: 0),
+            date: Self.dayDate(id),
             solarDay: solar,
             lunarDay: lunar,
             lunarMonth: month,
             isLunarLeapMonth: false,
-            category: category
+            category: category,
+            isHoangDao: isHoangDao
         )
+    }
+
+    /// Giải mã ngày dương từ `id` (`yyyy-MM-dd`) — để test navigation assert đúng `Date` được gửi.
+    private static func dayDate(_ id: String) -> Date {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter.date(from: id) ?? Date(timeIntervalSince1970: 0)
     }
 
     private static func makeMonth(id: String, month: Int, days: [ILLunarCalendarDayEntity] = []) -> ILLunarCalendarMonthEntity {
@@ -228,8 +268,8 @@ final class MockILLunarCalendarUseCase: ILLunarCalendarUseCase {
             months: [
                 Self.makeMonth(id: "2024-02", month: 2, days: [
                     Self.makeDay("2024-02-10", solar: 10, lunar: 1, month: 1, category: .newMoon),
-                    Self.makeDay("2024-02-11", solar: 11, lunar: 2, month: 1, category: .ordinary),
-                    Self.makeDay("2024-02-17", solar: 17, lunar: 8, month: 1, category: .fastDay),
+                    Self.makeDay("2024-02-11", solar: 11, lunar: 2, month: 1, category: .ordinary, isHoangDao: false),
+                    Self.makeDay("2024-02-17", solar: 17, lunar: 8, month: 1, category: .fastDay, isHoangDao: true),
                     Self.makeDay("2024-02-24", solar: 24, lunar: 15, month: 1, category: .fullMoon)
                 ]),
                 Self.makeMonth(id: "2024-03", month: 3),

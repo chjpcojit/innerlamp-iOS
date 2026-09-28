@@ -21,6 +21,9 @@ public enum ILMetrics {
     
     /// Khoảng cách giữa các hàng trong nhóm (10px)
     public static let rowSpacing: CGFloat = 10.0
+
+    /// Độ thụt trái của bình luận trả lời lồng (22px) ở màn Bài đăng đạo tràng (`indent: 22px`).
+    public static let commentIndent: CGFloat = 22.0
     
     /// Khoảng cách nhỏ (6–8px)
     public static let spaceSmall: CGFloat = 8.0
@@ -36,6 +39,21 @@ public enum ILMetrics {
 
     /// Lề ngang của các màn immersive (Phiên thiền, Niệm Phật...) — rộng hơn màn thường (26px)
     public static let immersiveHorizontal: CGFloat = 26.0
+
+    /// Gap between the breathing ring and the breath cue on the meditation session screen (34px)
+    public static let immersiveCueSpacing: CGFloat = 34.0
+
+    /// Breathing ring on the meditation session screen: outer diameter (264px), inset of the inner
+    /// outlined ring (26px) and of the innermost halo (62px).
+    public static let breathingRingDiameter: CGFloat = 264.0
+    public static let breathingRingInnerInset: CGFloat = 26.0
+    public static let breathingRingCoreInset: CGFloat = 62.0
+
+    /// Immersive transport controls: ghost side buttons (50px), gold primary button (78px) and the
+    /// gap between them (22px).
+    public static let transportSideButtonSize: CGFloat = 50.0
+    public static let transportPrimaryButtonSize: CGFloat = 78.0
+    public static let transportSpacing: CGFloat = 22.0
     
     // MARK: - Corner Radii
     /// Nút bấm tròn dạng Pill, Chip (999px)
@@ -46,9 +64,18 @@ public enum ILMetrics {
     
     /// Hàng danh sách, thẻ nhỏ (18px)
     public static let radiusCardSmall: CGFloat = 18.0
+
+    /// Thẻ trung bình giữa `radiusCardSmall` và `radiusCardLarge` (22px — vd. thẻ nhịp màn Chuông mõ)
+    public static let radiusCardMedium: CGFloat = 22.0
+
+    /// Standard content card (20px — e.g. stat tiles and chart cards on Stats)
+    public static let radiusCardRegular: CGFloat = 20.0
     
     /// Ô nhập liệu Input Field (14px)
     public static let radiusInput: CGFloat = 14.0
+
+    /// Labeled input card / small action card (16px)
+    public static let radiusField: CGFloat = 16.0
     
     /// Khung icon tile (13px)
     public static let radiusIconTile: CGFloat = 13.0
@@ -71,12 +98,15 @@ public enum ILMetrics {
     
     /// Chiều cao thanh điều hướng đáy bao gồm safe area (110px)
     public static let bottomNavHeight: CGFloat = 110.0
-    
-    /// Chiều cao header tiêu chuẩn (48px)
-    public static let headerHeight: CGFloat = 48.0
 
     /// Chiều cao 1 ô nhập số trong mã OTP (58px)
     public static let otpDigitBoxHeight: CGFloat = 58.0
+
+    /// Ảnh đèn `ILIcons.onboardingLamp` ở màn Onboarding intro — kích thước gốc @1x (114x160px)
+    public static let onboardingLampSize = CGSize(width: 114, height: 160)
+
+    /// Ảnh đèn `ILIcons.onboardingLamp` ở header màn Đăng nhập — cao 56px, giữ tỉ lệ ảnh gốc
+    public static let loginLampSize = CGSize(width: 40, height: 56)
     
     // MARK: - Shadow Helpers
     public struct Shadow {
@@ -116,6 +146,9 @@ public enum ILMetrics {
     
     /// Đổ bóng nút gold (0 8px 24px rgba(184,134,47,.24))
     public static let shadowGoldButton = Shadow(color: UIColor(hex: "#B8862F"), alpha: 0.24, x: 0, y: 8, blur: 24)
+
+    /// Đổ bóng nút play/pause vàng tròn màn Chuông mõ (0 8px 24px rgba(217,150,60,.28))
+    public static let shadowGoldToggle = Shadow(color: ILColors.goldBright, alpha: 0.28, x: 0, y: 8, blur: 24)
     
     /// Đổ bóng thanh phát nổi / card nổi (0 6px 20px rgba(34,30,25,.07))
     public static let shadowFloatingBar = Shadow(color: UIColor(hex: "#221E19"), alpha: 0.07, x: 0, y: 6, blur: 20)
@@ -125,6 +158,14 @@ public enum ILMetrics {
     
     /// Đổ bóng nút đèn ở thanh đáy tối (0 0 28px rgba(217,150,60,.45))
     public static let shadowLampDark = Shadow(color: UIColor(hex: "#D9963C"), alpha: 0.45, x: 0, y: 0, blur: 28)
+
+    /// Glow under the gold primary button of an immersive screen in light mode
+    /// (`--il-med-glow`: 0 8px 26px rgba(138,90,24,.28))
+    public static let shadowMedGoldLight = Shadow(color: ILColors.goldDeep, alpha: 0.28, x: 0, y: 8, blur: 26)
+
+    /// Glow under the gold primary button of an immersive screen in dark mode
+    /// (`--il-med-glow`: 0 0 44px rgba(217,150,60,.5))
+    public static let shadowMedGoldDark = Shadow(color: ILColors.goldBright, alpha: 0.50, x: 0, y: 0, blur: 44)
 
     // MARK: - Alert / Error Popups
     /// Light toast (0 14px 34px ink .18)
@@ -190,5 +231,62 @@ public enum ILMetrics {
         public static let dialogButtonHeight: CGFloat = 44
         /// Pill height on the full-screen error
         public static let fullButtonHeight: CGFloat = 48
+    }
+
+    /// Sizes, radii and animation timing of the loading placeholders
+    /// (`ILSkeletonLoadingView`, `ILLoadMoreFooterView`).
+    public enum Skeleton {
+        /// Lamp ring next to the "Lighting the lamp…" caption
+        public static let lampRingSize: CGFloat = 22
+        /// Lamp ring border width
+        public static let lampRingBorder: CGFloat = 1.4
+        /// Gold dot inside the lamp ring
+        public static let lampDotSize: CGFloat = 7
+        /// Gap between the lamp ring and the caption
+        public static let captionSpacing: CGFloat = 12
+        /// Gap between the caption row and the title bar
+        public static let captionBottomSpacing: CGFloat = 24
+        /// Vertical gap between skeleton blocks
+        public static let blockSpacing: CGFloat = 18
+
+        /// Title bar height / corner radius / width ratio of the container
+        public static let titleBarHeight: CGFloat = 30
+        public static let titleBarRadius: CGFloat = 10
+        public static let titleBarWidthRatio: CGFloat = 0.62
+        /// Hero block height
+        public static let heroHeight: CGFloat = 170
+        /// Two side-by-side tiles height
+        public static let tileHeight: CGFloat = 86
+
+        /// Placeholder row inner padding (vertical, horizontal)
+        public static let rowPadding = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
+        /// Placeholder row primary / secondary line heights
+        public static let rowLineHeight: CGFloat = 11
+        public static let rowSubLineHeight: CGFloat = 9
+        /// Corner radius of the row lines
+        public static let rowLineRadius: CGFloat = 6
+        /// Width ratio of the row secondary line
+        public static let rowSubLineWidthRatio: CGFloat = 0.44
+        /// Width ratios of the primary line for each of the 4 rows
+        public static let rowLineWidthRatios: [CGFloat] = [0.68, 0.54, 0.72, 0.46]
+
+        /// `ilpulse` — opacity .55 ↔ .95 over 1.6s, blocks staggered
+        public static let pulseDuration: TimeInterval = 1.6
+        public static let pulseMinOpacity: Float = 0.55
+        public static let pulseMaxOpacity: Float = 0.95
+        /// Opacity used instead of the pulse when Reduce Motion is on
+        public static let pulseStaticOpacity: Float = 0.75
+        /// Pulse delay of the hero block and the two tiles (title bar starts at 0)
+        public static let heroPulseDelay: TimeInterval = 0.15
+        public static let tilePulseDelays: [TimeInterval] = [0.25, 0.35]
+        /// Stagger step between consecutive placeholder rows
+        public static let rowPulseDelayStep: TimeInterval = 0.1
+
+        /// Load-more spinner diameter / ring width / one full turn
+        public static let spinnerSize: CGFloat = 14
+        public static let spinnerLineWidth: CGFloat = 2
+        public static let spinnerRotationDuration: TimeInterval = 0.9
+        /// Load-more footer vertical padding (top, bottom)
+        public static let footerPadding = UIEdgeInsets(top: 20, left: 0, bottom: 4, right: 0)
     }
 }

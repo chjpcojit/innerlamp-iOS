@@ -56,6 +56,7 @@ final class ILLibraryViewController: BaseViewController {
     private lazy var chipsView = ILLibraryCategoryChipsView()
     private lazy var featureCard = ILFeatureCardView()
     private lazy var listView = ILLibraryListView()
+    private lazy var skeletonView = ILSkeletonLoadingView()
 
     // MARK: - Initializer
     init(viewModel: ILLibraryViewModel) {
@@ -78,7 +79,7 @@ final class ILLibraryViewController: BaseViewController {
         super.setupViews()
         view.backgroundColor = ILColors.canvas
 
-        [headerView, scrollView].forEach {
+        [headerView, scrollView, skeletonView].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
@@ -127,6 +128,11 @@ final class ILLibraryViewController: BaseViewController {
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
+            skeletonView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            skeletonView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            skeletonView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            skeletonView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+
             contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: ILMetrics.spaceMedium),
             contentStack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: ILMetrics.screenHorizontal),
             contentStack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -ILMetrics.screenHorizontal),
@@ -147,8 +153,9 @@ final class ILLibraryViewController: BaseViewController {
         )
         let output = viewModel.transform(input: input)
 
+        // No `.receive(on: DispatchQueue.main)`: state is already sent on main (MainActor default),
+        // and deferring it renders the first state only after the appear transition has run.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 
@@ -160,11 +167,15 @@ final class ILLibraryViewController: BaseViewController {
     // MARK: - Render
     private func render(state: ViewState<ILLibraryStateModel>) {
         switch state {
-        case .idle, .loading:
+        case .idle:
             break
+        case .loading:
+            skeletonView.setLoading(true)
         case .success(let model):
+            skeletonView.setLoading(false)
             updateUI(with: model)
         case .failure:
+            skeletonView.setLoading(false)
             // TODO: hiển thị ILStateView(.error) khi có API danh mục thật (Phase 3 của tasks.md).
             break
         }

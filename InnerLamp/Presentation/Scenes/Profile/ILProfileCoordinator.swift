@@ -30,11 +30,9 @@ final class ILProfileCoordinator: Coordinator {
             .sink { event in
                 switch event {
                 case .editProfile:
-                    // TODO: điều hướng sang Chỉnh sửa hồ sơ (`edit`) khi có coordinator.
-                    break
+                    self.showEditProfile()
                 case .openStats:
-                    // TODO: điều hướng sang Tiến trình tu tập (`stats`) khi có coordinator.
-                    break
+                    self.showStats()
                 case .openAwards:
                     // TODO: điều hướng sang Dấu ấn tu tập (`awards`) khi có coordinator.
                     break
@@ -48,11 +46,9 @@ final class ILProfileCoordinator: Coordinator {
                     // TODO: điều hướng sang Chuông tỉnh thức (`remind`) khi có coordinator.
                     break
                 case .openSettings:
-                    // TODO: điều hướng sang Cài đặt (`settings`) khi có coordinator.
-                    break
+                    self.showSettings()
                 case .openNotifications:
-                    // TODO: điều hướng sang Thông báo (`notif`) khi có coordinator.
-                    break
+                    self.showNotifications()
                 case .openCommunity:
                     // TODO: điều hướng sang Trang chùa (`temple`) theo id khi có coordinator.
                     break
@@ -62,5 +58,29 @@ final class ILProfileCoordinator: Coordinator {
 
         let viewController = ILProfileViewController(viewModel: viewModel)
         navigationController.setViewControllers([viewController], animated: false)
+    }
+
+    private func showSettings() {
+        let coordinator = container.makeSettingsCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    private func showEditProfile() {
+        let coordinator = container.makeEditProfileCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    private func showStats() {
+        let coordinator = container.makeStatsCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    private func showNotifications() {
+        let coordinator = container.makeNotificationsCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
     }
 }

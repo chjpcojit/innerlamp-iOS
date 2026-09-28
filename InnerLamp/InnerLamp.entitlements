@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	App Attest environment. `development` maps to Apple's App Attest sandbox and is correct for
+	local/TestFlight-style testing; switch to `production` for App Store distribution. The value
+	MUST stay consistent with the server's App Attest environment — sandbox keys do not verify in
+	production and vice versa (see Docs/Specs/DeviceAttestation/design.md).
+
+	Requires the App Attest capability to be enabled for `weedigital.vn.InnerLamp` in the Apple
+	Developer portal, or automatic signing will fail with a missing-entitlement error.
+	-->
+	<key>com.apple.developer.devicecheck.appattest-environment</key>
+	<string>development</string>
+</dict>
+</plist>

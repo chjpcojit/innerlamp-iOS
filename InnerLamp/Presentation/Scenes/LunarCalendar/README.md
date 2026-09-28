@@ -15,26 +15,30 @@ tháng dương lịch từ tháng hiện tại, mỗi ô ngày hiện số dươ
 tô nhẹ ngày trai, nhãn "Mùng 1"/"Rằm". Header hiện tháng/năm đang xem và năm Can Chi + tháng âm;
 thẻ tối bên dưới mô tả ngày đang chọn, kèm 2 hàng "sắp tới" (ngày trai/mùng 1/rằm kế tiếp).
 `ILHomeCoordinator` sở hữu màn này (link "Lịch âm" ở dải lịch tuần và chạm thẻ âm lịch lớn của
-Trang chủ → `ILHomeNavEvent.openLunarCalendar`); màn là lá, nút ✕ pop về Trang chủ.
+Trang chủ → `ILHomeNavEvent.openLunarCalendar`); nút ✕ pop về Trang chủ. Chạm 1 ô ngày trong lưới
+tháng mở màn "Chi tiết ngày âm" cho ngày dương đó (qua delegate về `ILHomeCoordinator`).
 
 ## Status
 
 | Layer | File | Status | Notes |
 |---|---|---|---|
-| Domain — Entity | `ILLunarCalendarEntity.swift` | Done | Tháng → ngày (`ILLunarCalendarDayEntity`), hôm nay, ngày đang chọn, phân loại ngày (`newMoon`/`fullMoon`/`fastDay`/`ordinary`). Không có field UI. |
-| Presentation — StateModel | `ILLunarCalendarStateModel.swift` | Done | Text ô ngày đã format, tháng/năm header, trang carousel hiện tại, copy thẻ ngày, hàng sắp tới. |
+| Domain — Entity | `ILLunarCalendarEntity.swift` | Done | Tháng → ngày (`ILLunarCalendarDayEntity`), hôm nay, ngày đang chọn, phân loại ngày (`newMoon`/`fullMoon`/`fastDay`/`ordinary`), cờ Hoàng đạo/Hắc đạo (`isHoangDao`). Không có field UI. |
+| Presentation — StateModel | `ILLunarCalendarStateModel.swift` | Done | Text ô ngày đã format, loại chấm màu (`dotKind`), bảng chú thích (`legend`), tháng/năm header, trang carousel hiện tại, copy thẻ ngày, hàng sắp tới. |
 | Data — DTO + Mapper | — | N/A (no confirmed API contract yet) | Toàn bộ dữ liệu là tính toán thuần trên `ILLunarCalendar`, chưa có API lịch/sự kiện. |
 | Domain — UseCase | `ILLunarCalendarUseCase.swift` | Done | Logic thuần, không network/disk: dựng 6 tháng, chọn ngày, tìm ngày trai kế tiếp. Không có method nào cần stub. |
-| Presentation — ViewModel | `ILLunarCalendarViewModel.swift` | Done | 6 `Input` publisher (viewDidLoad, prev/next, pageChanged, dayTapped, closeTapped); `Entity -> StateModel` ở `makeStateModel`. |
+| Presentation — ViewModel | `ILLunarCalendarViewModel.swift` | Done | 6 `Input` publisher (viewDidLoad, prev/next, pageChanged, dayTapped, closeTapped); `Entity -> StateModel` ở `makeStateModel` (gồm ánh xạ `dotKind` Hoàng đạo/Hắc đạo + bảng chú thích). Chạm ngày chỉ đổi ngày được chọn (không điều hướng). |
 | Presentation — ViewController | `ILLunarCalendarViewController.swift` | Done | Header ✕ + hairline, thanh ‹ › carousel, thẻ ngày, hàng sắp tới; dùng token `ILColors`/`ILTypography`/`ILMetrics`. UI chia thành `Views/` (pager bar, carousel, month card, day info card). |
-| Presentation — Coordinator | `ILLunarCalendarCoordinator.swift` | Done | `.close` → pop + `finish()`. Không có delegate. |
+| Presentation — Coordinator | `ILLunarCalendarCoordinator.swift` | Done | `.close` → pop + `finish()`; `.openDayDetail` → delegate `lunarCalendarDidRequestDayDetail(_:date:)` về `ILHomeCoordinator`. |
 | Shared component | `DesignSystem/Components/ILChevronCircleButton.swift` | Done | Nút tròn ‹ › dùng chung, tách ra vì không mang nội dung riêng của màn. |
-| Tests | `ILLunarCalendarViewModelTests.swift`, `ILLunarCalendarUseCaseTests.swift` | Done | 10 test ViewModel (mock UseCase, drive qua `Input`) + 9 test UseCase (tính lịch thật: Tết 10/2/2024, Trung Thu 17/9/2024). Đã chạy: 25 test (kèm 6 test Home) pass trên iPhone 17 / iOS 26. |
-| Wiring | `DIContainer` + `ILHomeCoordinator` | Done | `makeLunarCalendar{UseCase,ViewModel,Coordinator}`; `ILHomeCoordinator.showLunarCalendar()`. |
+| Tests | `ILLunarCalendarViewModelTests.swift`, `ILLunarCalendarUseCaseTests.swift` | Done | 13 test ViewModel (mock UseCase, drive qua `Input`, gồm ánh xạ chấm màu Hoàng đạo/Hắc đạo + chú thích + navigation `openDayDetail(date:)`) + 10 test UseCase (tính lịch thật: Tết 10/2/2024, Trung Thu 17/9/2024, cờ Hoàng đạo khớp `ILLunarCalendar`). |
+| Wiring | `DIContainer` + `ILHomeCoordinator` | Done | `makeLunarCalendar{UseCase,ViewModel,Coordinator}`; `ILHomeCoordinator.showLunarCalendar()` đặt `delegate = self` và conform `ILLunarCalendarCoordinatorDelegate` để mở `showLunarDayDetail(_:)`. |
 
 ## Navigation events
 
 - `.close` — nút ✕ ở header (Input `closeTapped`): `ILLunarCalendarCoordinator` pop màn và `finish()`.
+- `.openDayDetail(date:)` — chạm 1 ô ngày trong lưới tháng (Input `dayTapped`): `ILLunarCalendarCoordinator`
+  gọi `delegate.lunarCalendarDidRequestDayDetail(_:date:)`, `ILHomeCoordinator` mở màn "Chi tiết ngày
+  âm" (`showLunarDayDetail(_:)`).
 
 Điều hướng vào màn này: `ILHomeNavEvent.openLunarCalendar` (Input `lunarCalendarTapped` của
 `ILHomeViewModel`), gửi từ link "Lịch âm" và thẻ âm lịch lớn ở Trang chủ.
@@ -49,10 +53,18 @@ Trang chủ → `ILHomeNavEvent.openLunarCalendar`); màn là lá, nút ✕ pop 
   API sự kiện chùa — chưa làm; hàng hiện không tương tác được.
 - **Danh sách ngày trai** (1, 8, 14, 15, 18, 23, 30 âm) lấy từ prototype. Tháng thiếu chỉ có 29
   ngày nên "30 âm" không xuất hiện ở những tháng đó — cần xác nhận quy ước (thay bằng 29?).
-- Chọn ngày chỉ đổi thẻ ngày/hàng sắp tới, chưa mở màn chi tiết ngày (prototype cũng không có).
 - Header cập nhật ngay khi vuốt qua nửa thẻ; nút ‹ › không bị vô hiệu ở đầu/cuối (khớp prototype).
 - **Chưa kiểm tra bằng mắt trên simulator/thiết bị**: build + unit test pass, nhưng layout carousel (chiều cao thẻ 6 hàng, snap, lề 20pt) và dark mode chưa được xem thực tế.
 
 ## Changelog
 
+- 2026-09-28 — tapping a day now only changes the selected day; it no longer sends
+  `openDayDetail(date:)`. The `openDayDetail` event + `ILLunarCalendarCoordinatorDelegate` wiring is
+  kept but currently has no trigger. Tests updated (tap emits no navigation event).
+- 2026-09-27 — nối luồng "Lịch âm → Chi tiết ngày âm": chạm 1 ô ngày chọn ngày đó và gửi
+  `ILLunarCalendarNavEvent.openDayDetail(date:)`; `ILLunarCalendarCoordinator` thêm delegate
+  `ILLunarCalendarCoordinatorDelegate`, `ILHomeCoordinator` conform và mở `showLunarDayDetail(_:)`.
+  Thêm 1 test navigation + cập nhật test "chạm ngày đã chọn" (không gọi `selectDay` nhưng vẫn mở
+  chi tiết).
+- 2026-09-27 — thêm Hoàng đạo / Hắc đạo cho lưới tháng: `ILLunarCalendarDayEntity.isHoangDao`, tính bằng `ILLunarCalendar.isHoangDao` trong `ILLunarCalendarUseCase.makeMonth`; ánh xạ `dotKind` (vàng Rằm·Mùng Một / xanh Hoàng đạo / đỏ Hắc đạo) ở ViewModel, chấm màu trong ô ngày + bảng chú thích dưới carousel; thêm 3 test (UseCase + ViewModel) và 3 khóa `lunarCalendar.legend.*`.
 - 2026-09-21 — initial build by il-screen-builder from `Docs/design_handoff_innerlamp` (`cal`): Entity/UseCase/StateModel/ViewModel/Coordinator/ViewController, 4 feature views, `ILChevronCircleButton`, Home wiring, tests

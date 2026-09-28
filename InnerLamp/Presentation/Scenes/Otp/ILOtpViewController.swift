@@ -27,8 +27,8 @@ final class ILOtpViewController: BaseViewController {
     private var lastShownResendError: String?
 
     // MARK: - UI Elements
-    private lazy var headerView: ILHeaderView = {
-        let view = ILHeaderView(title: "otp.header.title".localized)
+    private lazy var headerView: ILNavBar = {
+        let view = ILNavBar(title: "otp.header.title".localized)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.onBack = { [weak self] in
             self?.backTappedSubject.send(())
@@ -255,8 +255,9 @@ final class ILOtpViewController: BaseViewController {
         )
         let output = viewModel.transform(input: input)
 
+        // No `.receive(on: DispatchQueue.main)`: state is already sent on main (MainActor default),
+        // and deferring it renders the first state only after the appear transition has run.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 

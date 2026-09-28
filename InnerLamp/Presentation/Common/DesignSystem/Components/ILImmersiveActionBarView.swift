@@ -62,6 +62,9 @@ public final class ILImmersiveActionBarView: UIView {
             stack.trailingAnchor.constraint(equalTo: trailingAnchor),
             heightAnchor.constraint(equalToConstant: ILMetrics.inputHeight)
         ])
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILImmersiveActionBarView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     private func configure(_ button: UIButton, title: String, foreground: UIColor) {
@@ -83,9 +86,7 @@ public final class ILImmersiveActionBarView: UIView {
         }
     }
 
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         updateBorders()
     }
 

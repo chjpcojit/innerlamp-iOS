@@ -15,6 +15,8 @@ protocol ILLoginCoordinatorDelegate: AnyObject {
     func loginDidRequestForgotPassword(_ coordinator: ILLoginCoordinator)
     /// Đăng nhập thành công — điều hướng sang luồng chính (chưa có trong scope hiện tại).
     func loginDidFinishLogin(_ coordinator: ILLoginCoordinator)
+    /// Người dùng bấm "Xem trước, đăng nhập sau" — vào luồng chính không cần đăng nhập.
+    func loginDidRequestGuestPreview(_ coordinator: ILLoginCoordinator)
 }
 
 final class ILLoginCoordinator: Coordinator {
@@ -57,6 +59,9 @@ final class ILLoginCoordinator: Coordinator {
                     self.delegate?.loginDidRequestForgotPassword(self)
                 case .didLoginSuccessfully:
                     self.delegate?.loginDidFinishLogin(self)
+                    self.finish()
+                case .goToGuestPreview:
+                    self.delegate?.loginDidRequestGuestPreview(self)
                     self.finish()
                 }
             }

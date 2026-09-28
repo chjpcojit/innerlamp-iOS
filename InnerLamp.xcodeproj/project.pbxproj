@@ -41,19 +41,39 @@
 				Core/Localization/README.md,
 				Core/Logging/README.md,
 				Core/Storage/README.md,
+				Domain/UseCases/Almanac/README.md,
 				Info.plist,
+				Presentation/Scenes/Article/README.md,
+				Presentation/Scenes/Articles/README.md,
+				Presentation/Scenes/Bell/README.md,
+				Presentation/Scenes/EditProfile/README.md,
+				Presentation/Scenes/Events/README.md,
+				Presentation/Scenes/Festivals/README.md,
 				Presentation/Scenes/ForgotPassword/README.md,
 				Presentation/Scenes/Home/README.md,
 				Presentation/Scenes/Library/README.md,
 				Presentation/Scenes/Login/README.md,
 				Presentation/Scenes/LunarCalendar/README.md,
+				Presentation/Scenes/LunarDayDetail/README.md,
 				Presentation/Scenes/Mala/README.md,
+				Presentation/Scenes/MeditationSession/README.md,
+				Presentation/Scenes/MeditationSetup/README.md,
+				Presentation/Scenes/Notifications/README.md,
 				Presentation/Scenes/Onboarding/README.md,
 				Presentation/Scenes/Otp/README.md,
+				Presentation/Scenes/Photos/README.md,
+				Presentation/Scenes/Player/README.md,
+				Presentation/Scenes/Post/README.md,
 				Presentation/Scenes/Profile/README.md,
+				Presentation/Scenes/Reader/README.md,
 				Presentation/Scenes/Sangha/README.md,
+				Presentation/Scenes/Settings/README.md,
 				Presentation/Scenes/SignUp/README.md,
 				Presentation/Scenes/Splash/README.md,
+				Presentation/Scenes/Stats/README.md,
+				Presentation/Scenes/SutraDetail/README.md,
+				Presentation/Scenes/Talk/README.md,
+				Presentation/Scenes/Temple/README.md,
 			);
 			target = 3F39AA20305165770008341C /* InnerLamp */;
 		};
@@ -308,14 +328,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = InnerLamp/InnerLamp.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = UVACRWR6WM;
+				DEVELOPMENT_TEAM = S3Y6BJQ8MM;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = InnerLamp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
@@ -326,6 +347,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = weedigital.vn.InnerLamp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -341,14 +363,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = InnerLamp/InnerLamp.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = UVACRWR6WM;
+				DEVELOPMENT_TEAM = S3Y6BJQ8MM;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = InnerLamp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
@@ -359,6 +382,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = weedigital.vn.InnerLamp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;

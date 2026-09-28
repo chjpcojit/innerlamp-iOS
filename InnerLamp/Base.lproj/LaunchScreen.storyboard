@@ -18,7 +18,7 @@
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                             </imageView>
                         </subviews>
-                        <color key="backgroundColor" name="ILDarkBackground"/>
+                        <color key="backgroundColor" name="ILSplashBackground"/>
                         <constraints>
                             <constraint firstItem="ilL-au-nch" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="ilc-01-lead"/>
                             <constraint firstItem="ilL-au-nch" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" id="ilc-02-trai"/>
@@ -35,8 +35,8 @@
     </scenes>
     <resources>
         <image name="ILLaunchImage" width="440" height="956"/>
-        <namedColor name="ILDarkBackground">
-            <color red="0.0627451" green="0.05490196" blue="0.043137254" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        <namedColor name="ILSplashBackground">
+            <color red="0.94117647" green="0.90196078" blue="0.83137255" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
     </resources>
 </document>

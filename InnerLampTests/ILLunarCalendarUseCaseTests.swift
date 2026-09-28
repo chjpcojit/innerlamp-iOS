@@ -53,6 +53,24 @@ final class ILLunarCalendarUseCaseTests: XCTestCase {
         XCTAssertEqual(midAutumn?.category, .fullMoon)
     }
 
+    func test_getInitialState_computesHoangDaoFlagForEveryDay() {
+        let entity = makeSUT(today: date(2024, 2, 10)).getInitialState()
+
+        // Mỗi ngày phải có cờ Hoàng đạo khớp `ILLunarCalendar.isHoangDao` (tính thật, không tĩnh).
+        for month in entity.months {
+            for day in month.days {
+                let components = calendar.dateComponents([.day, .month, .year], from: day.date)
+                let expected = ILLunarCalendar.isHoangDao(
+                    solarDay: components.day ?? 1,
+                    solarMonth: components.month ?? 1,
+                    solarYear: components.year ?? 2000,
+                    lunarMonth: day.lunarMonth
+                )
+                XCTAssertEqual(day.isHoangDao, expected, "day \(day.id)")
+            }
+        }
+    }
+
     func test_category_forLunarDay_followsFastDayList() {
         XCTAssertEqual(ILLunarCalendarUseCaseImpl.category(forLunarDay: 1), .newMoon)
         XCTAssertEqual(ILLunarCalendarUseCaseImpl.category(forLunarDay: 15), .fullMoon)

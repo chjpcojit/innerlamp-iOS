@@ -14,6 +14,8 @@ final class ILHomeEventsCarouselView: UIView {
     /// Card rộng 84% khung carousel để lộ mép thẻ tháng kế bên (peek).
     private static let cardWidthRatio: CGFloat = 0.84
     private static let cardSpacing: CGFloat = 12
+    /// Release velocity (points/ms) above which a swipe counts as a flick and pages in its direction.
+    private static let flickVelocityThreshold: CGFloat = 0.2
 
     // MARK: - Properties
     var months: [ILHomeEventMonthModel] = [] {
@@ -101,8 +103,6 @@ final class ILHomeEventsCarouselView: UIView {
             $0.removeFromSuperview()
         }
         cardWidthConstraints.removeAll()
-        currentPage = 0
-        scrollView.setContentOffset(.zero, animated: false)
 
         let width = max(cardWidth, 1)
         for month in months {
@@ -113,6 +113,12 @@ final class ILHomeEventsCarouselView: UIView {
             cardWidthConstraints.append(widthConstraint)
             cardsStack.addArrangedSubview(card)
         }
+
+        // Mở carousel ở thẻ tháng hiện tại (nếu có sự kiện), không phải luôn ở thẻ đầu tiên.
+        currentPage = months.firstIndex(where: { $0.isCurrentMonth }) ?? 0
+        // Ép layout ngay để `contentSize` khớp số thẻ vừa dựng trước khi set offset theo trang.
+        layoutIfNeeded()
+        scrollView.setContentOffset(CGPoint(x: CGFloat(currentPage) * pageStride, y: 0), animated: false)
 
         rebuildDots()
     }
@@ -137,17 +143,25 @@ final class ILHomeEventsCarouselView: UIView {
 
 // MARK: - UIScrollViewDelegate
 extension ILHomeEventsCarouselView: UIScrollViewDelegate {
-    /// Snap từng thẻ: tối đa 1 trang mỗi lần vuốt dù vận tốc lớn, tránh nhảy nhiều tháng khi
-    /// người dùng vuốt nhanh.
+    /// Snap one card per swipe. The target page is decided from the page the carousel was
+    /// heading to (`currentPage`) plus the release velocity — not from the projected offset —
+    /// so a short, fast flick always advances one page in the flick direction instead of
+    /// snapping back against the finger (which caused the visible stutter).
     func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
         let stride = pageStride
         guard stride > 0, !months.isEmpty else { return }
-        let current = page(forOffset: scrollView.contentOffset.x)
-        let projected = page(forOffset: targetContentOffset.pointee.x)
-        let target = min(max(projected, current - 1), current + 1)
-        targetContentOffset.pointee = CGPoint(x: CGFloat(target) * stride, y: 0)
-        guard target != currentPage else { return }
-        currentPage = target
+        let target: Int
+        if velocity.x > Self.flickVelocityThreshold {
+            target = currentPage + 1
+        } else if velocity.x < -Self.flickVelocityThreshold {
+            target = currentPage - 1
+        } else {
+            target = min(max(page(forOffset: scrollView.contentOffset.x), currentPage - 1), currentPage + 1)
+        }
+        let clamped = min(max(target, 0), months.count - 1)
+        targetContentOffset.pointee = CGPoint(x: CGFloat(clamped) * stride, y: 0)
+        guard clamped != currentPage else { return }
+        currentPage = clamped
         rebuildDots()
     }
 
@@ -192,7 +206,7 @@ private final class ILHomeEventMonthCardView: UIView {
         let countLabel = UILabel()
         countLabel.font = ILTypography.caption
         countLabel.textColor = ILColors.inkMuted
-        countLabel.text = String(format: "home.events.countFormat".localized, month.events.count)
+        countLabel.text = String(format: "home.events.countFormat".localized, month.totalEventsCount)
 
         let headerRow = UIStackView(arrangedSubviews: [monthLabel, countLabel])
         headerRow.axis = .horizontal
@@ -231,11 +245,12 @@ private final class ILHomeEventMonthCardView: UIView {
             eventsStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             eventsStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -14)
         ])
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILHomeEventMonthCardView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         layer.borderColor = ILColors.border.cgColor
     }
 }

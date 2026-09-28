@@ -28,7 +28,7 @@ final class ILSanghaUseCaseImpl: ILSanghaUseCase {
             ),
             posts: [
                 ILSanghaPostEntity(
-                    id: "post.dieuhanh.1",
+                    id: "post-2",
                     authorName: "sangha.mock.post.author".localized,
                     postedAt: Date().addingTimeInterval(-2 * 60 * 60),
                     authorStreakDays: 41,

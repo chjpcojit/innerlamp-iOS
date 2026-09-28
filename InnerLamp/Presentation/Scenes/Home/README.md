@@ -19,14 +19,14 @@ flow: Login/SignUp/Otp → Home) và hiện là màn lá, chưa dẫn tới màn
 
 | Layer | File | Status | Notes |
 |---|---|---|---|
-| Domain — Entity | `ILHomeEntity.swift` | Done | Tên hiển thị thô, ngày âm lịch, lời dạy trong ngày, số liệu thời khóa/chuỗi ngày/tràng hạt, danh mục thời khóa gợi ý. |
-| Presentation — StateModel | `ILHomeStateModel.swift` | Done | Câu chào đã format, nhãn UI tĩnh (`quoteEyebrow`, `malaHelperText`), tiến độ tính toán (`sessionProgress`, `malaProgress`). |
+| Domain — Entity | `ILHomeEntity.swift` | Done | Tên hiển thị thô, ngày âm lịch (theo ngày chọn), lời dạy trong ngày, số liệu thời khóa/chuỗi ngày/tràng hạt, danh mục thời khóa gợi ý, ảnh chùa đẹp, chùa Việt Nam, bài viết Phật pháp. Lịch tuần là `weekPages` (5 trang) + `selectedDayID`; `ILHomeWeekDayEntity` có `lunarMonth`/`isHoangDao` (Hoàng đạo/Hắc đạo). |
+| Presentation — StateModel | `ILHomeStateModel.swift` | Done | Câu chào đã format, nhãn UI tĩnh (`quoteEyebrow`, `malaHelperText`), tiến độ tính toán (`sessionProgress`, `malaProgress`), các model presentation cho ảnh/chùa/bài viết + lịch tuần (`ILHomeWeekDotKind`, `ILHomeWeekLegendModel`, `ILHomeWeekPageModel`, `weekdayLabels`/`weekPages`/`weekLegend`). |
 | Data — DTO + Mapper | — | N/A (no confirmed API contract yet) | Toàn bộ dữ liệu hiện là mock trong `ILHomeUseCaseImpl`; sẽ thêm DTO/Mapper khi có API dashboard thật. |
-| Domain — UseCase | `ILHomeUseCase.swift` | Done (mock data) | `getInitialState()`/`incrementBead()`/`resetBeads()` là logic thuần (không network); đọc tên hiển thị qua `KeychainService` (tạm dùng chung key với luồng đăng ký, sẽ thay bằng session/current-user service thật). Nội dung lời dạy/thời khóa/thống kê vẫn là mock — có TODO thay bằng `NetworkService` khi có API. |
-| Presentation — ViewModel | `ILHomeViewModel.swift` | Done | `handleViewDidLoad`/`handleBeadTapped`/`handleResetBeadsTapped` đã nối Combine `Input` → `stateSubject`; `applyEntity(_:)` map `Entity -> StateModel`. |
-| Presentation — ViewController | `ILHomeViewController.swift` | Done | UI dùng token `ILColors`/`ILTypography`/`ILMetrics`, không hardcode text/màu/size; header và các card tách thành `View` riêng (`ILHomeGreetingHeaderView`, `ILQuoteCardView`, `ILStatProgressCardView`, ...). |
-| Presentation — Coordinator | `ILHomeCoordinator.swift` | Done | `ILHomeNavEvent` hiện rỗng — subscribe Combine `navigationEventPublisher` nhưng chưa có case nào để xử lý. |
-| Tests | `ILHomeViewModelTests.swift` | Done | 6 test: state khởi tạo khớp UseCase, fallback tên "khách", tăng hạt, reset hạt, mở màn Niệm Phật, mở màn Lịch âm — đều drive qua `Input` publisher. |
+| Domain — UseCase | `ILHomeUseCase.swift` | Done (mock data) | `getInitialState()`/`incrementBead()`/`resetBeads()`/`selectDay()` là logic thuần (không network); đọc tên hiển thị qua `KeychainService` (tạm dùng chung key với luồng đăng ký, sẽ thay bằng session/current-user service thật). Lịch tuần (`makeWeekPages` 5 trang) và cờ Hoàng đạo/Hắc đạo (`ILLunarCalendar.isHoangDao`) tính thật; `selectDay` tính lại thẻ âm lịch theo ngày chọn. Nội dung lời dạy/thời khóa/thống kê/ảnh chùa/chùa Việt Nam/bài viết vẫn là mock — có TODO thay bằng `NetworkService` khi có API. |
+| Presentation — ViewModel | `ILHomeViewModel.swift` | Done | `handleViewDidLoad`/`handleBeadTapped`/`handleResetBeadsTapped`/`handleDayTapped` đã nối Combine `Input` → `stateSubject`; `applyEntity(_:)` map `Entity -> StateModel` (gồm tính `dotKind` cho từng ngày). |
+| Presentation — ViewController | `ILHomeViewController.swift` | Done | UI dùng token `ILColors`/`ILTypography`/`ILMetrics`, không hardcode text/màu/size; header và các khối tách thành `View` riêng (`ILHomeGreetingHeaderView`, `ILHomeWeekCalendarView`, `ILHomeLunarHeroCardView`, `ILHomeEventsCarouselView`, `ILHomePhotoGridView`, `ILHomeTempleCarouselView`, `ILHomeBellCardView`, `ILHomeArticleListView`). Thêm `ILHomeDeityCarouselView` (carousel "Thư viện Phật & Bồ Tát": thẻ 124pt, badge loại, danh xưng, "Vía dd/mm âm lịch"). Thứ tự mục khớp prototype: Ảnh chùa đẹp → Chùa Việt Nam → Thư viện Phật & Bồ Tát → thống kê → tràng hạt → chuông mõ → thời khóa gợi ý → bài viết. |
+| Presentation — Coordinator | `ILHomeCoordinator.swift` | Done | Xử lý `openMala`/`openLunarCalendar`/`openLunarDayDetail`/`openPhotos`/`openBell`/`openFestivals`/`openArticle`/`openArticles`/`openTemple`/`openDeity`/`openMeditationSetup` — subscribe Combine `navigationEventPublisher`, tạo child coordinator tương ứng cho từng case. |
+| Tests | `ILHomeViewModelTests.swift` | Done | 16 test: state khởi tạo khớp UseCase (nay thêm assert lịch tuần/ảnh/chùa/bài viết/chuông mõ), fallback tên "khách", tăng hạt, reset hạt, chọn ngày (cập nhật thẻ âm lịch), chọn lại ngày hiện tại (không gọi UseCase), ánh xạ chấm màu Hoàng đạo/Hắc đạo/Rằm·Mùng Một, mở màn Niệm Phật, mở màn Lịch âm — đều drive qua `Input` publisher. |
 | Wiring | `DIContainer` + `AppCoordinator` | Done | `makeHomeUseCase()`/`makeHomeViewModel()`/`makeHomeCoordinator(navigationController:)`; `ILMainTabCoordinator` tạo `ILHomeCoordinator` trên nav riêng của tab Trang chủ; không còn `ILHomeCoordinatorDelegate`. |
 
 ## Navigation events
@@ -38,26 +38,80 @@ flow: Login/SignUp/Otp → Home) và hiện là màn lá, chưa dẫn tới màn
   `lunarCalendarTapped`): `ILHomeCoordinator.showLunarCalendar()` tạo `ILLunarCalendarCoordinator`
   làm child và push màn Lịch âm (xem `Scenes/LunarCalendar/README.md`).
 
-Các màn con khác của Home (thông báo, hồ sơ, sự kiện, chi tiết thời khóa) chưa build. Các
-điểm chạm tương ứng trên `ILHomeViewController` (`handleNotificationTapped`, `handleAvatarTapped`,
-`handleSuggestedSessionTapped`...) vẫn là TODO nội bộ ViewController,
-chưa forward qua ViewModel/Coordinator vì chưa có coordinator đích.
+- `.openFestivals` — nút "Tất cả" ở mục "Sự kiện Phật giáo" và chạm 1 sự kiện trong carousel
+  (đều đi qua Input `eventsTapped`): `ILHomeCoordinator.showFestivals()` tạo
+  `ILFestivalsCoordinator` làm child và push màn Lịch lễ Phật giáo (xem
+  `Scenes/Festivals/README.md`).
+
+- `.openDeity(id:)` — chạm 1 thẻ trong carousel "Thư viện Phật & Bồ Tát" (Input `deityTapped`):
+  `ILHomeCoordinator.showDeity(_:)` tạo `ILDeityCoordinator` làm child và push màn chi tiết
+  Phật / Bồ Tát (xem `Scenes/Deity/README.md`).
+
+- `.openMeditationSetup` — chạm hàng thiền trong "Thời khóa gợi ý" (Input
+  `suggestedSessionTapped`, ViewModel định tuyến theo `ILHomeSessionKind` — chỉ `.meditation` phát
+  event, khớp `goSetup` trong prototype): `ILHomeCoordinator.showMeditationSetup()` tạo
+  `ILMeditationSetupCoordinator` làm child (present modal full-screen, delegate = Home
+  coordinator; `startSession` hiện chỉ log TODO).
+
+Các màn con khác của Home (thông báo, hồ sơ, Đọc kinh/Cúng dường từ "Thời khóa gợi ý") chưa
+build. `handleNotificationTapped`/`handleAvatarTapped` vẫn là TODO nội bộ ViewController; hàng
+`.sutra`/`.offering` được forward tới ViewModel nhưng chưa phát event (TODO trong
+`handleSuggestedSessionTapped`).
 
 ## Known gaps / not implemented yet
 
-- Lời dạy trong ngày, thống kê thời khóa/chuỗi ngày, danh mục thời khóa gợi ý đều là dữ liệu mock
-  trong `ILHomeUseCaseImpl` — chưa có API dashboard thật để thay thế.
-- Ngày âm lịch (`lunarDateText`) là chuỗi mock cố định — chưa có thư viện chuyển đổi lịch âm.
+- Lời dạy trong ngày, thống kê thời khóa/chuỗi ngày, danh mục thời khóa gợi ý, ảnh chùa đẹp,
+  chùa Việt Nam và bài viết Phật pháp đều là dữ liệu mock trong `ILHomeUseCaseImpl` — chưa có
+  API tương ứng để thay thế.
+- Ngày/tháng/năm âm lịch và cờ Hoàng đạo/Hắc đạo tính thật bằng `ILLunarCalendar`. Câu kinh
+  trích trong thẻ âm lịch lớn là 1 câu ngẫu nhiên từ catalog kinh trong Core Data
+  (`ILSutraQuoteUseCase.randomQuote()` qua `ILHomeUseCase.loadRandomVerse()`), nạp mỗi lần
+  `viewDidLoad`; đổi ngày trong dải lịch tuần giữ nguyên câu đã nạp. Catalog rỗng/đọc lỗi thì
+  dùng câu tĩnh mặc định (`home.lunar.verse.*`). "Lời khuyên trong ngày" (ngày trai giới/trai/thường)
+  chưa hiển thị (chỉ dùng ở màn Chi tiết ngày âm, chưa build).
 - Tên hiển thị đọc tạm qua `KeychainService` dùng chung key với luồng đăng ký — sẽ thay bằng
   session/current-user service khi có.
-- Các điểm điều hướng phụ (thông báo, hồ sơ, lịch âm, sự kiện, chi tiết thời khóa) chưa có
-  coordinator đích nên vẫn là TODO.
+- Còn là TODO nội bộ ViewController/ViewModel: chuông thông báo, avatar (hồ sơ), "Tìm chùa"
+  (Đạo tràng), "Xem tất cả" Phật & Bồ Tát (màn danh sách chưa build), thẻ thống kê
+  (Nhật ký/Thống kê), hàng Đọc kinh/Cúng dường trong "Thời khóa gợi ý".
 - Số hạt trên thẻ tràng hạt chưa đồng bộ với màn Niệm Phật toàn màn hình (cả hai chỉ giữ trong
   bộ nhớ, chưa có Repository lưu local) — xem `Scenes/Mala/README.md`.
 - Không có UI test — chưa được yêu cầu.
 
 ## Changelog
 
+- 2026-09-28 — thêm carousel "Thư viện Phật & Bồ Tát" theo design handoff: tạo
+  `ILHomeDeityCarouselView` (trước đó được tham chiếu nhưng chưa có file → build lỗi);
+  `ILHomeDeityEntity.memorialDay` + `ILHomeUseCaseImpl.primaryMemorialDay(of:)` (ưu tiên ngày
+  "Đản"/"Vía"); `ILHomeDeityModel.kindLabel`/`memorialText`; header "Xem tất cả" (TODO — màn
+  danh sách Phật & Bồ Tát chưa build); nối `makeDeityUseCase/ViewModel/Coordinator` vào
+  `DIContainer` và truyền `deityUseCase` cho `ILHomeUseCaseImpl`; thêm key `home.deity.*`,
+  `deity.*` vào `vi.json`; thêm 5 test (ViewModel: `openDeity`, mapping thẻ; UseCase: chọn ngày
+  vía, map catalog).
+
+- 2026-09-27 — đổi mục "Sự kiện Phật giáo" ở Trang chủ từ màn "Sự kiện & khóa học" sang màn
+  "Lịch lễ Phật giáo" theo design handoff: đổi `ILHomeNavEvent.openEvents` →
+  `openFestivals` + `ILHomeCoordinator.showFestivals()` (mở `ILFestivalsCoordinator`), cập nhật
+  test `.openEvents` → `.openFestivals`.
+
+- 2026-09-27 — mở rộng carousel "Sự kiện Phật giáo" từ 3 tháng sang cả năm dương lịch hiện tại
+  (1/1 → 31/12): `ILHomeUseCaseImpl.loadBuddhistEventMonths(around:)` dùng
+  `calendar.dateInterval(of: .year, for: date)` thay cho tháng hiện tại + 2 tháng sau.
+
+- 2026-09-27 — nối chạm 1 sự kiện trong carousel "Sự kiện Phật giáo" vào màn Sự kiện & khóa học
+  (`handleEventTapped` giờ gửi `eventsTappedSubject`, trùng đường `.openEvents` với nút "Tất cả").
+
+- 2026-09-27 — cập nhật dải lịch tuần Trang chủ theo design handoff: thêm hàng nhãn thứ (Hai→CN, CN đỏ), dải 5 tuần vuốt ngang (2 trước/hiện tại/2 sau) với nhãn khoảng tháng, chấm màu Hoàng đạo (xanh) / Hắc đạo (đỏ) / Rằm·Mùng Một (vàng) + bảng chú thích; thêm `ILLunarCalendar.isHoangDao` và 4 color asset `auspicious`/`auspiciousOnDark`/`inauspicious`/`inauspiciousOnDark`; chạm 1 ngày giờ chọn ngày và cập nhật thẻ âm lịch lớn (`ILHomeUseCase.selectDay` + Input `dayTapped`); thêm 3 test.
+
+- 2026-09-27 — thêm `ILHomeSessionKind` (`meditation`/`sutra`/`offering`) vào
+  `ILHomeSuggestedSessionEntity`; Input `suggestedSessionTapped` + `ILHomeNavEvent.openMeditationSetup`;
+  `ILHomeCoordinator.showMeditationSetup()` mở màn Chuẩn bị thiền khi chạm hàng thiền trong
+  "Thời khóa gợi ý"; thêm 2 test.
+
+- 2026-09-26 — thêm `ILHomeNavEvent.openEvents` + Input `eventsTapped` (nút "Tất cả" ở mục
+  "Sự kiện Phật giáo"); `ILHomeCoordinator.showEvents()` mở màn Sự kiện & khóa học
+  (`ILEventsCoordinator`); thêm 1 test.
+- 2026-09-25 — cập nhật Trang chủ theo design handoff: thêm khối "Ảnh chùa đẹp" (`ILHomePhotoGridView`), carousel "Chùa Việt Nam" (`ILHomeTempleCarouselView`), thẻ "Chuông mõ" (`ILHomeBellCardView`) và danh sách "Bài viết Phật pháp hay" (`ILHomeArticleListView`); thêm `ILHomePhotoEntity`/`ILHomeTempleEntity`/`ILHomeArticleEntity` (Domain) + các model presentation tương ứng; mock data trong `ILHomeUseCaseImpl` (có TODO thay bằng API khi có contract); sắp lại thứ tự mục (thẻ thống kê xuống sau khối "Chùa Việt Nam") khớp prototype; thêm localize key `home.photos.*`/`home.temple.*`/`home.bell.*`/`home.article.*`.
 - 2026-09-21 — thêm `ILHomeNavEvent.openLunarCalendar` + Input `lunarCalendarTapped` (link "Lịch âm" và thẻ âm lịch lớn); `ILHomeCoordinator.showLunarCalendar()` mở màn Lịch âm (`ILLunarCalendarCoordinator`); thêm 1 test.
 - 2026-09-20 — thêm `ILHomeNavEvent.openMala` + Input `malaFullscreenTapped`; `ILHomeCoordinator.showMala()` mở màn Niệm Phật (`ILMalaCoordinator`); thêm 1 test.
 - 2026-09-20 — Home trở thành tab đầu của `ILMainTabBarController`: bỏ `ILBottomNavBar` khỏi màn, bỏ Input `libraryTabTapped`, `ILHomeNavEvent.openLibrary` và `ILHomeCoordinatorDelegate` (đổi tab do tab bar controller lo, không qua ViewModel).

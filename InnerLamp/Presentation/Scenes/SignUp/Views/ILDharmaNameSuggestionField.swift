@@ -140,6 +140,9 @@ final class ILDharmaNameSuggestionField: UIView, UITextFieldDelegate {
             ringView.widthAnchor.constraint(equalToConstant: 13),
             ringView.heightAnchor.constraint(equalToConstant: 13)
         ])
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILDharmaNameSuggestionField, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     private func updatePlaceholder() {
@@ -151,9 +154,7 @@ final class ILDharmaNameSuggestionField: UIView, UITextFieldDelegate {
 
     // `layer.borderColor` là CGColor tĩnh, không tự đảo theo trait — refresh thủ công khi hệ
     // thống đổi light/dark.
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         inputContainer.layer.borderColor = ILColors.ink.withAlphaComponent(0.12).cgColor
         ringView.layer.borderColor = ILColors.goldDeep.cgColor
     }

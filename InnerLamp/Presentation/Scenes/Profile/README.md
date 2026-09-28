@@ -21,20 +21,20 @@ the tab bar, not by this screen). Design: prototype screen `profile`
 | Domain — UseCase | `ILProfileUseCase.swift` | Skeleton | `getProfile()` returns a static mock (TODO: `ILProfileRepository` → `ILUserRepository` + network). |
 | Presentation — ViewModel | `ILProfileViewModel.swift` | Done | 10 Inputs, Entity → StateModel mapping, compact-count / reminder / heatmap-alpha / initial formatting. |
 | Presentation — ViewController | `ILProfileViewController.swift` | Done | Built from `ILStatSummaryCardView`, `ILHeatmapGridView` (new, shared), `ILSectionHeaderView`, `ILSettingRow`, `ILFlameView` + `Views/`. Visual QA pending. |
-| Presentation — Coordinator | `ILProfileCoordinator.swift` | Partial | All 9 nav events are TODO (target screens not built). |
+| Presentation — Coordinator | `ILProfileCoordinator.swift` | Partial | `openSettings`, `openNotifications`, `editProfile` push their screens; the rest are TODO (target screens not built). |
 | Tests | `ILProfileViewModelTests.swift` | Done | 1 test per Input + state mapping (full / empty / paid plan) + formatting helpers. |
 | Wiring | `DIContainer` + `ILMainTabCoordinator` | Done | Replaces the Me tab's `ILTabPlaceholderViewController`. |
 
 ## Navigation events
 
-- `editProfile` — "Sửa hồ sơ" pill tapped. TODO (`edit` not built).
+- `editProfile` — "Sửa hồ sơ" pill tapped. Pushes `ILEditProfileCoordinator`.
 - `openStats` — heatmap card tapped. TODO (`stats` not built).
 - `openAwards` — "Xem cả N dấu ấn" link or badges row tapped. TODO (`awards` not built).
 - `openOffering` — merit card tapped. TODO (`offer` not built).
 - `openPaywall` — Sen Vàng card tapped. TODO (`paywall` modal not built).
 - `openReminder` — "Chuông tỉnh thức" row tapped. TODO (`remind` not built).
-- `openSettings` — "Cài đặt" row tapped. TODO (`settings` not built).
-- `openNotifications` — "Thông báo" row tapped. TODO (`notif` not built).
+- `openSettings` — "Cài đặt" row tapped. Pushed to `ILSettingsCoordinator`.
+- `openNotifications` — "Thông báo" row tapped. Pushed to `ILNotificationsCoordinator`.
 - `openCommunity(id:)` — "Đạo tràng của tôi" row tapped (only when the user has a community). TODO (`temple` not built).
 
 ## Known gaps / not implemented yet
@@ -53,3 +53,4 @@ the tab bar, not by this screen). Design: prototype screen `profile`
 ## Changelog
 
 - 2026-09-20 — initial implementation from design handoff prototype screen `profile` (il-screen-builder). Added shared `ILStatSummaryCardView`, `ILHeatmapGridView`, `ILTypography.statValue/microCaption`.
+- 2026-09-27 — `editProfile` now opens the new Edit Profile screen (il-screen-builder, `EditProfile`).

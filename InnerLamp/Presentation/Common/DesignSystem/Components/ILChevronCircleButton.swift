@@ -44,8 +44,7 @@ public final class ILChevronCircleButton: UIControl {
         chevronLayer.path = makeChevronPath().cgPath
     }
 
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
+    private func applyColorAppearanceChange() {
         applyColors()
     }
 
@@ -71,6 +70,9 @@ public final class ILChevronCircleButton: UIControl {
             widthAnchor.constraint(equalToConstant: Self.diameter),
             heightAnchor.constraint(equalToConstant: Self.diameter)
         ])
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILChevronCircleButton, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     private func applyColors() {

@@ -22,7 +22,7 @@ final class ILMalaViewController: BaseViewController {
     // MARK: - UI Elements
     private lazy var backgroundView = ILImmersiveBackgroundView()
 
-    private lazy var headerView = ILHeaderView()
+    private lazy var headerView = ILNavBar()
 
     private lazy var countDisplayView = ILMalaCountDisplayView()
 
@@ -156,8 +156,9 @@ final class ILMalaViewController: BaseViewController {
         )
         let output = viewModel.transform(input: input)
 
+        // No `.receive(on: DispatchQueue.main)`: state is already sent on main (MainActor default),
+        // and deferring it renders the first state only after the appear transition has run.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 
@@ -200,8 +201,8 @@ final class ILMalaViewController: BaseViewController {
         lastRenderedCount = model.count
     }
 
-    /// Rung nhẹ mỗi phần tư tràng, rung "thành công" khi đủ tràng.
-    /// TODO: phát chuông ở hạt cuối tràng khi có audio service/asset chuông.
+    /// Haptic feedback per milestone: light on each quarter, "success" on a full round. The bead
+    /// "click" and the completion bell are played by `ILMalaViewModel` via its audio service.
     private func playFeedback(for milestone: ILMalaMilestone) {
         switch milestone {
         case .quarter:

@@ -119,6 +119,9 @@ public final class ILMalaStrandView: UIView {
         layer.addSublayer(rightTickLayer)
 
         updateColors()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILMalaStrandView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     public override func layoutSubviews() {
@@ -148,9 +151,7 @@ public final class ILMalaStrandView: UIView {
         CATransaction.commit()
     }
 
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         updateColors()
     }
 

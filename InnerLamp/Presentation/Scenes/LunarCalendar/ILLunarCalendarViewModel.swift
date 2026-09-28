@@ -9,6 +9,8 @@ import Combine
 enum ILLunarCalendarNavEvent: Equatable {
     /// Nút ✕ ở header — đóng màn Lịch âm.
     case close
+    /// Chạm 1 ô ngày trong lưới tháng — mở màn "Chi tiết ngày âm" cho ngày dương đó.
+    case openDayDetail(date: Date)
 }
 
 protocol ILLunarCalendarViewModelProtocol: ViewModelType {
@@ -113,7 +115,9 @@ final class ILLunarCalendarViewModel: ILLunarCalendarViewModelProtocol {
     }
 
     private func handleDayTapped(id: String) {
-        guard id != currentEntity.selectedDayID else { return }
+        // Tapping a day only changes the selection (hero card + highlight) — no navigation.
+        guard id != currentEntity.selectedDayID,
+              currentEntity.day(withID: id) != nil else { return }
         applyEntity(useCase.selectDay(id: id, in: currentEntity))
     }
 
@@ -157,11 +161,18 @@ final class ILLunarCalendarViewModel: ILLunarCalendarViewModelProtocol {
                         lunarText: lunarText(for: day),
                         isToday: day.id == entity.todayID,
                         isSelected: day.id == entity.selectedDayID,
-                        isFastDay: day.isFastDay
+                        isFastDay: day.isFastDay,
+                        dotKind: Self.dotKind(lunarDay: day.lunarDay, isHoangDao: day.isHoangDao)
                     )
                 }
             )
         }
+
+        state.legend = [
+            ILLunarCalendarLegendModel(text: "lunarCalendar.legend.hoangDao".localized, dotKind: .hoangDao),
+            ILLunarCalendarLegendModel(text: "lunarCalendar.legend.hacDao".localized, dotKind: .hacDao),
+            ILLunarCalendarLegendModel(text: "lunarCalendar.legend.newMoonFullMoon".localized, dotKind: .newMoonFullMoon)
+        ]
 
         if entity.months.indices.contains(page) {
             let month = entity.months[page]
@@ -217,6 +228,12 @@ final class ILLunarCalendarViewModel: ILLunarCalendarViewModelProtocol {
         case .fullMoon: return "lunarCalendar.day.fullMoon".localized
         case .fastDay, .ordinary: return "\(day.lunarDay)"
         }
+    }
+
+    /// Loại chấm màu của 1 ô ngày — Rằm/Mùng Một (vàng) ưu tiên hơn Hoàng đạo/Hắc đạo (xanh/đỏ).
+    private static func dotKind(lunarDay: Int, isHoangDao: Bool) -> ILLunarCalendarDayDotKind {
+        if lunarDay == 1 || lunarDay == 15 { return .newMoonFullMoon }
+        return isHoangDao ? .hoangDao : .hacDao
     }
 
     private static func heroTitleKey(for category: ILLunarCalendarDayCategory) -> String {

@@ -15,19 +15,24 @@ import UIKit
 public final class ILLampGlowView: UIView {
 
     // MARK: - Style
-    /// Bảng màu của đèn theo nền màn chứa nó. Splash/Session/Paywall nằm trên nền tối,
-    /// Login/Onboarding intro nằm trên nền sáng — design handoff cho hai bên hai mức
-    /// alpha và hai sắc độ lửa khác nhau, nên khai báo tường minh thay vì đoán theo trait.
+    /// Bảng màu của đèn theo nền màn chứa nó. Splash dùng `.splash` (đảo theo light/dark qua
+    /// bộ `--il-spl-bd`/`--il-spl-halo`), Session/Paywall nằm trên nền tối, Login/Onboarding
+    /// intro nằm trên nền sáng — design handoff cho mỗi bên mức alpha và sắc độ lửa khác nhau,
+    /// nên khai báo tường minh thay vì đoán theo trait.
     public enum Style {
         /// Nền tối — viền `gold` 0.50, fill trong vòng `goldBright` 0.28, lửa `goldLight` → `goldBright`.
         case onDark
         /// Nền sáng — viền `gold` 0.45, fill trong vòng `goldBright` 0.24, lửa `goldSoft` → `goldBright`.
         case onLight
+        /// Màn Splash — viền/fill đổi theo light/dark (`--il-spl-bd`/`--il-spl-halo`), lửa luôn
+        /// `goldLight` → `goldBright` (theo design, ngọn lửa không đổi theo theme).
+        case splash
 
         var borderColor: UIColor {
             switch self {
             case .onDark: return ILColors.goldBorderOnDark
             case .onLight: return ILColors.goldBorder
+            case .splash: return ILColors.splashBorder
             }
         }
 
@@ -35,12 +40,13 @@ public final class ILLampGlowView: UIView {
             switch self {
             case .onDark: return ILColors.goldRingFill
             case .onLight: return ILColors.goldRingFillSoft
+            case .splash: return ILColors.splashHalo
             }
         }
 
         var flameTopColor: UIColor {
             switch self {
-            case .onDark: return ILColors.goldLight
+            case .onDark, .splash: return ILColors.goldLight
             case .onLight: return ILColors.goldSoft
             }
         }
@@ -105,16 +111,11 @@ public final class ILLampGlowView: UIView {
         ring.translatesAutoresizingMaskIntoConstraints = false
         ring.clipsToBounds = false
         ring.layer.borderWidth = 1
-        ring.layer.borderColor = style.borderColor.cgColor
 
         // Fill trong vòng: sáng nhất ở 72% chiều cao (ngay dưới chân lửa), tắt dần
         // ra mép — dùng gradient layer vì `CAGradientLayer` chỉ hỗ trợ radial đối xứng
         // qua `startPoint`/`endPoint`, đủ để tái tạo đúng cảm giác của design.
         ringFillLayer.type = .radial
-        ringFillLayer.colors = [
-            style.fillColor.cgColor,
-            ILColors.goldGlowClear.cgColor
-        ]
         ringFillLayer.locations = [0.0, 0.68]
         ringFillLayer.startPoint = CGPoint(x: 0.5, y: 0.72)
         ringFillLayer.endPoint = CGPoint(x: 1.0, y: 1.0)
@@ -122,6 +123,8 @@ public final class ILLampGlowView: UIView {
 
         ring.addSubview(flameView)
         addSubview(ring)
+
+        applyStyleColors()
 
         NSLayoutConstraint.activate([
             ring.topAnchor.constraint(equalTo: topAnchor),
@@ -136,6 +139,9 @@ public final class ILLampGlowView: UIView {
         ])
 
         applyMetrics()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILLampGlowView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     private func applyMetrics() {
@@ -153,6 +159,21 @@ public final class ILLampGlowView: UIView {
     public override func layoutSubviews() {
         super.layoutSubviews()
         ringFillLayer.frame = ring.bounds
+    }
+
+    private func applyColorAppearanceChange() {
+        applyStyleColors()
+    }
+
+    /// `ring.layer.borderColor` và `ringFillLayer.colors` không tự đảo theo trait — resolve lại
+    /// theo appearance hiện tại. Chỉ `.splash` dùng màu động; `.onDark`/`.onLight` là màu cố
+    /// định nên gọi lại vô hại.
+    private func applyStyleColors() {
+        ring.layer.borderColor = style.borderColor.resolvedColor(with: traitCollection).cgColor
+        ringFillLayer.colors = [
+            style.fillColor.resolvedColor(with: traitCollection).cgColor,
+            ILColors.goldGlowClear.cgColor
+        ]
     }
 
     // MARK: - Animations

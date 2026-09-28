@@ -71,6 +71,9 @@ public class ILAlertOverlayView: UIView {
         addGestureRecognizer(swipe)
 
         applyLayerColors()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILAlertOverlayView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     public override func layoutSubviews() {
@@ -78,9 +81,7 @@ public class ILAlertOverlayView: UIView {
         layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: cornerRadius).cgPath
     }
 
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         applyLayerColors()
     }
 

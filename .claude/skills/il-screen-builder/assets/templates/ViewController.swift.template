@@ -18,7 +18,7 @@ final class IL{{Feature}}ViewController: BaseViewController {
     // MARK: - UI Elements
     // TODO: declare each subview as `private lazy var` here (configured inline in its
     // initializer closure) — never build it inside setupViews(). Prefer reusable IL*
-    // components (ILButton, ILField, ILRow, ILHeaderView, ...) and ILColors/ILTypography/
+    // components (ILButton, ILField, ILRow, ILNavBar, ...) and ILColors/ILTypography/
     // ILMetrics tokens over ad-hoc UIKit primitives. No literal text ("key".localized instead,
     // key added to Resources/Localization/vi.json), no literal font size (ILTypography preset
     // instead), no literal color (ILColors instead) — see references/design_tokens_rules.md.
@@ -64,8 +64,12 @@ final class IL{{Feature}}ViewController: BaseViewController {
         )
         let output = viewModel.transform(input: input)
 
+        // Never add `.receive(on: DispatchQueue.main)` here: the app target defaults to MainActor
+        // isolation, so the ViewModel (and every `Task { }` inside it) already sends on main.
+        // Hopping to the next run loop would deliver the initial state only after the appear
+        // transition has laid the view out empty, so self-sized blocks visibly grow mid-transition
+        // on first appearance. See references/mvvm_pattern.md §Main-thread delivery.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 

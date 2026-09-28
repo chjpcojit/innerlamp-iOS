@@ -35,6 +35,9 @@ final class ILSplashWordmarkLabel: UILabel {
     private let wordmark: String
     private var displayLink: CADisplayLink?
     private var animationStart: CFTimeInterval = 0
+    /// Tiến độ `ilword` hiện tại — giữ lại để vẽ lại khi theme đổi (màu chữ resolve theo
+    /// light/dark, `attributedText`/`shadowColor` không tự đảo theo trait).
+    private var progress: CGFloat = 0
 
     // MARK: - Initializer
     init(text: String) {
@@ -43,10 +46,13 @@ final class ILSplashWordmarkLabel: UILabel {
         translatesAutoresizingMaskIntoConstraints = false
         numberOfLines = 1
         textAlignment = .center
-        // Bóng loang thay cho blur — cùng màu chữ để không ám màu lạ lên nền tối.
-        layer.shadowColor = ILColors.inkOnDark.cgColor
+        // Bóng loang thay cho blur — cùng màu chữ để không ám màu lạ lên nền.
+        layer.shadowColor = ILColors.splashInk.cgColor
         layer.shadowOffset = .zero
         apply(progress: 0)
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILSplashWordmarkLabel, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     required init?(coder: NSCoder) {
@@ -93,24 +99,33 @@ final class ILSplashWordmarkLabel: UILabel {
 
     /// Vẽ lại chuỗi ở mức tiến độ `progress` (0 = trạng thái đầu, 1 = trạng thái nghỉ).
     private func apply(progress: CGFloat) {
+        self.progress = progress
+
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center
 
         let font = ILTypography.splashWordmark
         let letterSpacingEm = Timing.startLetterSpacingEm * (1 - progress)
+        let ink = ILColors.splashInk.resolvedColor(with: traitCollection)
 
         attributedText = NSAttributedString(
             string: wordmark,
             attributes: [
                 .font: font,
-                .foregroundColor: ILColors.inkOnDark,
+                .foregroundColor: ink,
                 .kern: font.pointSize * letterSpacingEm,
                 .paragraphStyle: paragraph
             ]
         )
 
+        layer.shadowColor = ink.cgColor
         layer.opacity = Float(progress)
         layer.shadowRadius = Blur.startRadius * (1 - progress)
         layer.shadowOpacity = Blur.startOpacity * Float(1 - progress)
+    }
+
+    private func applyColorAppearanceChange() {
+        // Vẽ lại đúng tiến độ hiện tại — `apply(progress:)` chỉ đổi màu, không chạy lại hiệu ứng.
+        apply(progress: progress)
     }
 }

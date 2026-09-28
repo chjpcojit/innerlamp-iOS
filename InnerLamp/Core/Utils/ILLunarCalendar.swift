@@ -157,26 +157,603 @@ enum ILLunarCalendar {
         return solarToLunar(day: comps.day ?? 1, month: comps.month ?? 1, year: comps.year ?? 2000)
     }
 
-    // MARK: - Can Chi (Thiên Can – Địa Chi)
+    /// Chỉ số (0...11) của Thần Sát cai quản ngày trong vòng 12 Thần Sát (Thanh Long Hoàng Đạo):
+    /// Thanh Long khởi tại `((lunarMonth - 1) % 6) * 2` rồi thuận hành; `dz = (jd + 1) % 12` là
+    /// Địa Chi của ngày. Chỉ số này quyết định tên sao (`dayStarName`) và tốt/xấu (`isHoangDao`).
+    static func dayStarIndex(solarDay: Int, solarMonth: Int, solarYear: Int, lunarMonth: Int) -> Int {
+        let dz = (jdFromDate(day: solarDay, month: solarMonth, year: solarYear) + 1) % 12
+        let shift = ((lunarMonth - 1) % 6) * 2
+        return ((dz - shift) % 12 + 12) % 12
+    }
 
-    private static let canNames = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"]
-    private static let chiNames = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"]
+    /// `true` nếu ngày là "Hoàng đạo" (ngày tốt), `false` nếu "Hắc đạo" (ngày xấu) — 12 Thần Sát
+    /// (Thanh Long Hoàng Đạo): ngày tốt khi Địa Chi của ngày rơi vào 6 sao tốt `{0, 1, 4, 5, 8, 9}`
+    /// (Thanh Long, Minh Đường, Kim Quỹ, Bảo Quang, Ngọc Đường, Tư Mệnh).
+    static func isHoangDao(solarDay: Int, solarMonth: Int, solarYear: Int, lunarMonth: Int) -> Bool {
+        isGoodDayStar(dayStarIndex(solarDay: solarDay, solarMonth: solarMonth, solarYear: solarYear, lunarMonth: lunarMonth))
+    }
+
+    /// `true` nếu chỉ số Thần Sát (0...11) là 1 trong 6 sao Hoàng đạo (ngày tốt).
+    static func isGoodDayStar(_ index: Int) -> Bool {
+        goodStarOffsets.contains(((index % 12) + 12) % 12)
+    }
+
+    /// Tên Thần Sát theo chỉ số 0...11 — 6 sao Hoàng đạo: Thanh Long (0), Minh Đường (1),
+    /// Kim Quỹ (4), Bảo Quang (5), Ngọc Đường (8), Tư Mệnh (9); 6 sao Hắc đạo: Thiên Hình (2),
+    /// Chu Tước (3), Bạch Hổ (6), Thiên Lao (7), Huyền Vũ (10), Câu Trần (11).
+    static func dayStarName(_ index: Int) -> String {
+        "lunarCalendar.star.\(((index % 12) + 12) % 12)".localized
+    }
+
+    // MARK: - Can Chi (Thiên Can – Địa Chi)
 
     /// Tên năm âm theo Can Chi — vd năm âm lịch 2024 -> "Giáp Thìn".
     static func canChiYear(_ lunarYear: Int) -> String {
-        let can = canNames[((lunarYear + 6) % 10 + 10) % 10]
-        let chi = chiNames[((lunarYear + 8) % 12 + 12) % 12]
-        return "\(can) \(chi)"
+        let can = "lunarCalendar.can.\(((lunarYear + 6) % 10 + 10) % 10)".localized
+        let chi = "lunarCalendar.chi.\(((lunarYear + 8) % 12 + 12) % 12)".localized
+        return String(format: "lunarCalendar.year.format".localized, can, chi)
     }
-
-    private static let lunarMonthNames = [
-        "Giêng", "Hai", "Ba", "Tư", "Năm", "Sáu", "Bảy", "Tám", "Chín", "Mười", "Mười Một", "Chạp"
-    ]
 
     /// "Tháng Bảy" — tháng nhuận thêm hậu tố "(nhuận)".
     static func lunarMonthLabel(_ month: Int, isLeap: Bool) -> String {
-        let index = max(1, min(12, month)) - 1
-        let name = lunarMonthNames[index]
-        return isLeap ? "Tháng \(name) (nhuận)" : "Tháng \(name)"
+        let index = max(1, min(12, month))
+        let name = "lunarCalendar.month.\(index)".localized
+        let formatKey = isLeap ? "lunarCalendar.month.label.leap" : "lunarCalendar.month.label"
+        return String(format: formatKey.localized, name)
     }
+
+    // MARK: - Can Chi ngày/tháng & giờ hoàng đạo (dùng cho màn Chi tiết ngày âm)
+
+    /// Tên Thiên Can theo chỉ số 0...9 (an toàn với mọi chỉ số nguyên).
+    static func canName(_ index: Int) -> String {
+        "lunarCalendar.can.\(((index % 10) + 10) % 10)".localized
+    }
+
+    /// Tên Địa Chi theo chỉ số 0...11 (an toàn với mọi chỉ số nguyên).
+    static func chiName(_ index: Int) -> String {
+        "lunarCalendar.chi.\(((index % 12) + 12) % 12)".localized
+    }
+
+    /// Chỉ số Thiên Can & Địa Chi (0-based) của 1 ngày dương:
+    /// `can = (jd + 9) % 10`, `chi = (jd + 1) % 12`.
+    static func dayCanChiIndices(day: Int, month: Int, year: Int) -> (can: Int, chi: Int) {
+        let jd = jdFromDate(day: day, month: month, year: year)
+        return (((jd + 9) % 10 + 10) % 10, ((jd + 1) % 12 + 12) % 12)
+    }
+
+    /// Tên Can Chi của 1 ngày dương — ví dụ "Giáp Tý".
+    static func canChiDay(day: Int, month: Int, year: Int) -> String {
+        let indices = dayCanChiIndices(day: day, month: month, year: year)
+        return "\(canName(indices.can)) \(chiName(indices.chi))"
+    }
+
+    /// Tên Can Chi của 1 tháng âm:
+    /// `can = (lunarYear*12 + lunarMonth + 3) % 10`, `chi = (lunarMonth + 1) % 12`.
+    static func canChiMonth(lunarYear: Int, lunarMonth: Int) -> String {
+        let can = ((lunarYear * 12 + lunarMonth + 3) % 10 + 10) % 10
+        let chi = ((lunarMonth + 1) % 12 + 12) % 12
+        return "\(canName(can)) \(chiName(chi))"
+    }
+
+    /// 6 vị trí "Hoàng đạo" trong vòng 12 Thần Sát (0-based): Thanh Long (0), Minh Đường (1),
+    /// Kim Quỹ (4), Bảo Quang (5), Ngọc Đường (8), Tư Mệnh (9).
+    private static let goodStarOffsets = [0, 1, 4, 5, 8, 9]
+
+    /// Chỉ số Địa Chi (0...11) của 6 giờ hoàng đạo trong ngày, theo thứ tự giờ trong ngày.
+    ///
+    /// Quy tắc (12 Thần Sát áp cho giờ): Thanh Long khởi giờ theo Địa Chi của ngày rồi thuận hành:
+    ///   Tý/Ngọ → Thân, Sửu/Mùi → Tuất, Dần/Thân → Tý, Mão/Dậu → Dần, Thìn/Tuất → Thìn, Tỵ/Hợi → Ngọ.
+    /// Tức `start = ((chiNgay - 2) * 2) mod 12`; giờ tốt = `start + {0,1,4,5,8,9}` (mod 12).
+    static func goodHourChiIndices(dayChiIndex: Int) -> [Int] {
+        let chi = ((dayChiIndex % 12) + 12) % 12
+        let start = (((chi - 2) * 2) % 12 + 12) % 12
+        return goodStarOffsets.map { (start + $0) % 12 }.sorted()
+    }
+
+    /// Chỉ số Địa Chi của tuổi xung khắc trong ngày — chi đối xung (Lục Xung, cách 6 vị trí).
+    static func clashChiIndex(dayChiIndex: Int) -> Int {
+        ((dayChiIndex + 6) % 12 + 12) % 12
+    }
+
+    /// Chỉ số Thiên Can (0...9) của 2 tuổi xung khắc theo Can của ngày, xếp mạnh nhất trước:
+    ///   +6: Thiên Can tương xung (Giáp–Canh, Ất–Tân, Bính–Nhâm, Đinh–Quý, Mậu–Giáp, Kỷ–Ất).
+    ///   +4: Ngũ hành tương khắc (Mộc khắc Thổ, Hỏa khắc Kim, Thổ khắc Thủy, Kim khắc Mộc, Thủy khắc Hỏa).
+    /// Ví dụ ngày Giáp (0) → Canh (6) và Mậu (4); ghép với `clashChiIndex` ra Canh Ngọ / Mậu Ngọ.
+    static func clashCanIndices(dayCanIndex: Int) -> [Int] {
+        let can = ((dayCanIndex % 10) + 10) % 10
+        return [(can + 6) % 10, (can + 4) % 10]
+    }
+
+    /// Hướng Hỷ thần theo Thiên Can của ngày (0...9), theo cặp Can (mod 5):
+    ///   Giáp/Kỷ → Đông Bắc, Ất/Canh → Tây Bắc, Bính/Tân → Tây Nam, Đinh/Nhâm → Nam, Mậu/Quý → Đông Nam.
+    static func joyStarDirection(dayCanIndex: Int) -> String {
+        joyStarDirectionKeys[((dayCanIndex % 5) + 5) % 5].localized
+    }
+
+    /// Hướng Tài thần theo Thiên Can của ngày (0...9):
+    ///   Giáp/Ất → Đông Nam, Bính/Đinh → Đông, Mậu → Bắc, Kỷ → Nam,
+    ///   Canh/Tân → Tây Nam, Nhâm → Tây, Quý → Tây Bắc.
+    static func wealthStarDirection(dayCanIndex: Int) -> String {
+        wealthStarDirectionKeys[((dayCanIndex % 10) + 10) % 10].localized
+    }
+
+    private static let joyStarDirectionKeys = [
+        "lunarCalendar.direction.northeast", "lunarCalendar.direction.northwest",
+        "lunarCalendar.direction.southwest", "lunarCalendar.direction.south",
+        "lunarCalendar.direction.southeast"
+    ]
+
+    private static let wealthStarDirectionKeys = [
+        "lunarCalendar.direction.southeast", "lunarCalendar.direction.southeast",
+        "lunarCalendar.direction.east", "lunarCalendar.direction.east",
+        "lunarCalendar.direction.north", "lunarCalendar.direction.south",
+        "lunarCalendar.direction.southwest", "lunarCalendar.direction.southwest",
+        "lunarCalendar.direction.west", "lunarCalendar.direction.northwest"
+    ]
+
+    // MARK: - Hạc thần (hướng xấu cần tránh khi xuất hành)
+
+    /// Hướng Hạc thần — hướng xấu cần TRÁNH khi xuất hành — theo ngày Can Chi (chu kỳ 60 ngày).
+    /// Trả `nil` khi Hạc thần "bận việc trên trời" (16 ngày trong chu kỳ) — hôm đó không có hướng
+    /// phải tránh. 44 ngày còn lại Hạc thần đi tuần 8 hướng, mỗi hướng giữ 5–6 ngày liên tiếp.
+    static func craneStarDirection(can: Int, chi: Int) -> String? {
+        craneStarDirectionKeys[sexagenaryDayIndex(can: can, chi: chi)]?.localized
+    }
+
+    /// Chỉ số (0...59) của ngày trong chu kỳ Can Chi 60 ngày — Giáp Tý = 0 … Quý Hợi = 59.
+    static func sexagenaryDayIndex(can: Int, chi: Int) -> Int {
+        let c = ((can % 10) + 10) % 10
+        let z = ((chi % 12) + 12) % 12
+        for n in 0..<60 where n % 10 == c && n % 12 == z {
+            return n
+        }
+        return 0
+    }
+
+    /// Bảng tra Hạc thần theo chỉ số ngày Can Chi (0...59). `nil` = Hạc thần bận việc trên trời
+    /// (16 ngày liên tiếp: Quý Tỵ … Mậu Thân), hôm đó không có hướng phải tránh. Nguồn quy ước:
+    /// "1001 Kiêng Kỵ Trong Tín Ngưỡng Dân Gian" (Thanh Hóa, 2010).
+    private static let craneStarDirectionKeys: [String?] = [
+        // 0–1  Giáp Tý, Ất Sửu → Đông Nam
+        "lunarCalendar.direction.southeast", "lunarCalendar.direction.southeast",
+        // 2–6  Bính Dần … Canh Ngọ → Nam
+        "lunarCalendar.direction.south", "lunarCalendar.direction.south",
+        "lunarCalendar.direction.south", "lunarCalendar.direction.south",
+        "lunarCalendar.direction.south",
+        // 7–12 Tân Mùi … Bính Tý → Tây Nam
+        "lunarCalendar.direction.southwest", "lunarCalendar.direction.southwest",
+        "lunarCalendar.direction.southwest", "lunarCalendar.direction.southwest",
+        "lunarCalendar.direction.southwest", "lunarCalendar.direction.southwest",
+        // 13–17 Đinh Sửu … Tân Tỵ → Tây
+        "lunarCalendar.direction.west", "lunarCalendar.direction.west",
+        "lunarCalendar.direction.west", "lunarCalendar.direction.west",
+        "lunarCalendar.direction.west",
+        // 18–23 Nhâm Ngọ … Đinh Hợi → Tây Bắc
+        "lunarCalendar.direction.northwest", "lunarCalendar.direction.northwest",
+        "lunarCalendar.direction.northwest", "lunarCalendar.direction.northwest",
+        "lunarCalendar.direction.northwest", "lunarCalendar.direction.northwest",
+        // 24–28 Mậu Tý … Nhâm Thìn → Bắc
+        "lunarCalendar.direction.north", "lunarCalendar.direction.north",
+        "lunarCalendar.direction.north", "lunarCalendar.direction.north",
+        "lunarCalendar.direction.north",
+        // 29–44 Quý Tỵ … Mậu Thân → Hạc thần bận việc trên trời (không có hướng tránh)
+        nil, nil, nil, nil, nil, nil, nil, nil,
+        nil, nil, nil, nil, nil, nil, nil, nil,
+        // 45–50 Kỷ Dậu … Giáp Dần → Đông Bắc
+        "lunarCalendar.direction.northeast", "lunarCalendar.direction.northeast",
+        "lunarCalendar.direction.northeast", "lunarCalendar.direction.northeast",
+        "lunarCalendar.direction.northeast", "lunarCalendar.direction.northeast",
+        // 51–55 Ất Mão … Kỷ Mùi → Đông
+        "lunarCalendar.direction.east", "lunarCalendar.direction.east",
+        "lunarCalendar.direction.east", "lunarCalendar.direction.east",
+        "lunarCalendar.direction.east",
+        // 56–59 Canh Thân … Quý Hợi → Đông Nam
+        "lunarCalendar.direction.southeast", "lunarCalendar.direction.southeast",
+        "lunarCalendar.direction.southeast", "lunarCalendar.direction.southeast"
+    ]
+
+    // MARK: - Tiết khí (24 solar terms)
+
+    /// Index (0...23) of the solar term (Tiết khí) governing a solar day — the Sun's ecliptic
+    /// longitude split into 24 segments of 15°. Index `0` = Xuân Phân (0°), advancing forward along
+    /// the ecliptic. Same astronomy as `sunLongitudeIndex` (the 12 major terms) but at 24-segment
+    /// resolution. Used by the almanac engine for the `solarTerm` field.
+    static func solarTermIndex(solarDay: Int, solarMonth: Int, solarYear: Int) -> Int {
+        solarTermIndex(jdn: jdFromDate(day: solarDay, month: solarMonth, year: solarYear))
+    }
+
+    private static func solarTermIndex(jdn: Int) -> Int {
+        let longitude = sunLongitude(Double(jdn) - 0.5 - timeZone / 24)
+        let raw = Int(floor(longitude / Double.pi * 12))
+        return ((raw % 24) + 24) % 24
+    }
+
+    /// Localized name of the 24 solar terms (index 0 = Xuân Phân … 23 = Kinh Trập).
+    static func solarTermName(_ index: Int) -> String {
+        "lunarCalendar.solarTerm.\(((index % 24) + 24) % 24)".localized
+    }
+
+    // MARK: - 12 Trực (Kiến, Trừ, …)
+
+    /// Index (0...11) of the day's Trực (12 Trực). The "Kiến" branch of lunar month `M` is
+    /// `ChiKien = (M + 1) % 12` (tháng Giêng Kiến Dần, tháng Hai Kiến Mão, …), then the day's
+    /// Trực advances with the day's Địa Chi: `truc = (ChiDay - ChiKien + 12) % 12`.
+    static func trucIndex(solarDay: Int, solarMonth: Int, solarYear: Int, lunarMonth: Int) -> Int {
+        let chiDay = ((jdFromDate(day: solarDay, month: solarMonth, year: solarYear) + 1) % 12 + 12) % 12
+        let chiKien = (lunarMonth + 1) % 12
+        return ((chiDay - chiKien) % 12 + 12) % 12
+    }
+
+    /// Localized name of the 12 Trực (index 0 = Kiến … 11 = Bế).
+    static func trucName(_ index: Int) -> String {
+        "lunarCalendar.truc.\(((index % 12) + 12) % 12)".localized
+    }
+
+    // MARK: - 28 Tú (Nhị thập bát tú)
+
+    /// Index (0...27) of the day's 28 Tú (lunar mansion), `0` = Giác. Convention `(JD + 9) % 28`,
+    /// the same anchoring family as the day Can-Chi (`(JD + 9) % 10`). This anchor follows the
+    /// common Vietnamese lịch convention but should be re-checked against an authoritative lịch vạn
+    /// niên before any "kiêng kỵ theo sao" copy is shipped.
+    static func star28Index(solarDay: Int, solarMonth: Int, solarYear: Int) -> Int {
+        let jd = jdFromDate(day: solarDay, month: solarMonth, year: solarYear)
+        return ((jd + 9) % 28 + 28) % 28
+    }
+
+    /// Localized name of the 28 Tú (index 0 = Giác … 27 = Chẩn).
+    static func star28Name(_ index: Int) -> String {
+        "lunarCalendar.star28.\(((index % 28) + 28) % 28)".localized
+    }
+
+    // MARK: - Almanac (unified day computation, optionally personalized)
+
+    /// Complete per-day almanac result. `isPersonalized` is `false` — and the Hung/Cát fields are the
+    /// general (universal) day evaluation — when no birth date was supplied to `almanac(...)`.
+    struct AlmanacResult: Equatable {
+        let lunarDay: Int
+        let lunarMonth: Int
+        let lunarYear: Int
+        let canChiDay: String
+        let canChiMonth: String
+        let canChiYear: String
+        let solarTerm: String
+        let isHoangDao: Bool
+        let hoangDaoDeity: String
+        let truc: String
+        let star28: String
+        let hoangDaoHours: [String]
+        let hyThanDirection: String
+        let taiThanDirection: String
+        let isPersonalized: Bool
+        let personalTier: ILAuspiciousTier
+        let personalScore: Int
+        let compatibilitySummary: String
+        let recommendedDos: [String]
+        let recommendedDonts: [String]
+    }
+
+    /// Computes the full day almanac for a solar date. Pass the birth date (day/month/year, optional)
+    /// to personalize the Hung/Cát fields; omit it (`nil`) for the general (universal) day evaluation.
+    static func almanac(
+        day: Int, month: Int, year: Int,
+        birthDay: Int?, birthMonth: Int?, birthYear: Int?
+    ) -> AlmanacResult {
+        let lunar = solarToLunar(day: day, month: month, year: year)
+        let indices = dayCanChiIndices(day: day, month: month, year: year)
+        let starIndex = dayStarIndex(solarDay: day, solarMonth: month, solarYear: year, lunarMonth: lunar.month)
+        let isHoangDao = isGoodDayStar(starIndex)
+        let trucIndex = trucIndex(solarDay: day, solarMonth: month, solarYear: year, lunarMonth: lunar.month)
+
+        let dayElement = napAmElement(can: indices.can, chi: indices.chi)
+
+        // Derive the user's age branch + mệnh from the birth date, when provided.
+        var userChiIndex: Int?
+        var userElement: ILFiveElements?
+        if let birthDay, let birthMonth, let birthYear {
+            let birthLunar = solarToLunar(day: birthDay, month: birthMonth, year: birthYear)
+            let userCan = ((birthLunar.year + 6) % 10 + 10) % 10
+            let userChi = ((birthLunar.year + 8) % 12 + 12) % 12
+            userChiIndex = userChi
+            userElement = napAmElement(can: userCan, chi: userChi)
+        }
+
+        let personal = personalEvaluation(
+            dayChiIndex: indices.chi,
+            dayElement: dayElement,
+            isHoangDao: isHoangDao,
+            userChiIndex: userChiIndex,
+            userElement: userElement
+        )
+        let actions = evaluateActions(tier: personal.tier, trucIndex: trucIndex)
+
+        return AlmanacResult(
+            lunarDay: lunar.day,
+            lunarMonth: lunar.month,
+            lunarYear: lunar.year,
+            canChiDay: canChiDay(day: day, month: month, year: year),
+            canChiMonth: canChiMonth(lunarYear: lunar.year, lunarMonth: lunar.month),
+            canChiYear: canChiYear(lunar.year),
+            solarTerm: solarTermName(solarTermIndex(solarDay: day, solarMonth: month, solarYear: year)),
+            isHoangDao: isHoangDao,
+            hoangDaoDeity: dayStarName(starIndex),
+            truc: trucName(trucIndex),
+            star28: star28Name(star28Index(solarDay: day, solarMonth: month, solarYear: year)),
+            hoangDaoHours: goodHourChiIndices(dayChiIndex: indices.chi).map { chiName($0) },
+            hyThanDirection: joyStarDirection(dayCanIndex: indices.can),
+            taiThanDirection: wealthStarDirection(dayCanIndex: indices.can),
+            isPersonalized: userChiIndex != nil,
+            personalTier: personal.tier,
+            personalScore: personal.score,
+            compatibilitySummary: personal.reasons.joined(separator: " · "),
+            recommendedDos: actions.dos,
+            recommendedDonts: actions.donts
+        )
+    }
+
+    /// `Date` convenience for `almanac(day:month:year:birthDay:birthMonth:birthYear:)`.
+    static func almanac(
+        date: Date,
+        birthDate: Date?,
+        calendar: Calendar = Calendar(identifier: .gregorian)
+    ) -> AlmanacResult {
+        let components = calendar.dateComponents([.day, .month, .year], from: date)
+        let birthComponents = birthDate.map { calendar.dateComponents([.day, .month, .year], from: $0) }
+        return almanac(
+            day: components.day ?? 1, month: components.month ?? 1, year: components.year ?? 2000,
+            birthDay: birthComponents?.day, birthMonth: birthComponents?.month, birthYear: birthComponents?.year
+        )
+    }
+
+    // MARK: - Nạp Âm + personal matcher + rules dispatcher
+
+    /// The Nạp Âm element of a Can-Chi pair, from the 60-Jiazi cycle grouped into 30 pairs.
+    static func napAmElement(can: Int, chi: Int) -> ILFiveElements {
+        napAmElements[sexagenaryDayIndex(can: can, chi: chi) / 2]
+    }
+
+    /// Localized Nạp Âm name (30 names, Jiazi-pair order: Hải Trung Kim … Đại Hải Thủy) of a
+    /// Can-Chi pair — used by the "Ngũ hành & nạp âm" section of the lunar day detail screen.
+    static func napAmName(can: Int, chi: Int) -> String {
+        "lunarCalendar.napAm.\((sexagenaryDayIndex(can: can, chi: chi) / 2) % 30)".localized
+    }
+
+    /// Localized display name of a Ngũ Hành element ("Kim", "Thủy", "Mộc", "Hỏa", "Thổ").
+    static func elementName(_ element: ILFiveElements) -> String {
+        "lunarCalendar.element.\(element.rawValue)".localized
+    }
+
+    /// Fixed Ngũ Hành of a Thiên Can (0 = Giáp … 9 = Quý): Giáp/Ất Mộc, Bính/Đinh Hỏa,
+    /// Mậu/Kỷ Thổ, Canh/Tân Kim, Nhâm/Quý Thủy.
+    static func canElement(_ can: Int) -> ILFiveElements {
+        let c = ((can % 10) + 10) % 10
+        return [.moc, .moc, .hoa, .hoa, .tho, .tho, .kim, .kim, .thuy, .thuy][c]
+    }
+
+    /// Fixed Ngũ Hành of a Địa Chi (0 = Tý … 11 = Hợi): Tý/Hợi Thủy, Sửu/Thìn/Mùi/Tuất Thổ,
+    /// Dần/Mão Mộc, Tỵ/Ngọ Hỏa, Thân/Dậu Kim.
+    static func chiElement(_ chi: Int) -> ILFiveElements {
+        let z = ((chi % 12) + 12) % 12
+        return [.thuy, .tho, .moc, .moc, .tho, .hoa, .hoa, .tho, .kim, .kim, .tho, .thuy][z]
+    }
+
+    /// Computes the score (0–100) and tier from the day's Địa Chi + Nạp Âm element, the day's
+    /// Hoàng đạo/Hắc đạo flag, and — optionally — the user's age branch + mệnh element.
+    ///
+    /// When `userChiIndex`/`userElement` are `nil` (no birth profile), the personal Địa Chi and Ngũ
+    /// Hành steps are skipped and only the Thần Sát signal remains — the "general" day evaluation.
+    ///
+    /// Base score 50, then:
+    ///   1. Địa Chi — Lục Xung (distance 6) `-40`; Tam Hợp `((day - user) mod 4 == 0, ≠ 0)` `+25`;
+    ///      Nhị Hợp `((day + user) mod 12 == 1)` `+20`.
+    ///   2. Ngũ Hành — Sinh nhập (day generates mệnh) `+20`; Khắc xuất (mệnh khắc day) `-5`;
+    ///      Khắc nhập (day khắc mệnh) `-25`; Đồng hành `+10`. Sinh xuất (mệnh sinh day) is neutral.
+    ///   3. Thần Sát — Hoàng đạo `+10`, Hắc đạo `-10`.
+    /// Clamped to 0–100.
+    static func personalEvaluation(
+        dayChiIndex: Int,
+        dayElement: ILFiveElements,
+        isHoangDao: Bool,
+        userChiIndex: Int?,
+        userElement: ILFiveElements?
+    ) -> (score: Int, tier: ILAuspiciousTier, reasons: [String]) {
+        var score = 50
+        var reasons: [String] = []
+
+        // 1. Địa Chi relation (Lục Xung / Tam Hợp / Nhị Hợp are mutually exclusive).
+        if let userChiIndex {
+            let distance = abs(dayChiIndex - userChiIndex)
+            let isTamHop = ((dayChiIndex - userChiIndex) % 4 + 4) % 4 == 0 && dayChiIndex != userChiIndex
+            let isNhiHop = (dayChiIndex + userChiIndex) % 12 == 1
+
+            if distance == 6 {
+                score -= 40
+                reasons.append("almanac.reason.lucXung".localized)
+            } else if isTamHop {
+                score += 25
+                reasons.append("almanac.reason.tamHop".localized)
+            } else if isNhiHop {
+                score += 20
+                reasons.append("almanac.reason.nhiHop".localized)
+            }
+        }
+
+        // 2. Ngũ Hành Nạp Âm relation.
+        if let userElement {
+            if dayElement.generates == userElement {
+                score += 20
+                reasons.append("almanac.reason.sinhNhap".localized)
+            } else if userElement.overcomes == dayElement {
+                score -= 5
+                reasons.append("almanac.reason.khacXuat".localized)
+            } else if dayElement.overcomes == userElement {
+                score -= 25
+                reasons.append("almanac.reason.khacNhap".localized)
+            } else if dayElement == userElement {
+                score += 10
+                reasons.append("almanac.reason.dongHanh".localized)
+            }
+            // else: userElement.generates == dayElement → "Sinh xuất", neutral (no score change).
+        }
+
+        // 3. Thần Sát ngày — always applied.
+        if isHoangDao {
+            score += 10
+            reasons.append("almanac.reason.hoangDao".localized)
+        } else {
+            score -= 10
+            reasons.append("almanac.reason.hacDao".localized)
+        }
+
+        score = max(0, min(100, score))
+        return (score, tier(for: score), reasons)
+    }
+
+    /// Maps a clamped 0–100 score to its `ILAuspiciousTier`.
+    static func tier(for score: Int) -> ILAuspiciousTier {
+        switch score {
+        case 85...100: return .daiCat
+        case 70...84: return .trungCat
+        case 55...69: return .tieuCat
+        case 45...54: return .binhHoa
+        case 30...44: return .tieuHung
+        case 15...29: return .hung
+        default: return .daiHung
+        }
+    }
+
+    /// Maps the day's Trực (index 0...11) and tier to recommended do/don't lists. Action keys are
+    /// resolved to `.localized` strings only after dedup so the HUNG/DAI_HUNG override can filter by
+    /// stable key rather than localized text.
+    static func evaluateActions(tier: ILAuspiciousTier, trucIndex: Int) -> (dos: [String], donts: [String]) {
+        var dos: [String] = []
+        var donts: [String] = []
+
+        switch trucIndex {
+        case 8, 10: // Thành, Khai
+            dos += [Action.khaiTruong, Action.xuatHanh, Action.nhapTrach, Action.kyKetGiaoDich]
+            donts += [Action.kienTung, Action.tranhChap]
+        case 4: // Định
+            dos += [Action.cungTeCauAn, Action.gapGoDoiTac, Action.dinhHon]
+            donts += [Action.khoiTo, Action.diXa]
+        case 6: // Phá
+            dos += [Action.phaDoNhaCu, Action.chuaBenh, Action.donDep]
+            donts += [Action.khoiCong, Action.cuoiHoi, Action.moCuaHang, Action.kyHopDong]
+        case 11: // Bế
+            dos += [Action.anTang, Action.dapDap, Action.tuBoPhanMo]
+            donts += [Action.khaoKhatMuuSuLon, Action.khaiTruong, Action.xuatHanh]
+        default:
+            dos += [Action.lamViecThien, Action.tungKinhCauBinhAn, Action.boThi]
+        }
+
+        // Override for strongly inauspicious tiers: demote major undertakings to warnings and steer
+        // toward calming practices.
+        if tier == .hung || tier == .daiHung {
+            let major: Set<String> = [Action.khaiTruong, Action.kyKetGiaoDich, Action.xuatHanh, Action.nhapTrach]
+            donts += dos.filter { major.contains($0) }
+            dos.removeAll { major.contains($0) }
+
+            dos += [Action.tinhTam, Action.thienDinh, Action.triChuCauAn, Action.donDepNhaCua]
+            donts += [Action.muuTinhDaiSu, Action.giaoDichTaiChinhLon, Action.tranhLuan]
+        }
+
+        return (
+            dos: uniquePreservingOrder(dos).map(\.localized),
+            donts: uniquePreservingOrder(donts).map(\.localized)
+        )
+    }
+
+    private static func uniquePreservingOrder(_ items: [String]) -> [String] {
+        var seen = Set<String>()
+        return items.filter { seen.insert($0).inserted }
+    }
+
+    /// The 30 Nạp Âm elements in Jiazi-pair order: Hải Trung Kim … Đại Hải Thủy.
+    private static let napAmElements: [ILFiveElements] = [
+        .kim, .hoa, .moc, .tho, .kim,
+        .hoa, .thuy, .tho, .kim, .moc,
+        .thuy, .tho, .hoa, .moc, .thuy,
+        .kim, .hoa, .moc, .tho, .kim,
+        .hoa, .thuy, .tho, .kim, .moc,
+        .thuy, .tho, .hoa, .moc, .thuy
+    ]
+
+    /// Stable localization keys for recommended/avoided actions.
+    private enum Action {
+        static let khaiTruong = "almanac.action.khaiTruong"
+        static let xuatHanh = "almanac.action.xuatHanh"
+        static let nhapTrach = "almanac.action.nhapTrach"
+        static let kyKetGiaoDich = "almanac.action.kyKetGiaoDich"
+        static let kienTung = "almanac.action.kienTung"
+        static let tranhChap = "almanac.action.tranhChap"
+        static let cungTeCauAn = "almanac.action.cungTeCauAn"
+        static let gapGoDoiTac = "almanac.action.gapGoDoiTac"
+        static let dinhHon = "almanac.action.dinhHon"
+        static let khoiTo = "almanac.action.khoiTo"
+        static let diXa = "almanac.action.diXa"
+        static let phaDoNhaCu = "almanac.action.phaDoNhaCu"
+        static let chuaBenh = "almanac.action.chuaBenh"
+        static let donDep = "almanac.action.donDep"
+        static let khoiCong = "almanac.action.khoiCong"
+        static let cuoiHoi = "almanac.action.cuoiHoi"
+        static let moCuaHang = "almanac.action.moCuaHang"
+        static let kyHopDong = "almanac.action.kyHopDong"
+        static let anTang = "almanac.action.anTang"
+        static let dapDap = "almanac.action.dapDap"
+        static let tuBoPhanMo = "almanac.action.tuBoPhanMo"
+        static let khaoKhatMuuSuLon = "almanac.action.khaoKhatMuuSuLon"
+        static let lamViecThien = "almanac.action.lamViecThien"
+        static let tungKinhCauBinhAn = "almanac.action.tungKinhCauBinhAn"
+        static let boThi = "almanac.action.boThi"
+        static let tinhTam = "almanac.action.tinhTam"
+        static let thienDinh = "almanac.action.thienDinh"
+        static let triChuCauAn = "almanac.action.triChuCauAn"
+        static let donDepNhaCua = "almanac.action.donDepNhaCua"
+        static let muuTinhDaiSu = "almanac.action.muuTinhDaiSu"
+        static let giaoDichTaiChinhLon = "almanac.action.giaoDichTaiChinhLon"
+        static let tranhLuan = "almanac.action.tranhLuan"
+    }
+}
+
+/// The five elements (Ngũ Hành). Raw value is the stable storage string (`"kim"`, `"thuy"`, …) so it
+/// round-trips through Core Data as a `String`, mirroring `ILBuddhistTradition`.
+enum ILFiveElements: String, CaseIterable, Equatable {
+    case kim
+    case thuy
+    case moc
+    case hoa
+    case tho
+
+    /// Position in the generating cycle Kim → Thủy → Mộc → Hỏa → Thổ (→ Kim).
+    var cycleIndex: Int {
+        switch self {
+        case .kim: return 0
+        case .thuy: return 1
+        case .moc: return 2
+        case .hoa: return 3
+        case .tho: return 4
+        }
+    }
+
+    private static func element(cycleIndex: Int) -> ILFiveElements {
+        let ordered: [ILFiveElements] = [.kim, .thuy, .moc, .hoa, .tho]
+        return ordered[((cycleIndex % 5) + 5) % 5]
+    }
+
+    /// The element this one generates (Sinh xuất).
+    var generates: ILFiveElements { Self.element(cycleIndex: cycleIndex + 1) }
+
+    /// The element this one overcomes (Khắc xuất): Kim → Mộc, Mộc → Thổ, Thổ → Thủy, Thủy → Hỏa,
+    /// Hỏa → Kim.
+    var overcomes: ILFiveElements { Self.element(cycleIndex: cycleIndex + 2) }
+}
+
+/// Auspicious/inauspicious tier derived from a score 0–100 (see `ILLunarCalendar.tier(for:)`).
+enum ILAuspiciousTier: Int, CaseIterable, Equatable {
+    case daiCat
+    case trungCat
+    case tieuCat
+    case binhHoa
+    case tieuHung
+    case hung
+    case daiHung
 }

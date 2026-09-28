@@ -2,6 +2,12 @@
 
 Mục đích: xoá khoảng đen xuất hiện trước khi splash động mount.
 
+## Hai bộ ảnh: Tối & Sáng
+- `LaunchImage-*.png` — **tối** (mặc định): nền `#2A241C → #100E0B`, fill `#100E0B`.
+- `LaunchImage-Light-*.png` — **sáng**: nền radial `#FFFCF4 → #F0E6D4` (tâm 50% 42%), vòng đèn `rgba(138,90,24,.38)`, wordmark `#221E19`, slogan `rgba(34,30,25,.72)`, fill `#F0E6D4`. Khớp token `--il-spl-*` light của splash động.
+
+iOS tự chọn ảnh theo chế độ máy. App đặt theme riêng (Sáng/Tối) chỉ áp dụng **sau** launch — launch luôn theo hệ thống.
+
 ## Nội dung ảnh
 Đúng trạng thái tĩnh (steady frame) của màn hình chờ: nền radial `#2A241C → #100E0B`, vầng sáng cam, vòng đèn 96px, ngọn lửa, wordmark "InnerLamp", slogan "Tự thắp đèn tâm, tự soi lối về".
 
@@ -10,11 +16,11 @@ Không có ripple / ember / dots — hiệu ứng động chỉ chạy sau khi a
 ## File
 | File | Thiết bị |
 |---|---|
-| LaunchImage-1320x2868.png | iPhone 16 Pro Max |
-| LaunchImage-1206x2622.png | iPhone 16 Pro |
-| LaunchImage-1179x2556.png | iPhone 14/15/16 Pro, 15/16 |
-| LaunchImage-1284x2778.png | iPhone 12–14 Pro Max |
-| LaunchImage-1170x2532.png | iPhone 12–14, 13/14 |
+| LaunchImage[-Light]-1320x2868.png | iPhone 16 Pro Max |
+| LaunchImage[-Light]-1206x2622.png | iPhone 16 Pro |
+| LaunchImage[-Light]-1179x2556.png | iPhone 14/15/16 Pro, 15/16 |
+| LaunchImage[-Light]-1284x2778.png | iPhone 12–14 Pro Max |
+| LaunchImage[-Light]-1170x2532.png | iPhone 12–14, 13/14 |
 
 Expo chỉ cần **một** ảnh (dùng 1320×2868 làm nguồn, `resizeMode: cover`); các size còn lại dành cho bản native thuần nếu dùng Asset Catalog.
 
@@ -24,22 +30,23 @@ Expo chỉ cần **một** ảnh (dùng 1320×2868 làm nguồn, `resizeMode: co
   "expo": {
     "backgroundColor": "#100E0B",
     "splash": {
-      "image": "./assets/launch/LaunchImage-1320x2868.png",
+      "image": "./assets/launch/LaunchImage-Light-1320x2868.png",
       "resizeMode": "cover",
-      "backgroundColor": "#100E0B",
+      "backgroundColor": "#F0E6D4",
       "dark": {
         "image": "./assets/launch/LaunchImage-1320x2868.png",
         "backgroundColor": "#100E0B"
       }
     },
-    "ios": { "userInterfaceStyle": "dark", "backgroundColor": "#100E0B" },
-    "android": { "backgroundColor": "#100E0B" }
+    "ios": { "userInterfaceStyle": "automatic" },
+    "android": { "userInterfaceStyle": "automatic" }
   }
 }
 ```
 - `resizeMode: "cover"` — **không** dùng `contain`: `contain` để lộ viền nền và tạo cảm giác nhảy hình.
-- `backgroundColor` phải là `#100E0B` ở mọi chỗ. Đây chính là màu lấp khoảng đen mặc định.
-- `ios.userInterfaceStyle: "dark"` để status bar sáng ngay từ giây đầu.
+- `backgroundColor`: `#F0E6D4` cho sáng, `#100E0B` cho tối (`splash.dark`) — màu lấp trước khi ảnh vẽ.
+- `userInterfaceStyle: "automatic"` để iOS/Android chọn đúng bộ ảnh; status bar: chữ tối ở sáng, chữ sáng ở tối.
+- Với Asset Catalog native: thêm biến thể *Appearance → Any, Dark* trong LaunchImage imageset (Any = Light, Dark = bản tối).
 
 ## Nối liền mạch sang splash động
 ```js

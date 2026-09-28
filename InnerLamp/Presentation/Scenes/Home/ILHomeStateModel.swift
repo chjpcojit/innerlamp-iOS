@@ -17,14 +17,40 @@ struct ILHomeSuggestedSessionModel: Equatable, Identifiable {
     let glyph: ILHomeSessionGlyph
 }
 
+/// Loại chấm màu dưới 1 ô ngày trong dải lịch tuần — khớp bảng chú thích Hoàng đạo/Hắc đạo/
+/// Rằm·Mùng Một trong design handoff.
+enum ILHomeWeekDotKind: Equatable {
+    /// Rằm (15 âm) / Mùng Một (1 âm) — chấm vàng.
+    case newMoonFullMoon
+    /// Hoàng đạo — chấm xanh.
+    case hoangDao
+    /// Hắc đạo — chấm đỏ.
+    case hacDao
+}
+
 /// 1 ngày trong dải lịch tuần Trang chủ — bản sao presentation của `ILHomeWeekDayEntity`, kèm
-/// nhãn thứ trong tuần đã format sẵn cho `ViewController`.
+/// chuỗi ngày âm và loại chấm đã tính sẵn cho `ViewController`.
 struct ILHomeWeekDayModel: Equatable, Identifiable {
     let id: String
-    let weekdayShort: String
     let solarDay: Int
-    let lunarDay: Int
+    /// "1/9" cho Mùng 1, ngược lại là số ngày âm.
+    let lunarText: String
+    let dotKind: ILHomeWeekDotKind
     let isToday: Bool
+    let isSelected: Bool
+}
+
+/// 1 trang (tuần) trong dải lịch tuần Trang chủ.
+struct ILHomeWeekPageModel: Equatable, Identifiable {
+    let id: String
+    let label: String
+    let days: [ILHomeWeekDayModel]
+}
+
+/// 1 mục trong bảng chú thích dưới dải lịch tuần (Hoàng đạo / Hắc đạo / Rằm · Mùng Một).
+struct ILHomeWeekLegendModel: Equatable {
+    let text: String
+    let dotKind: ILHomeWeekDotKind
 }
 
 /// Thẻ âm lịch lớn Trang chủ — bản sao presentation của `ILHomeLunarDateEntity` cộng nhãn UI
@@ -55,6 +81,48 @@ struct ILHomeEventMonthModel: Equatable, Identifiable {
     let id: String
     let monthLabel: String
     let events: [ILHomeEventItemModel]
+    /// Tổng số sự kiện thật của tháng (trước khi bị cắt còn tối đa `maxEventsPerMonthCard`
+    /// để hiển thị) — dùng cho badge số đếm, không phụ thuộc vào số dòng đang render.
+    let totalEventsCount: Int
+    /// Tháng dương lịch hiện tại — carousel dùng để mở đúng thẻ này lần đầu hiển thị, thay vì
+    /// luôn mở thẻ đầu tiên (khớp `month.id` dạng `yyyy-MM` do `ILHomeUseCaseImpl` sinh ra).
+    let isCurrentMonth: Bool
+}
+
+/// 1 ảnh trong khối "Ảnh chùa đẹp" — bản sao presentation của `ILHomePhotoEntity`.
+struct ILHomePhotoModel: Equatable, Identifiable {
+    let id: String
+}
+
+/// 1 chùa trong carousel "Chùa Việt Nam" — bản sao presentation của `ILHomeTempleEntity`.
+struct ILHomeTempleModel: Equatable, Identifiable {
+    let id: String
+    let name: String
+    let place: String
+    let region: String
+    let note: String
+}
+
+/// 1 bài viết trong danh sách "Bài viết Phật pháp hay" — bản sao presentation của
+/// `ILHomeArticleEntity`, kèm chuỗi "… phút đọc" đã format sẵn.
+struct ILHomeArticleModel: Equatable, Identifiable {
+    let id: String
+    let category: String
+    let title: String
+    let author: String
+    let readText: String
+}
+
+/// 1 vị Phật / Bồ Tát trong carousel "Thư viện Phật & Bồ Tát" — bản presentation của
+/// `ILHomeDeityEntity`: badge loại ("Phật" / "Bồ Tát") và dòng ngày vía ("Vía 15/04 âm lịch") đã
+/// format sẵn.
+struct ILHomeDeityModel: Equatable, Identifiable {
+    let id: String
+    let kind: ILDeityKind
+    let kindLabel: String
+    let name: String
+    /// Rỗng khi vị này không có ngày vía trong catalog — thẻ ẩn dòng này.
+    let memorialText: String
 }
 
 /// UI state cho màn Trang chủ — Presentation layer, do `ILHomeViewModel` sở hữu và cập nhật độc
@@ -67,8 +135,10 @@ struct ILHomeStateModel: Equatable {
     var avatarInitial: String = ""
     var dateText: String = ""
 
-    var weekLabelText: String = ""
-    var weekDays: [ILHomeWeekDayModel] = []
+    /// Nhãn 7 cột ("Hai"..."CN", CN đỏ) — cố định thứ tự Thứ Hai → Chủ nhật.
+    var weekdayLabels: [String] = []
+    var weekPages: [ILHomeWeekPageModel] = []
+    var weekLegend: [ILHomeWeekLegendModel] = []
     var weekCalendarLinkText: String = ""
 
     var lunarHero: ILHomeLunarHeroModel = ILHomeLunarHeroModel()
@@ -97,6 +167,27 @@ struct ILHomeStateModel: Equatable {
     var malaHelperText: String = ""
 
     var suggestedSessions: [ILHomeSuggestedSessionModel] = []
+
+    var photosTitle: String = ""
+    var photosViewAllText: String = ""
+    var photos: [ILHomePhotoModel] = []
+    var photosMoreText: String = ""
+    var photosMoreLabel: String = ""
+
+    var templesTitle: String = ""
+    var templesFindText: String = ""
+    var temples: [ILHomeTempleModel] = []
+
+    var deitiesTitle: String = ""
+    var deitiesViewAllText: String = ""
+    var deities: [ILHomeDeityModel] = []
+
+    var bellTitle: String = ""
+    var bellSubtitle: String = ""
+
+    var articlesTitle: String = ""
+    var articlesViewAllText: String = ""
+    var articles: [ILHomeArticleModel] = []
 
     static let initial = ILHomeStateModel()
 }

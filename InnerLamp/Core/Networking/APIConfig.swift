@@ -15,7 +15,7 @@ import Foundation
 /// TODO: Thay toàn bộ URL mock bên dưới bằng URL thật trước khi release. Hiện backend chưa sẵn
 /// sàng nên cả ba môi trường đều trỏ tới host mock — cùng tình trạng với
 /// `LocalizationConfig.serverBaseURL`.
-enum APIConfig {
+nonisolated enum APIConfig {
 
     /// Môi trường backend đang trỏ tới.
     ///

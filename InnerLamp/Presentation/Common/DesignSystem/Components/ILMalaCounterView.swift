@@ -173,6 +173,9 @@ public final class ILMalaCounterView: UIView {
         ])
 
         updateCount()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILMalaCounterView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     public override func layoutSubviews() {
@@ -200,9 +203,7 @@ public final class ILMalaCounterView: UIView {
         progressLayer.strokeEnd = CGFloat(progress)
     }
 
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         layer.borderColor = ILColors.border.cgColor
         trackLayer.strokeColor = ILColors.gold.withAlphaComponent(0.16).cgColor
         progressLayer.strokeColor = ILColors.gold.cgColor

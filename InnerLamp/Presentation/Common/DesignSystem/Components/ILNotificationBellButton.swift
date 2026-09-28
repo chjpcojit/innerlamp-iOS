@@ -73,11 +73,12 @@ public final class ILNotificationBellButton: UIControl {
         addTarget(self, action: #selector(handleTouchDown), for: [.touchDown, .touchDragEnter])
         addTarget(self, action: #selector(handleTouchUp), for: [.touchUpInside, .touchCancel, .touchDragExit])
         addTarget(self, action: #selector(handleTapAction), for: .touchUpInside)
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILNotificationBellButton, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         layer.borderColor = ILColors.border.cgColor
         bellShape.layer.borderColor = ILColors.ink.withAlphaComponent(0.55).cgColor
         badgeView.layer.borderColor = ILColors.surface.cgColor

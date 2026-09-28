@@ -21,6 +21,7 @@ final class ILLoginViewModelTests: XCTestCase {
     private var backTappedSubject: PassthroughSubject<Void, Never>!
     private var signupTappedSubject: PassthroughSubject<Void, Never>!
     private var forgotPasswordTappedSubject: PassthroughSubject<Void, Never>!
+    private var guestPreviewTappedSubject: PassthroughSubject<Void, Never>!
 
     override func setUp() {
         super.setUp()
@@ -36,6 +37,7 @@ final class ILLoginViewModelTests: XCTestCase {
         backTappedSubject = PassthroughSubject<Void, Never>()
         signupTappedSubject = PassthroughSubject<Void, Never>()
         forgotPasswordTappedSubject = PassthroughSubject<Void, Never>()
+        guestPreviewTappedSubject = PassthroughSubject<Void, Never>()
     }
 
     override func tearDown() {
@@ -48,6 +50,7 @@ final class ILLoginViewModelTests: XCTestCase {
         backTappedSubject = nil
         signupTappedSubject = nil
         forgotPasswordTappedSubject = nil
+        guestPreviewTappedSubject = nil
         sut = nil
         mockUseCase = nil
         super.tearDown()
@@ -62,7 +65,8 @@ final class ILLoginViewModelTests: XCTestCase {
             submitTapped: submitTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             signupTapped: signupTappedSubject.eraseToAnyPublisher(),
-            forgotPasswordTapped: forgotPasswordTappedSubject.eraseToAnyPublisher()
+            forgotPasswordTapped: forgotPasswordTappedSubject.eraseToAnyPublisher(),
+            guestPreviewTapped: guestPreviewTappedSubject.eraseToAnyPublisher()
         ))
     }
 
@@ -131,6 +135,19 @@ final class ILLoginViewModelTests: XCTestCase {
         forgotPasswordTappedSubject.send(())
 
         XCTAssertEqual(receivedEvent, .goToForgotPassword)
+    }
+
+    func test_guestPreviewTapped_firesGoToGuestPreviewEvent() {
+        let output = makeOutput()
+        output.state.sink { _ in }.store(in: &cancellables)
+        var receivedEvent: ILLoginNavEvent?
+        sut.navigationEventPublisher
+            .sink { receivedEvent = $0 }
+            .store(in: &cancellables)
+
+        guestPreviewTappedSubject.send(())
+
+        XCTAssertEqual(receivedEvent, .goToGuestPreview)
     }
 
     func test_submitTapped_withInvalidForm_setsValidationErrorsAndDoesNotCallUseCase() {

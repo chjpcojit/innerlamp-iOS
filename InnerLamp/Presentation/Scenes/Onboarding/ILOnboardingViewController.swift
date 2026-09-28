@@ -175,12 +175,10 @@ final class ILOnboardingViewController: BaseViewController {
         topGlowGradientLayer.frame = topGlowCircle.bounds
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
+    private func applyColorAppearanceChange() {
         // Giống Splash: CAGradientLayer.colors không tự đảo theo trait, canvasWarm/
         // canvasWarmEnd2 giờ có biến thể dark nên phải set lại thủ công. topGlow (vàng)
         // bất biến theo theme, không cần refresh.
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
         backgroundGradientLayer.colors = [
             ILColors.canvasWarm.cgColor,
             ILColors.canvasWarmEnd2.cgColor
@@ -223,6 +221,9 @@ final class ILOnboardingViewController: BaseViewController {
 
         bottomArea.addSubview(bottomStack)
         view.addSubview(bottomArea)
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILOnboardingViewController, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     /// Tạo view cho 1 step theo nội dung của nó và móc callback toggle (nếu có) về
@@ -283,7 +284,6 @@ final class ILOnboardingViewController: BaseViewController {
             progressBar.topAnchor.constraint(equalTo: topBar.bottomAnchor, constant: 22),
             progressBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 26),
             progressBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -26),
-            progressBar.heightAnchor.constraint(equalToConstant: 3),
 
             // Step Container
             stepContainerView.topAnchor.constraint(equalTo: progressBar.bottomAnchor, constant: 16),
@@ -294,9 +294,8 @@ final class ILOnboardingViewController: BaseViewController {
             // Bottom Area
             bottomArea.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 26),
             bottomArea.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -26),
-            bottomArea.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-
-            nextButton.heightAnchor.constraint(equalToConstant: 54)
+            bottomArea.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+            // nextButton height is owned by ILButton (ILMetrics.buttonHeight) — don't re-pin here.
         ])
 
         // Step Views Pinning — 1 view mới trong `stepViews` tự động được pin, không cần sửa gì ở đây.
@@ -329,8 +328,9 @@ final class ILOnboardingViewController: BaseViewController {
         )
         let output = viewModel.transform(input: input)
 
+        // No `.receive(on: DispatchQueue.main)`: state is already sent on main (MainActor default),
+        // and deferring it renders the first state only after the appear transition has run.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in
                 guard let self else { return }
                 let shouldAnimate = !self.suppressNextRenderAnimation

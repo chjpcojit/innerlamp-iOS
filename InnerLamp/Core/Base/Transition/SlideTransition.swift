@@ -106,8 +106,15 @@ final class SlideTransition: NSObject, NavigationTransitionAnimating {
 
         let container = transitionContext.containerView
         let toView = toVC.view!
+        // Reset transform TRƯỚC khi gán frame: gán `frame` khi view còn transform khác
+        // `.identity` sẽ bị UIKit bù ngược vào `center`, làm view lệch vị trí.
+        toView.transform = .identity
         toView.frame = transitionContext.finalFrame(for: toVC)
         container.addSubview(toView)
+        // Force the destination view to lay out before the slide starts (same as
+        // CrossFadeTransition), otherwise its first layout pass lands inside the animation and
+        // self-sized blocks visibly grow while sliding in on the first push.
+        toView.layoutIfNeeded()
 
         let size = container.bounds.size
         toView.transform = direction.incomingStart(in: size)
@@ -118,6 +125,10 @@ final class SlideTransition: NSObject, NavigationTransitionAnimating {
         }
         animator.addCompletion { [weak self] _ in
             fromVC.view.transform = .identity
+            // Luôn trả view đích về `.identity`: khi bị hủy, animator đảo chiều về vị trí
+            // bắt đầu nên view đích còn giữ transform ngoài màn hình. Nếu không reset, lần
+            // vuốt sau gán `frame` lên view đang có transform → view bị lệch và đè lên màn hiện tại.
+            toView.transform = .identity
             // Nếu bị hủy giữa chừng (vuốt cạnh rồi thả tay ngược lại), view đích cần được
             // gỡ khỏi containerView để không lưu lại "rác" trong cây view.
             if transitionContext.transitionWasCancelled {

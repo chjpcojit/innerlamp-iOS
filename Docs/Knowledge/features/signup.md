@@ -1,11 +1,11 @@
 ---
 type: Feature
 title: Sign Up
-description: New-user registration screen — collects dharma name/nickname, optional ordination place, phone number, required email, and a password of at least 8 characters, then requests an OTP verification code.
+description: New-user registration screen — collects dharma name/nickname, optional **ordination** place, phone number, required email, and a password of at least 8 characters, then requests an OTP verification code.
 resource: InnerLamp/Presentation/Scenes/SignUp/
 tags: [auth, onboarding, mvvm-c]
 status: draft
-generated: { by: claude-code, at: 2026-09-23T01:16:39+07:00 }
+generated: { by: claude-code, at: 2026-09-27T14:54:58+07:00 }
 sources:
   - path: Docs/Specs/SignUp/requirements.md
     kind: spec
@@ -61,7 +61,7 @@ wired by `AppCoordinator`, not by a parent feature coordinator.
 | Data / Repository | Repository impl | `Data/Repositories/ILSignUpRepositoryImpl.swift` — maps Entity → DTO, calls `NetworkService`, maps the response back, converts `NetworkError` → `ILSignUpError` |
 | Data / DTO | DTO | `Data/DTOs/ILSignUpDTO.swift` — `ILSignUpRequestOTPRequestDTO` (explicit snake_case `CodingKeys`) + `ILSignUpRequestOTPResponseDTO` (relies on `.convertFromSnakeCase`) |
 | Data / Mapper | Mapper | `Data/DTOs/Mappers/ILSignUpMapper.swift` — static `toDTO` / `toDomain`, never touches `ILSignUpStateModel` |
-| Data / Endpoint | Endpoint | `Data/DataSources/Remote/RequestRegistrationOTPEndpoint.swift` — `POST /v1/auth/register/request-otp`, `requiresAuth = false` |
+| Data / Endpoint | Endpoint | `Data/DataSources/Remote/RequestOTPEndpoint.swift` — struct `RequestRegistrationOTPEndpoint` (file renamed to `<Action>Endpoint`, struct name kept); `POST /v1/auth/register/request-otp`, `requiresAuth = false` |
 | Presentation / State | State Model | `Presentation/Scenes/SignUp/ILSignUpStateModel.swift` — UI-only state (field errors incl. `emailError`, raw `ordinationPlace`, strength, `isSubmitting`, `phoneE164`), no UIKit import |
 | Presentation / ViewModel | ViewModel | `Presentation/Scenes/SignUp/ILSignUpViewModel.swift` — `Input -> Output` per `ViewModelType`, exposes `navigationEventPublisher` |
 | Presentation / Coordinator | Coordinator | `Presentation/Scenes/SignUp/ILSignUpCoordinator.swift` |
@@ -210,14 +210,11 @@ is **not** special-cased into a Login redirect.
   `ILPhoneField` / `ILCountryPickerViewController` and the same
   phone-number formatting rules. Login does not enforce a minimum
   password length.
-- OTP feature (`InnerLamp/Presentation/Scenes/Otp/`) — receives the phone
-  number plus the server's timing after a successful verification-code
-  request, verifies the code, creates the account, and stores the
-  session. It has a spec (`Docs/Specs/Otp/`) but **is not yet documented
-  as an OKF concept in this bundle**.
+- [OTP Verification](otp.md) (`InnerLamp/Presentation/Scenes/Otp/`) — receives
+  the phone number plus the server's timing after a successful
+  verification-code request, verifies the code, creates the account, and
+  stores the session.
 - [Sign Up spec](../../Specs/SignUp/requirements.md) — the work-order spec
   this concept was reconciled against (`Docs/Specs/SignUp/`, v1.13).
-- `request-otp` endpoint concept
-  (`Docs/Knowledge/api/auth-signup.md`) — **not yet written**; the
-  request/response shapes are documented here and in
-  `Docs/Specs/SignUp/design.md` instead.
+- [`request-otp` endpoint](../api/auth-request-otp.md) — the wire
+  contract this feature's Data layer implements.

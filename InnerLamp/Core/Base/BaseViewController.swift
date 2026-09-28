@@ -143,10 +143,13 @@ class BaseViewController: UIViewController {
         // TODO: ẩn loading indicator
     }
 
+    /// Shows a transient error notification through the shared `ILAlert` component (a top toast
+    /// that auto-dismisses), replacing the old blocking `UIAlertController`.
     func showError(_ message: String) {
-        let alert = UIAlertController(title: "Lỗi", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Đóng", style: .default))
-        present(alert, animated: true)
+        ILAlertPresenter.shared.show(
+            .toast(title: "error.title".localized, message: message),
+            from: self
+        )
     }
 }
 

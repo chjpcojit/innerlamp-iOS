@@ -30,9 +30,12 @@ Tab 2 of `ILMainTabBarController` (owned by `ILMainTabCoordinator`; switching ta
 
 - Catalog is mock data — real API blocked on contract (spec ⚠️).
 - Per-category section titles are assumed copy (prototype only designs the default state).
-- Loading / error / offline states not rendered (`.failure` is a TODO branch).
+- `.loading` renders `ILSkeletonLoadingView` over the content area, but the ViewModel never emits
+  `.loading` yet (catalog is synchronous mock data until the Phase 3 async load). Error / offline
+  states still not rendered (`.failure` is a TODO branch).
 - Lamp / Sangha / Me tabs ignored until those screens exist.
 
 ## Changelog
 
 - 2026-09-20 — initial implementation from spec v1.0 (il-spec-writer + il-screen-builder)
+- 2026-09-27 — `.loading` now shows the shared `ILSkeletonLoadingView` (il-screen-builder)

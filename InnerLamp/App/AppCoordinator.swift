@@ -158,6 +158,10 @@ extension AppCoordinator: ILLoginCoordinatorDelegate {
     func loginDidFinishLogin(_ coordinator: ILLoginCoordinator) {
         showMain()
     }
+
+    func loginDidRequestGuestPreview(_ coordinator: ILLoginCoordinator) {
+        showMain()
+    }
 }
 
 // MARK: - ILForgotPasswordCoordinatorDelegate

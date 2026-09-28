@@ -24,14 +24,15 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
     private let backTappedSubject = PassthroughSubject<Void, Never>()
     private let signupTappedSubject = PassthroughSubject<Void, Never>()
     private let forgotPasswordTappedSubject = PassthroughSubject<Void, Never>()
+    private let guestPreviewTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
     private let backgroundGradientLayer = CAGradientLayer()
 
     // Header dùng chung — khớp `IL-NavBar` (`title="Đăng nhập", on-back`) trong design handoff
     // (`isLogin`), cùng pattern với Đăng ký/Quên mật khẩu/OTP.
-    private lazy var headerView: ILHeaderView = {
-        let view = ILHeaderView(title: "login.header.title".localized)
+    private lazy var headerView: ILNavBar = {
+        let view = ILNavBar(title: "login.header.title".localized)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -39,8 +40,12 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
     private let scrollView = UIScrollView()
     private let contentView = UIView()
 
-    // Nền sáng — khai báo tường minh để không rơi vào bảng màu `.onDark` mặc định của Splash.
-    private let lampIcon = ILLampGlowView(diameter: 56, style: .onLight)
+    // Ảnh minh họa đèn dùng chung với Onboarding intro (full-color, không tô màu).
+    private let lampIcon: UIImageView = {
+        let imageView = UIImageView(image: ILIcons.onboardingLamp)
+        imageView.contentMode = .scaleAspectFit
+        return imageView
+    }()
 
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
@@ -93,9 +98,7 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
 
     // `layer.colors` là CGColor tĩnh, không tự đảo theo trait — refresh thủ công khi hệ
     // thống đổi light/dark (giống Onboarding/Splash).
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         backgroundGradientLayer.colors = [
             ILColors.canvasWarm.cgColor,
             ILColors.canvasWarmEnd1.cgColor
@@ -200,6 +203,9 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
             footerContainer.addSubview($0)
         }
         view.addSubview(footerContainer)
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILLoginViewController, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     override func setupConstraints() {
@@ -223,6 +229,8 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
 
             lampIcon.topAnchor.constraint(equalTo: contentView.topAnchor, constant: ILMetrics.spaceLarge),
             lampIcon.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            lampIcon.widthAnchor.constraint(equalToConstant: ILMetrics.loginLampSize.width),
+            lampIcon.heightAnchor.constraint(equalToConstant: ILMetrics.loginLampSize.height),
 
             titleLabel.topAnchor.constraint(equalTo: lampIcon.bottomAnchor, constant: ILMetrics.spaceMedium),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -276,12 +284,14 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
             submitTapped: submitTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             signupTapped: signupTappedSubject.eraseToAnyPublisher(),
-            forgotPasswordTapped: forgotPasswordTappedSubject.eraseToAnyPublisher()
+            forgotPasswordTapped: forgotPasswordTappedSubject.eraseToAnyPublisher(),
+            guestPreviewTapped: guestPreviewTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
 
+        // No `.receive(on: DispatchQueue.main)`: state is already sent on main (MainActor default),
+        // and deferring it renders the first state only after the appear transition has run.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 
@@ -337,6 +347,7 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
     }
 
     @objc private func handleGuestPreviewTapped() {
-        // TODO: vào xem trước không đăng nhập khi có luồng Home.
+        view.endEditing(true)
+        guestPreviewTappedSubject.send(())
     }
 }

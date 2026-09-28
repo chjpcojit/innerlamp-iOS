@@ -20,7 +20,7 @@ final class ILForgotPasswordViewController: BaseViewController {
     private let backToLoginTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
-    private lazy var headerView = ILHeaderView(title: "forgot.header.title".localized)
+    private lazy var headerView = ILNavBar(title: "forgot.header.title".localized)
 
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -230,8 +230,9 @@ final class ILForgotPasswordViewController: BaseViewController {
         )
         let output = viewModel.transform(input: input)
 
+        // No `.receive(on: DispatchQueue.main)`: state is already sent on main (MainActor default),
+        // and deferring it renders the first state only after the appear transition has run.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 

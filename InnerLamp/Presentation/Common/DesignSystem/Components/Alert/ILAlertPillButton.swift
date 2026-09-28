@@ -79,6 +79,9 @@ public final class ILAlertPillButton: UIControl {
         addTarget(self, action: #selector(handleTapAction), for: .touchUpInside)
 
         updateAppearance()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILAlertPillButton, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     public override func layoutSubviews() {
@@ -126,9 +129,7 @@ public final class ILAlertPillButton: UIControl {
         layer.borderColor = border?.resolvedColor(with: traitCollection).cgColor
     }
 
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         updateAppearance()
     }
 

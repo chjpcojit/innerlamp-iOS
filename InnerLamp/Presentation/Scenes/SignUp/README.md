@@ -151,7 +151,7 @@ Việc tạo tài khoản thật sự dời sang UseCase của màn OTP sau khi 
 `ILSignUpViewModel.navigationEventPublisher` (được `ILSignUpCoordinator.start()` subscribe qua
 Combine `.sink`) xử lý 3 case của `ILSignUpNavEvent`:
 
-- **`.goBack`** (bấm nút back trên `ILHeaderView`) → coordinator `popViewController` rồi
+- **`.goBack`** (bấm nút back trên `ILNavBar`) → coordinator `popViewController` rồi
   `finish()`.
 - **`.goToLogin`** (bấm "Tôi đã có tài khoản") → coordinator gọi
   `delegate?.signUpDidRequestLogin(self)` rồi `finish()`. `AppCoordinator` nhận qua

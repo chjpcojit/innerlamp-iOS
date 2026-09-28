@@ -37,6 +37,22 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.makeKeyAndVisible()
         
         coordinator.start()
+        seedSutraQuotes(container: container)
+    }
+
+    /// Imports the bundled sutra quote catalog into Core Data on first launch (a no-op afterwards).
+    /// Runs in the background so it never delays the first screen; quote reads also seed on demand,
+    /// so a failure here only costs a log entry.
+    private func seedSutraQuotes(container: DIContainer) {
+        let useCase = container.makeSutraQuoteUseCase()
+        let loggingService = container.loggingService
+        Task {
+            do {
+                try await useCase.prepare()
+            } catch {
+                loggingService.log(level: .error, message: "SutraQuote seeding failed: \(error)")
+            }
+        }
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

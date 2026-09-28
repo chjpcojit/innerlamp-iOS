@@ -17,7 +17,7 @@ final class ILCountryPickerViewController: BaseViewController {
     private let selectedCountry: ILCountry
     private var filtered: [ILCountry] = ILCountry.all
 
-    private let headerView = ILHeaderView(title: "countryPicker.title".localized, isCloseButton: true)
+    private let headerView = ILNavBar(title: "countryPicker.title".localized, showBack: false, showClose: true)
     private let searchContainer = UIView()
     private let searchField = UITextField()
     private let tableView = UITableView()
@@ -43,7 +43,7 @@ final class ILCountryPickerViewController: BaseViewController {
         view.backgroundColor = ILColors.canvasWarm
 
         headerView.translatesAutoresizingMaskIntoConstraints = false
-        headerView.onBack = { [weak self] in self?.dismiss(animated: true) }
+        headerView.onClose = { [weak self] in self?.dismiss(animated: true) }
         view.addSubview(headerView)
 
         searchContainer.translatesAutoresizingMaskIntoConstraints = false

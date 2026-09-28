@@ -73,7 +73,7 @@ nonisolated public final class SentryLoggingService: LoggingService {
     }
 }
 
-private extension LogLevel {
+private nonisolated extension LogLevel {
     var sentryLevel: SentryLevel {
         switch self {
         case .debug:   return .debug

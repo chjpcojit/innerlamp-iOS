@@ -91,6 +91,9 @@ final class ILErrorDialogViewController: ILAlertModalViewController {
         contentStack.setCustomSpacing(9, after: titleLabel)
         contentStack.setCustomSpacing(22, after: messageLabel)
         cardView.addSubview(contentStack)
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILErrorDialogViewController, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     override func setupConstraints() {
@@ -129,9 +132,7 @@ final class ILErrorDialogViewController: ILAlertModalViewController {
         cardView.layer.shadowPath = UIBezierPath(roundedRect: cardView.bounds, cornerRadius: ILMetrics.radiusCardLarge).cgPath
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         applyShadow()
     }
 

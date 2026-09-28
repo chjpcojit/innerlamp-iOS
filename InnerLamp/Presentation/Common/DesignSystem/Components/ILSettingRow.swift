@@ -99,6 +99,7 @@ public final class ILSettingRow: UIControl {
         textStack.axis = .vertical
         textStack.spacing = 2
         textStack.alignment = .leading
+        textStack.isUserInteractionEnabled = false
         textStack.addArrangedSubview(titleLabel)
         textStack.addArrangedSubview(subLabel)
         
@@ -113,21 +114,25 @@ public final class ILSettingRow: UIControl {
         
         switchControl.onTintColor = ILColors.gold
         switchControl.isOn = isOn
+        switchControl.isUserInteractionEnabled = false
         switchControl.addTarget(self, action: #selector(switchValueChanged), for: .valueChanged)
         
         rightStack.axis = .horizontal
         rightStack.spacing = 8
         rightStack.alignment = .center
+        rightStack.isUserInteractionEnabled = false
         
         contentStack.axis = .horizontal
         contentStack.spacing = 12
         contentStack.alignment = .center
+        contentStack.isUserInteractionEnabled = false
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(textStack)
         contentStack.addArrangedSubview(valueLabel)
         contentStack.addArrangedSubview(rightStack)
         
         dividerView.translatesAutoresizingMaskIntoConstraints = false
+        dividerView.isUserInteractionEnabled = false
         dividerView.isHidden = isLast
         
         addSubview(contentStack)

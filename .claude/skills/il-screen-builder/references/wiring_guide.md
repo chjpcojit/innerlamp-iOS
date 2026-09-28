@@ -73,6 +73,9 @@ skipped).
       `references/data_layer_boundaries.md`)
 - [ ] `IL{{Feature}}Coordinator` + `IL{{Feature}}CoordinatorDelegate` in `Presentation/Scenes/{{Feature}}/`
 - [ ] `IL{{Feature}}ViewController` in `Presentation/Scenes/{{Feature}}/`
+- [ ] `IL{{Feature}}ViewController.bindViewModel()` sinks `output.state` directly — no
+      `.receive(on: DispatchQueue.main)` (defers the first render past the appear transition, so
+      self-sized blocks grow on first open; see `references/mvvm_pattern.md` §Main-thread delivery)
 - [ ] `IL{{Feature}}ViewModel` + `IL{{Feature}}ViewModelProtocol` + `IL{{Feature}}NavEvent` in `Presentation/Scenes/{{Feature}}/`
 - [ ] `IL{{Feature}}ViewModelTests` in `InnerLampTests/`, one real (non-placeholder) test per
       action/trigger, driven through its `Input` publisher (never by calling a private `handle*()`

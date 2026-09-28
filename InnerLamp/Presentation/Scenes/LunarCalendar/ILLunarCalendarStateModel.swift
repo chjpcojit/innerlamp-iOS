@@ -5,6 +5,16 @@
 
 import Foundation
 
+/// Loại chấm màu dưới 1 ô ngày trong lưới tháng — khớp bảng chú thích Hoàng đạo/Hắc đạo/Rằm·Mùng Một.
+enum ILLunarCalendarDayDotKind: Equatable {
+    /// Rằm (15 âm) / Mùng Một (1 âm) — chấm vàng.
+    case newMoonFullMoon
+    /// Hoàng đạo — chấm xanh.
+    case hoangDao
+    /// Hắc đạo — chấm đỏ.
+    case hacDao
+}
+
 /// 1 ô ngày trong lưới tháng — text đã format sẵn, ViewController chỉ đọc để vẽ.
 struct ILLunarCalendarDayModel: Equatable, Identifiable {
     let id: String
@@ -15,6 +25,14 @@ struct ILLunarCalendarDayModel: Equatable, Identifiable {
     let isToday: Bool
     let isSelected: Bool
     let isFastDay: Bool
+    /// Chấm màu dưới ô — vàng (Rằm·Mùng Một), xanh (Hoàng đạo), đỏ (Hắc đạo).
+    let dotKind: ILLunarCalendarDayDotKind
+}
+
+/// 1 mục trong bảng chú thích dưới carousel tháng (Hoàng đạo / Hắc đạo / Rằm · Mùng Một).
+struct ILLunarCalendarLegendModel: Equatable {
+    let text: String
+    let dotKind: ILLunarCalendarDayDotKind
 }
 
 /// 1 trang (tháng) của carousel.
@@ -43,6 +61,7 @@ struct ILLunarCalendarStateModel: Equatable {
 
     var months: [ILLunarCalendarMonthModel] = []
     var currentPage: Int = 0
+    var legend: [ILLunarCalendarLegendModel] = []
 
     var heroEyebrowText: String = ""
     var heroTitle: String = ""

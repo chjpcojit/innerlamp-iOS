@@ -1,86 +1,80 @@
 # Design — Library
 
-Version: 1.1
-Last updated: 2026-09-20
-Status: in-progress — UI + local filtering implemented against a mock catalog; backend catalog API not confirmed
+Version: 2.0
+Last updated: 2026-09-27
+Status: in-progress — UI + local filtering implemented against a mock catalog;
+owned by `ILMainTabCoordinator` (tab 2)
 
 > See `changelog.md` in this folder for the version history of this spec.
 
 ## Overview
 
-MVVM-C + Clean Architecture per `AGENTS.md`. Library is a **root tab** of the app, so it is reached
-across sections (Home ⇄ Library) and is owned by `AppCoordinator` — same as `Home`: its coordinator
-replaces the navigation stack root (`setViewControllers`), and each root screen embeds its own
-`ILBottomNavBar` (there is no `UITabBarController` yet). It follows the shape of the `Home` feature
-(mock-backed `UseCase` with a `TODO`, Entity → StateModel mapping in the ViewModel, `Views/` folder).
-Nothing on this screen needs a network call yet, so no DTO / Mapper / Repository exists (see
-"Deliberately stubbed for now").
+Library ("Thư viện") follows MVVM-C + Clean Architecture per `AGENTS.md`. It is
+**tab 2** of `ILMainTabBarController`, so `ILLibraryCoordinator` is owned by
+`ILMainTabCoordinator` (which gives it its own `BaseNavigationController`). It
+follows the `Home`/`Sangha` shape (mock-backed `UseCase` with a `TODO`, Entity →
+StateModel mapping in the ViewModel, `Views/` folder). Nothing on this screen
+needs a network call yet, so no DTO / Mapper / Repository exists.
 
-Design reference: `Docs/design_handoff_innerlamp/design/InnerLamp Prototype.dc.html`, screen `lib`
-(`isLib`). Tokens: canvas `--il-canvas`, row/search `--il-card`, title Lora 26.
+> Note (vs v1.x): v1.x documented Library as an `AppCoordinator`-owned root
+> screen with an embedded `ILBottomNavBar` and a `goHome` delegate. That shape
+> was superseded — Library is now a tab; the delegate, `goHome`, the embedded
+> bottom bar, and the Home "library tab" entry are all gone.
 
 ## Layers & components
 
 | Layer | File | Responsibility |
 |---|---|---|
-| Domain / Entity | `Domain/Entities/ILLibraryEntity.swift` | `ILLibraryEntity` (featured + items), `ILLibraryItemEntity`, `ILLibraryFeaturedEntity`, `ILLibraryContentKind` (sutra / meditation / talk), `ILLibraryTone`, `ILLibraryCategory` (all / kind). Pure business fields, no display strings beyond server-provided copy. |
+| Domain / Entity | `Domain/Entities/ILLibraryEntity.swift` | `ILLibraryEntity` (featured + items), `ILLibraryItemEntity`, `ILLibraryFeaturedEntity`, `ILLibraryContentKind` (sutra / meditation / talk), `ILLibraryTone`, `ILLibraryCategory` (all / kind, with `kind` mapping). Pure business fields. |
 | Domain / UseCase | `Domain/UseCases/Library/ILLibraryUseCase.swift` | `getCatalog()` returns the (mock) catalog; `items(in:category:)` is the real, pure in-memory category filter. |
-| Presentation / State | `Presentation/Scenes/Library/ILLibraryStateModel.swift` | Chips (with selected flag), featured card model, section title, row models (formatted duration, tone), `isListEmpty`. No UIKit. |
-| Presentation / ViewModel | `Presentation/Scenes/Library/ILLibraryViewModel.swift` | `Input -> Output`; Entity → StateModel mapping (duration formatting, section title, chip selection); owns `ILLibraryNavEvent`. |
-| Presentation / Coordinator | `Presentation/Scenes/Library/ILLibraryCoordinator.swift` | Replaces stack root with the Library screen; forwards `goHome` to `AppCoordinator` via `ILLibraryCoordinatorDelegate`; search/item events end in a `TODO` (destinations not built). |
-| Presentation / ViewController | `Presentation/Scenes/Library/ILLibraryViewController.swift` | `BaseViewController`; pinned title, scroll content, pinned `ILBottomNavBar(.lib)`; renders `ILLibraryStateModel`. |
-| Presentation / View (shared) | `Presentation/Common/DesignSystem/Components/ILSearchBarView.swift` | Tap-only search field (icon + placeholder), reusable by the future Search entry points. Content-free → shared per naming rule §3. |
-| Presentation / View (shared) | `Presentation/Common/DesignSystem/Components/ILFeatureCardView.swift` | Dark gradient card: caps eyebrow, serif title, gold pill CTA, glow. Takes only strings → shared. |
-| Presentation / View (feature) | `Presentation/Scenes/Library/Views/ILLibraryCategoryChipsView.swift` | Composes four `ILChip`s in an `ILChipFlowView`, emits selected category. Knows `ILLibraryCategory` → feature-scoped. |
-| Presentation / View (feature) | `Presentation/Scenes/Library/Views/ILLibraryListView.swift` | Section header + stack of `ILRow`s, or `ILStateView(.empty)`; emits tapped item id. Knows the row model → feature-scoped. |
-| Design tokens | `ILTypography.swift` / `ILColors.swift` | Reuse `displayMedium`, `body`, `chip`, `eyebrow`, `button`, `scriptureTitle` (22 Lora); add presets/colours only if none fits. |
-| Localization | `Resources/Localization/vi.json` | New `library.*` keys (title, search placeholder, chips, section titles, CTA, mock catalog copy). |
-| Wiring | `App/DIContainer.swift`, `App/AppCoordinator.swift` | `makeLibraryUseCase/ViewModel/Coordinator`; `showLibrary()` + `ILLibraryCoordinatorDelegate` conformance. |
-| Entry from Home | `ILHomeViewModel` / `ILHomeViewController` / `ILHomeCoordinator` | Needs modification: new Input `libraryTabTapped`, `ILHomeNavEvent.openLibrary`, `ILHomeCoordinatorDelegate.homeDidRequestLibrary`; `ILHomeViewModelTests` updated. |
-| Tests | `InnerLampTests/ILLibraryViewModelTests.swift` | One test per Input, mocking `ILLibraryUseCase`; formatting cases. |
-
-### Entity / StateModel / DTO split
-
-- `ILLibraryItemEntity`: `id`, `kind`, `title`, `subtitle`, `durationMinutes`, `tone`
-  (`ILLibraryTone` = gold/green/rose/ink, same convention as `ILHomeSessionTone`; mapped to
-  `ILColors.Tone` in the ViewController because Domain must not import UIKit).
-- `ILLibraryFeaturedEntity`: `id`, `eyebrow`, `title`, `durationMinutes`.
-- `ILLibraryStateModel`: `chips`, `featured`, `sectionTitle`, `rows`, `isListEmpty` — everything
-  display-shaped (`durationText`, localized titles, selected flag).
-- DTO/Mapper: **not created** — no confirmed contract (see Pending in `requirements.md`).
+| Presentation / State | `Presentation/Scenes/Library/ILLibraryStateModel.swift` | Chips, featured card model, section title, row models (formatted duration, tone), empty copy, `isListEmpty`. No UIKit. |
+| Presentation / ViewModel | `Presentation/Scenes/Library/ILLibraryViewModel.swift` | `Input -> Output` per `ViewModelType`; Entity → StateModel mapping (duration formatting, section title, chip selection); owns `ILLibraryNavEvent` (`.openSearch`, `.openItem(id:kind:)`). |
+| Presentation / Coordinator | `Presentation/Scenes/Library/ILLibraryCoordinator.swift` | `setViewControllers([ILLibraryViewController])`; `.openItem` with `kind == .sutra` → `showSutraDetail(id)` (wired); `.openSearch` and `.openItem` for `.meditation`/`.talk` → TODO. No delegate. |
+| Presentation / ViewController | `Presentation/Scenes/Library/ILLibraryViewController.swift` | `setupViews`/`setupConstraints`/`bindViewModel` per `BaseViewController`; pinned title, scroll content. |
+| Shared component | `Presentation/Common/DesignSystem/Components/ILSearchBarView.swift` | Tap-only search field (icon + placeholder), reusable by future Search entry points. |
+| Shared component | `Presentation/Common/DesignSystem/Components/ILFeatureCardView.swift` | Dark gradient card: caps eyebrow, serif title, gold pill CTA, glow. |
+| Feature-scoped view | `Presentation/Scenes/Library/Views/ILLibraryCategoryChipsView.swift` | Composes four `ILChip`s; emits selected category. |
+| Feature-scoped view | `Presentation/Scenes/Library/Views/ILLibraryListView.swift` | Section header + stack of `ILRow`s, or empty state; emits tapped item id. |
+| Localization | `Resources/Localization/vi.json` | `library.*` keys (title, search placeholder, chips, section titles, CTA, empty copy, mock catalog copy). |
+| Wiring | `App/DIContainer.swift`, `ILMainTabCoordinator` | `makeLibraryUseCase/ViewModel/Coordinator`; `ILMainTabCoordinator` creates it on the Library tab's own nav. |
 
 ## Navigation flow
 
 ```
-AppCoordinator
-  ├─ showHome() → ILHomeCoordinator (root)
-  │     libraryTabTapped → .openLibrary → homeDidRequestLibrary → AppCoordinator.showLibrary()
-  └─ showLibrary() → ILLibraryCoordinator (replaces stack root, crossfade)
-        home tab       → .goHome        → libraryDidRequestHome → AppCoordinator.showHome()
-        search bar     → .openSearch    → TODO (Search screen not built)
-        row / featured → .openItem(id:kind:) → TODO (Detail / Talk / Reader not built)
+ILMainTabCoordinator (tab "Thư viện")
+  └─ ILLibraryCoordinator                         (owned by Main, not AppCoordinator)
+       setViewControllers([ILLibraryViewController])  ← root of the Library tab's nav
+       search bar   → .openSearch              → TODO (Search screen not built)
+       row (sutra)  → .openItem(id:.sutra)     → showSutraDetail(id) (wired)
+       row (meditation/talk) → .openItem       → TODO (Meditation/Talk not built)
+       featured     → .openItem(id:.talk)      → TODO (Talk not built)
 ```
-
-On leaving a root screen, its coordinator calls `finish()` after notifying the delegate so
-`AppCoordinator.childCoordinators` does not accumulate stale Home/Library coordinators.
 
 ## Data flow (single, local — no sequential API calls)
 
-1. `viewDidLoad` → ViewModel asks `useCase.getCatalog()` (mock) → maps to `ILLibraryStateModel`
-   with category `.all`.
-2. `categorySelected(c)` → ViewModel calls `useCase.items(in: catalog, category: c)` → rebuilds
-   chips / section title / rows. Featured is untouched.
+1. `viewDidLoad` → ViewModel asks `useCase.getCatalog()` (mock) → maps to
+   `ILLibraryStateModel` with category `.all`.
+2. `categorySelected(c)` → ViewModel calls `useCase.items(in: category:)` →
+   rebuilds chips / section title / rows. Featured is untouched.
 3. Taps produce `ILLibraryNavEvent`s only; ViewModel holds no navigation logic.
 
-No Step-by-step Flow section: the screen makes zero API calls today. When Phase 3 lands with a
-single `GET` catalog call this stays a one-call flow; if the contract turns out to need a second
-call (e.g. featured separate from list) add the section then.
+No Step-by-step Flow section: the screen makes zero API calls today. When Phase
+3 lands with a single `GET` catalog call this stays a one-call flow; if the
+contract turns out to need a second call (e.g. featured separate from list) add
+the section then.
 
 ## Deliberately stubbed for now
 
-- `ILLibraryUseCaseImpl.getCatalog()` returns a static mock catalog (4 sutras from the prototype
-  plus a few meditation/talk rows so the filters have data). Carries a `// TODO:` to swap in the
-  Repository once the catalog contract is confirmed — tracked in `tasks.md` Phase 3. Same
-  precedent as `ILHomeUseCaseImpl`.
-- `ILLibraryCoordinator` search / item events: `TODO` — destination screens are Deferred.
-- Lamp / Sangha / Me tab taps: ignored (`TODO`), as on Home.
+- `ILLibraryUseCaseImpl.getCatalog()` returns a static mock catalog (4 sutras,
+  2 meditations, 2 talks, 1 featured) with a `// TODO:` to swap in the
+  Repository once the catalog contract is confirmed — tracked in `tasks.md`
+  Phase 3.
+- `ILLibraryCoordinator` search event and `.openItem` for `.meditation` /
+  `.talk` are `TODO` (destination screens not built). Only `.sutra` →
+  SutraDetail is wired.
+
+## Design reference
+
+Matches `Docs/design_handoff_innerlamp/design/InnerLamp Prototype.dc.html`,
+screen `lib` (`isLib`). See `InnerLamp/Presentation/Scenes/Library/README.md`
+for the full design-vs-implementation comparison and changelog.

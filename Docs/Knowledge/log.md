@@ -1,5 +1,87 @@
 # Knowledge Bundle Update Log
 
+## 2026-09-28
+
+- Updated `features/temple.md` after the Temple screen ("Trang chùa") was
+  redesigned to match the full design handoff (`Component.TEMPLE_INFO`): the
+  entity/state/viewmodel shape grew from a 3-stat mock strip to the complete
+  profile (status card, facts grid, organization, architecture, amenities,
+  visit rules, location & contacts), and the catalog grew from 8 to 9 temples.
+  Still `status: draft` — catalog remains mock data, no temple API.
+
+## 2026-09-27
+
+- Full sync of the bundle against `Docs/Specs/` (the user's "read the Specs and
+  update OKF" request). Added **9 feature concepts**, **3 API endpoint
+  concepts**, and **2 architecture concepts**, and re-verified the 3
+  pre-existing concepts against current code.
+- New feature concepts (all `status: draft` except where noted), each written
+  from the real code, not the spec prose: `features/otp.md` (verify/resend are
+  real, only the manual real-backend test is open), `features/forgot-password.md`
+  (`sendResetInstructions` is a `print("TODO")` stub; no reset contract),
+  `features/onboarding.md` (`stable` — complete local flow, no backend, no
+  pending work), `features/home.md` (mock content, no dashboard API),
+  `features/splash.md` (post-splash route hardcoded to Onboarding),
+  `features/bell.md` (memory-only; no persistence or sound picker),
+  `features/library.md` (mock catalog; search/item destinations TODO),
+  `features/main.md` (`stable` — complete container, no backend), and
+  `features/temple.md` (mock catalog; the SRS's list/discovery scope is a draft
+  with no engineering spec and is unimplemented).
+- New API endpoint concepts (all `draft` — contract confirmed in
+  `Docs/Specs/API/openapi.yaml` v3.9, not yet exercised against a real backend):
+  `api/auth-request-otp.md`, `api/auth-verify-otp.md`,
+  `api/auth-resend-otp.md`. Noted the `resend-otp` `resend_remaining` drift
+  (listed in the openapi, not modeled by `ILOtpResendResponseDTO`).
+- New architecture concepts (both `stable`): `architecture/networking.md` (the
+  transport boundary; 401 refresh documented as deferred) and
+  `architecture/logging-groups.md` (the 4 groups; 3 of 4 transports mocked by
+  design).
+- Re-verified `features/signup.md`: fixed one drift — the endpoint file is
+  `Data/DataSources/Remote/RequestOTPEndpoint.swift` (struct
+  `RequestRegistrationOTPEndpoint`), not `RequestRegistrationOTPEndpoint.swift`.
+  Refreshed its OTP / endpoint related-concepts links (now written) and bumped
+  `generated.at`.
+- Rewrote `features/login.md` from the current code: `generated.by` is now
+  `claude-code`; corrected the Forgot Password navigation (now a real
+  coordinator), the guest/success destinations (now `showMain()`), added
+  `ILLoginRepository` to the Architecture table, and documented the confirmed
+  login contract plus the two Domain gaps (`device` object, incomplete
+  `ILLoginError`).
+- `domain/usecases/deviceattestation.md` re-read and found still accurate
+  (three server ops still `// TODO` stubs); left untouched.
+- Updated `index.md`: moved `api/` and `architecture/` out of "Planned", added
+  all 17 concept rows with status reasons, and updated the planned list to
+  `domain/entities/` + `design-system/`.
+- Status rationale recorded here for future readers: `stable` is used only for
+  features with no backend dependency and no stub (Onboarding, Main) and for
+  architecture patterns that are implemented + tested with documented deferrals
+  (networking, logging). Everything with a stub, mock data, or an
+  unverified-against-real-backend flow stays `draft`.
+
+## 2026-09-23 (2)
+
+- Added `domain/usecases/deviceattestation.md` (`type: UseCase`,
+  `status: draft`), documenting the DeviceAttestation background core
+  service as implemented in Phases 1–3 of `Docs/Specs/DeviceAttestation/`:
+  the Domain entity / repository protocol / UseCase, the
+  `ILAppAttestDataSource` wrapping `DCAppAttestService` (the only file that
+  imports `DeviceCheck`), the Data-layer repository, the `DIContainer`
+  wiring, the App Attest environment entitlement, and the UseCase unit
+  tests. This is the first concept in the `domain/` section.
+- Placed it under `domain/usecases/` (not `features/`, which the spec's
+  Phase 5 placeholder suggested) because the service is UI-less — no
+  screen/coordinator/ViewModel — so `UseCase` is the correct `type:` per the
+  bundle's taxonomy.
+- Marked `draft` because the three server round-trips
+  (`fetchAttestationChallenge` / `submitAttestation` /
+  `fetchAssertionChallenge`) are one-line `// TODO` stubs in
+  `ILDeviceAttestationRepositoryImpl` (Phase 4 is blocked on the backend
+  contract), so the flow has not been exercised end-to-end. Promote to
+  `stable` once the server ops are real and the attestation + assertion
+  flows run against a real/staging backend.
+- Moved `domain/` out of "Planned, not yet populated" in `index.md` and
+  added the concept's row to the concept table.
+
 ## 2026-09-23
 
 - Rewrote `features/signup.md` (`status: draft`) after re-reading the

@@ -79,6 +79,9 @@ public final class ILCheckboxRow: UIControl {
 
         addTarget(self, action: #selector(handleTap), for: .touchUpInside)
         updateAppearance()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILCheckboxRow, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     private func updateAppearance() {
@@ -95,9 +98,7 @@ public final class ILCheckboxRow: UIControl {
 
     // `layer.borderColor` là CGColor tĩnh, không tự đảo theo trait — refresh thủ công
     // khi hệ thống đổi light/dark (ink giờ có biến thể dark).
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         updateAppearance()
     }
 

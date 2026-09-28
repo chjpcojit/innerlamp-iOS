@@ -1,4 +1,4 @@
-# Handoff: InnerLamp — ứng dụng tu tập (45 màn hình)
+# Handoff: InnerLamp — ứng dụng tu tập (50 màn hình)
 
 ## Overview
 InnerLamp là ứng dụng thiền / tụng kinh / nhật ký tu tập cho người Việt. Bundle này chứa toàn bộ bản bấm thử (clickable prototype) 45 màn hình và 9 component dùng chung, đủ để dựng phiên bản đầu tiên của app.
@@ -81,7 +81,7 @@ Dùng một ThemeProvider trả về object token theo `colorScheme` (`useColorS
 
 ## Launch screen (ảnh tĩnh)
 
-Thư mục `launch/` chứa 5 ảnh launch iPhone + README riêng. Ảnh là **khung tĩnh** của `splash` (nền, vầng sáng, vòng đèn, ngọn lửa, wordmark, slogan) để iOS không hiện khoảng đen trước khi app mount; hiệu ứng động chỉ chạy sau đó và nối tiếp liền mạch. `backgroundColor` phải là `#100E0B` ở mọi khai báo, `resizeMode: "cover"`, và chỉ gọi `SplashScreen.hideAsync()` trong `onLayout` của màn splash động. Bảng chuyển từng hiệu ứng CSS sang Reanimated nằm trong `launch/README.md`.
+Thư mục `launch/` chứa 5 ảnh launch iPhone **tối** + 5 ảnh **sáng** (`LaunchImage-Light-*`) + README riêng (cấu hình `splash.dark` trong Expo). Ảnh là **khung tĩnh** của `splash` (nền, vầng sáng, vòng đèn, ngọn lửa, wordmark, slogan) để iOS không hiện khoảng đen trước khi app mount; hiệu ứng động chỉ chạy sau đó và nối tiếp liền mạch. `backgroundColor` phải là `#100E0B` ở mọi khai báo, `resizeMode: "cover"`, và chỉ gọi `SplashScreen.hideAsync()` trong `onLayout` của màn splash động. Bảng chuyển từng hiệu ứng CSS sang Reanimated nằm trong `launch/README.md`.
 
 Slogan chính thức: **"Tự thắp đèn tâm, tự soi lối về"** (Lora italic 15px).
 
@@ -119,7 +119,28 @@ Mỗi component nằm ở `design/IL-*.dc.html`; logic props ở cuối file, đ
 
 Màn **Bộ component** trong prototype (chip cuối thanh nhảy màn) hiển thị toàn bộ state — dùng nó làm checklist khi code component library.
 
-## Screens (45)
+## Cập nhật mới (bản này)
+- **Bottom tab bar — icon riêng** (`IL-BottomNav`): SVG nét 1.6px, 22×22 — mái chùa (Trang chủ), kinh sách mở (Thư viện), người trong nhóm (Đạo tràng), người (Tôi). Tab active: nét `--il-ink` (tối: `#D9963C`) + fill nhẹ `--il-ink-12` (tối: `rgba(217,150,60,.22)`). Nút đèn giữa: ngọn lửa + đài sen màu `#E6A94E` (tối: `#1A1611`) trên tròn 48px.
+- **Chuông mõ** (`bell`): nhịp chuông 40–160 bpm, mõ cách 5–120s; preset tụng kinh / niệm / lạy; tự đánh chuông ở mốc 10/27/108 tiếng. Âm thanh đang **tổng hợp** — cần file audio thật.
+- **Ảnh chùa đẹp** (khối trên Trang chủ: 1 lớn + 2 nhỏ → màn `photos`): lọc Tất cả / Chùa / Tượng Phật / Thiền / Lễ hội, lightbox xem ảnh.
+- **Chùa Việt Nam** (carousel ngang snap, thấy 1.5 thẻ): 8 chùa → `temple` (hiện dùng chung 1 template, data-bind theo chùa chọn).
+- **Bài viết Phật pháp hay** (thay "bài đăng tương tác" trên Trang chủ): 5 bài biên tập → màn `article` (Lưu, Chia sẻ, Đọc tiếp). Khác với **Chia sẻ của bạn đồng tu** ở tab Đạo tràng (nội dung cộng đồng → `post`).
+- **Ghi danh / Chia sẻ câu kinh**: nút hành động ghim đáy màn (sticky + hairline). Form ghi danh thêm dropdown tùy chọn "Nơi quy y" (6 lựa chọn).
+- Ảnh dùng `<image-slot>` (`image-slot.js`) làm chỗ đặt ảnh — thay bằng ảnh thật khi code.
+
+### Light mode — khối nền tối đã chuyển sang token theo theme
+- Hero âm lịch (Trang chủ): `--il-hero-ov / -ink / -ink2 / -sub / -acc / -acc2`.
+- Header Trang chùa: `--il-th-bg / -ink / -sub / -glow / -flame`; thanh nav trong suốt, nằm đè (height:0), gradient hero tan vào `--il-canvas` — không có đường cắt.
+- Thẻ Pháp thoại (Thư viện) & Công đức (Hồ sơ): `--il-feat-bg / -bd / -glow`.
+- Sáng: kicker `#74500F` (≥4.5:1 trên nền be). Giá trị đầy đủ ở rule `[data-il-theme="light"|"dark"]` đầu file prototype.
+
+### Header chung & light mode (đợt 2)
+- Mọi màn con dùng `IL-NavBar` trong wrapper sticky `padding:56px 20px 10px`, **không có line dưới header**. Màn có hero (Trang chùa, Pháp thoại, Chi tiết bài kinh) dùng bar trong suốt nằm đè (height:0) và luôn ghim trên cùng khi cuộn.
+- Thông báo, Trình phát chuyển sang `IL-NavBar` (nút đóng / "Mục lục").
+- Light mode thêm cho: Thông báo, Thành tựu, Thống kê, Cúng dường, Trình phát (`--il-pl-*`), Pháp thoại, Trợ giúp. Token mới: `--il-feat-track / -off / -ghost / -ghostfg`, `--il-pl-bg / -sub / -chip / -chipfg / -chipbd`.
+- Cúng dường: nút "Thắp đèn" sticky đáy màn.
+
+## Screens (50)
 
 Nhóm theo luồng; tên trong ngoặc là key state trong prototype.
 
@@ -132,6 +153,8 @@ Nhóm theo luồng; tên trong ngoặc là key state trong prototype.
 **Nhật ký (3)** — `journal` danh sách; `write` viết; `entry` chi tiết một ngày.
 
 **Cộng đồng & chùa (9)** — `sangha` đạo tràng; `post` bài đăng + bình luận lồng cấp (thụt 22px); `compose` viết bài (chọn đối tượng xoay vòng, gắn thẻ); `temple` trang chùa; `events` sự kiện & khóa học (3 tab đổi danh sách); `register` ghi danh; `offer` cúng dường; `receipt` biên nhận; `cal` lịch âm — **carousel cuộn ngang theo tháng** (snap từng tháng, nút ‹ › hai bên, 6 tháng từ tháng hiện tại; ngày âm tính thật từ thuật toán lunar, tô nhẹ ngày trai, nhãn Mùng 1 / Rằm; header hiện tháng + năm can chi đang xem).
+
+**Mới (5)** — `bell` chuông mõ; `photos` ảnh chùa đẹp; `article` bài viết Phật pháp; carousel chùa (trên `home`) → `temple`.
 
 **Hệ thống (7)** — `notif` thông báo; `lang` ngôn ngữ & hiển thị (3 ngôn ngữ, 4 cỡ chữ đổi preview, 3 theme); `faq` trợ giúp (accordion, mở 1 mục); `paywall` gói Sen Vàng (3 gói, CTA + ghi chú đổi theo gói); `loading` skeleton (nhịp `ilpulse` 1.6s so le); `error` lỗi tải (mã lỗi + 2 nút); `offline` mất kết nối; `kit` bộ component.
 
@@ -156,12 +179,13 @@ Prototype giữ toàn bộ trong một store phẳng; khi code, tách như sau:
 - **Local-first**: nhật ký, chuỗi hạt, thống kê nên ghi local trước rồi đồng bộ — người dùng thường thực hành khi offline.
 
 ## Assets
-Không dùng ảnh hay icon set. Toàn bộ "icon" hiện đang là hình khối CSS (tròn, vuông bo, hình giọt `border-radius: 50% 0 50% 50%`). **Khi code nên thay bằng icon set thật** (Lucide hoặc Phosphor, nét mảnh) — giữ kích thước 13–15px trong tile 42–44px. Ảnh chùa / sự kiện hiện là gradient tối; cần ảnh thật từ phía sản phẩm.
+Icon tab bar đã là SVG riêng (xem *Cập nhật mới*). Các "icon" còn lại vẫn là hình khối CSS (tròn, vuông bo, hình giọt `border-radius: 50% 0 50% 50%`). **Khi code nên thay bằng icon set thật** (Lucide hoặc Phosphor, nét mảnh) — giữ kích thước 13–15px trong tile 42–44px. Ảnh chùa / sự kiện hiện là gradient tối; cần ảnh thật từ phía sản phẩm.
 
 ## Files
 - `design/InnerLamp Prototype.dc.html` — toàn bộ 45 màn + logic điều hướng và dữ liệu mẫu.
 - `design/IL-Btn|Chip|Field|Row|SettingRow|NavBar|BottomNav|Avatar|State.dc.html` — 10 component, mỗi file gồm markup + bảng màu theo state.
-- `launch/` — 5 ảnh launch tĩnh cho iOS + hướng dẫn cấu hình Expo.
+- `launch/` — 10 ảnh launch tĩnh cho iOS (5 tối + 5 sáng) + hướng dẫn cấu hình Expo.
+- `design/image-slot.js` — placeholder ảnh (chỉ dùng trong prototype).
 - `design/support.js`, `design/ios-frame.jsx` — runtime để mở prototype trong trình duyệt; **không** port sang app.
 
 ## Gợi ý thứ tự code

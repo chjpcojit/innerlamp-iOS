@@ -27,10 +27,10 @@ final class ILSanghaCoordinator: Coordinator {
         let viewModel = container.makeSanghaViewModel()
 
         viewModel.navigationEventPublisher
-            .sink { event in
+            .sink { [weak self] event in
                 switch event {
                 case .openFindSangha:
-                    // TODO: điều hướng sang Trang chùa (`temple`) khi có coordinator.
+                    // TODO: mở màn danh sách/tìm đạo tràng (chưa build — không phải Trang chùa).
                     break
                 case .startSitting:
                     // TODO: điều hướng sang Chuẩn bị thiền (`setup`) khi có luồng Đèn.
@@ -39,19 +39,34 @@ final class ILSanghaCoordinator: Coordinator {
                     // TODO: present màn Viết bài (`compose`, modal) khi có coordinator.
                     break
                 case .openEvents:
-                    // TODO: điều hướng sang Sự kiện & khóa học (`events`) khi có coordinator.
-                    break
-                case .openCommunity:
-                    // TODO: điều hướng sang Trang chùa (`temple`) theo id khi có coordinator.
-                    break
-                case .openPost:
-                    // TODO: điều hướng sang Bài đăng (`post`) theo id khi có coordinator.
-                    break
+                    self?.showEvents()
+                case .openCommunity(let id):
+                    self?.showTemple(id)
+                case .openPost(let id):
+                    self?.showPost(id: id)
                 }
             }
             .store(in: &cancellables)
 
         let viewController = ILSanghaViewController(viewModel: viewModel)
         navigationController.setViewControllers([viewController], animated: false)
+    }
+
+    private func showPost(id: String) {
+        let coordinator = container.makePostCoordinator(navigationController: navigationController, postID: id)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    private func showEvents() {
+        let coordinator = container.makeEventsCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    private func showTemple(_ templeID: String) {
+        let coordinator = container.makeTempleCoordinator(navigationController: navigationController, templeID: templeID)
+        addChild(coordinator)
+        coordinator.start()
     }
 }

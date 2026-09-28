@@ -156,6 +156,9 @@ public final class ILRow: UIControl {
         addTarget(self, action: #selector(handleTapAction), for: .touchUpInside)
         
         updateAppearance()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILRow, _) in
+            view.applyColorAppearanceChange()
+        }
     }
     
     private func updateAppearance() {
@@ -213,9 +216,7 @@ public final class ILRow: UIControl {
     
     // `layer.borderColor` là CGColor tĩnh, không tự đảo theo trait — refresh thủ công
     // khi hệ thống đổi light/dark (ink/surface giờ có biến thể dark).
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         updateAppearance()
     }
 

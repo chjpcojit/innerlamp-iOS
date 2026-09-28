@@ -16,6 +16,16 @@ final class ILHomeViewController: BaseViewController {
     private let resetBeadsTappedSubject = PassthroughSubject<Void, Never>()
     private let malaFullscreenTappedSubject = PassthroughSubject<Void, Never>()
     private let lunarCalendarTappedSubject = PassthroughSubject<Void, Never>()
+    private let lunarHeroTappedSubject = PassthroughSubject<Void, Never>()
+    private let dayTappedSubject = PassthroughSubject<String, Never>()
+    private let photosTappedSubject = PassthroughSubject<Void, Never>()
+    private let bellTappedSubject = PassthroughSubject<Void, Never>()
+    private let eventsTappedSubject = PassthroughSubject<Void, Never>()
+    private let articleTappedSubject = PassthroughSubject<String, Never>()
+    private let articlesViewAllTappedSubject = PassthroughSubject<Void, Never>()
+    private let templeTappedSubject = PassthroughSubject<String, Never>()
+    private let deityTappedSubject = PassthroughSubject<String, Never>()
+    private let suggestedSessionTappedSubject = PassthroughSubject<String, Never>()
 
     // MARK: - UI Elements
     private let scrollView = UIScrollView()
@@ -28,6 +38,15 @@ final class ILHomeViewController: BaseViewController {
     private let eventsHeader = ILSectionHeaderView(title: "home.events.title".localized, trailingText: "home.events.viewAll".localized)
     private let eventsCarousel = ILHomeEventsCarouselView()
 
+    private let photosHeader = ILSectionHeaderView(title: "home.photos.title".localized, trailingText: "home.photos.viewAll".localized)
+    private let photosGrid = ILHomePhotoGridView()
+
+    private let templesHeader = ILSectionHeaderView(title: "home.temple.title".localized, trailingText: "home.temple.find".localized)
+    private let templesCarousel = ILHomeTempleCarouselView()
+
+    private let deitiesHeader = ILSectionHeaderView(title: "home.deity.title".localized, trailingText: "home.deity.viewAll".localized)
+    private let deitiesCarousel = ILHomeDeityCarouselView()
+
     private let todayCard = ILStatProgressCardView(title: "home.today.title".localized)
     private let streakCard = ILStatStreakCardView(title: "home.streak.title".localized, unitText: "home.streak.unit".localized)
     private let statsStack = UIStackView()
@@ -35,8 +54,13 @@ final class ILHomeViewController: BaseViewController {
     private let malaHeader = ILSectionHeaderView(title: "home.mala.title".localized, trailingText: "home.mala.fullscreen".localized)
     private let malaCounter = ILMalaCounterView(resetTitle: "home.mala.reset".localized)
 
+    private let bellCard = ILHomeBellCardView()
+
     private let suggestedHeader = ILSectionHeaderView(title: "home.suggested.title".localized)
     private let suggestedStack = UIStackView()
+
+    private let articlesHeader = ILSectionHeaderView(title: "home.article.title".localized, trailingText: "home.article.library".localized)
+    private let articlesList = ILHomeArticleListView()
 
 
     // MARK: - Initializer
@@ -73,6 +97,7 @@ final class ILHomeViewController: BaseViewController {
 
         weekCalendarView.translatesAutoresizingMaskIntoConstraints = false
         weekCalendarView.onCalendarLinkTap = { [weak self] in self?.handleCalendarLinkTapped() }
+        weekCalendarView.onSelectDay = { [weak self] day in self?.dayTappedSubject.send(day.id) }
 
         lunarHeroCard.translatesAutoresizingMaskIntoConstraints = false
         lunarHeroCard.onTap = { [weak self] in self?.handleLunarHeroTapped() }
@@ -82,6 +107,24 @@ final class ILHomeViewController: BaseViewController {
 
         eventsCarousel.translatesAutoresizingMaskIntoConstraints = false
         eventsCarousel.onEventTap = { [weak self] event in self?.handleEventTapped(event) }
+
+        photosHeader.translatesAutoresizingMaskIntoConstraints = false
+        photosHeader.onTrailingTap = { [weak self] in self?.handlePhotosViewAllTapped() }
+
+        photosGrid.translatesAutoresizingMaskIntoConstraints = false
+        photosGrid.onTap = { [weak self] in self?.handlePhotoTapped() }
+
+        templesHeader.translatesAutoresizingMaskIntoConstraints = false
+        templesHeader.onTrailingTap = { [weak self] in self?.handleTemplesFindTapped() }
+
+        templesCarousel.translatesAutoresizingMaskIntoConstraints = false
+        templesCarousel.onTempleTap = { [weak self] temple in self?.handleTempleTapped(temple) }
+
+        deitiesHeader.translatesAutoresizingMaskIntoConstraints = false
+        deitiesHeader.onTrailingTap = { [weak self] in self?.handleDeitiesViewAllTapped() }
+
+        deitiesCarousel.translatesAutoresizingMaskIntoConstraints = false
+        deitiesCarousel.onDeityTap = { [weak self] deity in self?.handleDeityTapped(deity) }
 
         statsStack.addArrangedSubview(todayCard)
         statsStack.addArrangedSubview(streakCard)
@@ -97,15 +140,27 @@ final class ILHomeViewController: BaseViewController {
         malaCounter.onTapBead = { [weak self] in self?.handleBeadTapped() }
         malaCounter.onReset = { [weak self] in self?.handleResetBeadsTapped() }
 
+        bellCard.translatesAutoresizingMaskIntoConstraints = false
+        bellCard.onTap = { [weak self] in self?.handleBellTapped() }
+
         suggestedHeader.translatesAutoresizingMaskIntoConstraints = false
 
         suggestedStack.axis = .vertical
         suggestedStack.spacing = ILMetrics.rowSpacing
         suggestedStack.translatesAutoresizingMaskIntoConstraints = false
 
+        articlesHeader.translatesAutoresizingMaskIntoConstraints = false
+        articlesHeader.onTrailingTap = { [weak self] in self?.handleArticlesViewAllTapped() }
+
+        articlesList.translatesAutoresizingMaskIntoConstraints = false
+        articlesList.onArticleTap = { [weak self] article in self?.handleArticleTapped(article) }
+
         [
             headerView, weekCalendarView, lunarHeroCard, eventsHeader, eventsCarousel,
-            statsStack, malaHeader, malaCounter, suggestedHeader, suggestedStack
+            photosHeader, photosGrid, templesHeader, templesCarousel, deitiesHeader, deitiesCarousel,
+            statsStack,
+            malaHeader, malaCounter, bellCard, suggestedHeader, suggestedStack,
+            articlesHeader, articlesList
         ].forEach {
             contentView.addSubview($0)
         }
@@ -146,7 +201,31 @@ final class ILHomeViewController: BaseViewController {
             eventsCarousel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             eventsCarousel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 
-            statsStack.topAnchor.constraint(equalTo: eventsCarousel.bottomAnchor, constant: ILMetrics.groupSpacing),
+            photosHeader.topAnchor.constraint(equalTo: eventsCarousel.bottomAnchor, constant: ILMetrics.groupSpacing),
+            photosHeader.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            photosHeader.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+
+            photosGrid.topAnchor.constraint(equalTo: photosHeader.bottomAnchor, constant: ILMetrics.rowSpacing),
+            photosGrid.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            photosGrid.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+
+            templesHeader.topAnchor.constraint(equalTo: photosGrid.bottomAnchor, constant: ILMetrics.groupSpacing),
+            templesHeader.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            templesHeader.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+
+            templesCarousel.topAnchor.constraint(equalTo: templesHeader.bottomAnchor, constant: ILMetrics.rowSpacing),
+            templesCarousel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            templesCarousel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+
+            deitiesHeader.topAnchor.constraint(equalTo: templesCarousel.bottomAnchor, constant: ILMetrics.groupSpacing),
+            deitiesHeader.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            deitiesHeader.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+
+            deitiesCarousel.topAnchor.constraint(equalTo: deitiesHeader.bottomAnchor, constant: ILMetrics.rowSpacing),
+            deitiesCarousel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            deitiesCarousel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+
+            statsStack.topAnchor.constraint(equalTo: deitiesCarousel.bottomAnchor, constant: ILMetrics.groupSpacing),
             statsStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             statsStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 
@@ -158,14 +237,26 @@ final class ILHomeViewController: BaseViewController {
             malaCounter.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             malaCounter.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 
-            suggestedHeader.topAnchor.constraint(equalTo: malaCounter.bottomAnchor, constant: ILMetrics.groupSpacing),
+            bellCard.topAnchor.constraint(equalTo: malaCounter.bottomAnchor, constant: ILMetrics.rowSpacing),
+            bellCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            bellCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+
+            suggestedHeader.topAnchor.constraint(equalTo: bellCard.bottomAnchor, constant: ILMetrics.groupSpacing),
             suggestedHeader.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             suggestedHeader.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 
             suggestedStack.topAnchor.constraint(equalTo: suggestedHeader.bottomAnchor, constant: ILMetrics.rowSpacing),
             suggestedStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             suggestedStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            suggestedStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+
+            articlesHeader.topAnchor.constraint(equalTo: suggestedStack.bottomAnchor, constant: ILMetrics.groupSpacing),
+            articlesHeader.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            articlesHeader.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+
+            articlesList.topAnchor.constraint(equalTo: articlesHeader.bottomAnchor, constant: ILMetrics.rowSpacing),
+            articlesList.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            articlesList.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            articlesList.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
     }
 
@@ -177,12 +268,23 @@ final class ILHomeViewController: BaseViewController {
             beadTapped: beadTappedSubject.eraseToAnyPublisher(),
             resetBeadsTapped: resetBeadsTappedSubject.eraseToAnyPublisher(),
             malaFullscreenTapped: malaFullscreenTappedSubject.eraseToAnyPublisher(),
-            lunarCalendarTapped: lunarCalendarTappedSubject.eraseToAnyPublisher()
+            lunarCalendarTapped: lunarCalendarTappedSubject.eraseToAnyPublisher(),
+            lunarHeroTapped: lunarHeroTappedSubject.eraseToAnyPublisher(),
+            dayTapped: dayTappedSubject.eraseToAnyPublisher(),
+            photosTapped: photosTappedSubject.eraseToAnyPublisher(),
+            bellTapped: bellTappedSubject.eraseToAnyPublisher(),
+            eventsTapped: eventsTappedSubject.eraseToAnyPublisher(),
+            articleTapped: articleTappedSubject.eraseToAnyPublisher(),
+            articlesViewAllTapped: articlesViewAllTappedSubject.eraseToAnyPublisher(),
+            templeTapped: templeTappedSubject.eraseToAnyPublisher(),
+            deityTapped: deityTappedSubject.eraseToAnyPublisher(),
+            suggestedSessionTapped: suggestedSessionTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
 
+        // No `.receive(on: DispatchQueue.main)`: state is already sent on main (MainActor default),
+        // and deferring it renders the first state only after the appear transition has run.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 
@@ -206,9 +308,10 @@ final class ILHomeViewController: BaseViewController {
         headerView.dateText = model.dateText
         headerView.avatarInitial = model.avatarInitial
 
-        weekCalendarView.weekLabelText = model.weekLabelText
+        weekCalendarView.weekdayLabels = model.weekdayLabels
         weekCalendarView.calendarLinkText = model.weekCalendarLinkText
-        weekCalendarView.days = model.weekDays
+        weekCalendarView.legend = model.weekLegend
+        weekCalendarView.pages = model.weekPages
 
         lunarHeroCard.eyebrowText = model.lunarHero.eyebrowText
         lunarHeroCard.solarLabel = model.lunarHero.solarLabel
@@ -235,6 +338,26 @@ final class ILHomeViewController: BaseViewController {
         malaCounter.helperText = model.malaHelperText
 
         renderSuggestedSessions(model.suggestedSessions)
+
+        photosHeader.title = model.photosTitle
+        photosHeader.trailingText = model.photosViewAllText
+        photosGrid.photosMoreText = model.photosMoreText
+        photosGrid.photosMoreLabel = model.photosMoreLabel
+
+        templesHeader.title = model.templesTitle
+        templesHeader.trailingText = model.templesFindText
+        templesCarousel.temples = model.temples
+
+        deitiesHeader.title = model.deitiesTitle
+        deitiesHeader.trailingText = model.deitiesViewAllText
+        deitiesCarousel.deities = model.deities
+
+        bellCard.title = model.bellTitle
+        bellCard.subtitle = model.bellSubtitle
+
+        articlesHeader.title = model.articlesTitle
+        articlesHeader.trailingText = model.articlesViewAllText
+        articlesList.articles = model.articles
     }
 
     private func renderSuggestedSessions(_ sessions: [ILHomeSuggestedSessionModel]) {
@@ -298,25 +421,73 @@ final class ILHomeViewController: BaseViewController {
     }
 
     private func handleLunarHeroTapped() {
-        lunarCalendarTappedSubject.send(())
+        lunarHeroTappedSubject.send(())
     }
 
-    /// Danh sách sự kiện đầy đủ (màn `events`) chưa có màn riêng trong scope hiện tại.
+    /// Nút "Tất cả" ở mục "Sự kiện Phật giáo" — mở màn Lịch lễ Phật giáo (`festivals`).
     private func handleEventsViewAllTapped() {
-        // TODO: điều hướng sang màn Sự kiện & khóa học khi có coordinator tương ứng.
+        eventsTappedSubject.send(())
     }
 
-    /// Chi tiết 1 sự kiện chưa có màn riêng trong scope hiện tại.
+    /// Chạm 1 sự kiện trong carousel "Sự kiện Phật giáo" — mở màn Lịch lễ Phật giáo (`festivals`).
     private func handleEventTapped(_ event: ILHomeEventItemModel) {
-        // TODO: điều hướng theo `event.id` khi có màn Sự kiện & khóa học.
+        eventsTappedSubject.send(())
     }
 
     private func handleMalaFullscreenTapped() {
         malaFullscreenTappedSubject.send(())
     }
 
-    /// Thời khóa gợi ý (thiền, tụng kinh, cúng đèn) chưa có màn riêng trong scope hiện tại.
+    /// 1 hàng "Thời khóa gợi ý" — ViewModel quyết định màn đích theo loại mục (thiền → Chuẩn bị
+    /// thiền).
     private func handleSuggestedSessionTapped(_ session: ILHomeSuggestedSessionModel) {
-        // TODO: điều hướng theo `session.id` khi có màn Thiết lập thời khóa/Đọc kinh/Cúng dường.
+        suggestedSessionTappedSubject.send(session.id)
+    }
+
+    /// Khối "Ảnh chùa đẹp" — mở màn gallery ảnh chùa (`photos`).
+    private func handlePhotosViewAllTapped() {
+        photosTappedSubject.send(())
+    }
+
+    private func handlePhotoTapped() {
+        photosTappedSubject.send(())
+    }
+
+    /// Link "Tìm chùa" ở carousel "Chùa Việt Nam" — màn danh sách/tìm chùa chưa build.
+    private func handleTemplesFindTapped() {
+        // TODO: điều hướng sang màn tìm chùa (Đạo tràng) khi có coordinator tương ứng.
+    }
+
+    /// Chi tiết 1 chùa trong carousel "Chùa Việt Nam" — mở màn Trang chùa (`temple`) theo
+    /// `temple.id`.
+    private func handleTempleTapped(_ temple: ILHomeTempleModel) {
+        templeTappedSubject.send(temple.id)
+    }
+
+    /// Chi tiết 1 vị Phật / Bồ Tát trong carousel "Thư viện Phật & Bồ Tát" — mở màn chi tiết
+    /// (`deity`) theo `deity.id`.
+    private func handleDeityTapped(_ deity: ILHomeDeityModel) {
+        deityTappedSubject.send(deity.id)
+    }
+
+    /// Link "Xem tất cả" ở carousel "Thư viện Phật & Bồ Tát" — màn danh sách Phật & Bồ Tát
+    /// (`buddhas` trong prototype) chưa build.
+    private func handleDeitiesViewAllTapped() {
+        // TODO: điều hướng sang màn danh sách Phật & Bồ Tát khi có coordinator tương ứng.
+    }
+
+    /// Thẻ "Chuông mõ" — mở màn Chuông mõ.
+    private func handleBellTapped() {
+        bellTappedSubject.send(())
+    }
+
+    /// Link "Xem tất cả" ở mục "Bài viết Phật pháp hay" — mở màn Tất cả bài viết (`articles`).
+    private func handleArticlesViewAllTapped() {
+        articlesViewAllTappedSubject.send(())
+    }
+
+    /// Chi tiết 1 bài viết — mở màn Bài viết Phật pháp (`article`) theo `article.id`.
+    private func handleArticleTapped(_ article: ILHomeArticleModel) {
+        articleTappedSubject.send(article.id)
     }
 }

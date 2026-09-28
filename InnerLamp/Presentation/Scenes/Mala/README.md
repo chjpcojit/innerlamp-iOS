@@ -21,8 +21,8 @@ chủ), push lên nav của tab Trang chủ và ẩn `ILBottomNavBar` trong lúc
 | Presentation — StateModel | `ILMalaStateModel.swift` | Done | Nhãn `.localized` đã format ("N tràng", "/ 108"), `milestone` của lần đếm gần nhất. |
 | Data — DTO + Mapper | — | N/A (no confirmed API contract yet) | Chưa có API tràng hạt; không tạo speculative. |
 | Domain — UseCase | `ILMalaUseCase.swift` | Done (in-memory) | `advanceBead` (wrap 108 → 1, +1 tràng khi chạm 108), `resetBeads`, `milestone(for:)` là logic thuần. Lưu local chưa làm — xem Known gaps. |
-| Presentation — ViewModel | `ILMalaViewModel.swift` | Done | 5 Input: `viewDidLoad`, `beadAdvanced`, `resetTapped`, `doneTapped`, `backTapped`; `applyEntity(_:milestone:)` map Entity → StateModel. |
-| Presentation — ViewController | `ILMalaViewController.swift` | Done | Ghép 4 component dùng chung (bên dưới); rung nhẹ theo `milestone`; ẩn/hiện bottom nav theo appear/disappear. |
+| Presentation — ViewModel | `ILMalaViewModel.swift` | Done | 5 Input: `viewDidLoad`, `beadAdvanced`, `resetTapped`, `doneTapped`, `backTapped`; `applyEntity(_:milestone:)` map Entity → StateModel; mỗi hạt `playBead()`, đủ tràng `playBell()` qua `ILPracticeSoundPlaying`. |
+| Presentation — ViewController | `ILMalaViewController.swift` | Done | Ghép 4 component dùng chung (bên dưới); rung nhẹ theo `milestone` (âm thanh do ViewModel phát); ẩn/hiện bottom nav theo appear/disappear. |
 | Presentation — Coordinator | `ILMalaCoordinator.swift` | Done | `.goBack` → pop + `finish()`. Không có delegate (màn lá). |
 | Tests | `ILMalaViewModelTests.swift` | Done | 7 test ViewModel (qua `Input` publisher, mock UseCase) + 7 test `ILMalaUseCaseImpl` (wrap, tràng, mốc). |
 | Wiring | `DIContainer` + `ILHomeCoordinator` | Done | `makeMalaUseCase/ViewModel/Coordinator`; `ILHomeCoordinator.showMala()` (section coordinator, không đi qua `AppCoordinator`). |
@@ -41,8 +41,8 @@ Component dùng chung mới trong `DesignSystem/Components/` (đều generic, kh
 - **Số hạt/số tràng chưa lưu và chưa đồng bộ với Trang chủ**: cả hai màn đều giữ trong bộ nhớ, bắt
   đầu từ 0 mỗi lần mở màn. Cần Repository lưu local (Core Data/UserDefaults) — ngoài phạm vi
   `il-screen-builder`, xem TODO trong `ILMalaUseCaseImpl`.
-- **Chuông ở hạt 108** chưa phát âm thanh (chưa có audio service/asset) — hiện chỉ rung
-  (`UINotificationFeedbackGenerator`), TODO trong `ILMalaViewController.playFeedback`.
+- **Chuông ở hạt 108** nay đã phát âm thanh thật (`playBell()` qua `ILPracticeSoundPlaying`), mỗi
+  hạt cũng phát tiếng click nhẹ (`playBead()`). Chưa có tuỳ chọn âm lượng / chọn âm cho người dùng.
 - Số đếm dùng Be Vietnam Pro Regular thay vì Light (300) như thiết kế — bundle chưa có bản Light.
 - Vuốt cạnh trái để back (gesture của `BaseNavigationController`) pop mà không qua `.goBack`, nên
   coordinator con chỉ được gỡ khỏi `childCoordinators` khi bấm nút — cùng hạn chế với các màn push
@@ -52,3 +52,5 @@ Component dùng chung mới trong `DesignSystem/Components/` (đều generic, kh
 ## Changelog
 
 - 2026-09-20 — initial scaffold + implementation by il-screen-builder (theo `Docs/design_handoff_innerlamp`, màn `mala`).
+- 2026-09-26 — thêm âm thanh: mỗi hạt phát click nhẹ (`bead_click.m4a`), đủ tràng phát chuông
+  (`bell_strike.m4a`) qua `ILPracticeSoundPlaying` (dùng chung service `Core/Audio` với màn Chuông mõ).

@@ -28,6 +28,8 @@ struct ILLunarCalendarDayEntity: Equatable, Identifiable {
     let lunarMonth: Int
     let isLunarLeapMonth: Bool
     let category: ILLunarCalendarDayCategory
+    /// `true` = ngày Hoàng đạo (tốt), `false` = Hắc đạo (xấu) — xem `ILLunarCalendar.isHoangDao`.
+    let isHoangDao: Bool
 
     /// Ngày trai gồm mùng 1, rằm và các ngày trai còn lại.
     var isFastDay: Bool { category != .ordinary }

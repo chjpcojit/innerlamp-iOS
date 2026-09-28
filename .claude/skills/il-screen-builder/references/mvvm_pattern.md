@@ -142,8 +142,8 @@ final class IL<Feature>ViewController: BaseViewController {
         )
         let output = viewModel.transform(input: input)
 
+        // No `.receive(on: DispatchQueue.main)` — see §Main-thread delivery below.
         output.state
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 
@@ -168,6 +168,26 @@ UI action targets (`@objc` handlers, `onTap` closures on `IL*` components — th
 component's own API, unrelated to this rule) call `.send(())` on the matching `*Subject`, which
 `transform(input:)` already subscribed on the ViewModel side. The ViewController never calls a
 `viewModel.handle*()` method directly anymore.
+
+## Main-thread delivery (no `.receive(on:)`)
+
+The `InnerLamp` app target sets `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, so every
+`IL<Feature>ViewModel` is implicitly `@MainActor`, and each `Task { }` it starts inherits the main
+actor (an `await` on a nonisolated UseCase hops back to main before the next line). State is
+therefore always sent on the main thread already — the ViewController subscribes to
+`output.state` **without** `.receive(on: DispatchQueue.main)` (or `RunLoop.main`).
+
+This is a correctness rule, not a style preference. `.receive(on: DispatchQueue.main)` always
+defers delivery to the next run-loop turn, even when already on main. Because `stateSubject` is a
+`CurrentValueSubject` seeded in `init` and `viewDidLoad` sends synchronously, the initial state
+must be rendered inside `viewDidLoad`; deferred, it lands *after* the push/tab transition has
+already laid the view out empty, and any self-sized block (multi-line label, card) visibly grows
+while the transition runs — only on the first appearance, which makes it easy to miss.
+
+- Don't add explicit `@MainActor` to the ViewModel — it's redundant with the target default.
+- Don't mark a ViewModel (or its `handle*()` methods) `nonisolated`, and don't use
+  `Task.detached` / `DispatchQueue.global` to send state — either would break the guarantee
+  above. Heavy work belongs in the UseCase/Repository, which the ViewModel `await`s.
 
 ## Async actions (network / persistence calls in a UseCase)
 

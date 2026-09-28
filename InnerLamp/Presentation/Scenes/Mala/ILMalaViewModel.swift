@@ -43,14 +43,20 @@ final class ILMalaViewModel: ILMalaViewModelProtocol {
     private var currentEntity: ILMalaEntity
     private var currentState: ILMalaStateModel
     private let useCase: ILMalaUseCase
+    private let soundPlayer: ILPracticeSoundPlaying
+    /// Câu niệm do màn gọi truyền vào (vd. danh hiệu / thần chú từ màn chi tiết Phật & Bồ Tát);
+    /// `nil` dùng câu mặc định "Nam mô A Di Đà Phật".
+    private let mantraText: String?
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initializer
-    init(useCase: ILMalaUseCase) {
+    init(useCase: ILMalaUseCase, soundPlayer: ILPracticeSoundPlaying, mantraText: String? = nil) {
         self.useCase = useCase
+        self.soundPlayer = soundPlayer
+        self.mantraText = mantraText
         let initialEntity = useCase.getInitialState()
         self.currentEntity = initialEntity
-        let initialState = ILMalaViewModel.makeStateModel(from: initialEntity, milestone: nil)
+        let initialState = ILMalaViewModel.makeStateModel(from: initialEntity, milestone: nil, mantraText: mantraText)
         self.currentState = initialState
         self.stateSubject = CurrentValueSubject(.success(initialState))
     }
@@ -87,7 +93,13 @@ final class ILMalaViewModel: ILMalaViewModelProtocol {
 
     private func handleBeadAdvanced() {
         let advanced = useCase.advanceBead(currentEntity)
-        applyEntity(advanced, milestone: useCase.milestone(for: advanced))
+        let milestone = useCase.milestone(for: advanced)
+        // Every bead plays a soft click; completing a full round (108) also rings the bell.
+        soundPlayer.playBead()
+        if milestone == .roundComplete {
+            soundPlayer.playBell()
+        }
+        applyEntity(advanced, milestone: milestone)
     }
 
     private func handleResetTapped() {
@@ -107,11 +119,15 @@ final class ILMalaViewModel: ILMalaViewModelProtocol {
     /// nằm ở đây, không phải trong một Mapper dùng chung (xem `references/data_layer_boundaries.md`).
     private func applyEntity(_ entity: ILMalaEntity, milestone: ILMalaMilestone?) {
         currentEntity = entity
-        currentState = ILMalaViewModel.makeStateModel(from: entity, milestone: milestone)
+        currentState = ILMalaViewModel.makeStateModel(from: entity, milestone: milestone, mantraText: mantraText)
         stateSubject.send(.success(currentState))
     }
 
-    private static func makeStateModel(from entity: ILMalaEntity, milestone: ILMalaMilestone?) -> ILMalaStateModel {
+    private static func makeStateModel(
+        from entity: ILMalaEntity,
+        milestone: ILMalaMilestone?,
+        mantraText: String?
+    ) -> ILMalaStateModel {
         var state = ILMalaStateModel()
         state.headerTitle = "mala.header.title".localized
         state.headerSubtitle = String(format: "mala.header.roundsFormat".localized, entity.completedRounds)
@@ -120,7 +136,7 @@ final class ILMalaViewModel: ILMalaViewModelProtocol {
         state.goal = entity.goal
         state.goalText = String(format: "mala.count.goalFormat".localized, entity.goal)
 
-        state.mantraText = "mala.mantra".localized
+        state.mantraText = mantraText ?? "mala.mantra".localized
         state.hintText = "mala.hint".localized
         state.strandAccessibilityLabel = "mala.strand.accessibility".localized
         state.resetTitle = "mala.action.reset".localized

@@ -72,6 +72,9 @@ public final class ILSearchBarView: UIControl {
 
         addTarget(self, action: #selector(handleTapAction), for: .touchUpInside)
         updateBorders()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILSearchBarView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     private static let iconSize: CGFloat = 14
@@ -83,9 +86,7 @@ public final class ILSearchBarView: UIControl {
 
     // `layer.borderColor` là CGColor tĩnh, không tự đảo theo trait — refresh thủ công khi
     // hệ thống đổi light/dark.
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         updateBorders()
     }
 

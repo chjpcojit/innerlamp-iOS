@@ -8,7 +8,7 @@
 import Foundation
 
 protocol NetworkService {
-    func request<T: Decodable>(endpoint: Endpoint, responseType: T.Type) async throws -> T
+    func request<T: Decodable & Sendable>(endpoint: Endpoint, responseType: T.Type) async throws -> T
     
     func request(endpoint: Endpoint) async throws
 }
@@ -40,7 +40,7 @@ actor NetworkServiceImpl: NetworkService {
         self.decoder.dateDecodingStrategy = .iso8601
     }
     
-    func request<T: Decodable>(endpoint: Endpoint, responseType: T.Type) async throws -> T {
+    func request<T: Decodable & Sendable>(endpoint: Endpoint, responseType: T.Type) async throws -> T {
         var urlRequest = try endpoint.buildURLRequest()
         injectAuthHeader(into: &urlRequest, endpoint: endpoint)
 

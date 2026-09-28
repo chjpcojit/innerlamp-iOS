@@ -56,6 +56,10 @@ public enum ILColors {
     public static let tint2 = asset("ILTint2")
     public static let tint3 = asset("ILTint3")
 
+    /// Đáy nền gradient ấm thứ hai (`--il-sunk2`) — kem đất `#EFE6D5` ở light, nâu đêm `#1B1712` ở
+    /// dark. Dùng cho đỉnh hero "Chi tiết ngày âm".
+    public static let sunk2 = asset("ILSunk2")
+
     // MARK: - Inks (Typography & Primary CTAs)
     /// Chữ chính, nút primary
     public static let ink = asset("ILInk")
@@ -74,6 +78,10 @@ public enum ILColors {
 
     /// Chữ mô tả dài trên nền sáng (alpha 0.66 của `ink`)
     public static let inkDim = ink.withAlphaComponent(0.66)
+
+    /// Chữ thân bài đậm hơn `inkSecondary` một nhịp (alpha 0.80 của `ink`) — vd. đoạn thân bài
+    /// viết Phật pháp (`--il-ink-8` trong design handoff).
+    public static let inkStrong = ink.withAlphaComponent(0.80)
 
     /// Chữ nút phụ / label phụ ít nổi bật (alpha 0.45 của `ink`)
     public static let inkSubtle = ink.withAlphaComponent(0.45)
@@ -104,6 +112,16 @@ public enum ILColors {
 
     /// Slogan dưới wordmark màn Splash (alpha 0.55 của `inkOnDark`)
     public static let inkOnDarkTagline = inkOnDark.withAlphaComponent(0.55)
+
+    // MARK: - Notifications hero card (luôn tối)
+    /// Eyebrow vàng trên thẻ tối (alpha 0.90 của `goldBright`) — "SẮP DIỄN RA · 30 PHÚT NỮA".
+    public static let goldOnDarkStrong = goldBright.withAlphaComponent(0.90)
+
+    /// Nhãn nút ghost trên thẻ tối (alpha 0.80 của `inkOnDark`) — "Bỏ qua tối nay".
+    public static let inkOnDarkStrong = inkOnDark.withAlphaComponent(0.80)
+
+    /// Viền nút ghost trên thẻ tối (alpha 0.25 của `inkOnDark`).
+    public static let inkOnDarkBorderSoft = inkOnDark.withAlphaComponent(0.25)
 
     // MARK: - Accent & State Colors
     /// Nhấn chính, tiến trình, focus ring
@@ -147,26 +165,74 @@ public enum ILColors {
     /// không đổi theo theme (theo `lampFlame` của `IL-BottomNav`).
     public static let lampFlameDark = asset("ILLampFlameDark")
 
+    /// Chữ trên nút nền `goldBright` (vd. "Trì niệm với tràng hạt") — cố định `#1A1611` ở cả hai
+    /// theme, dùng chung asset với `lampFlameDark`.
+    public static let inkOnGold = lampFlameDark
+
     /// Viền vòng đèn (alpha 0.45 của `gold`)
     public static let goldBorder = gold.withAlphaComponent(0.45)
 
     /// Viền thẻ nhấn nhẹ trên nền sáng — nhạt hơn `goldBorder` (alpha 0.35 của `gold`)
     public static let goldCardBorder = gold.withAlphaComponent(0.35)
 
+    /// Viền vòng ngoài artwork trình phát toàn màn (alpha 0.40 của `gold`).
+    public static let goldRingBorder = gold.withAlphaComponent(0.40)
+
+    /// Viền vòng trong artwork trình phát toàn màn (alpha 0.28 của `gold`).
+    public static let goldRingInnerBorder = gold.withAlphaComponent(0.28)
+
     /// Viền vòng đèn trên nền tối — rõ hơn `goldBorder` (alpha 0.50 của `gold`)
     public static let goldBorderOnDark = gold.withAlphaComponent(0.50)
 
-    /// Vòng ripple lan ra của màn Splash — ba mức alpha theo thứ tự phát (0.50 → 0.30 của `goldBright`)
-    public static let goldRippleStrong = goldBright.withAlphaComponent(0.50)
-    public static let goldRippleSoft = goldBright.withAlphaComponent(0.40)
-    public static let goldRippleFaint = goldBright.withAlphaComponent(0.30)
-
-    /// Tia sáng quét hai bên vòng đèn màn Splash (alpha 0.50 → 0.35 của `goldLight`)
-    public static let goldRayStrong = goldLight.withAlphaComponent(0.50)
-    public static let goldRaySoft = goldLight.withAlphaComponent(0.35)
-
     /// Chữ nhấn trên nền sáng
     public static let goldDeep = asset("ILGoldDeep")
+
+    /// Chữ vàng nhấn trên nền tối (`#E8B061` trong bảng vàng cố định của design handoff, "không
+    /// đổi theo theme") — dùng cho các màn hero luôn tối (vd. chip "Tụng hằng ngày" ở màn chi tiết
+    /// bài kinh), không phải `link` (token đổi theo light/dark).
+    public static let goldOnDark = asset("ILGoldOnDark")
+
+    // MARK: - Featured Card (theme-aware — `--il-feat-*` / `--il-hero-acc` in the handoff)
+    /// Featured card gradient start (light `#F3E8D4` / dark `#2A2620`)
+    public static let featBackgroundStart = asset("ILFeatBackgroundStart")
+    /// Featured card gradient end (light `#E6D5B7` / dark `#181510`)
+    public static let featBackgroundEnd = asset("ILFeatBackgroundEnd")
+    /// Featured card border (light `rgba(138,90,24,.16)` / dark transparent)
+    public static let featBorder = asset("ILFeatBorder")
+    /// Radial glow in the featured card corner (light `rgba(196,146,60,.3)` / dark `rgba(217,150,60,.28)`)
+    public static let featGlow = asset("ILFeatGlow")
+    /// Transparent end of `featGlow` for the radial gradient
+    public static let featGlowClear = featGlow.withAlphaComponent(0.0)
+    /// Unfilled progress track on the featured card (light `rgba(138,90,24,.16)` / dark `rgba(245,238,224,.14)`)
+    public static let featTrack = asset("ILFeatTrack")
+    /// Eyebrow accent on the featured card (light `#74500F` / dark `rgba(217,150,60,.95)`)
+    public static let featAccent = asset("ILFeatAccent")
+    /// Secondary text on the featured card (alpha 0.60 of `ink` — `--il-th-sub`)
+    public static let featSub = ink.withAlphaComponent(0.60)
+
+    // MARK: - Lunar hero (Trang chủ — bộ `--il-hero-*` light/dark của design handoff)
+    /// Chữ chính hero âm lịch Trang chủ (`--il-hero-ink`): `#221E19` ở light, `#F7F1E4` ở dark.
+    public static let heroInk = asset("ILHeroInk")
+
+    /// Chữ tháng âm hero âm lịch (`--il-hero-ink2`): `#4A4034` ở light, `#E9DFCC` ở dark.
+    public static let heroInk2 = asset("ILHeroInk2")
+
+    /// Chữ phụ hero âm lịch (`--il-hero-sub`) — 62% của `heroInk` (năm can chi + nguồn câu kinh).
+    public static let heroSub = heroInk.withAlphaComponent(0.62)
+
+    /// Eyebrow + chấm tròn hero âm lịch (`--il-hero-acc`) — dùng chung `featAccent`
+    /// (`#74500F` light / `rgba(217,150,60,.95)` dark), giá trị trùng 1–1 trong design handoff.
+    public static let heroAccent = featAccent
+
+    /// Viền chấm tròn hero âm lịch (`--il-hero-acc2`) — 50% của `heroAccent` (khớp bản light;
+    /// bản dark xấp xỉ 0.48, chênh không đáng kể, cùng cách `ILLunarDayDetailHeroView`).
+    public static let heroAccentBorder = featAccent.withAlphaComponent(0.5)
+
+    /// Ba điểm dừng overlay gradient hero âm lịch (`--il-hero-ov`) — wash đổi theo light/dark để
+    /// chữ luôn đủ tương phản trên nền ảnh tượng Phật (hiện là gradient placeholder).
+    public static let heroOverlayStart = asset("ILHeroOverlayStart")
+    public static let heroOverlayMid = asset("ILHeroOverlayMid")
+    public static let heroOverlayEnd = asset("ILHeroOverlayEnd")
 
     /// Thiền, thành công
     public static let green = asset("ILGreen")
@@ -182,6 +248,32 @@ public enum ILColors {
 
     /// Lỗi form, hành động xóa
     public static let danger = asset("ILDanger")
+    /// Border of destructive action cards ("Xóa tài khoản", alpha 0.28 of `danger`)
+    public static let dangerBorder = danger.withAlphaComponent(0.28)
+
+    /// Chấm "Hoàng đạo" (ngày tốt) trong lịch tuần Trang chủ + nhãn chú thích — `#5E8A6C`,
+    /// cố định không đổi theo theme (khớp `#5E8A6C` trong design handoff).
+    public static let auspicious = asset("ILAuspicious")
+
+    /// Biến thể sáng của `auspicious` dùng khi ô ngày đang chọn (nền mực tối) — `#8FC19E`.
+    public static let auspiciousOnDark = asset("ILAuspiciousOnDark")
+
+    /// Chấm "Hắc đạo" (ngày xấu) trong lịch tuần Trang chủ + nhãn chú thích — `#C64545`,
+    /// cố định không đổi theo theme (khớp `#C64545` trong design handoff).
+    public static let inauspicious = asset("ILInauspicious")
+
+    /// Biến thể sáng của `inauspicious` dùng khi ô ngày đang chọn (nền mực tối) — `#E88A80`.
+    public static let inauspiciousOnDark = asset("ILInauspiciousOnDark")
+
+    /// Chữ "Tuổi xung khắc" ở màn Chi tiết ngày âm (`--il-clash-fg`) — đỏ đậm `#A23A3A` ở light,
+    /// đỏ hồng nhạt `#E89A8E` ở dark (theme-aware, không phải đỏ cố định `inauspicious`).
+    public static let clashForeground = asset("ILClashForeground")
+
+    /// Nền chip "tuổi xung khắc" — alpha 0.10 của `clashForeground` (xấp xỉ `--il-clash-bg`).
+    public static let clashTintBackground = clashForeground.withAlphaComponent(0.10)
+
+    /// Viền chip "tuổi xung khắc" — alpha 0.24 của `clashForeground` (xấp xỉ `--il-clash-bd`).
+    public static let clashBorder = clashForeground.withAlphaComponent(0.24)
 
     /// Chữ nhấn / link — `goldDeep` ở light, `#E8B061` ở dark (`--il-link`)
     public static let link = asset("ILLink")
@@ -215,6 +307,104 @@ public enum ILColors {
     public static let medGoldTint = goldBright.withAlphaComponent(0.16)
     public static let medGoldTintBorder = goldBright.withAlphaComponent(0.40)
 
+    /// Thẻ / pad trên nền immersive (`--il-med-card`): `#FFFDF8` ở light, trong suốt 4% ở dark.
+    public static let medCard = asset("ILMedCard")
+
+    /// Nền rất nhạt của khối segmented control trên nền immersive (`--il-med-04` = medInk 4%).
+    public static let medTrackSubtle = medInk.withAlphaComponent(0.04)
+
+    /// Chữ mạnh trên nền immersive (`--il-med-8` = medInk 80%) — nhãn chip chưa chọn.
+    public static let medInkStrong = medInk.withAlphaComponent(0.80)
+
+    /// Viền chip đang chọn trên nền immersive (goldBright 50%).
+    public static let medGoldChipBorder = goldBright.withAlphaComponent(0.50)
+
+    /// Quầng sáng quanh pad khi gõ mõ / thỉnh chuông (goldBright 32%).
+    public static let medGoldHalo = goldBright.withAlphaComponent(0.32)
+
+    /// Viền pad khi vừa gõ (goldBright 75%).
+    public static let medGoldStrikeBorder = goldBright.withAlphaComponent(0.75)
+
+    /// Breathing-ring outlines on the meditation session screen (`--il-med-ring`, `--il-med-ring2`):
+    /// `goldDeep` 30% / 42% in light mode, `gold` 25% / 40% in dark mode — the base hue differs per
+    /// theme, so these live in their own color sets instead of being alpha variants.
+    public static let medRing = asset("ILMedRing")
+    public static let medRingStrong = asset("ILMedRingStrong")
+
+    /// Soft halo filling the breathing ring (`--il-med-halo`): `goldBright` 20% light / 28% dark.
+    public static let medHalo = asset("ILMedHalo")
+
+    /// Glyph on top of a `medGold` fill (`--il-med-onGold`): `#FFFDF8` light / `#1A1611` dark.
+    public static let medOnGold = asset("ILMedOnGold")
+
+    /// Glyphs inside the ghost transport buttons (`--il-med-5`): ink 58% light / 50% dark.
+    public static let medInkControl = asset("ILMedInkControl")
+
+    // MARK: - Splash (themed — bộ `--il-spl-*` light/dark của design handoff)
+    /// Nền radial màn Splash: kem ấm `#FFFCF4` ở light, đêm `#2A241C` ở dark.
+    public static let splashBackgroundTop = asset("ILSplashBackgroundTop")
+
+    /// Điểm kết thúc nền Splash: giấy `#F0E6D4` ở light, đen ấm `#100E0B` ở dark.
+    public static let splashBackground = asset("ILSplashBackground")
+
+    /// Wordmark "InnerLamp": `#221E19` ở light, `#F5EEE0` ở dark.
+    public static let splashInk = asset("ILSplashInk")
+
+    /// Slogan dưới wordmark (alpha đã nướng vào color set).
+    public static let splashInkSub = asset("ILSplashInkSub")
+
+    /// Quầng sáng vàng phía trên màn Splash (gold ở light, goldBright ở dark).
+    public static let splashGlow = asset("ILSplashGlow")
+
+    /// Nền radial bên trong vòng đèn màn Splash (gold ở light, goldBright ở dark).
+    public static let splashHalo = asset("ILSplashHalo")
+
+    /// Viền vòng đèn màn Splash (goldDeep ở light, gold ở dark).
+    public static let splashBorder = asset("ILSplashBorder")
+
+    /// Ba vòng ripple lan ra — nhạt dần theo thứ tự phát (goldDeep/goldBright).
+    public static let splashRing = asset("ILSplashRing")
+    public static let splashRing2 = asset("ILSplashRing2")
+    public static let splashRing3 = asset("ILSplashRing3")
+
+    /// Tia sáng quét hai bên vòng đèn (gold ở light, goldLight ở dark).
+    public static let splashRay = asset("ILSplashRay")
+    public static let splashRay2 = asset("ILSplashRay2")
+
+    // MARK: - Temple header (hero "Trang chùa" — bộ `--il-th-*` light/dark của design handoff)
+    /// Đỉnh gradient hero Trang chùa (`--il-th-bg` chặng 1) — kem ấm ở light, nâu đêm ở dark.
+    public static let templeHeaderTop = asset("ILTempleHeaderTop")
+
+    /// Giữa gradient hero Trang chùa (`--il-th-bg` chặng 2) — tan dần về `canvas`.
+    public static let templeHeaderMid = asset("ILTempleHeaderMid")
+
+    /// Chữ chính hero Trang chùa (`--il-th-ink`): `ink` ở light, `inkOnDark` ở dark.
+    public static let templeHeaderInk = asset("ILTempleHeaderInk")
+
+    /// Quầng sáng vàng ở đỉnh hero Trang chùa (`--il-th-glow`), alpha đã nướng vào color set.
+    public static let templeHeaderGlow = asset("ILTempleHeaderGlow")
+
+    /// Chữ phụ hero Trang chùa (`--il-th-sub`) — 60% của `templeHeaderInk` (design dark dùng ~55%,
+    /// chênh lệch không đáng kể nên derive chung 60%).
+    public static let templeHeaderSub = templeHeaderInk.withAlphaComponent(0.60)
+
+    // MARK: - Player (themed — bộ `--il-pl-*` light/dark của design handoff)
+    /// Tâm gradient nền trình phát (`--il-pl-bg`): kem ấm `#FFFCF4` ở light, đêm `#2A241C` ở dark.
+    public static let playerBackgroundCenter = asset("ILPlayerBackgroundCenter")
+
+    /// Mép gradient nền trình phát: giấy `#EFE5D2` ở light, đen ấm `#0F0D0A` ở dark.
+    public static let playerBackgroundEdge = asset("ILPlayerBackgroundEdge")
+
+    /// Chữ phụ trên nền trình phát (`--il-pl-sub`) — alpha đã nướng vào color set vì khác nhau giữa
+    /// light (ink 58%) và dark (inkOnDark 50%).
+    public static let playerSubtitle = asset("ILPlayerSubtitle")
+
+    /// Nền chip chưa chọn trên trình phát (`--il-pl-chip`) — ink 4% light / inkOnDark 7% dark.
+    public static let playerChipBackground = asset("ILPlayerChipBackground")
+
+    /// Chữ chip chưa chọn trên trình phát (`--il-pl-chipfg`) — ink 66% light / inkOnDark 60% dark.
+    public static let playerChipText = asset("ILPlayerChipText")
+
     // MARK: - Bead (không đổi theo theme)
     /// Hạt mẹ — gradient sáng → vàng → `goldDeep`
     public static let beadMotherLight = asset("ILBeadMotherLight")
@@ -236,8 +426,14 @@ public enum ILColors {
     /// Viền thẻ tiêu chuẩn (alpha 0.08 của `ink`)
     public static let border = ink.withAlphaComponent(0.08)
 
+    /// Hairline under a sticky header strip (`--il-ink-06`, alpha 0.06 of `ink`)
+    public static let borderSoft = ink.withAlphaComponent(0.06)
+
     /// Viền nút ghost, input active (alpha 0.18 của `ink`)
     public static let borderStrong = ink.withAlphaComponent(0.18)
+
+    /// Border of labeled input cards (`--il-ink-1`, alpha 0.10 of `ink`)
+    public static let borderMedium = ink.withAlphaComponent(0.10)
 
     /// Viền thẻ trên nền tối (alpha 0.08 của `inkOnDarkVariant`)
     public static let borderDark = inkOnDarkVariant.withAlphaComponent(0.08)
@@ -319,6 +515,25 @@ public enum ILColors {
         public static let fullFootnote = ILColors.inkOnDark.withAlphaComponent(0.34)
         /// Secondary button label (alpha 0.78 of `inkOnDark`)
         public static let fullSecondaryLabel = ILColors.inkOnDark.withAlphaComponent(0.78)
+    }
+
+    /// Alpha variants used only by the loading placeholders (`ILSkeletonLoadingView`,
+    /// `ILLoadMoreFooterView`). All derive from theme-aware bases, so they flip with dark mode.
+    public enum Skeleton {
+        /// Hero block (`--il-ink-07`)
+        public static let blockStrong = ILColors.ink.withAlphaComponent(0.07)
+        /// Title bar + row icon tile (`--il-ink-08`)
+        public static let bar = ILColors.ink.withAlphaComponent(0.08)
+        /// Row primary line (`--il-ink-09`)
+        public static let line = ILColors.ink.withAlphaComponent(0.09)
+        /// Tiles + row secondary line (`--il-ink-06`)
+        public static let lineSoft = ILColors.ink.withAlphaComponent(0.06)
+        /// Row card background (`--il-card-70`)
+        public static let rowBackground = ILColors.surface.withAlphaComponent(0.70)
+        /// Lamp ring around the pulsing dot (gold, alpha 0.55)
+        public static let lampRing = ILColors.gold.withAlphaComponent(0.55)
+        /// Load-more spinner track (`--il-ink-12`)
+        public static let spinnerTrack = ILColors.ink.withAlphaComponent(0.12)
     }
 
     // MARK: - Semantic Helper

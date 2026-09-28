@@ -224,6 +224,9 @@ public final class ILPhoneField: UIView, UITextFieldDelegate {
 
         updateCountrySelector()
         updateAppearance()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILPhoneField, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     private func updatePlaceholder() {
@@ -262,9 +265,7 @@ public final class ILPhoneField: UIView, UITextFieldDelegate {
 
     // `layer.borderColor` là CGColor tĩnh, không tự đảo theo trait — refresh thủ công khi hệ
     // thống đổi light/dark.
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         checkLayer.strokeColor = ILColors.canvas.cgColor
         updateAppearance()
     }

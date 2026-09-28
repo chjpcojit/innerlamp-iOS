@@ -20,7 +20,7 @@ the tab bar, not by this screen). Design: prototype screen `sangha`
 | Domain — UseCase | `ILSanghaUseCase.swift` | Skeleton | `getSangha()` returns a static mock (TODO: repository → network). |
 | Presentation — ViewModel | `ILSanghaViewModel.swift` | Done | 7 Inputs, Entity → StateModel mapping, count / relative-time / initial formatting. |
 | Presentation — ViewController | `ILSanghaViewController.swift` | Done | Built from `ILTabHeaderView`, `ILChip`, `ILSectionHeaderView`, `ILAvatarView`, `ILButton` (shared) + `Views/`. Visual QA pending. |
-| Presentation — Coordinator | `ILSanghaCoordinator.swift` | Partial | All 6 nav events are TODO (target screens not built). |
+| Presentation — Coordinator | `ILSanghaCoordinator.swift` | Partial | `openEvents` / `openCommunity` / `openPost` wired; `openFindSangha` / `startSitting` / `openCompose` still TODO. |
 | Tests | `ILSanghaViewModelTests.swift` | Done | 1 test per Input + state mapping + formatting helpers. |
 | Wiring | `DIContainer` + `ILMainTabCoordinator` | Done | Replaces the Sangha tab's `ILTabPlaceholderViewController`. |
 
@@ -29,9 +29,9 @@ the tab bar, not by this screen). Design: prototype screen `sangha`
 - `openFindSangha` — header "Tìm đạo tràng" tapped. TODO (Temple screen `temple` not built).
 - `startSitting` — "Ngồi cùng" tapped. TODO (Setup / Lamp flow `setup` not built).
 - `openCompose` — "Viết bài chia sẻ" chip tapped. TODO (`compose` modal not built).
-- `openEvents` — "Sự kiện & khóa học" chip tapped. TODO (`events` not built).
-- `openCommunity(id:)` — "Đạo tràng của tôi" card tapped. TODO (`temple` not built).
-- `openPost(id:)` — post card tapped. TODO (`post` not built).
+- `openEvents` — "Sự kiện & khóa học" chip tapped. Wired → `showEvents` (`ILEventsCoordinator`).
+- `openCommunity(id:)` — "Đạo tràng của tôi" card tapped. Wired → `showTemple` (`ILTempleCoordinator`).
+- `openPost(id:)` — post card tapped. Wired → `showPost` (`ILPostCoordinator`).
 
 ## Known gaps / not implemented yet
 
@@ -45,4 +45,6 @@ the tab bar, not by this screen). Design: prototype screen `sangha`
 
 ## Changelog
 
+- 2026-09-26 — wired `openPost(id:)` → `ILPostCoordinator` (screen `post`); aligned mock post id to
+  `post-2` so the feed tap resolves to the Post catalog.
 - 2026-09-20 — initial implementation from design handoff prototype screen `sangha` (il-screen-builder). Added shared `ILTabHeaderView`, `ILColors.tint/tint2/tint3` (+ assets), `ILColors.goldCardBorder`, `ILTypography.note/bodyCompact/statNumber/chevron/quoteItalic`.

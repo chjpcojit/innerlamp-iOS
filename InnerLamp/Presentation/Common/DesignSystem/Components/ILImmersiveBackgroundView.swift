@@ -13,6 +13,9 @@ public final class ILImmersiveBackgroundView: UIView {
     public enum Style {
         /// `--il-med-bg`: light in light mode, dark in dark mode (center 50%/32%, edge 74%).
         case immersive
+        /// `--il-pl-bg`: the full-screen player's radial background — light in light mode, dark in
+        /// dark mode (center 50%/26%, edge 74%).
+        case player
         /// Always-dark night background of the full-screen error popup
         /// (`radial-gradient(circle at 50% 34%, #2A241C, #100E0B 76%)`), independent of theme.
         case alwaysDarkAlert
@@ -20,6 +23,7 @@ public final class ILImmersiveBackgroundView: UIView {
         var centerPoint: CGPoint {
             switch self {
             case .immersive: return CGPoint(x: 0.5, y: 0.32)
+            case .player: return CGPoint(x: 0.5, y: 0.26)
             case .alwaysDarkAlert: return CGPoint(x: 0.5, y: 0.34)
             }
         }
@@ -27,6 +31,7 @@ public final class ILImmersiveBackgroundView: UIView {
         var edgeLocation: NSNumber {
             switch self {
             case .immersive: return 0.74
+            case .player: return 0.74
             case .alwaysDarkAlert: return 0.76
             }
         }
@@ -34,6 +39,7 @@ public final class ILImmersiveBackgroundView: UIView {
         var colors: (center: UIColor, edge: UIColor) {
             switch self {
             case .immersive: return (ILColors.medBackgroundCenter, ILColors.medBackgroundEdge)
+            case .player: return (ILColors.playerBackgroundCenter, ILColors.playerBackgroundEdge)
             case .alwaysDarkAlert: return (ILColors.darkBackgroundTop, ILColors.darkBackground)
             }
         }
@@ -70,6 +76,9 @@ public final class ILImmersiveBackgroundView: UIView {
         gradientLayer.locations = [0, style.edgeLocation]
         layer.addSublayer(gradientLayer)
         updateColors()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILImmersiveBackgroundView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     public override func layoutSubviews() {
@@ -90,9 +99,7 @@ public final class ILImmersiveBackgroundView: UIView {
         )
     }
 
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         updateColors()
     }
 

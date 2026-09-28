@@ -14,7 +14,8 @@ AppCoordinator
          setViewControllers([ILLoginViewController]) — Login là root của stack riêng
          (bấm "Tạo tài khoản mới") → loginDidRequestSignup → AppCoordinator.showSignUp()
          (bấm "Quên?" cạnh mật khẩu) → loginDidRequestForgotPassword (chưa có màn ForgotPassword)
-         (đăng nhập thành công) → loginDidFinishLogin (chưa có luồng Home trong scope hiện tại)
+         (đăng nhập thành công) → loginDidFinishLogin → AppCoordinator.showMain()
+         (bấm "Xem trước, đăng nhập sau") → loginDidRequestGuestPreview → AppCoordinator.showMain()
 ```
 
 `ILLoginCoordinator` được `AppCoordinator` sở hữu vì đây là chuyển tiếp **cross-section**
@@ -41,8 +42,9 @@ Component Design System mới (generic, không có nội dung riêng của Login
 | `ILDividerRow` | Hàng chia "hoặc" giữa CTA SMS và CTA tạo tài khoản — hai gạch ngang co giãn quanh nhãn giữa, chỉ phụ thuộc `text`, thay cho hàm private `makeDividerRow()` từng lặp nội bộ trong `ILLoginViewController`. |
 
 Không có component feature-scoped mới nào (mọi field/CTA của Login đều tái dùng
-`ILPhoneField`/`ILField`/`ILButton`/`ILLampGlowView`/`ILCountryPickerViewController` sẵn có từ
-SignUp).
+`ILPhoneField`/`ILField`/`ILButton`/`ILCountryPickerViewController` sẵn có từ SignUp). Ảnh đèn
+header dùng token `ILIcons.onboardingLamp` (chung với Onboarding intro), kích thước
+`ILMetrics.loginLampSize`.
 
 Wiring: `DIContainer` (`makeLoginUseCase/ViewModel/Coordinator`) + `AppCoordinator`
 (`showLogin()` + conform `ILLoginCoordinatorDelegate`) — không đổi, đã nối sẵn từ trước.
@@ -110,7 +112,7 @@ không đọc/ghi Keychain, không tự giả lập lỗi `ILLoginError.invalidC
 ### 5. Điều hướng ra khỏi màn hình
 
 `ILLoginViewModel.navigationEventPublisher` (được `ILLoginCoordinator.start()` subscribe qua
-Combine `.sink`) xử lý 3 case của `ILLoginNavEvent`:
+Combine `.sink`) xử lý 4 case của `ILLoginNavEvent`:
 
 - **`.goToSignup`** (bấm "Tạo tài khoản mới") → coordinator gọi
   `delegate?.loginDidRequestSignup(self)` rồi `finish()`. `AppCoordinator` nhận qua
@@ -121,8 +123,12 @@ Combine `.sink`) xử lý 3 case của `ILLoginNavEvent`:
   sẽ làm coordinator bị dealloc trong khi Login VC còn sống bên dưới). `AppCoordinator` hiện
   chưa có màn ForgotPassword thật để push — ngoài scope hiện tại.
 - **`.didLoginSuccessfully`** (đăng nhập thành công) → coordinator gọi
-  `delegate?.loginDidFinishLogin(self)` rồi `finish()`. `AppCoordinator` hiện chưa có luồng Home
-  thật để điều hướng sang — ngoài scope hiện tại.
+  `delegate?.loginDidFinishLogin(self)` rồi `finish()`. `AppCoordinator` nhận qua
+  `ILLoginCoordinatorDelegate.loginDidFinishLogin` → `showMain()`.
+- **`.goToGuestPreview`** (bấm "Xem trước, đăng nhập sau") → coordinator gọi
+  `delegate?.loginDidRequestGuestPreview(self)` rồi `finish()`. `AppCoordinator` nhận qua
+  `ILLoginCoordinatorDelegate.loginDidRequestGuestPreview` → `showMain()` (vào luồng chính không
+  cần đăng nhập).
 
 ## Đối chiếu với thiết kế (`InnerLamp Prototype.dc.html`, block `isLogin`)
 
@@ -139,8 +145,6 @@ Combine `.sink`) xử lý 3 case của `ILLoginNavEvent`:
 - "Đăng nhập bằng mã SMS" (`smsCodeButton`) chưa điều hướng sang màn Xác thực OTP riêng —
   `handleSmsCodeTapped()` là TODO, chờ `ILOtpCoordinator` hỗ trợ luồng đăng nhập (hiện `Otp` chỉ
   phục vụ xác thực sau khi Đăng ký).
-- "Xem trước, đăng nhập sau" (`guestPreviewButton`) chưa vào được luồng Home — `TODO`, chờ có
-  luồng Home.
 - Màn Quên mật khẩu chưa tồn tại — `loginDidRequestForgotPassword` hiện không có action thật ở
   `AppCoordinator`.
 
@@ -150,9 +154,9 @@ Combine `.sink`) xử lý 3 case của `ILLoginNavEvent`:
   Keychain mock (đúng hard rule "never a guessed real implementation" của `il-screen-builder`).
   **Hệ quả**: nút "Đăng nhập" hiện luôn thành công (không throw `ILLoginError.
   invalidCredentials`) cho tới khi có implementation thật.
-- `handleSmsCodeTapped()`/`handleGuestPreviewTapped()`: TODO cục bộ trong `ILLoginViewController`,
-  không đi qua `ILLoginViewModel` vì chưa có logic/nav event nào cần xử lý — sẽ chuyển thành
-  `Input` publisher riêng khi có luồng thật để nối.
+- `handleSmsCodeTapped()`: TODO cục bộ trong `ILLoginViewController`, không đi qua
+  `ILLoginViewModel` vì chưa có logic/nav event nào cần xử lý — sẽ chuyển thành `Input` publisher
+  riêng khi có luồng thật để nối.
 
 ## Changelog
 

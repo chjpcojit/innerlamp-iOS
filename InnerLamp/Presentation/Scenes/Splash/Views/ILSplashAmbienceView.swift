@@ -34,11 +34,11 @@ final class ILSplashAmbienceView: UIView {
         static let rayDelay: TimeInterval = 0.3
     }
 
-    /// Ba vòng ripple nhạt dần theo thứ tự phát.
+    /// Ba vòng ripple nhạt dần theo thứ tự phát (`--il-spl-ring` → `-ring3`).
     private static let rippleColors: [UIColor] = [
-        ILColors.goldRippleStrong,
-        ILColors.goldRippleSoft,
-        ILColors.goldRippleFaint
+        ILColors.splashRing,
+        ILColors.splashRing2,
+        ILColors.splashRing3
     ]
 
     // MARK: - UI Elements
@@ -59,8 +59,8 @@ final class ILSplashAmbienceView: UIView {
         }
 
         rayViews = [
-            RayView(color: ILColors.goldRayStrong),
-            RayView(color: ILColors.goldRaySoft)
+            RayView(color: ILColors.splashRay),
+            RayView(color: ILColors.splashRay2)
         ]
 
         super.init(frame: .zero)
@@ -106,11 +106,28 @@ final class ILSplashAmbienceView: UIView {
                 )
             ])
         }
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILSplashAmbienceView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     // MARK: - Animations
     // CAAnimation add trước khi view có window sẽ bị Core Animation bỏ qua — chỉ gọi sau khi
     // view đã lên màn (vd. trong `viewDidAppear`), không phải lúc khởi tạo.
+
+    private func applyColorAppearanceChange() {
+        updateColors()
+    }
+
+    /// Viền ripple (`layer.borderColor`) và gradient tia sáng không tự đảo theo trait —
+    /// resolve lại thủ công theo appearance hiện tại.
+    private func updateColors() {
+        for (index, ripple) in rippleViews.enumerated() {
+            ripple.layer.borderColor = Self.rippleColors[index]
+                .resolvedColor(with: traitCollection).cgColor
+        }
+        rayViews.forEach { $0.updateColors(with: traitCollection) }
+    }
 
     /// Cả hai nhóm hiệu ứng nền — ViewController chỉ cần gọi một lần.
     func startAnimations() {
@@ -198,28 +215,36 @@ final class ILSplashAmbienceView: UIView {
 private final class RayView: UIView {
 
     let gradientLayer = CAGradientLayer()
+    private let color: UIColor
 
     init(color: UIColor) {
+        self.color = color
         super.init(frame: .zero)
         translatesAutoresizingMaskIntoConstraints = false
         isUserInteractionEnabled = false
         backgroundColor = .clear
 
         gradientLayer.anchorPoint = CGPoint(x: 0.5, y: 1.0)
-        // `transparent → màu → transparent`: hai đầu mờ hẳn cùng sắc độ để không bị xám ở mép.
-        gradientLayer.colors = [
-            color.withAlphaComponent(0.0).cgColor,
-            color.cgColor,
-            color.withAlphaComponent(0.0).cgColor
-        ]
         gradientLayer.locations = [0.0, 0.5, 1.0]
         gradientLayer.startPoint = CGPoint(x: 0.5, y: 0.0)
         gradientLayer.endPoint = CGPoint(x: 0.5, y: 1.0)
         layer.addSublayer(gradientLayer)
+        updateColors(with: traitCollection)
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    /// `transparent → màu → transparent`: hai đầu mờ hẳn cùng sắc độ để không bị xám ở mép.
+    /// Gọi lại khi theme đổi vì `CAGradientLayer.colors` không tự đảo theo trait.
+    func updateColors(with traitCollection: UITraitCollection) {
+        let resolved = color.resolvedColor(with: traitCollection)
+        gradientLayer.colors = [
+            resolved.withAlphaComponent(0.0).cgColor,
+            resolved.cgColor,
+            resolved.withAlphaComponent(0.0).cgColor
+        ]
     }
 
     override func layoutSubviews() {

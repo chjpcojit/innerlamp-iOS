@@ -29,6 +29,6 @@ struct LocalizationContentEndpoint: Endpoint {
     var responseEnvelope: ResponseEnvelope { .bare }
 }
 
-struct LocalizationVersionResponse: Decodable {
+nonisolated struct LocalizationVersionResponse: Decodable {
     let version: String
 }

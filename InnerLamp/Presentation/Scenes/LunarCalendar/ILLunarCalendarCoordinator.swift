@@ -6,13 +6,18 @@
 import UIKit
 import Combine
 
-/// Màn lá — không có delegate: `ILLunarCalendarNavEvent.close` chỉ pop màn và tự `finish()`,
-/// parent (`ILHomeCoordinator`) không cần phản ứng gì thêm.
+/// Chạm 1 ngày trong lưới tháng → parent (`ILHomeCoordinator`) mở màn "Chi tiết ngày âm".
+protocol ILLunarCalendarCoordinatorDelegate: AnyObject {
+    func lunarCalendarDidRequestDayDetail(_ coordinator: ILLunarCalendarCoordinator, date: Date)
+}
+
 final class ILLunarCalendarCoordinator: Coordinator {
 
     let navigationController: UINavigationController
     var childCoordinators: [any Coordinator] = []
     weak var parentCoordinator: (any Coordinator)?
+
+    weak var delegate: ILLunarCalendarCoordinatorDelegate?
 
     private let container: DIContainer
     private var cancellables = Set<AnyCancellable>()
@@ -35,6 +40,8 @@ final class ILLunarCalendarCoordinator: Coordinator {
                 case .close:
                     self.navigationController.popViewController(animated: true)
                     self.finish()
+                case .openDayDetail(let date):
+                    self.delegate?.lunarCalendarDidRequestDayDetail(self, date: date)
                 }
             }
             .store(in: &cancellables)

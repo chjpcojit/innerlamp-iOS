@@ -67,6 +67,8 @@ public final class ILChip: UIControl {
     
     // MARK: - Setup
     private func setupViews() {
+        translatesAutoresizingMaskIntoConstraints = false
+
         layer.cornerRadius = 17.0
         layer.masksToBounds = true
         
@@ -113,6 +115,9 @@ public final class ILChip: UIControl {
         addTarget(self, action: #selector(handleTapAction), for: .touchUpInside)
         
         updateAppearance()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILChip, _) in
+            view.applyColorAppearanceChange()
+        }
     }
     
     private func updateAppearance() {
@@ -149,9 +154,7 @@ public final class ILChip: UIControl {
 
     // `layer.borderColor` là CGColor tĩnh, không tự đảo theo trait — refresh thủ công
     // khi hệ thống đổi light/dark (ink/surface giờ có biến thể dark).
-    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
+    private func applyColorAppearanceChange() {
         updateAppearance()
     }
     
