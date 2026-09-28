@@ -32,6 +32,8 @@ enum ILHomeNavEvent: Equatable {
     case openTemple(id: String)
     /// Chạm 1 vị Phật / Bồ Tát trong carousel "Thư viện Phật & Bồ Tát" — mở màn chi tiết `id`.
     case openDeity(id: String)
+    /// Link "Xem tất cả" ở khối "Thư viện Phật & Bồ Tát" — mở màn danh sách "Chư Phật & Bồ Tát".
+    case openDeities
     /// Chạm 1 hàng thiền trong "Thời khóa gợi ý" — mở màn Chuẩn bị thiền (`setup`).
     case openMeditationSetup
 }
@@ -65,6 +67,8 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
         let templeTapped: AnyPublisher<String, Never>
         /// Chạm 1 vị Phật / Bồ Tát trong carousel "Thư viện Phật & Bồ Tát" — mang theo `id`.
         let deityTapped: AnyPublisher<String, Never>
+        /// Link "Xem tất cả" ở khối "Thư viện Phật & Bồ Tát".
+        let deitiesViewAllTapped: AnyPublisher<Void, Never>
         /// Chạm 1 hàng trong "Thời khóa gợi ý" — mang theo `id` mục.
         let suggestedSessionTapped: AnyPublisher<String, Never>
     }
@@ -151,6 +155,10 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
 
         input.deityTapped
             .sink { [weak self] id in self?.navigationEventSubject.send(.openDeity(id: id)) }
+            .store(in: &cancellables)
+
+        input.deitiesViewAllTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openDeities) }
             .store(in: &cancellables)
 
         input.suggestedSessionTapped

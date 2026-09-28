@@ -351,9 +351,10 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
 
     /// Ngày vía chính hiển thị trên thẻ carousel "Thư viện Phật & Bồ Tát": ưu tiên ngày đản sinh
     /// ("Đản") hoặc ngày có chữ "Vía" (vd. Thích Ca → Phật Đản 15/4, Quán Thế Âm → Đản sinh 19/2),
-    /// ngược lại lấy ngày lễ đầu tiên của catalog.
+    /// ngược lại lấy ngày lễ đầu tiên của catalog. Logic nằm trên `ILDeityEntity` (Domain) để dùng
+    /// chung với màn danh sách "Chư Phật & Bồ Tát"; giữ lại hàm này cho call site + test cũ.
     static func primaryMemorialDay(of days: [ILDeityMemorialDayEntity]) -> ILDeityMemorialDayEntity? {
-        days.first { $0.eventName.contains("Đản") || $0.eventName.contains("Vía") } ?? days.first
+        ILDeityEntity.primaryMemorialDay(of: days)
     }
 
     /// Khóa tháng dương lịch `yyyy-MM` — dùng để gom và làm id ổn định cho thẻ tháng.

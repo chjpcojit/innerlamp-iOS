@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package innerlamp.grpctest;
+
+// Test-only service (Docs/Specs/GRPC/design.md § "Testing" / requirements.md FR-012). Not a
+// business contract — exists solely so InnerLampTests can exercise Core/GRPC's auth, error
+// mapping, logging, and streaming behavior against a real wire/serialization path, in-process,
+// with no live backend.
+service EchoTestService {
+  // Unary: echoes the request message back, or fails with `fail_with_status_code` when set.
+  rpc Echo(EchoRequest) returns (EchoResponse);
+
+  // Server-streaming: emits `count` echo responses in order, or fails before the first message
+  // is yielded when `fail_before_first_message` is set.
+  rpc EchoStream(EchoStreamRequest) returns (stream EchoResponse);
+}
+
+message EchoRequest {
+  string message = 1;
+  // When non-zero, the test server responds with this gRPC status code instead of succeeding —
+  // used to exercise GRPCError's status-code mapping (matches google.rpc.Code numbering).
+  int32 fail_with_status_code = 2;
+  // When non-zero, the test server sleeps this many milliseconds before responding — used to
+  // exercise a real (not simulated) deadline-exceeded timeout.
+  int32 delay_ms = 3;
+}
+
+message EchoResponse {
+  string message = 1;
+  // Populated with whatever "authorization" metadata value the server received, or left empty
+  // when none was sent — used to assert GRPCAuthInterceptor's present/absent matrix (FR-002)
+  // without the test server needing any real auth logic.
+  string received_authorization = 2;
+}
+
+message EchoStreamRequest {
+  string message = 1;
+  int32 count = 2;
+  bool fail_before_first_message = 3;
+}

@@ -27,6 +27,7 @@ final class ILHomeViewModelTests: XCTestCase {
     private var articlesViewAllTappedSubject: PassthroughSubject<Void, Never>!
     private var templeTappedSubject: PassthroughSubject<String, Never>!
     private var deityTappedSubject: PassthroughSubject<String, Never>!
+    private var deitiesViewAllTappedSubject: PassthroughSubject<Void, Never>!
     private var suggestedSessionTappedSubject: PassthroughSubject<String, Never>!
 
     override func setUp() {
@@ -50,6 +51,7 @@ final class ILHomeViewModelTests: XCTestCase {
         articlesViewAllTappedSubject = PassthroughSubject<Void, Never>()
         templeTappedSubject = PassthroughSubject<String, Never>()
         deityTappedSubject = PassthroughSubject<String, Never>()
+        deitiesViewAllTappedSubject = PassthroughSubject<Void, Never>()
         suggestedSessionTappedSubject = PassthroughSubject<String, Never>()
     }
 
@@ -69,6 +71,7 @@ final class ILHomeViewModelTests: XCTestCase {
         articlesViewAllTappedSubject = nil
         templeTappedSubject = nil
         deityTappedSubject = nil
+        deitiesViewAllTappedSubject = nil
         suggestedSessionTappedSubject = nil
         sut = nil
         mockUseCase = nil
@@ -91,6 +94,7 @@ final class ILHomeViewModelTests: XCTestCase {
             articlesViewAllTapped: articlesViewAllTappedSubject.eraseToAnyPublisher(),
             templeTapped: templeTappedSubject.eraseToAnyPublisher(),
             deityTapped: deityTappedSubject.eraseToAnyPublisher(),
+            deitiesViewAllTapped: deitiesViewAllTappedSubject.eraseToAnyPublisher(),
             suggestedSessionTapped: suggestedSessionTappedSubject.eraseToAnyPublisher()
         )
     }
@@ -440,6 +444,18 @@ final class ILHomeViewModelTests: XCTestCase {
         deityTappedSubject.send("buddha_shakyamuni")
 
         XCTAssertEqual(receivedEvent, .openDeity(id: "buddha_shakyamuni"))
+    }
+
+    func test_deitiesViewAllTapped_firesOpenDeitiesNavigationEvent() {
+        _ = sut.transform(input: makeInput())
+        var receivedEvent: ILHomeNavEvent?
+        sut.navigationEventPublisher
+            .sink { receivedEvent = $0 }
+            .store(in: &cancellables)
+
+        deitiesViewAllTappedSubject.send(())
+
+        XCTAssertEqual(receivedEvent, .openDeities)
     }
 
     func test_initialState_mapsDeityKindLabelAndMemorialText() {

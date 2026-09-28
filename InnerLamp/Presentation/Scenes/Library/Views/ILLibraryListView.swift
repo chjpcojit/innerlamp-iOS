@@ -12,6 +12,7 @@ final class ILLibraryListView: UIView {
 
     // MARK: - Properties
     var onItemTapped: ((String) -> Void)?
+    var onViewAllTapped: (() -> Void)?
 
     // MARK: - UI Elements
     private let sectionHeader = ILSectionHeaderView(title: "")
@@ -30,6 +31,7 @@ final class ILLibraryListView: UIView {
     // MARK: - Setup
     private func setupViews() {
         sectionHeader.translatesAutoresizingMaskIntoConstraints = false
+        sectionHeader.onTrailingTap = { [weak self] in self?.onViewAllTapped?() }
 
         rowsStack.axis = .vertical
         rowsStack.spacing = ILMetrics.rowSpacing
@@ -52,7 +54,8 @@ final class ILLibraryListView: UIView {
 
     // MARK: - Configure
     func configure(with model: ILLibraryStateModel) {
-        sectionHeader.title = model.sectionTitle
+        sectionHeader.title = model.sutrasSectionTitle
+        sectionHeader.trailingText = model.sutrasViewAllText
 
         rowsStack.arrangedSubviews.forEach {
             rowsStack.removeArrangedSubview($0)

@@ -4,6 +4,41 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v1.2 (2026-09-28)
+
+- `tasks.md`: Phase 3 (API integration) implemented by `il-data-layer-builder`
+  — `requirements.md`/`design.md` prose unchanged (per that skill's remit),
+  only `tasks.md` checkboxes ticked. Added: `ILLoginDTO`/`ILLoginMapper`
+  (`Data/DTOs/`, `Data/DTOs/Mappers/`), `LoginEndpoint`
+  (`Data/DataSources/Remote/`, `POST /v1/auth/login`), `ILLoginRepositoryImpl`
+  (`Data/Repositories/`, derives the contract's `device` object from
+  `UIDevice`/`Bundle` at the Data boundary — `ILLoginEntity` itself is
+  unchanged), and the full `ILLoginError` failure-case set with matching
+  `login.error.*` `vi.json` keys. `ILLoginUseCaseImpl` now takes
+  `ILLoginRepository`/`KeychainService`/`ILUserRepository` and its `login`
+  stores the session on success (same pattern as `ILOtpUseCaseImpl.verifyCode`).
+  `DIContainer.makeLoginUseCase()` wired accordingly.
+- Cross-feature cleanup: the refresh-token Keychain key moved from
+  `ILOtpUseCaseImpl.refreshTokenKey` to
+  `KeychainAuthTokenProviding.refreshTokenKey` (`Core/Networking/`) now that
+  both Login and Otp write the same key — `ILOtpUseCaseImpl`'s own doc comment
+  had already flagged this as the point at which the constant should move.
+  `ILOtpUseCaseTests` updated to match; no behavior change for Otp.
+  `APIConfig.serverBaseURL`'s `.dev` case now points at the BE team's local
+  dev server (LAN IP, confirmed live 2026-09-28) instead of the mock host, with
+  a matching `NSAppTransportSecurity` exception added to `Info.plist` for that
+  one HTTP host — needed so the feature is actually testable on a physical
+  device before a real HTTPS `.dev` host exists.
+- New tests: `InnerLampTests/ILLoginRepositoryTests.swift` (DTO encoding
+  including the nested `device` object, response decoding, mapper, endpoint,
+  exhaustive `NetworkError` → `ILLoginError` mapping — mirrors
+  `ILSignUpRepositoryTests.swift`) and `InnerLampTests/ILLoginUseCaseTests.swift`
+  (mocks `ILLoginRepository`, covers session persistence and failure
+  propagation — mirrors `ILOtpUseCaseTests.swift`). `ILLoginViewModelTests`
+  needed no changes.
+- Reason: BE confirmed the local dev backend is live and matches the
+  documented contract (login + the three OTP routes), unblocking Phase 3.
+
 ## v1.1 (2026-09-27)
 
 - `requirements.md`: removed the incorrect ⚠️ "login API contract not

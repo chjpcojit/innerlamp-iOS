@@ -78,6 +78,20 @@ struct ILDeityRelatedSutraEntity: Equatable {
 }
 
 extension ILDeityEntity {
+    /// Ngày vía chính dùng cho thẻ tóm tắt (carousel Trang chủ, danh sách "Chư Phật & Bồ Tát"):
+    /// ưu tiên ngày đản sinh ("Đản") hoặc ngày có chữ "Vía" (vd. Thích Ca → Phật Đản 15/4,
+    /// Quán Thế Âm → Đản sinh 19/2), ngược lại lấy ngày lễ đầu tiên của catalog. `nil` khi vị
+    /// không có ngày vía nào.
+    var primaryMemorialDay: ILDeityMemorialDayEntity? {
+        Self.primaryMemorialDay(of: memorialDays)
+    }
+
+    /// Bản static của `primaryMemorialDay` cho nơi chỉ có mảng `memorialDays` (vd. mapper của
+    /// Trang chủ / Thư viện).
+    static func primaryMemorialDay(of days: [ILDeityMemorialDayEntity]) -> ILDeityMemorialDayEntity? {
+        days.first { $0.eventName.contains("Đản") || $0.eventName.contains("Vía") } ?? days.first
+    }
+
     /// `canonicalSource` tách thành từng bộ kinh — cắt ở dấu phẩy nằm ngoài ngoặc đơn, để
     /// "Kinh Hoa Nghiêm (Avataṃsaka Sūtra), Kinh Đại Nhật" thành 2 mục.
     var canonicalSources: [String] {

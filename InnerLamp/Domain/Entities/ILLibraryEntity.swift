@@ -22,24 +22,6 @@ enum ILLibraryTone: Equatable {
     case ink
 }
 
-/// Tham số lọc danh sách: tất cả hoặc theo 1 loại nội dung.
-enum ILLibraryCategory: Equatable, CaseIterable {
-    case all
-    case sutra
-    case meditation
-    case talk
-
-    /// Loại nội dung mà nhóm này giữ lại; `nil` = không lọc.
-    var kind: ILLibraryContentKind? {
-        switch self {
-        case .all: return nil
-        case .sutra: return .sutra
-        case .meditation: return .meditation
-        case .talk: return .talk
-        }
-    }
-}
-
 /// 1 mục nội dung (kinh, thiền dẫn, pháp thoại) — chỉ dữ liệu nghiệp vụ, không có trạng thái UI.
 struct ILLibraryItemEntity: Equatable {
     let id: String
@@ -61,6 +43,9 @@ struct ILLibraryFeaturedEntity: Equatable {
 struct ILLibraryEntity: Equatable {
     var featured: ILLibraryFeaturedEntity?
     var items: [ILLibraryItemEntity] = []
+    /// Carousel "Chư Phật & Bồ Tát" — bản tóm tắt, dùng chung `ILHomeDeityEntity` (map từ
+    /// `ILDeityUseCase.getAllDeities()`) với carousel cùng nội dung ở Trang chủ.
+    var deities: [ILHomeDeityEntity] = []
 
     static let empty = ILLibraryEntity()
 }

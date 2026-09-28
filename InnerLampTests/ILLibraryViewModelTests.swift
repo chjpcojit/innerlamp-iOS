@@ -14,9 +14,12 @@ final class ILLibraryViewModelTests: XCTestCase {
     private var cancellables: Set<AnyCancellable>!
 
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
-    private var categorySelectedSubject: PassthroughSubject<ILLibraryCategory, Never>!
+    private var quickAccessTappedSubject: PassthroughSubject<ILLibraryQuickAccessKind, Never>!
     private var searchTappedSubject: PassthroughSubject<Void, Never>!
     private var featuredTappedSubject: PassthroughSubject<Void, Never>!
+    private var deityTappedSubject: PassthroughSubject<String, Never>!
+    private var deitiesViewAllTappedSubject: PassthroughSubject<Void, Never>!
+    private var sutrasViewAllTappedSubject: PassthroughSubject<Void, Never>!
     private var itemTappedSubject: PassthroughSubject<String, Never>!
 
     override func setUp() {
@@ -26,18 +29,24 @@ final class ILLibraryViewModelTests: XCTestCase {
         cancellables = []
 
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
-        categorySelectedSubject = PassthroughSubject<ILLibraryCategory, Never>()
+        quickAccessTappedSubject = PassthroughSubject<ILLibraryQuickAccessKind, Never>()
         searchTappedSubject = PassthroughSubject<Void, Never>()
         featuredTappedSubject = PassthroughSubject<Void, Never>()
+        deityTappedSubject = PassthroughSubject<String, Never>()
+        deitiesViewAllTappedSubject = PassthroughSubject<Void, Never>()
+        sutrasViewAllTappedSubject = PassthroughSubject<Void, Never>()
         itemTappedSubject = PassthroughSubject<String, Never>()
     }
 
     override func tearDown() {
         cancellables = nil
         viewDidLoadSubject = nil
-        categorySelectedSubject = nil
+        quickAccessTappedSubject = nil
         searchTappedSubject = nil
         featuredTappedSubject = nil
+        deityTappedSubject = nil
+        deitiesViewAllTappedSubject = nil
+        sutrasViewAllTappedSubject = nil
         itemTappedSubject = nil
         sut = nil
         mockUseCase = nil
@@ -47,9 +56,12 @@ final class ILLibraryViewModelTests: XCTestCase {
     private func makeInput() -> ILLibraryViewModel.Input {
         ILLibraryViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
-            categorySelected: categorySelectedSubject.eraseToAnyPublisher(),
+            quickAccessTapped: quickAccessTappedSubject.eraseToAnyPublisher(),
             searchTapped: searchTappedSubject.eraseToAnyPublisher(),
             featuredTapped: featuredTappedSubject.eraseToAnyPublisher(),
+            deityTapped: deityTappedSubject.eraseToAnyPublisher(),
+            deitiesViewAllTapped: deitiesViewAllTappedSubject.eraseToAnyPublisher(),
+            sutrasViewAllTapped: sutrasViewAllTappedSubject.eraseToAnyPublisher(),
             itemTapped: itemTappedSubject.eraseToAnyPublisher()
         )
     }
@@ -63,7 +75,7 @@ final class ILLibraryViewModelTests: XCTestCase {
     }
 
     // MARK: - viewDidLoad
-    func test_viewDidLoad_selectsAllChipAndShowsWholeCatalog() {
+    func test_viewDidLoad_showsQuickAccessDeitiesAndRows() {
         let output = sut.transform(input: makeInput())
         let latest = captureLatestState(output)
 
@@ -71,47 +83,21 @@ final class ILLibraryViewModelTests: XCTestCase {
 
         XCTAssertGreaterThanOrEqual(mockUseCase.getCatalogCallCount, 2) // init + viewDidLoad
         let state = latest()
-        XCTAssertEqual(state?.chips.map(\.category), ILLibraryCategory.allCases)
-        XCTAssertEqual(state?.chips.filter(\.isSelected).map(\.category), [.all])
-        XCTAssertEqual(state?.rows.map(\.id), ["s1", "m1", "t1"])
+        XCTAssertEqual(state?.quickAccess.map(\.kind), [.sutras, .meditation, .talk, .buddhas])
+        XCTAssertEqual(state?.rows.map(\.id), ["s1"])
         XCTAssertEqual(state?.featured?.id, "featured")
+        XCTAssertEqual(state?.deities.map(\.id), ["d1"])
+        XCTAssertEqual(state?.sutrasSectionTitle, "library.section.sutra".localized)
+        XCTAssertEqual(state?.sutrasViewAllText, "library.section.sutra.viewAll".localized)
     }
 
-    // MARK: - categorySelected
-    func test_categorySelected_filtersRowsSelectsChipAndKeepsFeatured() {
-        let output = sut.transform(input: makeInput())
-        let latest = captureLatestState(output)
-
-        categorySelectedSubject.send(.meditation)
-
-        XCTAssertEqual(mockUseCase.lastFilterCategory, .meditation)
-        let state = latest()
-        XCTAssertEqual(state?.rows.map(\.id), ["m1"])
-        XCTAssertEqual(state?.chips.filter(\.isSelected).map(\.category), [.meditation])
-        XCTAssertEqual(state?.sectionTitle, "library.section.meditation".localized)
-        XCTAssertEqual(state?.featured?.id, "featured")
-    }
-
-    func test_categorySelected_sameCategory_doesNotEmitNewState() {
-        let output = sut.transform(input: makeInput())
-        var emissionCount = 0
-        output.state
-            .sink { _ in emissionCount += 1 }
-            .store(in: &cancellables)
-        let baseline = emissionCount
-
-        categorySelectedSubject.send(.all)
-
-        XCTAssertEqual(emissionCount, baseline)
-    }
-
-    func test_categorySelected_withNoMatches_marksListEmpty() {
-        mockUseCase.catalog.items = mockUseCase.catalog.items.filter { $0.kind != .talk }
+    func test_emptyRows_marksListEmpty() {
+        mockUseCase.catalog.items = []
         sut = ILLibraryViewModel(useCase: mockUseCase)
         let output = sut.transform(input: makeInput())
         let latest = captureLatestState(output)
 
-        categorySelectedSubject.send(.talk)
+        viewDidLoadSubject.send(())
 
         XCTAssertEqual(latest()?.isListEmpty, true)
     }
@@ -142,9 +128,9 @@ final class ILLibraryViewModelTests: XCTestCase {
         var receivedEvent: ILLibraryNavEvent?
         sut.navigationEventPublisher.sink { receivedEvent = $0 }.store(in: &cancellables)
 
-        itemTappedSubject.send("m1")
+        itemTappedSubject.send("s1")
 
-        XCTAssertEqual(receivedEvent, .openItem(id: "m1", kind: .meditation))
+        XCTAssertEqual(receivedEvent, .openItem(id: "s1", kind: .sutra))
     }
 
     func test_itemTapped_unknownId_firesNothing() {
@@ -155,6 +141,46 @@ final class ILLibraryViewModelTests: XCTestCase {
         itemTappedSubject.send("does-not-exist")
 
         XCTAssertNil(receivedEvent)
+    }
+
+    func test_quickAccessTapped_firesOpenQuickAccessEvent() {
+        _ = sut.transform(input: makeInput())
+        var receivedEvent: ILLibraryNavEvent?
+        sut.navigationEventPublisher.sink { receivedEvent = $0 }.store(in: &cancellables)
+
+        quickAccessTappedSubject.send(.meditation)
+
+        XCTAssertEqual(receivedEvent, .openQuickAccess(.meditation))
+    }
+
+    func test_deityTapped_firesOpenDeityEvent() {
+        _ = sut.transform(input: makeInput())
+        var receivedEvent: ILLibraryNavEvent?
+        sut.navigationEventPublisher.sink { receivedEvent = $0 }.store(in: &cancellables)
+
+        deityTappedSubject.send("d1")
+
+        XCTAssertEqual(receivedEvent, .openDeity(id: "d1"))
+    }
+
+    func test_deitiesViewAllTapped_firesOpenDeitiesEvent() {
+        _ = sut.transform(input: makeInput())
+        var receivedEvent: ILLibraryNavEvent?
+        sut.navigationEventPublisher.sink { receivedEvent = $0 }.store(in: &cancellables)
+
+        deitiesViewAllTappedSubject.send(())
+
+        XCTAssertEqual(receivedEvent, .openDeities)
+    }
+
+    func test_sutrasViewAllTapped_firesOpenQuickAccessSutrasEvent() {
+        _ = sut.transform(input: makeInput())
+        var receivedEvent: ILLibraryNavEvent?
+        sut.navigationEventPublisher.sink { receivedEvent = $0 }.store(in: &cancellables)
+
+        sutrasViewAllTappedSubject.send(())
+
+        XCTAssertEqual(receivedEvent, .openQuickAccess(.sutras))
     }
 
     // MARK: - Duration formatting
@@ -171,23 +197,16 @@ final class ILLibraryViewModelTests: XCTestCase {
     }
 }
 
-// MARK: - ILLibraryUseCaseImpl (real filter logic)
+// MARK: - ILLibraryUseCaseImpl (real deity mapping)
 final class ILLibraryUseCaseTests: XCTestCase {
 
-    private let sut = ILLibraryUseCaseImpl()
+    private let sut = ILLibraryUseCaseImpl(deityUseCase: MockILDeityUseCase())
 
-    func test_items_all_returnsEveryItemInOriginalOrder() {
+    func test_getCatalog_mapsDeitiesFromDeityUseCase() {
         let catalog = sut.getCatalog()
-        XCTAssertEqual(sut.items(in: catalog, category: .all), catalog.items)
-    }
-
-    func test_items_byCategory_returnsOnlyMatchingKind() {
-        let catalog = sut.getCatalog()
-        for category in ILLibraryCategory.allCases where category != .all {
-            let result = sut.items(in: catalog, category: category)
-            XCTAssertFalse(result.isEmpty)
-            XCTAssertTrue(result.allSatisfy { $0.kind == category.kind })
-        }
+        XCTAssertFalse(catalog.deities.isEmpty)
+        XCTAssertFalse(catalog.items.isEmpty)
+        XCTAssertTrue(catalog.items.allSatisfy { $0.kind == .sutra })
     }
 }
 
@@ -196,22 +215,16 @@ final class MockILLibraryUseCase: ILLibraryUseCase {
     var catalog = ILLibraryEntity(
         featured: ILLibraryFeaturedEntity(id: "featured", eyebrow: "eyebrow", title: "title", durationMinutes: 46),
         items: [
-            ILLibraryItemEntity(id: "s1", kind: .sutra, title: "Sutra", subtitle: "sub", durationMinutes: 130, tone: .gold),
-            ILLibraryItemEntity(id: "m1", kind: .meditation, title: "Meditation", subtitle: "sub", durationMinutes: 10, tone: .green),
-            ILLibraryItemEntity(id: "t1", kind: .talk, title: "Talk", subtitle: "sub", durationMinutes: 62, tone: .rose)
+            ILLibraryItemEntity(id: "s1", kind: .sutra, title: "Sutra", subtitle: "sub", durationMinutes: 130, tone: .gold)
+        ],
+        deities: [
+            ILHomeDeityEntity(id: "d1", kind: .buddha, name: "Thích Ca", honorific: "honorific", virtue: "virtue", memorialDay: nil)
         ]
     )
     var getCatalogCallCount = 0
-    var lastFilterCategory: ILLibraryCategory?
 
     func getCatalog() -> ILLibraryEntity {
         getCatalogCallCount += 1
         return catalog
-    }
-
-    func items(in catalog: ILLibraryEntity, category: ILLibraryCategory) -> [ILLibraryItemEntity] {
-        lastFilterCategory = category
-        guard let kind = category.kind else { return catalog.items }
-        return catalog.items.filter { $0.kind == kind }
     }
 }

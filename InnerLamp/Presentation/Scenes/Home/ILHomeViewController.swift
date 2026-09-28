@@ -25,6 +25,7 @@ final class ILHomeViewController: BaseViewController {
     private let articlesViewAllTappedSubject = PassthroughSubject<Void, Never>()
     private let templeTappedSubject = PassthroughSubject<String, Never>()
     private let deityTappedSubject = PassthroughSubject<String, Never>()
+    private let deitiesViewAllTappedSubject = PassthroughSubject<Void, Never>()
     private let suggestedSessionTappedSubject = PassthroughSubject<String, Never>()
 
     // MARK: - UI Elements
@@ -278,6 +279,7 @@ final class ILHomeViewController: BaseViewController {
             articlesViewAllTapped: articlesViewAllTappedSubject.eraseToAnyPublisher(),
             templeTapped: templeTappedSubject.eraseToAnyPublisher(),
             deityTapped: deityTappedSubject.eraseToAnyPublisher(),
+            deitiesViewAllTapped: deitiesViewAllTappedSubject.eraseToAnyPublisher(),
             suggestedSessionTapped: suggestedSessionTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
@@ -470,10 +472,9 @@ final class ILHomeViewController: BaseViewController {
         deityTappedSubject.send(deity.id)
     }
 
-    /// Link "Xem tất cả" ở carousel "Thư viện Phật & Bồ Tát" — màn danh sách Phật & Bồ Tát
-    /// (`buddhas` trong prototype) chưa build.
+    /// Link "Xem tất cả" ở carousel "Thư viện Phật & Bồ Tát" — mở màn danh sách "Chư Phật & Bồ Tát".
     private func handleDeitiesViewAllTapped() {
-        // TODO: điều hướng sang màn danh sách Phật & Bồ Tát khi có coordinator tương ứng.
+        deitiesViewAllTappedSubject.send(())
     }
 
     /// Thẻ "Chuông mõ" — mở màn Chuông mõ.

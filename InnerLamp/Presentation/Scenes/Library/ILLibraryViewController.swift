@@ -12,9 +12,12 @@ final class ILLibraryViewController: BaseViewController {
     private let viewModel: ILLibraryViewModel
     private var cancellables = Set<AnyCancellable>()
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
-    private let categorySelectedSubject = PassthroughSubject<ILLibraryCategory, Never>()
+    private let quickAccessTappedSubject = PassthroughSubject<ILLibraryQuickAccessKind, Never>()
     private let searchTappedSubject = PassthroughSubject<Void, Never>()
     private let featuredTappedSubject = PassthroughSubject<Void, Never>()
+    private let deityTappedSubject = PassthroughSubject<String, Never>()
+    private let deitiesViewAllTappedSubject = PassthroughSubject<Void, Never>()
+    private let sutrasViewAllTappedSubject = PassthroughSubject<Void, Never>()
     private let itemTappedSubject = PassthroughSubject<String, Never>()
 
     // MARK: - UI Elements
@@ -53,8 +56,12 @@ final class ILLibraryViewController: BaseViewController {
     }()
 
     private lazy var searchBar = ILSearchBarView(placeholder: "library.search.placeholder".localized)
-    private lazy var chipsView = ILLibraryCategoryChipsView()
+    private lazy var quickAccessGrid = ILLibraryQuickAccessGridView()
     private lazy var featureCard = ILFeatureCardView()
+    private lazy var deitiesHeader = ILSectionHeaderView(title: "")
+    /// Dùng chung view carousel với Trang chủ (`ILHomeDeityCarouselView`) — cùng dữ liệu
+    /// "Chư Phật & Bồ Tát", chỉ khác tiêu đề section (xem `ILLibraryStateModel.deitiesTitle`).
+    private lazy var deitiesCarousel = ILHomeDeityCarouselView()
     private lazy var listView = ILLibraryListView()
     private lazy var skeletonView = ILSkeletonLoadingView()
 
@@ -91,18 +98,23 @@ final class ILLibraryViewController: BaseViewController {
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
 
-        [searchBar, chipsView, featureCard, listView].forEach {
+        [searchBar, quickAccessGrid, featureCard, deitiesHeader, deitiesCarousel, listView].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentStack.addArrangedSubview($0)
         }
         contentStack.setCustomSpacing(ILMetrics.spaceMedium, after: searchBar)
-        contentStack.setCustomSpacing(ILMetrics.groupSpacing, after: chipsView)
+        contentStack.setCustomSpacing(ILMetrics.groupSpacing, after: quickAccessGrid)
         contentStack.setCustomSpacing(ILMetrics.groupSpacing + 2, after: featureCard)
+        contentStack.setCustomSpacing(ILMetrics.rowSpacing, after: deitiesHeader)
+        contentStack.setCustomSpacing(ILMetrics.groupSpacing + 2, after: deitiesCarousel)
 
         searchBar.onTap = { [weak self] in self?.searchTappedSubject.send(()) }
-        chipsView.onCategorySelected = { [weak self] category in self?.categorySelectedSubject.send(category) }
+        quickAccessGrid.onTileTapped = { [weak self] kind in self?.quickAccessTappedSubject.send(kind) }
         featureCard.onTap = { [weak self] in self?.featuredTappedSubject.send(()) }
+        deitiesHeader.onTrailingTap = { [weak self] in self?.deitiesViewAllTappedSubject.send(()) }
+        deitiesCarousel.onDeityTap = { [weak self] deity in self?.deityTappedSubject.send(deity.id) }
         listView.onItemTapped = { [weak self] id in self?.itemTappedSubject.send(id) }
+        listView.onViewAllTapped = { [weak self] in self?.sutrasViewAllTappedSubject.send(()) }
     }
 
     override func setupConstraints() {
@@ -146,9 +158,12 @@ final class ILLibraryViewController: BaseViewController {
 
         let input = ILLibraryViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
-            categorySelected: categorySelectedSubject.eraseToAnyPublisher(),
+            quickAccessTapped: quickAccessTappedSubject.eraseToAnyPublisher(),
             searchTapped: searchTappedSubject.eraseToAnyPublisher(),
             featuredTapped: featuredTappedSubject.eraseToAnyPublisher(),
+            deityTapped: deityTappedSubject.eraseToAnyPublisher(),
+            deitiesViewAllTapped: deitiesViewAllTappedSubject.eraseToAnyPublisher(),
+            sutrasViewAllTapped: sutrasViewAllTappedSubject.eraseToAnyPublisher(),
             itemTapped: itemTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
@@ -182,7 +197,7 @@ final class ILLibraryViewController: BaseViewController {
     }
 
     private func updateUI(with model: ILLibraryStateModel) {
-        chipsView.configure(chips: model.chips)
+        quickAccessGrid.configure(tiles: model.quickAccess)
 
         if let featured = model.featured {
             featureCard.eyebrow = featured.eyebrow
@@ -192,6 +207,10 @@ final class ILLibraryViewController: BaseViewController {
         } else {
             featureCard.isHidden = true
         }
+
+        deitiesHeader.title = model.deitiesTitle
+        deitiesHeader.trailingText = model.deitiesViewAllText
+        deitiesCarousel.deities = model.deities
 
         listView.configure(with: model)
     }

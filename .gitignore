@@ -58,6 +58,10 @@ go.sum
 *.mov
 *.wmv
 
+# Xcode build output (derived artifacts — never commit)
+build/
+DerivedData/
+
 # Sensitive file
 *.pem
 *.json

@@ -35,7 +35,7 @@ final class ILOtpUseCaseTests: XCTestCase {
 
     override func tearDown() {
         try? keychainService.delete(key: KeychainAuthTokenProviding.accessTokenKey)
-        try? keychainService.delete(key: ILOtpUseCaseImpl.refreshTokenKey)
+        try? keychainService.delete(key: KeychainAuthTokenProviding.refreshTokenKey)
         sut = nil
         userRepository = nil
         stack = nil
@@ -78,7 +78,7 @@ final class ILOtpUseCaseTests: XCTestCase {
         // The access token must land under the exact key NetworkService reads.
         let provided = KeychainAuthTokenProviding(keychainService: keychainService)
         XCTAssertEqual(provided.currentToken(), "access-1")
-        XCTAssertEqual(try keychainService.loadString(key: ILOtpUseCaseImpl.refreshTokenKey), "refresh-1")
+        XCTAssertEqual(try keychainService.loadString(key: KeychainAuthTokenProviding.refreshTokenKey), "refresh-1")
 
         let storedUser = try await userRepository.loadUser()
         XCTAssertEqual(storedUser?.id, 42)

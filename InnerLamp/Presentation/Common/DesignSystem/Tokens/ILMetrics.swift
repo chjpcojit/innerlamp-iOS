@@ -152,6 +152,10 @@ public enum ILMetrics {
     
     /// Đổ bóng thanh phát nổi / card nổi (0 6px 20px rgba(34,30,25,.07))
     public static let shadowFloatingBar = Shadow(color: UIColor(hex: "#221E19"), alpha: 0.07, x: 0, y: 6, blur: 20)
+
+    /// Bóng nhẹ dưới tab đang chọn của segmented control (0 1px 3px rgba(34,30,25,.08)) — khớp
+    /// `box-shadow` của tab đang chọn ở màn Thiền định trong design handoff.
+    public static let shadowSegmentSelected = Shadow(color: UIColor(hex: "#221E19"), alpha: 0.08, x: 0, y: 1, blur: 3)
     
     /// Đổ bóng nút đèn ở thanh đáy sáng (0 8px 20px rgba(34,30,25,.28))
     public static let shadowLampLight = Shadow(color: UIColor(hex: "#221E19"), alpha: 0.28, x: 0, y: 8, blur: 20)

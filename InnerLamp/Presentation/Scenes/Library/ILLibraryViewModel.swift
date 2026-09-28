@@ -6,9 +6,22 @@
 import Foundation
 import Combine
 
+/// 4 điểm truy cập nhanh của lưới đầu màn — mỗi ô mở 1 màn danh sách/hub riêng (khác `openItem`,
+/// vốn mở thẳng 1 nội dung). Khớp `libTiles` trong design handoff (`isLib`).
+enum ILLibraryQuickAccessKind: Equatable {
+    case sutras
+    case meditation
+    case talk
+    case buddhas
+}
+
 enum ILLibraryNavEvent: Equatable {
     case openSearch
     case openItem(id: String, kind: ILLibraryContentKind)
+    case openQuickAccess(ILLibraryQuickAccessKind)
+    case openDeity(id: String)
+    /// Link "Xem tất cả" ở khối "Chư Phật & Bồ Tát" — mở màn danh sách đầy đủ.
+    case openDeities
 }
 
 protocol ILLibraryViewModelProtocol: ViewModelType {
@@ -22,9 +35,12 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
     // MARK: - Input / Output
     struct Input {
         let viewDidLoad: AnyPublisher<Void, Never>
-        let categorySelected: AnyPublisher<ILLibraryCategory, Never>
+        let quickAccessTapped: AnyPublisher<ILLibraryQuickAccessKind, Never>
         let searchTapped: AnyPublisher<Void, Never>
         let featuredTapped: AnyPublisher<Void, Never>
+        let deityTapped: AnyPublisher<String, Never>
+        let deitiesViewAllTapped: AnyPublisher<Void, Never>
+        let sutrasViewAllTapped: AnyPublisher<Void, Never>
         let itemTapped: AnyPublisher<String, Never>
     }
 
@@ -40,7 +56,6 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
     private let navigationEventSubject = PassthroughSubject<ILLibraryNavEvent, Never>()
     private let stateSubject: CurrentValueSubject<ViewState<ILLibraryStateModel>, Never>
     private var catalog: ILLibraryEntity
-    private var selectedCategory: ILLibraryCategory = .all
     private var currentState: ILLibraryStateModel
     private let useCase: ILLibraryUseCase
     private var cancellables = Set<AnyCancellable>()
@@ -50,11 +65,7 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
         self.useCase = useCase
         let initialCatalog = useCase.getCatalog()
         self.catalog = initialCatalog
-        let initialState = ILLibraryViewModel.makeStateModel(
-            catalog: initialCatalog,
-            items: useCase.items(in: initialCatalog, category: .all),
-            selectedCategory: .all
-        )
+        let initialState = ILLibraryViewModel.makeStateModel(catalog: initialCatalog)
         self.currentState = initialState
         self.stateSubject = CurrentValueSubject(.success(initialState))
     }
@@ -65,8 +76,8 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
             .sink { [weak self] _ in self?.handleViewDidLoad() }
             .store(in: &cancellables)
 
-        input.categorySelected
-            .sink { [weak self] category in self?.handleCategorySelected(category) }
+        input.quickAccessTapped
+            .sink { [weak self] kind in self?.navigationEventSubject.send(.openQuickAccess(kind)) }
             .store(in: &cancellables)
 
         input.searchTapped
@@ -75,6 +86,18 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
 
         input.featuredTapped
             .sink { [weak self] _ in self?.handleFeaturedTapped() }
+            .store(in: &cancellables)
+
+        input.deityTapped
+            .sink { [weak self] id in self?.navigationEventSubject.send(.openDeity(id: id)) }
+            .store(in: &cancellables)
+
+        input.deitiesViewAllTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openDeities) }
+            .store(in: &cancellables)
+
+        input.sutrasViewAllTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openQuickAccess(.sutras)) }
             .store(in: &cancellables)
 
         input.itemTapped
@@ -87,13 +110,6 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
     // MARK: - Actions
     private func handleViewDidLoad() {
         catalog = useCase.getCatalog()
-        selectedCategory = .all
-        publishState()
-    }
-
-    private func handleCategorySelected(_ category: ILLibraryCategory) {
-        guard category != selectedCategory else { return }
-        selectedCategory = category
         publishState()
     }
 
@@ -108,26 +124,16 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
     }
 
     private func publishState() {
-        currentState = ILLibraryViewModel.makeStateModel(
-            catalog: catalog,
-            items: useCase.items(in: catalog, category: selectedCategory),
-            selectedCategory: selectedCategory
-        )
+        currentState = ILLibraryViewModel.makeStateModel(catalog: catalog)
         stateSubject.send(.success(currentState))
     }
 
     // MARK: - Entity -> StateModel mapping
-    /// Việc riêng của presentation (nhãn chip, tiêu đề mục theo nhóm, format thời lượng) nên nằm
-    /// ở đây, không phải trong Mapper dùng chung (xem `references/data_layer_boundaries.md`).
-    private static func makeStateModel(
-        catalog: ILLibraryEntity,
-        items: [ILLibraryItemEntity],
-        selectedCategory: ILLibraryCategory
-    ) -> ILLibraryStateModel {
+    /// Việc riêng của presentation (nhãn ô truy cập nhanh, format ngày vía, format thời lượng) nên
+    /// nằm ở đây, không phải trong Mapper dùng chung (xem `references/data_layer_boundaries.md`).
+    private static func makeStateModel(catalog: ILLibraryEntity) -> ILLibraryStateModel {
         var model = ILLibraryStateModel()
-        model.chips = ILLibraryCategory.allCases.map {
-            ILLibraryChipModel(category: $0, title: chipTitle(for: $0), isSelected: $0 == selectedCategory)
-        }
+        model.quickAccess = quickAccessTiles()
         model.featured = catalog.featured.map {
             ILLibraryFeaturedModel(
                 id: $0.id,
@@ -136,8 +142,23 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
                 ctaTitle: String(format: "library.featured.cta".localized, formatDuration(minutes: $0.durationMinutes))
             )
         }
-        model.sectionTitle = sectionTitle(for: selectedCategory)
-        model.rows = items.map {
+        model.deitiesTitle = "library.deity.title".localized
+        model.deitiesViewAllText = "library.deity.viewAll".localized
+        model.deities = catalog.deities.map { deity in
+            let memorialText = deity.memorialDay.map {
+                String(format: "home.deity.memorialFormat".localized, $0.lunarDay, $0.lunarMonth)
+            } ?? ""
+            return ILHomeDeityModel(
+                id: deity.id,
+                kind: deity.kind,
+                kindLabel: deity.kind == .buddha ? "deity.kind.buddha".localized : "deity.kind.bodhisattva".localized,
+                name: deity.name,
+                memorialText: memorialText
+            )
+        }
+        model.sutrasSectionTitle = "library.section.sutra".localized
+        model.sutrasViewAllText = "library.section.sutra.viewAll".localized
+        model.rows = catalog.items.map {
             ILLibraryRowModel(
                 id: $0.id,
                 title: $0.title,
@@ -151,6 +172,36 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
         return model
     }
 
+    /// 4 ô cố định (không phụ thuộc catalog) — nhãn/glyph khớp `libTiles` trong design handoff.
+    private static func quickAccessTiles() -> [ILLibraryQuickAccessModel] {
+        [
+            ILLibraryQuickAccessModel(
+                id: "sutras", kind: .sutras,
+                label: "library.tile.sutra.label".localized,
+                subtitle: "library.tile.sutra.subtitle".localized,
+                glyph: "經", tone: .gold
+            ),
+            ILLibraryQuickAccessModel(
+                id: "meditation", kind: .meditation,
+                label: "library.tile.meditation.label".localized,
+                subtitle: "library.tile.meditation.subtitle".localized,
+                glyph: "禪", tone: .green
+            ),
+            ILLibraryQuickAccessModel(
+                id: "talk", kind: .talk,
+                label: "library.tile.talk.label".localized,
+                subtitle: "library.tile.talk.subtitle".localized,
+                glyph: "法", tone: .rose
+            ),
+            ILLibraryQuickAccessModel(
+                id: "buddhas", kind: .buddhas,
+                label: "library.tile.buddha.label".localized,
+                subtitle: "library.tile.buddha.subtitle".localized,
+                glyph: "佛", tone: .ink
+            )
+        ]
+    }
+
     /// < 60 phút → "38 phút"; >= 60 phút → "2g 10p" (bỏ phần phút nếu tròn giờ).
     static func formatDuration(minutes: Int) -> String {
         guard minutes >= 60 else {
@@ -162,23 +213,5 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
             return String(format: "library.duration.hours".localized, hours)
         }
         return String(format: "library.duration.hoursMinutes".localized, hours, remainder)
-    }
-
-    private static func chipTitle(for category: ILLibraryCategory) -> String {
-        switch category {
-        case .all: return "library.chip.all".localized
-        case .sutra: return "library.chip.sutra".localized
-        case .meditation: return "library.chip.meditation".localized
-        case .talk: return "library.chip.talk".localized
-        }
-    }
-
-    private static func sectionTitle(for category: ILLibraryCategory) -> String {
-        switch category {
-        case .all: return "library.section.all".localized
-        case .sutra: return "library.section.sutra".localized
-        case .meditation: return "library.section.meditation".localized
-        case .talk: return "library.section.talk".localized
-        }
     }
 }

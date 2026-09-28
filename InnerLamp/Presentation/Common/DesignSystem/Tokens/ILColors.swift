@@ -240,6 +240,14 @@ public enum ILColors {
     /// Chữ thiền / thành công
     public static let greenText = asset("ILGreenText")
 
+    /// Viền trạng thái "đã tải về" (alpha 0.40 của `green`) — `rgba(110,143,122,.4)` trong design
+    /// handoff (pill "Đã tải về" ở màn Thiền định).
+    public static let greenBorder = green.withAlphaComponent(0.40)
+
+    /// Nền nhạt trạng thái "đã tải về" (alpha 0.12 của `green`) — `rgba(110,143,122,.12)` trong
+    /// design handoff (pill "Đã tải về" ở màn Thiền định).
+    public static let greenTint = green.withAlphaComponent(0.12)
+
     /// Niệm Phật, cảnh báo mềm
     public static let rose = asset("ILRose")
 

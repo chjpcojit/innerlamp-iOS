@@ -21,6 +21,7 @@ This document serves as the specification & guidelines for AI Agents reading, ma
   - Core Data: Manages local relational data (`InnerLamp.xcdatamodeld`).
 - **Logging & Observability**: Sentry (crash, SPM `sentry-cocoa`) + 3 internal mock channels (security alert, metrics, flow tracking). Details & usage: [`Core/Logging/README.md`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Core/Logging/README.md), original spec: [`Mobile Logging Architecture.md`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Docs/Specs/Mobile%20Logging%20Architecture.md).
 - **Testing**: `XCTest` for Unit Tests & UI Tests.
+- **Verification scope**: Do **not** boot or run the iOS Simulator to verify a change. Verification is limited to a successful build (`xcodebuild build`) and a passing test run (`xcodebuild test` / `XCTest`). The user runs the app on a physical device and checks the actual UI/behavior themselves.
 
 ---
 

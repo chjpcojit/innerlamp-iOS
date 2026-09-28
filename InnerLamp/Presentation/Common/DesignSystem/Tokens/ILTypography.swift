@@ -98,6 +98,8 @@ public enum ILTypography {
     /// Tiêu đề thẻ tối nổi bật (vd. "Thời khóa tối cùng đạo tràng") — 19px Lora theo design handoff.
     public static let heroCardTitle = lora(size: 19, weight: .regular)
     public static let scriptureBody = lora(size: 18, weight: .regular)
+    /// Số serif (Lora) 18px — vd. số phút trong vòng tròn preset thiền ở màn Thiền định.
+    public static let serifNumber = lora(size: 18, weight: .regular)
     /// Số ngày trong ô ngày của thẻ sự kiện (17px Lora theo design handoff).
     public static let dateTileDay = lora(size: 17, weight: .regular)
     public static let scriptureBodySmall = lora(size: 15, weight: .regular)
@@ -106,6 +108,12 @@ public enum ILTypography {
     public static let scriptureDescription = lora(size: 14, weight: .regular)
     /// Tiêu đề ảnh trong gallery "Ảnh chùa đẹp" — 13.5px Lora theo design handoff.
     public static let photoCaptionTitle = lora(size: 13.5, weight: .regular)
+    /// Nhãn ô truy cập nhanh màn Thư viện (Kinh sách/Thiền định/Pháp thoại/Phật & Bồ Tát) — 16px
+    /// Lora theo design handoff (`isLib`, `font:400 16px Lora`).
+    public static let quickAccessTileTitle = lora(size: 16, weight: .regular)
+    /// Tiêu đề serif (Lora) 16px cho thẻ/hàng danh sách (vd. tên preset thiền chuông và tên bài
+    /// thiền dẫn ở màn Thiền định) — `font:400 16px Lora` trong design handoff.
+    public static let serifCardTitle = lora(size: 16, weight: .regular)
     /// Chữ "A" nhỏ ở đầu trái thanh chỉnh cỡ chữ kinh văn (màn Cài đặt) — 12px Lora theo design handoff.
     public static let scriptureBodyTiny = lora(size: 12, weight: .regular)
     /// Đoạn thân bài viết Phật pháp (màn Bài viết) — 16px Lora, luôn dùng cùng line-height 1.85
@@ -191,10 +199,15 @@ public enum ILTypography {
     public static let statValueMedium = beVietnamPro(size: 19, weight: .medium)
     /// Hero stat number on a featured card — 46px regular (e.g. "42" streak days on Stats).
     public static let statHero = beVietnamPro(size: 46, weight: .regular)
+    /// Số liệu lớn kiểu serif (Lora) trên thẻ nổi bật — 34px theo design handoff (vd. "7 ngày thiền
+    /// liên tục" ở màn Thiền định).
+    public static let statDisplay = lora(size: 34, weight: .regular)
     /// Value inside a half-width stat tile — 24px medium (e.g. "168" hours on Stats).
     public static let statTileValue = beVietnamPro(size: 24, weight: .medium)
     /// Chú thích rất nhỏ 10px regular (vd. dòng phụ dưới tên dấu ấn)
     public static let microCaption = beVietnamPro(size: 10, weight: .regular)
+    /// Nhãn rất nhỏ 8.5px medium (vd. "PHÚT" dưới số phút ở vòng tròn preset thiền).
+    public static let microLabel = beVietnamPro(size: 8.5, weight: .medium)
     /// Nhãn thứ trong tuần ở đầu lưới lịch tháng — 10.5px medium
     public static let captionMedium = beVietnamPro(size: 10.5, weight: .medium)
     /// Số ngày âm nhỏ dưới số ngày dương trong ô lịch tháng — 8.5px regular

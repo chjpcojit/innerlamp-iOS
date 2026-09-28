@@ -112,11 +112,6 @@ protocol ILOtpUseCase {
 
 final class ILOtpUseCaseImpl: ILOtpUseCase {
 
-    /// Keychain key the refresh token is stored under. Token refresh is not implemented yet, so
-    /// nothing reads it back; when that flow lands this constant should move next to
-    /// `KeychainAuthTokenProviding.accessTokenKey`, the single place that owns the access-token key.
-    static let refreshTokenKey = "refresh_token"
-
     private let repository: ILOtpRepository
     private let keychainService: KeychainService
     private let userRepository: ILUserRepository
@@ -159,7 +154,7 @@ final class ILOtpUseCaseImpl: ILOtpUseCase {
                 key: KeychainAuthTokenProviding.accessTokenKey,
                 value: session.accessToken
             )
-            try keychainService.save(key: Self.refreshTokenKey, value: session.refreshToken)
+            try keychainService.save(key: KeychainAuthTokenProviding.refreshTokenKey, value: session.refreshToken)
             try await userRepository.saveUser(session.user)
         } catch {
             throw ILOtpError.storageFailed

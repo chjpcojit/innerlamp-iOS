@@ -31,6 +31,22 @@ final class DIContainer {
         )
     }()
 
+    /// The one shared, app-wide gRPC channel — built once, held for the app's lifetime, never
+    /// created per call or per feature. See Docs/Specs/GRPC/requirements.md FR-001. The lifetime
+    /// object also owns the event-loop group that backs the channel, so neither is torn down
+    /// while RPCs are in flight.
+    lazy var grpcChannelLifetime: GRPCConfiguration.ChannelLifetime = {
+        GRPCConfiguration.makeChannelLifetime()
+    }()
+
+    lazy var grpcService: GRPCService = {
+        GRPCService(
+            client: GRPCConfiguration.makeClient(channel: grpcChannelLifetime.channel),
+            authTokenProvider: KeychainAuthTokenProviding(keychainService: keychainService),
+            loggingService: loggingService
+        )
+    }()
+
     lazy var localizationService: LocalizationService = LocalizationServiceImpl.shared
 
     lazy var themeService: ThemeService = ThemeServiceImpl.shared
@@ -138,8 +154,16 @@ final class DIContainer {
     }
 
     // MARK: - Login
+    func makeLoginRepository() -> ILLoginRepository {
+        ILLoginRepositoryImpl(networkService: networkService)
+    }
+
     func makeLoginUseCase() -> ILLoginUseCase {
-        ILLoginUseCaseImpl()
+        ILLoginUseCaseImpl(
+            repository: makeLoginRepository(),
+            keychainService: keychainService,
+            userRepository: makeUserRepository()
+        )
     }
 
     func makeLoginViewModel() -> ILLoginViewModel {
@@ -234,6 +258,19 @@ final class DIContainer {
 
     func makeDeityCoordinator(navigationController: UINavigationController, deityID: String) -> ILDeityCoordinator {
         ILDeityCoordinator(navigationController: navigationController, container: self, deityID: deityID)
+    }
+
+    // MARK: - Deities (danh sách "Chư Phật & Bồ Tát")
+    func makeDeitiesUseCase() -> ILDeitiesUseCase {
+        ILDeitiesUseCaseImpl(deityUseCase: makeDeityUseCase())
+    }
+
+    func makeDeitiesViewModel() -> ILDeitiesViewModel {
+        ILDeitiesViewModel(useCase: makeDeitiesUseCase())
+    }
+
+    func makeDeitiesCoordinator(navigationController: UINavigationController) -> ILDeitiesCoordinator {
+        ILDeitiesCoordinator(navigationController: navigationController, container: self)
     }
 
     // MARK: - LunarCalendar
@@ -348,6 +385,19 @@ final class DIContainer {
         )
     }
 
+    // MARK: - MeditationHub
+    func makeMeditationHubUseCase() -> ILMeditationHubUseCase {
+        ILMeditationHubUseCaseImpl() // add real dependencies only alongside their real implementation
+    }
+
+    func makeMeditationHubViewModel() -> ILMeditationHubViewModel {
+        ILMeditationHubViewModel(useCase: makeMeditationHubUseCase())
+    }
+
+    func makeMeditationHubCoordinator(navigationController: UINavigationController) -> ILMeditationHubCoordinator {
+        ILMeditationHubCoordinator(navigationController: navigationController, container: self)
+    }
+
     // MARK: - Photos
     func makePhotosUseCase() -> ILPhotosUseCase {
         ILPhotosUseCaseImpl() // add real dependencies only alongside their real implementation
@@ -402,7 +452,7 @@ final class DIContainer {
 
     // MARK: - Library
     func makeLibraryUseCase() -> ILLibraryUseCase {
-        ILLibraryUseCaseImpl() // add real dependencies only alongside their real implementation
+        ILLibraryUseCaseImpl(deityUseCase: makeDeityUseCase())
     }
 
     func makeLibraryViewModel() -> ILLibraryViewModel {

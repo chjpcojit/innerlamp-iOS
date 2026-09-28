@@ -5,11 +5,14 @@
 
 import Foundation
 
-/// 1 chip lọc nhóm (Tất cả / Kinh văn / Thiền dẫn / Pháp thoại).
-struct ILLibraryChipModel: Equatable {
-    let category: ILLibraryCategory
-    let title: String
-    let isSelected: Bool
+/// 1 ô truy cập nhanh trong lưới 2 cột đầu màn (Kinh sách / Thiền định / Pháp thoại / Phật & Bồ Tát).
+struct ILLibraryQuickAccessModel: Equatable, Identifiable {
+    let id: String
+    let kind: ILLibraryQuickAccessKind
+    let label: String
+    let subtitle: String
+    let glyph: String
+    let tone: ILLibraryTone
 }
 
 /// Thẻ nổi bật đã sẵn sàng hiển thị (CTA đã ghép thời lượng).
@@ -31,9 +34,15 @@ struct ILLibraryRowModel: Equatable {
 
 /// Trạng thái UI của màn Thư viện — do `ILLibraryViewModel` sở hữu, `ViewController` chỉ đọc để render.
 struct ILLibraryStateModel: Equatable {
-    var chips: [ILLibraryChipModel] = []
+    var quickAccess: [ILLibraryQuickAccessModel] = []
     var featured: ILLibraryFeaturedModel?
-    var sectionTitle: String = ""
+    var deitiesTitle: String = ""
+    var deitiesViewAllText: String = ""
+    /// Dùng chung `ILHomeDeityModel` với carousel "Thư viện Phật & Bồ Tát" ở Trang chủ — cùng
+    /// hình dạng dữ liệu hiển thị (badge loại, danh xưng, ngày vía).
+    var deities: [ILHomeDeityModel] = []
+    var sutrasSectionTitle: String = ""
+    var sutrasViewAllText: String = ""
     var rows: [ILLibraryRowModel] = []
     var emptyTitle: String = ""
     var emptyMessage: String = ""

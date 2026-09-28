@@ -7,7 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		56C5249ED3FF5CAF33ECD0A3 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = CE34DAB67E3E66D52A62DD65 /* Sentry */; };
+		3FBEC6C6306AB47E00D96CF4 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6C5306AB47E00D96CF4 /* Sentry */; };
+		3FBEC6C9306AB52D00D96CF4 /* GRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6C8306AB52D00D96CF4 /* GRPC */; };
+		3FBEC6D6306AB5CD00D96CF4 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6D5306AB5CD00D96CF4 /* SwiftProtobuf */; };
+		3FBEC6E0306AB5CD00D96CF4 /* GRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6E2306AB5CD00D96CF4 /* GRPC */; };
+		3FBEC6E1306AB5CD00D96CF4 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6E3306AB5CD00D96CF4 /* SwiftProtobuf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +50,7 @@
 				Presentation/Scenes/Article/README.md,
 				Presentation/Scenes/Articles/README.md,
 				Presentation/Scenes/Bell/README.md,
+				Presentation/Scenes/Deities/README.md,
 				Presentation/Scenes/EditProfile/README.md,
 				Presentation/Scenes/Events/README.md,
 				Presentation/Scenes/Festivals/README.md,
@@ -56,6 +61,7 @@
 				Presentation/Scenes/LunarCalendar/README.md,
 				Presentation/Scenes/LunarDayDetail/README.md,
 				Presentation/Scenes/Mala/README.md,
+				Presentation/Scenes/MeditationHub/README.md,
 				Presentation/Scenes/MeditationSession/README.md,
 				Presentation/Scenes/MeditationSetup/README.md,
 				Presentation/Scenes/Notifications/README.md,
@@ -105,7 +111,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				56C5249ED3FF5CAF33ECD0A3 /* Sentry in Frameworks */,
+				3FBEC6C6306AB47E00D96CF4 /* Sentry in Frameworks */,
+				3FBEC6C9306AB52D00D96CF4 /* GRPC in Frameworks */,
+				3FBEC6D6306AB5CD00D96CF4 /* SwiftProtobuf in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +121,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3FBEC6E0306AB5CD00D96CF4 /* GRPC in Frameworks */,
+				3FBEC6E1306AB5CD00D96CF4 /* SwiftProtobuf in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -166,7 +176,9 @@
 			);
 			name = InnerLamp;
 			packageProductDependencies = (
-				CE34DAB67E3E66D52A62DD65 /* Sentry */,
+				3FBEC6C5306AB47E00D96CF4 /* Sentry */,
+				3FBEC6C8306AB52D00D96CF4 /* GRPC */,
+				3FBEC6D5306AB5CD00D96CF4 /* SwiftProtobuf */,
 			);
 			productName = InnerLamp;
 			productReference = 3F39AA21305165770008341C /* InnerLamp.app */;
@@ -189,6 +201,10 @@
 				3F39AA3D305165790008341C /* InnerLampTests */,
 			);
 			name = InnerLampTests;
+			packageProductDependencies = (
+				3FBEC6E2306AB5CD00D96CF4 /* GRPC */,
+				3FBEC6E3306AB5CD00D96CF4 /* SwiftProtobuf */,
+			);
 			productName = InnerLampTests;
 			productReference = 3F39AA3A305165790008341C /* InnerLampTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -247,7 +263,9 @@
 			mainGroup = 3F39AA18305165770008341C;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				F31C8A6C35B7F142D1E2D463 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+				3FBEC6C4306AB47E00D96CF4 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+				3FBEC6C7306AB52D00D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift" */,
+				3FBEC6D4306AB5CD00D96CF4 /* XCRemoteSwiftPackageReference "swift-protobuf" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3F39AA22305165770008341C /* Products */;
@@ -642,21 +660,59 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		F31C8A6C35B7F142D1E2D463 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+		3FBEC6C4306AB47E00D96CF4 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/getsentry/sentry-cocoa.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 8.0.0;
+				minimumVersion = 9.29.2;
+			};
+			traits = (
+			);
+		};
+		3FBEC6C7306AB52D00D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/grpc/grpc-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.27.6;
+			};
+		};
+		3FBEC6D4306AB5CD00D96CF4 /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-protobuf";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.38.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		CE34DAB67E3E66D52A62DD65 /* Sentry */ = {
+		3FBEC6C5306AB47E00D96CF4 /* Sentry */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = F31C8A6C35B7F142D1E2D463 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			package = 3FBEC6C4306AB47E00D96CF4 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
 			productName = Sentry;
+		};
+		3FBEC6C8306AB52D00D96CF4 /* GRPC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3FBEC6C7306AB52D00D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift" */;
+			productName = GRPC;
+		};
+		3FBEC6D5306AB5CD00D96CF4 /* SwiftProtobuf */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3FBEC6D4306AB5CD00D96CF4 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
+			productName = SwiftProtobuf;
+		};
+		3FBEC6E2306AB5CD00D96CF4 /* GRPC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3FBEC6C7306AB52D00D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift" */;
+			productName = GRPC;
+		};
+		3FBEC6E3306AB5CD00D96CF4 /* SwiftProtobuf */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3FBEC6D4306AB5CD00D96CF4 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
+			productName = SwiftProtobuf;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

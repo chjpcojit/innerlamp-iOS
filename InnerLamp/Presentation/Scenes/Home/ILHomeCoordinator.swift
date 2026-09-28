@@ -49,6 +49,8 @@ final class ILHomeCoordinator: Coordinator {
                     self?.showTemple(id)
                 case .openDeity(let id):
                     self?.showDeity(id)
+                case .openDeities:
+                    self?.showDeities()
                 case .openMeditationSetup:
                     self?.showMeditationSetup()
                 }
@@ -122,6 +124,13 @@ final class ILHomeCoordinator: Coordinator {
     /// Màn chi tiết Phật & Bồ Tát — đẩy lên từ carousel "Thư viện Phật & Bồ Tát".
     private func showDeity(_ deityID: String) {
         let coordinator = container.makeDeityCoordinator(navigationController: navigationController, deityID: deityID)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    /// Màn danh sách "Chư Phật & Bồ Tát" — đẩy lên từ link "Xem tất cả" của carousel.
+    private func showDeities() {
+        let coordinator = container.makeDeitiesCoordinator(navigationController: navigationController)
         addChild(coordinator)
         coordinator.start()
     }

@@ -1,8 +1,9 @@
 # Tasks — Login
 
-Version: 1.1
-Last updated: 2026-09-27
-Status: in-progress (Phase 1–2 done; Phase 3–4 pending)
+Version: 1.2
+Last updated: 2026-09-28
+Status: in-progress (Phase 1–3 done; Phase 3's manual on-device QA and Phase
+4 pending)
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -49,7 +50,7 @@ Status: in-progress (Phase 1–2 done; Phase 3–4 pending)
       state, country change, the four nav events (back/signup/forgot/guest),
       invalid-form no-call, valid-form success, and login-failure stays-on-screen
 
-## Phase 3 — API integration (pending; contract confirmed, Data layer not built)
+## Phase 3 — API integration (Data layer built; pending on-device QA)
 
 > Contract confirmed (`Docs/Specs/API/openapi.yaml` v3.9): `POST /v1/auth/login`
 > — request `phone_number`, `password` (non-empty), `device` {platform,
@@ -61,25 +62,42 @@ Status: in-progress (Phase 1–2 done; Phase 3–4 pending)
 > 5 fails → 15-min lock), `413`, `429` LOGIN_LOCKED (`details.locked_until`),
 > `500` INTERNAL_ERROR.
 
-- [ ] Create `ILLoginDTO` + `ILLoginMapper` (`Data/DTOs/` + `Data/DTOs/Mappers/`)
+- [x] Create `ILLoginDTO` + `ILLoginMapper` (`Data/DTOs/` + `Data/DTOs/Mappers/`)
       — one type per wire shape, per the contract above
-- [ ] Extend `ILLoginEntity` (or decide to derive `device` at the Data boundary)
-      — the contract requires a `device` object the entity does not yet carry
-- [ ] Create the `LoginEndpoint` conformance under `Data/DataSources/Remote/`
+- [x] Extend `ILLoginEntity` (or decide to derive `device` at the Data boundary)
+      — decided: `device` is derived at the Data boundary
+      (`ILLoginRepositoryImpl.currentDevice()`, from `UIDevice`/`Bundle`), per
+      design.md gap #1's second option — `ILLoginEntity` is unchanged
+- [x] Create the `LoginEndpoint` conformance under `Data/DataSources/Remote/`
       (`POST /v1/auth/login`, `requiresAuth = false`, body from the request DTO)
-- [ ] Create `ILLoginRepositoryImpl` (`Data/Repositories/`) wrapping
+- [x] Create `ILLoginRepositoryImpl` (`Data/Repositories/`) wrapping
       `NetworkService`; map `NetworkError` → `ILLoginError` at the boundary
-- [ ] Extend `ILLoginError` with the contract's failure cases (`.invalidPhone`,
+- [x] Extend `ILLoginError` with the contract's failure cases (`.invalidPhone`,
       `.invalidPassword`, `.invalidDevice`, `.invalidCredentials`, `.loginLocked`,
       `.server`, `.networkUnavailable`, `.timedOut`) — read 429 timing from
       `details.locked_until`, reusing `ILUnlockTimeFormatter`; add matching
-      `login.error.*` keys to `vi.json`
-- [ ] Inject `ILLoginRepository` into `ILLoginUseCaseImpl.init` and replace the
-      `login` stub body with the real repository call
-- [ ] Update `ILLoginViewModelTests` + add a mock repository to cover real
+      `login.error.*` keys to `vi.json`. Also added `.storageFailed` (same
+      precedent as `ILOtpError.storageFailed`) for a post-login Keychain/local
+      user store write failure.
+- [x] Inject `ILLoginRepository` into `ILLoginUseCaseImpl.init` and replace the
+      `login` stub body with the real repository call — success now also
+      stores the session (access/refresh token in Keychain, user in
+      `ILUserRepository`), same pattern as `ILOtpUseCaseImpl.verifyCode`. The
+      shared refresh-token Keychain key moved from `ILOtpUseCaseImpl` to
+      `KeychainAuthTokenProviding.refreshTokenKey` (both features write the
+      same key; this was the refactor `ILOtpUseCaseImpl`'s own doc comment
+      anticipated).
+- [x] Update `ILLoginViewModelTests` + add a mock repository to cover real
       success/failure paths (the current `MockILLoginUseCase` stays for the
-      validation/nav tests)
-- [ ] Manual test against a real/staging backend once available
+      validation/nav tests) — done as `InnerLampTests/ILLoginUseCaseTests.swift`
+      (mocks `ILLoginRepository`, mirrors `ILOtpUseCaseTests.swift`) plus
+      `InnerLampTests/ILLoginRepositoryTests.swift` (DTO/mapper/endpoint/error
+      mapping, mirrors `ILSignUpRepositoryTests.swift`); `ILLoginViewModelTests`
+      itself needed no changes since it only depends on the `ILLoginUseCase`
+      protocol, which kept its signature.
+- [ ] Manual test against a real/staging backend once available — local dev
+      backend confirmed reachable 2026-09-28 (`APIConfig.serverBaseURL` `.dev`
+      now points at it); pending the user's on-device QA pass.
 
 ## Phase 4 — SMS-code login (pending, separate scope)
 

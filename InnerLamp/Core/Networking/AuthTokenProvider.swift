@@ -22,6 +22,12 @@ nonisolated final class KeychainAuthTokenProviding: AuthTokenProviding {
     /// (`il-data-layer-builder`'s job) when it saves the token after a successful login.
     static let accessTokenKey = "access_token"
 
+    /// Fixed Keychain key the refresh token is stored under. Shared by every flow that receives a
+    /// session (`ILOtpUseCaseImpl.verifyCode`, `ILLoginUseCaseImpl.login`) — there is one stored
+    /// session per signed-in user, so one key. Token refresh is not implemented yet, so nothing
+    /// reads it back.
+    static let refreshTokenKey = "refresh_token"
+
     private let keychainService: KeychainService
 
     init(keychainService: KeychainService) {

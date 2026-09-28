@@ -7,14 +7,15 @@ import Foundation
 
 protocol ILLibraryUseCase {
     func getCatalog() -> ILLibraryEntity
-
-    /// Lọc theo nhóm ngay trong bộ nhớ — không gọi mạng. Giữ nguyên thứ tự gốc của catalog.
-    func items(in catalog: ILLibraryEntity, category: ILLibraryCategory) -> [ILLibraryItemEntity]
 }
 
 final class ILLibraryUseCaseImpl: ILLibraryUseCase {
 
-    init() {}
+    private let deityUseCase: ILDeityUseCase
+
+    init(deityUseCase: ILDeityUseCase) {
+        self.deityUseCase = deityUseCase
+    }
 
     func getCatalog() -> ILLibraryEntity {
         // TODO: khi API danh mục thư viện được xác nhận (xem Docs/Specs/Library/requirements.md),
@@ -50,37 +51,21 @@ final class ILLibraryUseCaseImpl: ILLibraryUseCase {
                     title: "library.mock.daibi.title".localized,
                     subtitle: "library.mock.daibi.subtitle".localized,
                     durationMinutes: 9, tone: .ink
-                ),
-                ILLibraryItemEntity(
-                    id: "meditation.breathing", kind: .meditation,
-                    title: "library.mock.breathing.title".localized,
-                    subtitle: "library.mock.breathing.subtitle".localized,
-                    durationMinutes: 10, tone: .green
-                ),
-                ILLibraryItemEntity(
-                    id: "meditation.bodyscan", kind: .meditation,
-                    title: "library.mock.bodyscan.title".localized,
-                    subtitle: "library.mock.bodyscan.subtitle".localized,
-                    durationMinutes: 20, tone: .gold
-                ),
-                ILLibraryItemEntity(
-                    id: "talk.hieu", kind: .talk,
-                    title: "library.mock.talkHieu.title".localized,
-                    subtitle: "library.mock.talkHieu.subtitle".localized,
-                    durationMinutes: 46, tone: .rose
-                ),
-                ILLibraryItemEntity(
-                    id: "talk.tamtinh", kind: .talk,
-                    title: "library.mock.talkTamTinh.title".localized,
-                    subtitle: "library.mock.talkTamTinh.subtitle".localized,
-                    durationMinutes: 62, tone: .ink
                 )
-            ]
+            ],
+            // Carousel "Chư Phật & Bồ Tát" — cùng catalog và cùng phép map `primaryMemorialDay`
+            // với carousel "Thư viện Phật & Bồ Tát" ở Trang chủ (`ILHomeUseCaseImpl`), để chạm thẻ
+            // mở đúng màn chi tiết `Deity` bằng cùng id.
+            deities: deityUseCase.getAllDeities().map {
+                ILHomeDeityEntity(
+                    id: $0.id,
+                    kind: $0.kind,
+                    name: $0.nameVi,
+                    honorific: $0.titleHonorific,
+                    virtue: $0.coreVirtue,
+                    memorialDay: ILHomeUseCaseImpl.primaryMemorialDay(of: $0.memorialDays)
+                )
+            }
         )
-    }
-
-    func items(in catalog: ILLibraryEntity, category: ILLibraryCategory) -> [ILLibraryItemEntity] {
-        guard let kind = category.kind else { return catalog.items }
-        return catalog.items.filter { $0.kind == kind }
     }
 }

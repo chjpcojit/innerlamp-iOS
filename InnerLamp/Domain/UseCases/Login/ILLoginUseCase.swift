@@ -5,13 +5,47 @@
 
 import Foundation
 
-enum ILLoginError: Error, LocalizedError {
+enum ILLoginError: Error, LocalizedError, Equatable {
     case invalidCredentials
+    case invalidPhone
+    case invalidPassword
+    case invalidDevice
+    /// `details.locked_until` from a 429 `LOGIN_LOCKED` — 5 consecutive failed attempts lock the
+    /// number for 15 minutes (`Docs/Specs/API/openapi.yaml` v3.9).
+    case loginLocked(lockedUntil: String?)
+    case invalidInput
+    case server
+    case networkUnavailable
+    case timedOut
+    /// The session returned by a successful login could not be written to the Keychain / local
+    /// user store — same precedent as `ILOtpError.storageFailed`.
+    case storageFailed
 
     var errorDescription: String? {
         switch self {
         case .invalidCredentials:
             return "login.error.invalidCredentials".localized
+        case .invalidPhone:
+            return "login.error.phoneInvalid".localized
+        case .invalidPassword:
+            return "login.error.passwordRequired".localized
+        case .invalidDevice:
+            return "login.error.invalidDevice".localized
+        case .loginLocked(let lockedUntil):
+            guard let formatted = ILUnlockTimeFormatter.displayString(from: lockedUntil) else {
+                return "login.error.locked".localized
+            }
+            return String(format: "login.error.lockedUntil".localized, formatted)
+        case .invalidInput:
+            return "login.error.invalidInput".localized
+        case .server:
+            return "error.generic".localized
+        case .networkUnavailable:
+            return "error.no_internet".localized
+        case .timedOut:
+            return "login.error.timedOut".localized
+        case .storageFailed:
+            return "login.error.storageFailed".localized
         }
     }
 }
@@ -25,22 +59,27 @@ protocol ILLoginUseCase {
     func validatePhone(nationalDigits: String, country: ILCountry) -> String?
     func validatePassword(_ value: String) -> String?
 
-    /// Đăng nhập bằng số điện thoại + mật khẩu.
-    ///
-    /// Out of scope for `il-screen-builder` — cần network call (Auth API) thật để so khớp tài
-    /// khoản, nên giữ nguyên dạng stub cho tới khi có API thật — xem
-    /// `references/data_layer_boundaries.md`. Không giả lập bằng Keychain/UserDefaults (đó vẫn
-    /// là một local Repository call, không được phép implement thật ở đây — xem Changelog trong
-    /// `Presentation/Scenes/Login/README.md`).
+    /// Đăng nhập bằng số điện thoại + mật khẩu. Thành công lưu luôn phiên đăng nhập (token vào
+    /// Keychain, user vào `ILUserRepository`) — cùng pattern với `ILOtpUseCase.verifyCode`, xem
+    /// `Docs/Specs/Login/design.md`.
     func login(_ credential: ILLoginEntity) async throws
 }
 
 final class ILLoginUseCaseImpl: ILLoginUseCase {
 
-    // TODO: inject NetworkService/Repository thật khi implement `login` thật — không inject sẵn
-    // ở đây vì hiện chưa có logic thật nào trong file này cần dùng tới, xem
-    // `references/data_layer_boundaries.md`.
-    init() {}
+    private let repository: ILLoginRepository
+    private let keychainService: KeychainService
+    private let userRepository: ILUserRepository
+
+    init(
+        repository: ILLoginRepository,
+        keychainService: KeychainService,
+        userRepository: ILUserRepository
+    ) {
+        self.repository = repository
+        self.keychainService = keychainService
+        self.userRepository = userRepository
+    }
 
     func getInitialState() -> ILLoginStateModel {
         ILLoginStateModel.initial
@@ -60,6 +99,20 @@ final class ILLoginUseCaseImpl: ILLoginUseCase {
     }
 
     func login(_ credential: ILLoginEntity) async throws {
-        print("TODO: implement login — network/repository call, not built by il-screen-builder")
+        let session = try await repository.login(credential)
+
+        // Store the session last: the server already authenticated the credential, so a storage
+        // failure cannot be recovered by retrying login — surfaced as its own case so the message
+        // can say so (same precedent as `ILOtpUseCaseImpl.verifyCode`).
+        do {
+            try keychainService.save(
+                key: KeychainAuthTokenProviding.accessTokenKey,
+                value: session.accessToken
+            )
+            try keychainService.save(key: KeychainAuthTokenProviding.refreshTokenKey, value: session.refreshToken)
+            try await userRepository.saveUser(session.user)
+        } catch {
+            throw ILLoginError.storageFailed
+        }
     }
 }
