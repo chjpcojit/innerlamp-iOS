@@ -12,10 +12,9 @@ final class ILHomeViewController: BaseViewController {
     private let viewModel: ILHomeViewModel
     private var cancellables = Set<AnyCancellable>()
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
-    private let beadTappedSubject = PassthroughSubject<Void, Never>()
-    private let resetBeadsTappedSubject = PassthroughSubject<Void, Never>()
     private let malaFullscreenTappedSubject = PassthroughSubject<Void, Never>()
     private let lunarCalendarTappedSubject = PassthroughSubject<Void, Never>()
+    private let memorialTappedSubject = PassthroughSubject<Void, Never>()
     private let lunarHeroTappedSubject = PassthroughSubject<Void, Never>()
     private let dayTappedSubject = PassthroughSubject<String, Never>()
     private let photosTappedSubject = PassthroughSubject<Void, Never>()
@@ -27,12 +26,17 @@ final class ILHomeViewController: BaseViewController {
     private let deityTappedSubject = PassthroughSubject<String, Never>()
     private let deitiesViewAllTappedSubject = PassthroughSubject<Void, Never>()
     private let suggestedSessionTappedSubject = PassthroughSubject<String, Never>()
+    private let notificationTappedSubject = PassthroughSubject<Void, Never>()
+    private let avatarTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
     private let scrollView = UIScrollView()
     private let contentView = UIView()
 
+    // Pinned greeting header: sits above the scroll view and blurs in as content scrolls under it.
+    private let headerContainer = ILStickyHeaderBand(tintColor: ILColors.canvasWarm)
     private let headerView = ILHomeGreetingHeaderView()
+    private var lastHeaderHeight: CGFloat = 0
     private let weekCalendarView = ILHomeWeekCalendarView()
     private let lunarHeroCard = ILHomeLunarHeroCardView()
 
@@ -53,7 +57,7 @@ final class ILHomeViewController: BaseViewController {
     private let statsStack = UIStackView()
 
     private let malaHeader = ILSectionHeaderView(title: "home.mala.title".localized, trailingText: "home.mala.fullscreen".localized)
-    private let malaCounter = ILMalaCounterView(resetTitle: "home.mala.reset".localized)
+    private let malaCounter = ILMalaCounterView()
 
     private let bellCard = ILHomeBellCardView()
 
@@ -80,6 +84,21 @@ final class ILHomeViewController: BaseViewController {
         navigationController?.setNavigationBarHidden(true, animated: animated)
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        lunarHeroCard.playRollAnimation()
+    }
+
+    /// Above-the-fold layers, top to bottom: lower ones slide further (20 → 40pt) and land later.
+    override func entranceAnimationTargets() -> [UIView] {
+        [headerView, weekCalendarView, lunarHeroCard, eventsHeader, eventsCarousel]
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateScrollInsetForHeader()
+    }
+
     // MARK: - Setup
     override func setupViews() {
         super.setupViews()
@@ -87,7 +106,12 @@ final class ILHomeViewController: BaseViewController {
 
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.showsVerticalScrollIndicator = false
+        scrollView.contentInsetAdjustmentBehavior = .never
         view.addSubview(scrollView)
+
+        headerContainer.bind(to: scrollView)
+        headerContainer.addSubview(headerView)
+        view.addSubview(headerContainer)
 
         contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
@@ -98,6 +122,7 @@ final class ILHomeViewController: BaseViewController {
 
         weekCalendarView.translatesAutoresizingMaskIntoConstraints = false
         weekCalendarView.onCalendarLinkTap = { [weak self] in self?.handleCalendarLinkTapped() }
+        weekCalendarView.onMemorialLinkTap = { [weak self] in self?.memorialTappedSubject.send(()) }
         weekCalendarView.onSelectDay = { [weak self] day in self?.dayTappedSubject.send(day.id) }
 
         lunarHeroCard.translatesAutoresizingMaskIntoConstraints = false
@@ -138,8 +163,7 @@ final class ILHomeViewController: BaseViewController {
         malaHeader.onTrailingTap = { [weak self] in self?.handleMalaFullscreenTapped() }
 
         malaCounter.translatesAutoresizingMaskIntoConstraints = false
-        malaCounter.onTapBead = { [weak self] in self?.handleBeadTapped() }
-        malaCounter.onReset = { [weak self] in self?.handleResetBeadsTapped() }
+        malaCounter.onTap = { [weak self] in self?.handleMalaFullscreenTapped() }
 
         bellCard.translatesAutoresizingMaskIntoConstraints = false
         bellCard.onTap = { [weak self] in self?.handleBellTapped() }
@@ -157,7 +181,7 @@ final class ILHomeViewController: BaseViewController {
         articlesList.onArticleTap = { [weak self] article in self?.handleArticleTapped(article) }
 
         [
-            headerView, weekCalendarView, lunarHeroCard, eventsHeader, eventsCarousel,
+            weekCalendarView, lunarHeroCard, eventsHeader, eventsCarousel,
             photosHeader, photosGrid, templesHeader, templesCarousel, deitiesHeader, deitiesCarousel,
             statsStack,
             malaHeader, malaCounter, bellCard, suggestedHeader, suggestedStack,
@@ -171,7 +195,7 @@ final class ILHomeViewController: BaseViewController {
         super.setupConstraints()
 
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: ILMetrics.spaceMedium),
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -182,11 +206,16 @@ final class ILHomeViewController: BaseViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: -ILMetrics.bottomNavHeight),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -ILMetrics.screenHorizontal * 2),
 
-            headerView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            headerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            headerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            headerContainer.topAnchor.constraint(equalTo: view.topAnchor),
+            headerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
-            weekCalendarView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: ILMetrics.groupSpacing),
+            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: ILMetrics.spaceMedium),
+            headerView.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: ILMetrics.screenHorizontal),
+            headerView.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -ILMetrics.screenHorizontal),
+            headerView.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: -ILMetrics.rowSpacing),
+
+            weekCalendarView.topAnchor.constraint(equalTo: contentView.topAnchor),
             weekCalendarView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             weekCalendarView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 
@@ -266,10 +295,9 @@ final class ILHomeViewController: BaseViewController {
 
         let input = ILHomeViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
-            beadTapped: beadTappedSubject.eraseToAnyPublisher(),
-            resetBeadsTapped: resetBeadsTappedSubject.eraseToAnyPublisher(),
             malaFullscreenTapped: malaFullscreenTappedSubject.eraseToAnyPublisher(),
             lunarCalendarTapped: lunarCalendarTappedSubject.eraseToAnyPublisher(),
+            memorialTapped: memorialTappedSubject.eraseToAnyPublisher(),
             lunarHeroTapped: lunarHeroTappedSubject.eraseToAnyPublisher(),
             dayTapped: dayTappedSubject.eraseToAnyPublisher(),
             photosTapped: photosTappedSubject.eraseToAnyPublisher(),
@@ -280,7 +308,9 @@ final class ILHomeViewController: BaseViewController {
             templeTapped: templeTappedSubject.eraseToAnyPublisher(),
             deityTapped: deityTappedSubject.eraseToAnyPublisher(),
             deitiesViewAllTapped: deitiesViewAllTappedSubject.eraseToAnyPublisher(),
-            suggestedSessionTapped: suggestedSessionTappedSubject.eraseToAnyPublisher()
+            suggestedSessionTapped: suggestedSessionTappedSubject.eraseToAnyPublisher(),
+            notificationTapped: notificationTappedSubject.eraseToAnyPublisher(),
+            avatarTapped: avatarTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
 
@@ -291,6 +321,18 @@ final class ILHomeViewController: BaseViewController {
             .store(in: &cancellables)
 
         viewDidLoadSubject.send(())
+    }
+
+    // MARK: - Pinned header
+    /// Content starts below the pinned header: reserve its height (+ the former gap) as top inset.
+    private func updateScrollInsetForHeader() {
+        let height = headerContainer.frame.height
+        guard height > 0, height != lastHeaderHeight else { return }
+        let isInitial = lastHeaderHeight == 0
+        lastHeaderHeight = height
+        scrollView.contentInset.top = height
+        scrollView.verticalScrollIndicatorInsets.top = height
+        if isInitial { scrollView.contentOffset.y = -height }
     }
 
     // MARK: - Render
@@ -311,6 +353,7 @@ final class ILHomeViewController: BaseViewController {
         headerView.avatarInitial = model.avatarInitial
 
         weekCalendarView.weekdayLabels = model.weekdayLabels
+        weekCalendarView.memorialLinkText = model.weekMemorialLinkText
         weekCalendarView.calendarLinkText = model.weekCalendarLinkText
         weekCalendarView.legend = model.weekLegend
         weekCalendarView.pages = model.weekPages
@@ -322,6 +365,8 @@ final class ILHomeViewController: BaseViewController {
         lunarHeroCard.lunarYearLabel = model.lunarHero.lunarYearLabel
         lunarHeroCard.verseLines = model.lunarHero.verseLines
         lunarHeroCard.verseSource = model.lunarHero.verseSource
+        lunarHeroCard.imageURL = model.lunarHero.imageURL
+        lunarHeroCard.imageCreditText = model.lunarHero.imageCreditText
 
         eventsHeader.title = model.eventsTitle
         eventsHeader.trailingText = model.eventsViewAllText
@@ -343,16 +388,21 @@ final class ILHomeViewController: BaseViewController {
 
         photosHeader.title = model.photosTitle
         photosHeader.trailingText = model.photosViewAllText
+        photosGrid.photos = model.photos
         photosGrid.photosMoreText = model.photosMoreText
         photosGrid.photosMoreLabel = model.photosMoreLabel
 
         templesHeader.title = model.templesTitle
         templesHeader.trailingText = model.templesFindText
         templesCarousel.temples = model.temples
+        templesCarousel.emptyText = model.templesEmptyText
+        templesCarousel.isLoading = model.templesLoading
 
         deitiesHeader.title = model.deitiesTitle
         deitiesHeader.trailingText = model.deitiesViewAllText
         deitiesCarousel.deities = model.deities
+        deitiesCarousel.emptyText = model.deitiesEmptyText
+        deitiesCarousel.isLoading = model.deitiesLoading
 
         bellCard.title = model.bellTitle
         bellCard.subtitle = model.bellSubtitle
@@ -360,6 +410,9 @@ final class ILHomeViewController: BaseViewController {
         articlesHeader.title = model.articlesTitle
         articlesHeader.trailingText = model.articlesViewAllText
         articlesList.articles = model.articles
+        articlesList.emptyText = model.articlesEmptyText
+        articlesList.emptyMessage = "home.article.updating.message".localized
+        articlesList.isLoading = model.articlesLoading
     }
 
     private func renderSuggestedSessions(_ sessions: [ILHomeSuggestedSessionModel]) {
@@ -400,22 +453,12 @@ final class ILHomeViewController: BaseViewController {
     }
 
     // MARK: - Actions
-    private func handleBeadTapped() {
-        beadTappedSubject.send(())
-    }
-
-    private func handleResetBeadsTapped() {
-        resetBeadsTappedSubject.send(())
-    }
-
-    /// Thông báo chưa có màn riêng trong scope hiện tại.
     private func handleNotificationTapped() {
-        // TODO: điều hướng sang màn Thông báo khi có ILNotificationsCoordinator.
+        notificationTappedSubject.send(())
     }
 
-    /// Hồ sơ cá nhân chưa có màn riêng trong scope hiện tại.
     private func handleAvatarTapped() {
-        // TODO: điều hướng sang màn Hồ sơ khi có ILProfileCoordinator.
+        avatarTappedSubject.send(())
     }
 
     private func handleCalendarLinkTapped() {

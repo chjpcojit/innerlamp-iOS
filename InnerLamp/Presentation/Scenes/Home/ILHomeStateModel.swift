@@ -63,6 +63,9 @@ struct ILHomeLunarHeroModel: Equatable {
     var lunarYearLabel: String = ""
     var verseLines: [String] = []
     var verseSource: String = ""
+    /// Picture of the selected day; `nil` until the server answers (the gradient stays) or when none.
+    var imageURL: String?
+    var imageCreditText: String = ""
 }
 
 /// 1 sự kiện trong carousel "Sự kiện Phật giáo" — bản sao presentation của
@@ -92,6 +95,8 @@ struct ILHomeEventMonthModel: Equatable, Identifiable {
 /// 1 ảnh trong khối "Ảnh chùa đẹp" — bản sao presentation của `ILHomePhotoEntity`.
 struct ILHomePhotoModel: Equatable, Identifiable {
     let id: String
+    /// Raw server thumbnail URL; `nil` shows the placeholder.
+    var thumbnailURL: String? = nil
 }
 
 /// 1 chùa trong carousel "Chùa Việt Nam" — bản sao presentation của `ILHomeTempleEntity`.
@@ -101,6 +106,8 @@ struct ILHomeTempleModel: Equatable, Identifiable {
     let place: String
     let region: String
     let note: String
+    /// Raw server thumbnail URL; `nil` shows the placeholder.
+    var thumbnailURL: String? = nil
 }
 
 /// 1 bài viết trong danh sách "Bài viết Phật pháp hay" — bản sao presentation của
@@ -111,6 +118,7 @@ struct ILHomeArticleModel: Equatable, Identifiable {
     let title: String
     let author: String
     let readText: String
+    var thumbnailURL: String? = nil
 }
 
 /// 1 vị Phật / Bồ Tát trong carousel "Thư viện Phật & Bồ Tát" — bản presentation của
@@ -121,8 +129,9 @@ struct ILHomeDeityModel: Equatable, Identifiable {
     let kind: ILDeityKind
     let kindLabel: String
     let name: String
-    /// Rỗng khi vị này không có ngày vía trong catalog — thẻ ẩn dòng này.
+    /// "Vía 15/04 âm lịch", or the "updating" placeholder when the server has no memorial day.
     let memorialText: String
+    var thumbnailURL: String? = nil
 }
 
 /// UI state cho màn Trang chủ — Presentation layer, do `ILHomeViewModel` sở hữu và cập nhật độc
@@ -139,6 +148,7 @@ struct ILHomeStateModel: Equatable {
     var weekdayLabels: [String] = []
     var weekPages: [ILHomeWeekPageModel] = []
     var weekLegend: [ILHomeWeekLegendModel] = []
+    var weekMemorialLinkText: String = ""
     var weekCalendarLinkText: String = ""
 
     var lunarHero: ILHomeLunarHeroModel = ILHomeLunarHeroModel()
@@ -177,10 +187,20 @@ struct ILHomeStateModel: Equatable {
     var templesTitle: String = ""
     var templesFindText: String = ""
     var temples: [ILHomeTempleModel] = []
+    /// "Đang cập nhật" when the server answered with no temples (or failed); empty while loading
+    /// or when there are cards.
+    var templesEmptyText: String = ""
+    /// `true` until `/v1/temples/top` has answered while there are no cards: shows skeleton cards.
+    var templesLoading: Bool = false
 
     var deitiesTitle: String = ""
     var deitiesViewAllText: String = ""
     var deities: [ILHomeDeityModel] = []
+    /// "Đang cập nhật" when the server answered with no deities (or failed); empty while loading
+    /// or when there are cards — the carousel then hides the placeholder.
+    var deitiesEmptyText: String = ""
+    /// `true` until `/v1/deities/top` has answered while there are no cards: shows skeleton cards.
+    var deitiesLoading: Bool = false
 
     var bellTitle: String = ""
     var bellSubtitle: String = ""
@@ -188,6 +208,11 @@ struct ILHomeStateModel: Equatable {
     var articlesTitle: String = ""
     var articlesViewAllText: String = ""
     var articles: [ILHomeArticleModel] = []
+    /// "Đang cập nhật" when the server answered with no articles (or failed); empty while loading
+    /// or when there are rows.
+    var articlesEmptyText: String = ""
+    /// `true` until `/v1/articles/top` has answered while there are no rows: shows skeleton rows.
+    var articlesLoading: Bool = false
 
     static let initial = ILHomeStateModel()
 }

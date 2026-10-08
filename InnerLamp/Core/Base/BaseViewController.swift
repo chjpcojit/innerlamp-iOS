@@ -16,19 +16,50 @@ class BaseViewController: UIViewController {
 
     private let dismissKeyboardTapFilter = DismissKeyboardTapFilter()
 
+    /// The entrance animation runs only the first time the screen appears.
+    private var hasPlayedEntrance = false
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         setupViews()
         setupConstraints()
+        hideSystemTopEdgeEffects(in: view)
         bindViewModel()
         setupDismissKeyboardOnTap()
         setupKeyboardAvoidance()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        guard !hasPlayedEntrance else { return }
+        hasPlayedEntrance = true
+        let targets = entranceAnimationTargets()
+        guard !targets.isEmpty else { return }
+        ILEntranceAnimator.prepare(targets)
+        // Start right away (next run loop), alongside the screen transition rather than after it,
+        // so the content is never a blank screen waiting for `viewDidAppear`. Deliberately not
+        // `transitionCoordinator.animate(alongsideTransition:)`: its closure is skipped when the
+        // transition is not animated, which would leave the targets hidden forever.
+        DispatchQueue.main.async { ILEntranceAnimator.play(targets) }
+    }
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
+
+    /// iOS 26 adds a system blur at the top edge of every scroll view (the camera / status bar area).
+    /// Screens own their header blur (`ILStickyHeaderBand`), so the system one is turned off for every
+    /// scroll view built in `setupViews()`.
+    private func hideSystemTopEdgeEffects(in root: UIView) {
+        guard #available(iOS 26.0, *) else { return }
+        if let scrollView = root as? UIScrollView { scrollView.topEdgeEffect.isHidden = true }
+        root.subviews.forEach { hideSystemTopEdgeEffects(in: $0) }
+    }
+
+    /// Override to opt in to the shared first-open entrance animation: return the views to animate,
+    /// top to bottom (later = lower layer = slides further and starts later). Default: none.
+    func entranceAnimationTargets() -> [UIView] { [] }
 
     /// Tap khoảng trống ngoài keyboard/control để ẩn keyboard
     private func setupDismissKeyboardOnTap() {

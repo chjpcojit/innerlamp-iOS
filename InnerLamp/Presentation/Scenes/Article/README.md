@@ -20,15 +20,15 @@ về Trang chủ. Chạm 1 bài trong "Đọc tiếp" chuyển bài tại chỗ 
 
 | Layer | File | Status | Notes |
 |---|---|---|---|
-| Domain — Entity | `ILArticleEntity.swift` | Done | `ILArticleItemEntity` (nội dung bài đầy đủ) + `ILArticleEntity` (catalog, `currentArticleID`, `savedArticleIDs`). Không có field UI. |
+| Domain — Entity | `ILArticleEntity.swift` | Done | `ILArticleItemEntity` (bài đầy đủ từ `GET /v1/articles/{id}`), `ILArticleSummaryEntity` ("Đọc tiếp"), `ILArticleEntity` (`currentArticleID`, `article?`, `nextArticles`, `savedArticleIDs`). Không có field UI. |
 | Presentation — StateModel | `ILArticleStateModel.swift` | Done | Các chuỗi đã format (nhãn header, "N phút đọc", "date · read", nhãn nút Lưu/Đã lưu), danh sách "Đọc tiếp". |
-| Data — DTO + Mapper | — | N/A (no confirmed API contract yet) | Catalog bài viết là nội dung tĩnh, chưa có API bài viết thật. |
-| Domain — UseCase | `ILArticleUseCase.swift` | Done | Logic thuần, không network/disk: dựng catalog 5 bài, chọn bài, toggle lưu (in-memory), 2 bài "Đọc tiếp". Không có method nào cần stub. |
+| Data — DTO + Mapper + Repository | `Data/DTOs/ILArticleDTO.swift`, `Mappers/ILArticleMapper.swift`, `Data/Repositories/ILArticleRepositoryImpl.swift`, `Data/DataSources/Remote/ArticleDetailEndpoint.swift` (+ `TopArticlesEndpoint`, `ArticlesPageEndpoint`) | Done | Contract: `Docs/Specs/Article/design.md`. Network-only, lỗi là `ILCatalogError`. Repository dùng chung với Home + Articles. |
+| Domain — UseCase | `ILArticleUseCase.swift` | Done | `loadArticle(id:)`, `loadNextArticles(excluding:)` (2 bài từ `/v1/articles/top`, best effort), `toggleSave` (in-memory). |
 | Presentation — ViewModel | `ILArticleViewModel.swift` | Done | 5 `Input` publisher (viewDidLoad, backTapped, saveTapped, shareTapped, nextArticleTapped); `Entity -> StateModel` ở `makeStateModel`. |
 | Presentation — ViewController | `ILArticleViewController.swift` | Done | Header ‹ + hairline, ảnh hero, tiêu đề/tác giả/thân bài/trích dẫn, nút Lưu/Chia sẻ, danh sách "Đọc tiếp"; dùng token `ILColors`/`ILTypography`/`ILMetrics`. UI chia `Views/` (hero, trích dẫn, danh sách đọc tiếp). |
 | Presentation — Coordinator | `ILArticleCoordinator.swift` | Done | `.back` → pop + `finish()`; `.share` → TODO (màn `share` chưa build). Không có delegate. |
 | Shared token | `DesignSystem/Tokens/ILTypography.swift` + `ILColors.swift` | Done | Thêm preset `articleBody` (Lora 16px) + `articleQuote` (Lora 18px nghiêng) và `ILColors.inkStrong` (ink alpha 0.80, `--il-ink-8`) cho thân bài. |
-| Tests | `ILArticleViewModelTests.swift` | Done | 5 test ViewModel (mock UseCase, drive qua `Input`): load bài, toggle lưu, chuyển bài "Đọc tiếp", nav back, nav share. |
+| Tests | `ILArticleViewModelTests.swift`, `ILArticleUseCaseTests.swift`, `ILArticleRepositoryTests.swift` | Written, chưa chạy | ViewModel (async load, lỗi, nguồn, ngày, lưu, "Đọc tiếp", nav), UseCase, Repository (wire shape thật). Đã type-check; test target chung chưa build được do `InnerLampTests/GRPC/*`. |
 | Wiring | `DIContainer` + `ILHomeCoordinator` | Done | `makeArticle{UseCase,ViewModel,Coordinator}`; `ILHomeCoordinator.showArticle(_:)`; `ILHomeNavEvent.openArticle(id:)` (Input `articleTapped` của `ILHomeViewModel`). |
 
 ## Navigation events
@@ -42,14 +42,11 @@ về Trang chủ. Chạm 1 bài trong "Đọc tiếp" chuyển bài tại chỗ 
 
 ## Known gaps / not implemented yet
 
-- **Chưa có ảnh thật** — ô ảnh hero dùng nền tint ấm + nhãn danh mục làm placeholder (khớp ghi chú
-  "Ảnh chùa/sự kiện hiện là gradient tối; cần ảnh thật từ phía sản phẩm" ở README design handoff).
+- **Ảnh hero** tải từ `image_url` (hotlink từ trang gốc, BE xác nhận 60/60 tải được) bằng `ILRemoteImageView`; lỗi/không có ảnh thì giữ placeholder nền tint + nhãn danh mục.
 - **Nút "Chia sẻ" chưa làm gì** — màn `share` (3 kiểu thiệp) chưa build, nên `ILArticleNavEvent.share`
   chỉ có TODO trong coordinator.
 - **Lưu bài chỉ là trạng thái in-memory** — chưa persist `savedArticleIDs` (xem TODO ở
   `ILArticleUseCaseImpl`); khi có màn "Bài đã lưu" thật cần ghi xuống UserDefaultsService/Core Data.
-- **Catalog 5 bài là nội dung tĩnh** lấy từ `Component.ARTICLES` của prototype — cần thay bằng API
-  bài viết thật khi có (xem TODO ở `ILArticleUseCaseImpl`).
 - Chưa kiểm tra bằng mắt trên simulator/thiết bị: build + unit test pass, nhưng bố cục cuộn, ảnh
   hero và dark mode chưa được xem thực tế.
 
@@ -57,3 +54,5 @@ về Trang chủ. Chạm 1 bài trong "Đọc tiếp" chuyển bài tại chỗ 
 
 - 2026-09-26 — initial build by il-screen-builder from `Docs/design_handoff_innerlamp` (`article`): Entity/UseCase/StateModel/ViewModel/Coordinator/ViewController, 3 feature views, `ILTypography.articleBody`/`articleQuote`, Home wiring, tests
 - 2026-09-27 — `.loading` now shows the shared `ILSkeletonLoadingView` below the header; the ViewModel does not emit `.loading` yet (synchronous mock content)
+- 2026-09-30 — bài viết đọc từ `GET /v1/articles/{id}` (bỏ catalog tĩnh); ViewModel phát `.loading`/`.failure`; thêm dòng "Nguồn: …" (chạm để mở bài gốc), ngày đăng chỉ hiện khi có; "Đọc tiếp" lấy từ `/v1/articles/top`.
+- 2026-10-07 — header khớp prototype: nền cùng màu canvas với nội dung, bỏ đường kẻ chân; scroll chạy dưới header (contentInset), khi cuộn 0→120pt thì blur (`UIVisualEffectView`) hiện dần và nền canvas mờ về 65%

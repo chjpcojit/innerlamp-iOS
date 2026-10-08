@@ -25,6 +25,8 @@ final class ILPlayerViewController: BaseViewController {
 
     private lazy var headerView = ILNavBar()
 
+    private let centerGuide = UILayoutGuide()
+
     private let artworkView = ILPlayerArtworkView()
 
     private lazy var titleLabel: UILabel = {
@@ -187,7 +189,13 @@ final class ILPlayerViewController: BaseViewController {
 
         let horizontal = ILMetrics.screenHorizontal
 
+        // The space left between the header and the controls — the artwork + title are centered in it.
+        view.addLayoutGuide(centerGuide)
+
         NSLayoutConstraint.activate([
+            centerGuide.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            centerGuide.bottomAnchor.constraint(equalTo: bottomStack.topAnchor),
+
             backgroundView.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -198,7 +206,9 @@ final class ILPlayerViewController: BaseViewController {
             headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -horizontal),
 
             centerStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            centerStack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            centerStack.centerYAnchor.constraint(equalTo: centerGuide.centerYAnchor),
+            centerStack.topAnchor.constraint(greaterThanOrEqualTo: centerGuide.topAnchor),
+            centerStack.bottomAnchor.constraint(lessThanOrEqualTo: centerGuide.bottomAnchor),
             centerStack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: horizontal),
             centerStack.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -horizontal),
 

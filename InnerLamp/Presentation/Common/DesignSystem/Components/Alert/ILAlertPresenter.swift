@@ -43,6 +43,9 @@ public final class ILAlertPresenter {
         case let .toast(title, message):
             showOverlay(ILToastView(title: title, message: message), alert: alert, from: viewController)
 
+        case let .success(title, message):
+            showOverlay(ILToastView(title: title, message: message, tone: .success), alert: alert, from: viewController)
+
         case let .banner(title, message, primary, secondary):
             showOverlay(
                 ILAlertBannerView(title: title, message: message, primary: primary, secondary: secondary),

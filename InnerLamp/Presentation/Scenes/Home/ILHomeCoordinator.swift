@@ -12,6 +12,10 @@ final class ILHomeCoordinator: Coordinator {
     var childCoordinators: [any Coordinator] = []
     weak var parentCoordinator: (any Coordinator)?
 
+    /// Hồ sơ là root của tab Tôi (do `ILProfileCoordinator` sở hữu), nên Home không tự dựng màn
+    /// Hồ sơ — `ILMainTabCoordinator` gán closure này để chuyển tab.
+    var onOpenProfile: (() -> Void)?
+
     private let container: DIContainer
     private var cancellables = Set<AnyCancellable>()
 
@@ -31,6 +35,8 @@ final class ILHomeCoordinator: Coordinator {
                 switch event {
                 case .openMala:
                     self?.showMala()
+                case .openMemorial:
+                    self?.showMemorial()
                 case .openLunarCalendar:
                     self?.showLunarCalendar()
                 case .openLunarDayDetail(let date, let verse):
@@ -53,12 +59,23 @@ final class ILHomeCoordinator: Coordinator {
                     self?.showDeities()
                 case .openMeditationSetup:
                     self?.showMeditationSetup()
+                case .openNotifications:
+                    self?.showNotifications()
+                case .openProfile:
+                    self?.onOpenProfile?()
                 }
             }
             .store(in: &cancellables)
 
         let viewController = ILHomeViewController(viewModel: viewModel)
         navigationController.setViewControllers([viewController], animated: false)
+    }
+
+    /// Màn Sổ giỗ — đẩy lên từ link "Sổ giỗ" cạnh "Lịch âm" ở dải lịch tuần.
+    private func showMemorial() {
+        let coordinator = container.makeMemorialCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
     }
 
     private func showLunarCalendar() {
@@ -131,6 +148,13 @@ final class ILHomeCoordinator: Coordinator {
     /// Màn danh sách "Chư Phật & Bồ Tát" — đẩy lên từ link "Xem tất cả" của carousel.
     private func showDeities() {
         let coordinator = container.makeDeitiesCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    /// Màn Thông báo — đẩy lên từ chuông ở header.
+    private func showNotifications() {
+        let coordinator = container.makeNotificationsCoordinator(navigationController: navigationController)
         addChild(coordinator)
         coordinator.start()
     }

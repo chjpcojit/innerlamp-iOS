@@ -151,6 +151,7 @@ nonisolated final class ILDeityLocalDataSourceImpl: ILDeityLocalDataSource {
         switch kind {
         case .buddha: return "BUDDHA"
         case .bodhisattva: return "BODHISATTVA"
+        case .deva: return "DEVA"
         }
     }
 
@@ -208,7 +209,7 @@ nonisolated final class ILDeityLocalDataSourceImpl: ILDeityLocalDataSource {
 
         return ILDeityEntity(
             id: managed.id,
-            kind: managed.kind == storedKind(.buddha) ? .buddha : .bodhisattva,
+            kind: [ILDeityKind.buddha, .bodhisattva, .deva].first { storedKind($0) == managed.kind } ?? .bodhisattva,
             nameVi: managed.nameVi,
             nameSanskrit: managed.nameSanskrit,
             nameChinese: managed.nameChinese,

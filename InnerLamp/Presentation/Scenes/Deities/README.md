@@ -11,8 +11,13 @@ a stub gets a real implementation, a new action/nav event is added, tests are fi
 List screen for the Buddhas & Bodhisattvas catalog, matching `buddhas` ("Chư Phật & Bồ Tát") in
 `Docs/design_handoff_innerlamp`. Layout: a pinned header (`ILNavBar` + three filter chips —
 Tất cả / Chư Phật / Bồ Tát) over a 2-column grid of `ILDeitiesCardView` cards. Each card shows a
-placeholder image tile with a kind badge, the name (Lora), the core virtue, and the primary
-memorial day ("Vía dd/mm âm lịch"). Tapping a card pushes the existing `Deity` detail screen.
+placeholder image tile with a kind badge, the name (Lora), the core virtue, and a memorial-day
+line (currently "Ngày vía: đang cập nhật" — see gaps). Tapping a card pushes the existing `Deity`
+detail screen.
+
+Data comes from the server only (no bundled/mock fallback). The list is every page of `GET /v1/deities` (Buddhas then Bodhisattvas, both types), falling back to
+`GET /v1/deities/top` if the paged call fails. The screen shows a card-shaped skeleton (`ILDeitiesSkeletonView`), an "Đang cập nhật" empty state
+when there is no data (also per filter), and an error/offline state with "Thử lại".
 
 Opened from two places:
 - Home — the "Xem tất cả" link on the "Thư viện Phật & Bồ Tát" carousel (`ILHomeCoordinator`).
@@ -23,14 +28,14 @@ Opened from two places:
 
 | Layer | File | Status | Notes |
 |---|---|---|---|
-| Domain — Entity | `Domain/Entities/ILDeitiesEntity.swift` | Done | Thin aggregate wrapping `[ILDeityEntity]` (reuses the shared Domain entity rather than duplicating its fields). |
-| Domain — UseCase | `Domain/UseCases/Deities/ILDeitiesUseCase.swift` | Done | Wraps the existing `ILDeityUseCase` catalog; kind filtering is pure in-memory logic (no network/repository). |
-| Presentation — StateModel | `Presentation/Scenes/Deities/ILDeitiesStateModel.swift` | Done | Filter chips, card items, header subtitle. |
-| Presentation — ViewModel | `Presentation/Scenes/Deities/ILDeitiesViewModel.swift` | Done | Inputs: viewDidLoad, back, filterSelected, deityTapped. Selection is UI state held here, not on the Entity. |
-| Presentation — ViewController | `Presentation/Scenes/Deities/ILDeitiesViewController.swift` | Done | Pinned `ILNavBar` + `ILChip` row; body is `ILDeitiesGridView`. |
+| Domain — Entity | `Domain/Entities/ILDeitiesEntity.swift` | Done | Thin aggregate wrapping `[ILDeitySummaryEntity]` (server summaries). |
+| Domain — UseCase | `Domain/UseCases/Deities/ILDeitiesUseCase.swift` | Done | `loadDeities()` via `ILDeityCatalogRepository` (all `/v1/deities` pages, de-duplicated by id; falls back to top list, throws when both fail). Kind filtering is pure in-memory logic. |
+| Presentation — StateModel | `Presentation/Scenes/Deities/ILDeitiesStateModel.swift` | Done | Filter chips, card items, header subtitle, empty-state copy. |
+| Presentation — ViewModel | `Presentation/Scenes/Deities/ILDeitiesViewModel.swift` | Done | Inputs: viewDidLoad, back, filterSelected, deityTapped, retryTapped. `.loading → .success/.failure`. Selection is UI state held here, not on the Entity. |
+| Presentation — ViewController | `Presentation/Scenes/Deities/ILDeitiesViewController.swift` | Done | Pinned `ILNavBar` + `ILChip` row; body is `ILDeitiesGridView`, or `ILDeitiesSkeletonView` (pulsing 2-column card placeholders) / `ILStateView` (empty "Đang cập nhật", error/offline + retry `ILButton`). |
 | Presentation — Views | `Presentation/Scenes/Deities/Views/ILDeitiesGridView.swift`, `ILDeitiesCardView.swift` | Done | Feature-scoped 2-column grid + card. |
 | Presentation — Coordinator | `Presentation/Scenes/Deities/ILDeitiesCoordinator.swift` | Done | Leaf flow: `.back` pops + `finish()`; `.openDeity(id)` forwards to `ILDeityCoordinator`. |
-| Tests | `InnerLampTests/ILDeitiesViewModelTests.swift` | Done | One test per Input trigger, driven through the `Input` publishers. |
+| Tests | `InnerLampTests/ILDeitiesViewModelTests.swift` | Done | ViewModel (load/empty/failure/retry/filters/nav) + UseCase (source merging, paging, de-dup, partial/total failure) with a mock repository. |
 
 ## Navigation events
 
@@ -41,11 +46,17 @@ Opened from two places:
 
 - No real artwork: the card's image tile is a flat `ILColors.sunk2` placeholder (the design uses an
   `<image-slot>`), same approach as the Home deity carousel.
-- The catalog is still the static mock in `ILDeityUseCaseImpl`; when a real deity API/seed exists,
-  swap that source — no change is needed in this screen (it reads through `ILDeityUseCase`).
+- Memorial days: the list APIs (`/v1/deities/top`, `/v1/deities?page=N`) carry no memorial days
+  (only `/v1/deities/{id}` does), so every card shows "Ngày vía: đang cập nhật". Fill it once the
+  list API adds the field (fetching every detail just for this line was judged too chatty).
+- The list is fully loaded up-front (all pages, capped at 50) — fine for the current 18-item catalog
+  (6 Buddhas + 12 Bodhisattvas); switch to infinite scroll (`ILLoadMoreFooterView`) if it grows large.
 
 ## Changelog
 
+- 2026-09-30 — list wired to the server catalog; bundled `phat_botat.json` data removed from this
+  screen. Added loading, "Đang cập nhật" empty and error/offline + retry states; memorial line
+  shows the "updating" placeholder.
 - 2026-09-28 — initial list screen from the design handoff (`buddhas`): pinned header with filter
   chips, 2-column card grid, wired from Home and Library; moved `primaryMemorialDay` onto
   `ILDeityEntity` so the list and Home share one definition.

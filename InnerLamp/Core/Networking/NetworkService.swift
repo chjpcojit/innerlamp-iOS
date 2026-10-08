@@ -23,17 +23,22 @@ actor NetworkServiceImpl: NetworkService {
     /// (the project's default actor isolation), which is an error in Swift 6.
     private nonisolated(unsafe) let authTokenProvider: AuthTokenProviding
     private nonisolated(unsafe) let logger: NetworkLogging
+    /// `nil` → a 401 is surfaced as `.unauthorized` with no refresh attempt (tests, and the
+    /// transport the refresher itself uses).
+    private nonisolated(unsafe) let sessionRefresher: AuthSessionRefreshing?
 
     init(
         session: URLSession = NetworkConfiguration.makeSession(),
         decoder: JSONDecoder = JSONDecoder(),
         authTokenProvider: AuthTokenProviding = KeychainAuthTokenProviding(keychainService: KeychainServiceImpl()),
-        logger: NetworkLogging = NetworkLogger(loggingService: SentryLoggingService.shared)
+        logger: NetworkLogging = NetworkLogger(loggingService: SentryLoggingService.shared),
+        sessionRefresher: AuthSessionRefreshing? = nil
     ) {
         self.session = session
         self.decoder = decoder
         self.authTokenProvider = authTokenProvider
         self.logger = logger
+        self.sessionRefresher = sessionRefresher
         
         // Configure decoder
         self.decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -41,6 +46,38 @@ actor NetworkServiceImpl: NetworkService {
     }
     
     func request<T: Decodable & Sendable>(endpoint: Endpoint, responseType: T.Type) async throws -> T {
+        try await withSessionRefresh(endpoint: endpoint) {
+            try await self.performRequest(endpoint: endpoint, responseType: responseType)
+        }
+    }
+
+    func request(endpoint: any Endpoint) async throws {
+        try await withSessionRefresh(endpoint: endpoint) {
+            try await self.performRequest(endpoint: endpoint)
+        }
+    }
+
+    // MARK: Private helpers — 401 refresh
+
+    /// Runs `operation`; on a 401 for a request that carried the stored access token, refreshes
+    /// the session and retries exactly once. A second 401, or a failed refresh, propagates.
+    private func withSessionRefresh<R>(endpoint: Endpoint, _ operation: () async throws -> R) async throws -> R {
+        let sentToken = authTokenProvider.currentToken()
+        do {
+            return try await operation()
+        } catch NetworkError.unauthorized {
+            guard let sessionRefresher,
+                  endpoint.requiresAuth,
+                  endpoint.headers?["Authorization"] == nil,
+                  let sentToken, !sentToken.isEmpty else {
+                throw NetworkError.unauthorized
+            }
+            try await sessionRefresher.refreshSession(afterRejectedToken: sentToken)
+            return try await operation()
+        }
+    }
+
+    private func performRequest<T: Decodable & Sendable>(endpoint: Endpoint, responseType: T.Type) async throws -> T {
         var urlRequest = try endpoint.buildURLRequest()
         injectAuthHeader(into: &urlRequest, endpoint: endpoint)
 
@@ -84,7 +121,7 @@ actor NetworkServiceImpl: NetworkService {
         }
     }
     
-    func request(endpoint: any Endpoint) async throws {
+    private func performRequest(endpoint: any Endpoint) async throws {
         var urlRequest = try endpoint.buildURLRequest()
         injectAuthHeader(into: &urlRequest, endpoint: endpoint)
 

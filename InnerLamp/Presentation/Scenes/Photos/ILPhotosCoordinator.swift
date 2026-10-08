@@ -6,8 +6,9 @@
 import UIKit
 import Combine
 
-/// Màn lá — không có delegate: `ILPhotosNavEvent.back` chỉ pop màn và tự `finish()`, parent
-/// (`ILHomeCoordinator`) không cần phản ứng gì thêm.
+/// Không có delegate: `ILPhotosNavEvent.back` chỉ pop màn và tự `finish()`, parent
+/// (`ILHomeCoordinator`) không cần phản ứng gì thêm. `.openPhoto` mở `ILPhotoViewerCoordinator` làm
+/// child.
 final class ILPhotosCoordinator: Coordinator {
 
     let navigationController: UINavigationController
@@ -35,11 +36,32 @@ final class ILPhotosCoordinator: Coordinator {
                 case .back:
                     self.navigationController.popViewController(animated: true)
                     self.finish()
+                case .openPhoto(let photos, let selectedID):
+                    self.showPhotoViewer(photos: photos, selectedID: selectedID)
                 }
             }
             .store(in: &cancellables)
 
         let viewController = ILPhotosViewController(viewModel: viewModel)
         navigationController.pushViewController(viewController, animated: true)
+    }
+
+    private func showPhotoViewer(photos: [ILPhotosPhotoModel], selectedID: String) {
+        let items = photos.map {
+            ILPhotoViewerItemModel(
+                id: $0.id,
+                title: $0.title,
+                place: $0.place,
+                categoryLabel: $0.categoryLabel,
+                imageURL: $0.imageURL
+            )
+        }
+        let coordinator = container.makePhotoViewerCoordinator(
+            navigationController: navigationController,
+            items: items,
+            startID: selectedID
+        )
+        addChild(coordinator)
+        coordinator.start()
     }
 }

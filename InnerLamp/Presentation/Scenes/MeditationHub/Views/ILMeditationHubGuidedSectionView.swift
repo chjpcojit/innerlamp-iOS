@@ -15,7 +15,13 @@ final class ILMeditationHubGuidedSectionView: UIView {
     var onDownloadTapped: ((String) -> Void)?
 
     // MARK: - UI Elements
-    private lazy var eyebrow = ILSectionEyebrowView()
+    /// Design `medhub` viết eyebrow inline (9.5px / letter-spacing .16em / `--il-ink-45`), khác
+    /// `ILSectionEyebrowView` dùng chung (10px / .14em / .42) nên dùng nhãn riêng ở đây.
+    private let eyebrow: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 1
+        return label
+    }()
     private let cardsStack = UIStackView()
 
     // MARK: - Initializer
@@ -30,7 +36,12 @@ final class ILMeditationHubGuidedSectionView: UIView {
 
     // MARK: - Configure
     func configure(sectionTitle: String, sessions: [ILMeditationHubGuidedModel]) {
-        eyebrow.title = sectionTitle
+        eyebrow.attributedText = ILTypography.makeAttributedString(
+            text: sectionTitle.uppercased(),
+            font: ILTypography.eyebrowSmall,
+            color: ILColors.inkSubtle,
+            letterSpacingEm: 0.16
+        )
         rebuild(sessions: sessions)
     }
 
@@ -79,8 +90,14 @@ private final class GuidedCardView: UIView {
         static let cornerRadius: CGFloat = ILMetrics.radiusCardRegular
         static let horizontalPadding: CGFloat = 16
         static let verticalPadding: CGFloat = 14
+        /// Khoảng cách giữa khối chữ và nút phát (`gap:12px`).
+        static let headerPlaySpacing: CGFloat = 12
+        /// Khoảng cách từ khối chữ lên hairline (`margin-top:12px`).
         static let footerTopSpacing: CGFloat = 12
+        /// Khoảng cách từ hairline xuống hàng chân thẻ (`padding-top:10px`).
         static let separatorTopSpacing: CGFloat = 10
+        /// Khoảng cách giữa mô tả và pill Tải về (`gap:8px`).
+        static let footerSpacing: CGFloat = ILMetrics.spaceSmall
         static let playButtonSize: CGFloat = 40
     }
 
@@ -96,7 +113,10 @@ private final class GuidedCardView: UIView {
     private let playButton = ILPlayPauseButton(
         diameter: Layout.playButtonSize,
         glyphColor: ILColors.canvas,
-        fillColor: ILColors.ink
+        fillColor: ILColors.ink,
+        // Design: tam giác CSS 10×12, `margin-left:3px` trong vòng tròn căn giữa → lệch +1.5pt.
+        playGlyphSize: CGSize(width: 10, height: 12),
+        playGlyphOffsetX: 1.5
     )
     private lazy var downloadButton = DownloadPillButton()
 
@@ -110,9 +130,21 @@ private final class GuidedCardView: UIView {
             color: ILColors.link,
             letterSpacingEm: 0.12
         )
-        nameLabel.text = model.name
+        // Design `font:400 16px/1.35 Lora`.
+        nameLabel.attributedText = ILTypography.makeParagraph(
+            text: model.name,
+            font: ILTypography.serifCardTitle,
+            color: ILColors.ink,
+            cssLineHeight: 1.35
+        )
         metaLabel.text = model.metaText
-        summaryLabel.text = model.summary
+        // Design `font:400 11px/1.5`, màu `--il-ink-45`.
+        summaryLabel.attributedText = ILTypography.makeParagraph(
+            text: model.summary,
+            font: ILTypography.label,
+            color: ILColors.inkSubtle,
+            cssLineHeight: 1.5
+        )
         downloadButton.title = model.downloadTitle
         downloadButton.isDownloaded = model.isDownloaded
         openArea.accessibilityLabel = model.accessibilityLabel
@@ -127,14 +159,15 @@ private final class GuidedCardView: UIView {
         layer.borderWidth = 1
 
         methodLabel.numberOfLines = 1
-        nameLabel.font = ILTypography.serifCardTitle
         nameLabel.numberOfLines = 2
         metaLabel.font = ILTypography.subhead
         metaLabel.numberOfLines = 1
 
         let textStack = UIStackView(arrangedSubviews: [methodLabel, nameLabel, metaLabel])
         textStack.axis = .vertical
-        textStack.alignment = .leading
+        // `.fill` pins every label to the stack width so the multi-line name wraps instead of
+        // resolving to an ambiguous width.
+        textStack.alignment = .fill
         textStack.spacing = 4
         textStack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -143,6 +176,10 @@ private final class GuidedCardView: UIView {
         openArea.accessibilityTraits = .button
         openArea.addTarget(self, action: #selector(handleSessionTap), for: .touchUpInside)
 
+        // Added with `addSubview` (not a stack view), so autoresizing must be turned off here —
+        // otherwise its zero-frame autoresizing constraints fight the 40pt size + edge anchors,
+        // Auto Layout drops constraints and the button and the text block collapse to zero width.
+        playButton.translatesAutoresizingMaskIntoConstraints = false
         playButton.isAccessibilityElement = false
         playButton.onTap = { [weak self] in self?.onSessionTap?() }
 
@@ -154,22 +191,28 @@ private final class GuidedCardView: UIView {
             textStack.bottomAnchor.constraint(equalTo: openArea.bottomAnchor),
             textStack.leadingAnchor.constraint(equalTo: openArea.leadingAnchor),
 
-            playButton.leadingAnchor.constraint(equalTo: textStack.trailingAnchor, constant: 12),
+            playButton.leadingAnchor.constraint(equalTo: textStack.trailingAnchor, constant: Layout.headerPlaySpacing),
             playButton.trailingAnchor.constraint(equalTo: openArea.trailingAnchor),
-            playButton.centerYAnchor.constraint(equalTo: openArea.centerYAnchor),
-            playButton.topAnchor.constraint(greaterThanOrEqualTo: openArea.topAnchor),
+            // Design canh nút phát theo **đỉnh** khối chữ (`display:flex` mặc định stretch → nút
+            // cao cố định nằm ở flex-start), không phải canh giữa.
+            playButton.topAnchor.constraint(equalTo: openArea.topAnchor),
             playButton.bottomAnchor.constraint(lessThanOrEqualTo: openArea.bottomAnchor)
         ])
 
         summaryLabel.font = ILTypography.label
         summaryLabel.numberOfLines = 0
+        // Mô tả nhường chỗ cho pill: co lại để xuống dòng thay vì ép pill "Tải về" hẹp đi. Pill tự
+        // khai báo `intrinsicContentSize` nên stack luôn biết kích thước thật của nó.
+        summaryLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
+        downloadButton.setContentHuggingPriority(.required, for: .horizontal)
+        downloadButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         downloadButton.onTap = { [weak self] in self?.onDownloadTap?() }
 
         let footerStack = UIStackView(arrangedSubviews: [summaryLabel, downloadButton])
         footerStack.axis = .horizontal
         footerStack.alignment = .center
-        footerStack.spacing = ILMetrics.spaceSmall
+        footerStack.spacing = Layout.footerSpacing
 
         let cardStack = UIStackView(arrangedSubviews: [openArea, separator, footerStack])
         cardStack.axis = .vertical
@@ -197,9 +240,9 @@ private final class GuidedCardView: UIView {
     private func updateAppearance() {
         backgroundColor = ILColors.surface
         layer.borderColor = ILColors.border.cgColor
-        nameLabel.textColor = ILColors.ink
+        // `nameLabel` dùng attributed text với màu động (`ILColors.ink`) nên tự đổi theo theme.
         metaLabel.textColor = ILColors.inkTertiary
-        summaryLabel.textColor = ILColors.inkMuted
+        // `summaryLabel` dùng attributed text với màu động (`ILColors.inkSubtle`) nên tự đổi theo theme.
         separator.backgroundColor = ILColors.borderSoft
     }
 
@@ -213,8 +256,17 @@ private final class GuidedCardView: UIView {
 /// Pill "Tải về" / "✓ Đã tải về" ở chân thẻ thiền dẫn.
 private final class DownloadPillButton: UIControl {
 
+    /// `padding:6px 12px` trong design handoff.
+    private enum Layout {
+        static let verticalInset: CGFloat = 6
+        static let horizontalInset: CGFloat = 12
+    }
+
     var title: String = "" {
-        didSet { titleLabel.text = title }
+        didSet {
+            titleLabel.text = title
+            invalidateIntrinsicContentSize()
+        }
     }
 
     var isDownloaded: Bool = false {
@@ -234,6 +286,16 @@ private final class DownloadPillButton: UIControl {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /// Pill là `UIControl` nên không có intrinsic size sẵn: khai báo theo nhãn bên trong để stack
+    /// ngang (mô tả + pill) luôn phân bổ được chỗ cho pill trước khi mô tả xuống dòng.
+    override var intrinsicContentSize: CGSize {
+        let labelSize = titleLabel.intrinsicContentSize
+        return CGSize(
+            width: labelSize.width + Layout.horizontalInset * 2,
+            height: labelSize.height + Layout.verticalInset * 2
+        )
+    }
+
     private func setupViews() {
         isAccessibilityElement = true
         accessibilityTraits = .button
@@ -246,10 +308,10 @@ private final class DownloadPillButton: UIControl {
         addSubview(titleLabel)
 
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 6),
-            titleLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12)
+            titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: Layout.verticalInset),
+            titleLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Layout.verticalInset),
+            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.horizontalInset),
+            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Layout.horizontalInset)
         ])
 
         addTarget(self, action: #selector(handleTap), for: .touchUpInside)
@@ -267,7 +329,7 @@ private final class DownloadPillButton: UIControl {
             titleLabel.textColor = ILColors.greenText
         } else {
             backgroundColor = .clear
-            layer.borderColor = ILColors.borderStrong.cgColor
+            layer.borderColor = ILColors.borderPill.cgColor
             titleLabel.textColor = ILColors.ink
         }
     }

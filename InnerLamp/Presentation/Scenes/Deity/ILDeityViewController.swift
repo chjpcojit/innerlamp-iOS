@@ -6,7 +6,7 @@
 import UIKit
 import Combine
 
-/// Màn chi tiết Phật / Bồ Tát — khớp `isBuddha` trong design handoff: hero ảnh 420pt nằm dưới
+/// Màn chi tiết Phật / Bồ Tát — khớp `isBuddha` trong design handoff: hero ảnh 382pt nằm dưới
 /// header trong suốt (header chuyển sang nền `canvas` + hiện danh xưng khi cuộn qua hero), thẻ
 /// ngày vía, tiểu sử thu gọn, đại nguyện đánh số, thẻ thần chú & danh hiệu, kinh liên quan.
 final class ILDeityViewController: BaseViewController {
@@ -16,12 +16,16 @@ final class ILDeityViewController: BaseViewController {
         static let collapsedBiographyHeight: CGFloat = 152
         static let sectionSpacing: CGFloat = 26
         static let headerBottomInset: CGFloat = 10
+        /// Opacity of the `canvas` tint over the blur once the header is "solid", low enough that
+        /// the blurred content underneath stays visible.
+        static let solidHeaderTintAlpha: CGFloat = 0.35
     }
 
     // MARK: - Properties
     private let viewModel: ILDeityViewModel
     private var cancellables = Set<AnyCancellable>()
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
+    private let retryTappedSubject = PassthroughSubject<Void, Never>()
     private let backTappedSubject = PassthroughSubject<Void, Never>()
     private let biographyToggledSubject = PassthroughSubject<Void, Never>()
     private let vowsToggledSubject = PassthroughSubject<Void, Never>()
@@ -32,6 +36,7 @@ final class ILDeityViewController: BaseViewController {
 
     private var headerTitle = ""
     private var isHeaderSolid = false
+    private var hasHeroImage = false
     private var isBiographyExpanded = false
 
     // MARK: - UI Elements
@@ -39,7 +44,8 @@ final class ILDeityViewController: BaseViewController {
     private let contentView = UIView()
 
     /// Dải header dán cố định — trong suốt trên hero, chuyển nền `canvas` khi cuộn qua hero.
-    private let headerBand = UIView()
+    /// Blur only: the canvas tint is state-driven (`updateHeaderAppearance`), so the band's own tint stays off.
+    private let headerBand = ILStickyHeaderBand(tintRestAlpha: 0, tintGlassAlpha: 0)
     private let navBar = ILNavBar(showBack: true)
 
     private let heroView = ILDeityHeroView()
@@ -68,6 +74,13 @@ final class ILDeityViewController: BaseViewController {
     private let sutrasStack = UIStackView()
 
     private let footnoteLabel = UILabel()
+
+    /// Whole-screen loading / error states, shown instead of `scrollView` while the profile is
+    /// not on screen yet.
+    private let loadingView = ILLoadingDotsView()
+    private let errorStateView = ILStateView(kind: .error)
+    private lazy var retryButton = ILButton(title: "common.retry".localized, variant: .primary)
+    private let errorStack = UIStackView()
 
     // MARK: - Initializer
     init(viewModel: ILDeityViewModel) {
@@ -103,6 +116,7 @@ final class ILDeityViewController: BaseViewController {
         view.backgroundColor = ILColors.canvas
 
         navBar.onBack = { [weak self] in self?.backTappedSubject.send(()) }
+        navBar.usesTransparentButtons = true
         headerBand.backgroundColor = ILColors.canvas.withAlphaComponent(0)
 
         scrollView.showsVerticalScrollIndicator = false
@@ -167,14 +181,35 @@ final class ILDeityViewController: BaseViewController {
         contentView.addSubview(heroView)
         contentView.addSubview(bodyStack)
 
+        setupStateViews()
+
+        heroView.onBlurProgress = { [weak self] progress in
+            guard let self else { return }
+            // Once solid the strip stays fully blurred, even when there is no photo to drive it.
+            headerBand.setProgress(isHeaderSolid ? 1 : progress)
+        }
         headerBand.addSubview(navBar)
         view.addSubview(scrollView)
+        view.addSubview(loadingView)
+        view.addSubview(errorStack)
         view.addSubview(headerBand)
+    }
+
+    private func setupStateViews() {
+        loadingView.isHidden = true
+
+        retryButton.onTap = { [weak self] in self?.retryTappedSubject.send(()) }
+        errorStack.axis = .vertical
+        errorStack.alignment = .fill
+        errorStack.spacing = ILMetrics.groupSpacing
+        errorStack.addArrangedSubview(errorStateView)
+        errorStack.addArrangedSubview(retryButton)
+        errorStack.isHidden = true
     }
 
     override func setupConstraints() {
         super.setupConstraints()
-        [scrollView, contentView, headerBand, navBar, heroView, bodyStack].forEach {
+        [scrollView, contentView, navBar, heroView, bodyStack, loadingView, errorStack].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
 
@@ -210,7 +245,14 @@ final class ILDeityViewController: BaseViewController {
             bodyStack.topAnchor.constraint(equalTo: heroView.bottomAnchor, constant: ILMetrics.spaceStandard),
             bodyStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
             bodyStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
-            bodyStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -34)
+            bodyStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -34),
+
+            loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+
+            errorStack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            errorStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: horizontal),
+            errorStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -horizontal)
         ])
     }
 
@@ -219,6 +261,7 @@ final class ILDeityViewController: BaseViewController {
 
         let input = ILDeityViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
+            retryTapped: retryTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             biographyToggled: biographyToggledSubject.eraseToAnyPublisher(),
             vowsToggled: vowsToggledSubject.eraseToAnyPublisher(),
@@ -241,25 +284,70 @@ final class ILDeityViewController: BaseViewController {
     // MARK: - Render
     private func render(state: ViewState<ILDeityStateModel>) {
         switch state {
-        case .idle, .loading:
+        case .idle:
             break
+        case .loading:
+            showScreenState(.loading)
         case .success(let model):
+            showScreenState(.content)
             updateUI(with: model)
         case .failure(let error):
-            showError(error.localizedDescription)
+            configureErrorState(for: error)
+            showScreenState(.error)
         }
+    }
+
+    private enum ScreenState {
+        case loading
+        case content
+        case error
+    }
+
+    private func showScreenState(_ screenState: ScreenState) {
+        scrollView.isHidden = screenState != .content
+        errorStack.isHidden = screenState != .error
+        let isLoading = screenState == .loading
+        if isLoading, loadingView.isHidden {
+            loadingView.isHidden = false
+            // Pulsing needs a window; on the first `.loading` (sent from `viewDidLoad`) the view is
+            // not in one yet, so start it on the next run-loop turn.
+            DispatchQueue.main.async { [weak self] in self?.loadingView.startPulsingAnimation() }
+        } else if !isLoading {
+            loadingView.isHidden = true
+        }
+        if screenState != .content {
+            // The header stays transparent over the plain canvas, with no title.
+            scrollView.contentOffset = .zero
+            updateHeaderAppearance()
+        }
+    }
+
+    /// Offline gets its own glyph/title; every other failure (not found, server error) reads as a
+    /// generic load error with the error's own message.
+    private func configureErrorState(for error: Error) {
+        if case ILCatalogError.offline = error {
+            errorStateView.kind = .offline
+            errorStateView.title = "deity.error.offlineTitle".localized
+        } else {
+            errorStateView.kind = .error
+            errorStateView.title = "deity.error.title".localized
+        }
+        errorStateView.message = error.localizedDescription
     }
 
     private func updateUI(with model: ILDeityStateModel) {
         headerTitle = model.headerTitle
         navBar.title = isHeaderSolid ? headerTitle : ""
+        hasHeroImage = model.imageURL?.isEmpty == false
+        updateNavBarStyle()
 
         heroView.configure(
             kindLabel: model.kindLabel,
             realm: model.realmLabel,
             name: model.name,
             sanskrit: model.sanskritName,
-            watermark: model.watermark
+            watermark: model.watermark,
+            imageURL: model.imageURL
         )
 
         if let memorialDay = model.memorialDay {
@@ -382,12 +470,21 @@ final class ILDeityViewController: BaseViewController {
         let shouldBeSolid = threshold > 0 && scrollView.contentOffset.y >= threshold
         guard shouldBeSolid != isHeaderSolid else { return }
         isHeaderSolid = shouldBeSolid
+        updateNavBarStyle()
+        heroView.update(contentOffsetY: scrollView.contentOffset.y)
+        if shouldBeSolid { headerBand.setProgress(1) }
         UIView.animate(withDuration: 0.2) {
-            self.headerBand.backgroundColor = shouldBeSolid
-                ? ILColors.canvas
-                : ILColors.canvas.withAlphaComponent(0)
+            self.headerBand.backgroundColor = ILColors.canvas.withAlphaComponent(
+                shouldBeSolid ? Layout.solidHeaderTintAlpha : 0
+            )
         }
         navBar.title = shouldBeSolid ? headerTitle : ""
+    }
+
+    /// Buttons are transparent, so over the photo they use the light (on-dark) palette; once the
+    /// header turns solid, or when there is no photo, they use the normal theme palette.
+    private func updateNavBarStyle() {
+        navBar.isDark = hasHeroImage && !isHeaderSolid
     }
 
     // MARK: - Actions
@@ -403,6 +500,7 @@ final class ILDeityViewController: BaseViewController {
 // MARK: - UIScrollViewDelegate
 extension ILDeityViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        heroView.update(contentOffsetY: scrollView.contentOffset.y)
         updateHeaderAppearance()
     }
 }

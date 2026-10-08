@@ -6,14 +6,15 @@
 //  grpc-swift error type crosses this boundary (FR-005). See Docs/Specs/GRPC/design.md §
 //  "GRPCError — planned shape".
 //
-//  Migrated to gRPC Swift 1.x: failures surface as `GRPCStatus` (or a `GRPCErrorProtocol`
-//  transport error), both mapped to the named cases below.
+//  gRPC Swift 2.x: failures surface as `RPCError` (the library's error shape, carrying an
+//  `RPCError.Code`), converted here into the named cases below. `RPCErrorConvertible` covers any
+//  feature type that opts into defining its own status.
 //
 
 import Foundation
-import GRPC
+import GRPCCore
 
-enum GRPCError: Error, LocalizedError, Sendable {
+nonisolated enum GRPCError: Error, LocalizedError, Sendable {
     /// No token, or the token was rejected by the server — the gRPC analogue of REST's
     /// `.unauthorized`. No token-refresh is attempted here, same deferral as `Core/Networking`.
     case unauthenticated(message: String)
@@ -32,11 +33,11 @@ enum GRPCError: Error, LocalizedError, Sendable {
     /// `NetworkError.unknown(_:)`'s role.
     case unknown(code: Int, message: String)
 
-    /// Maps a `GRPCStatus`'s code to a named case — the gRPC equivalent of decoding
+    /// Maps an `RPCError`'s code to a named case — the gRPC equivalent of decoding
     /// `NetworkError` from an HTTP status code.
-    init(_ status: GRPCStatus) {
-        let message = status.message ?? ""
-        switch status.code {
+    init(_ rpcError: RPCError) {
+        let message = rpcError.message
+        switch rpcError.code {
         case .unauthenticated:
             self = .unauthenticated(message: message)
         case .unavailable:
@@ -48,20 +49,20 @@ enum GRPCError: Error, LocalizedError, Sendable {
         case .internalError:
             self = .serverError(message: message)
         default:
-            self = .unknown(code: status.code.rawValue, message: message)
+            self = .unknown(code: rpcError.code.rawValue, message: message)
         }
     }
 
     /// Maps *any* error grpc-swift may throw to this layer's own shape, so nothing raw leaks out
-    /// (FR-005). `GRPCStatus` is the common case; `GRPCErrorProtocol` covers transport-level
-    /// failures (a failed connection, a serialization fault) which carry no status of their own.
+    /// (FR-005). `RPCError` is the common case; `RPCErrorConvertible` covers a feature-defined
+    /// error carrying its own status; anything else is treated as a decode/transport fault.
     init(_ error: Error) {
         if let grpcError = error as? GRPCError {
             self = grpcError
-        } else if let status = error as? GRPCStatus {
-            self = GRPCError(status)
-        } else if let transformable = error as? GRPCStatusTransformable {
-            self = GRPCError(transformable.makeGRPCStatus())
+        } else if let rpcError = error as? RPCError {
+            self = GRPCError(rpcError)
+        } else if let convertible = error as? RPCErrorConvertible {
+            self = GRPCError(RPCError(convertible))
         } else {
             self = .decodingError(error)
         }

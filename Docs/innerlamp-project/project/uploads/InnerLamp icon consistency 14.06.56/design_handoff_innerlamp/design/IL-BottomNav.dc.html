@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div ref="{{ rootRef }}" style="margin:0 -20px;overflow:hidden;transition:height .32s cubic-bezier(.22,.61,.36,1);height: {{ boxH }}">
+<div style="padding:10px 22px 30px;display:flex;align-items:flex-end;justify-content:space-between;will-change:transform;transition:transform .34s cubic-bezier(.22,.61,.36,1);background: {{ fade }};transform: {{ shift }}">
+  <div onClick="{{ hHome }}" style="text-align:center;flex:1;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ c0 }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 4px"><path d="M12 2.5v2"></path><path d="M4 11.5c3-1 5.5-3.3 8-6.5 2.5 3.2 5 5.5 8 6.5"></path><path d="M6 11v9h12v-9"></path><path d="M10 20v-4.5a2 2 0 0 1 4 0V20" fill="{{ f0 }}"></path></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;color: {{ c0 }}">Trang chủ</div></div>
+  <div onClick="{{ hLib }}" style="text-align:center;flex:1;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ c1 }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 4px"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z" fill="{{ f1 }}"></path><path d="M12 6.5v13"></path></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;color: {{ c1 }}">Thư viện</div></div>
+  <div onClick="{{ hLamp }}" style="text-align:center;flex:1;cursor:pointer"><div style="width:48px;height:48px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;background: {{ lampBg }};box-shadow: {{ lampShadow }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="display:block"><path d="M12 2.5c2.6 3 3.6 5.2 3.6 7.1a3.6 3.6 0 0 1-7.2 0c0-1.9 1-4.1 3.6-7.1z" fill="{{ lampFlame }}"></path><path d="M4.5 15.5c2 3 4.6 4.5 7.5 4.5s5.5-1.5 7.5-4.5c-2.6.3-5 .2-7.5-1.2-2.5 1.4-4.9 1.5-7.5 1.2z" fill="{{ lampFlame }}"></path></svg></div></div>
+  <div onClick="{{ hSangha }}" style="text-align:center;flex:1;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ c2 }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 4px"><circle cx="12" cy="7.5" r="3" fill="{{ f2 }}"></circle><path d="M6 20c0-3.5 2.7-6 6-6s6 2.5 6 6"></path><circle cx="4.8" cy="10" r="1.9"></circle><circle cx="19.2" cy="10" r="1.9"></circle><path d="M2 18.5c0-2 1.2-3.6 3-4"></path><path d="M22 18.5c0-2-1.2-3.6-3-4"></path></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;color: {{ c2 }}">Đạo tràng</div></div>
+  <div onClick="{{ hMe }}" style="text-align:center;flex:1;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ c3 }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 4px"><circle cx="12" cy="8" r="3.6" fill="{{ f3 }}"></circle><path d="M4.5 20.5c.8-4 3.8-6.5 7.5-6.5s6.7 2.5 7.5 6.5"></path></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;color: {{ c3 }}">Tôi</div></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:402,&quot;height&quot;:110},&quot;active&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;lib&quot;,&quot;sangha&quot;,&quot;me&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;hidden&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onNav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(key: string) =&gt; void&quot;}}">
+class Component extends DCLogic {
+  _ref = React.createRef();
+
+  renderVals() {
+    const dark = !!this.props.dark;
+    const active = this.props.active || 'home';
+    const on = dark ? '#D9963C' : 'var(--il-ink)';
+    const off = dark ? 'rgba(242,235,221,.4)' : 'var(--il-ink-4)';
+    const go = k => () => this.props.onNav && this.props.onNav(k);
+    const c = k => (active === k ? on : off);
+    const f = k => (active === k ? (dark ? 'rgba(217,150,60,.22)' : 'var(--il-ink-12, rgba(0,0,0,.1))') : 'none');
+    return {
+      rootRef: this._ref,
+      shift: this.props.hidden ? 'translateY(calc(100% + 12px))' : 'translateY(0)',
+      boxH: this.props.hidden ? '0px' : '88px',
+      fade: dark
+        ? 'linear-gradient(180deg,rgba(20,18,15,0),#14120F 34%)'
+        : 'linear-gradient(180deg,transparent,var(--il-canvas) 32%)',
+      c0: c('home'), c1: c('lib'), c2: c('sangha'), c3: c('me'),
+      f0: f('home'), f1: f('lib'), f2: f('sangha'), f3: f('me'),
+      lampBg: dark ? '#D9963C' : 'var(--il-ink)',
+      lampFlame: dark ? '#1A1611' : '#E6A94E',
+      lampShadow: dark ? '0 0 28px rgba(217,150,60,.45)' : '0 8px 20px var(--il-ink-28)',
+      hHome: go('home'), hLib: go('lib'), hSangha: go('sangha'), hMe: go('me'), hLamp: go('lamp'),
+    };
+  }
+}
+</script>
+</body>
+</html>

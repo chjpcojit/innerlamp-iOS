@@ -69,6 +69,12 @@ public final class ILNavBar: UIView {
         didSet { updateAppearance() }
     }
 
+    /// `true` drops the chip background and border of the back / close / action buttons so they
+    /// sit directly on the imagery below (stretchy hero screens, see `ILStretchyHeaderView`).
+    public var usesTransparentButtons: Bool = false {
+        didSet { updateAppearance() }
+    }
+
     public var onBack: (() -> Void)?
     public var onClose: (() -> Void)?
     public var onAction: (() -> Void)?
@@ -218,23 +224,25 @@ public final class ILNavBar: UIView {
         let buttonHighlight = isDark
             ? ILColors.inkOnDark.withAlphaComponent(0.16)
             : ILColors.ink.withAlphaComponent(0.06)
+        let normalBackground = usesTransparentButtons ? UIColor.clear : buttonBackground
+        let normalBorder = usesTransparentButtons ? UIColor.clear : buttonBorder
 
         titleLabel.textColor = titleColor
         subLabel.textColor = dimColor
 
-        backButton.normalBackgroundColor = buttonBackground
+        backButton.normalBackgroundColor = normalBackground
         backButton.highlightedBackgroundColor = buttonHighlight
-        backButton.borderColor = buttonBorder
+        backButton.borderColor = normalBorder
         backButton.glyphColor = glyphColor
 
-        closeButton.normalBackgroundColor = buttonBackground
+        closeButton.normalBackgroundColor = normalBackground
         closeButton.highlightedBackgroundColor = buttonHighlight
-        closeButton.borderColor = buttonBorder
+        closeButton.borderColor = normalBorder
         closeButton.glyphColor = glyphColor
 
-        actionButton.normalBackgroundColor = buttonBackground
+        actionButton.normalBackgroundColor = normalBackground
         actionButton.highlightedBackgroundColor = buttonHighlight
-        actionButton.borderColor = buttonBorder
+        actionButton.borderColor = normalBorder
         actionButton.textColor = titleColor
     }
 

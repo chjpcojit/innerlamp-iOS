@@ -24,6 +24,7 @@ final class ILBuddhistEventUseCaseTests: XCTestCase {
         lunarDay: Int,
         lunarMonth: Int,
         tradition: ILBuddhistTradition = .universal,
+        category: ILBuddhistEventCategory = .commemoration,
         isLeapMonthEligible: Bool = false
     ) -> ILBuddhistEventTemplateEntity {
         ILBuddhistEventTemplateEntity(
@@ -33,6 +34,7 @@ final class ILBuddhistEventUseCaseTests: XCTestCase {
             lunarDay: lunarDay,
             lunarMonth: lunarMonth,
             tradition: tradition,
+            category: category,
             isLeapMonthEligible: isLeapMonthEligible
         )
     }
@@ -148,6 +150,30 @@ final class ILBuddhistEventUseCaseTests: XCTestCase {
             .filter { calendar.isDate($0.date, inSameDayAs: leap.date) }
             .map(\.template.id)
         XCTAssertEqual(idsOnLeapDay, ["leap-ok"], "Non-eligible template must not fire on a leap-month day")
+    }
+
+    // MARK: - Short-month rule (day 30)
+
+    func test_occurrences_day30TemplateFiresOncePerMonthEvenWhenMonthHas29Days() {
+        // Địa Tạng (30/7) must appear exactly once in each lunar year: on day 30 of a 30-day
+        // month 7, or on day 29 when month 7 is short.
+        let diaTang = template(id: "dia-tang", lunarDay: 30, lunarMonth: 7)
+
+        let result = makeSUT().occurrences(
+            of: [diaTang],
+            from: date(2021, 1, 1),
+            to: date(2030, 1, 1),
+            calendar: calendar
+        )
+
+        XCTAssertEqual(result.count, 9, "one occurrence per lunar year, none lost in short months")
+        for occurrence in result {
+            let lunar = ILLunarCalendar.solarToLunar(date: occurrence.date, calendar: calendar)
+            let next = calendar.date(byAdding: .day, value: 1, to: occurrence.date) ?? occurrence.date
+            XCTAssertEqual(lunar.month, 7)
+            XCTAssertFalse(lunar.isLeapMonth)
+            XCTAssertEqual(ILLunarCalendar.solarToLunar(date: next, calendar: calendar).day, 1, "must be the last day of the month")
+        }
     }
 
     // MARK: - Helpers

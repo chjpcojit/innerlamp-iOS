@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="./image-slot.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&amp;family=Be+Vietnam+Pro:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%}
+a{color:#2F4A36;text-decoration:none}
+a:hover{color:#8A5A2B}
+input::placeholder{color:rgba(74,51,34,.45)}
+.gp-sc::-webkit-scrollbar,.gp-chips::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+<div style="height: {{ rootH }};font-family:'Be Vietnam Pro',sans-serif">
+<div data-screen-label="Cây gia phả · mobile" style="position:relative;isolation:isolate;width:100%;height:100%;overflow:hidden;color:#3A2A1C;background:radial-gradient(600px 500px at 30% 20%,#F6EEDB 0%,#EFE3C8 55%,#E2D2B0 100%);display:flex;flex-direction:column">
+  <div style="position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(90,62,43,.06) 1px,transparent 1.3px),radial-gradient(rgba(90,62,43,.04) 1px,transparent 1.3px);background-size:6px 6px,11px 11px;background-position:0 0,3px 5px"></div>
+  <div style="position:absolute;left:-120px;top:40px;width:360px;height:300px;border-radius:50%;background:radial-gradient(closest-side,rgba(79,122,87,.22),transparent);filter:blur(20px);pointer-events:none"></div>
+
+  <header style="position:relative;z-index:3;flex:none;display:flex;align-items:center;gap:10px;padding:58px 16px 0 10px">
+    <div onClick="{{ onBack }}" style="width:40px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3A2A1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M15 5l-7 7 7 7"></path></svg>
+    </div>
+    <div onClick="{{ openPk }}" style="cursor:pointer;width:34px;height:34px;flex:none;border-radius:5px;background:#9E3B2C;display:flex;align-items:center;justify-content:center;transform:rotate(-4deg);box-shadow:inset 0 0 0 2px #9E3B2C,inset 0 0 0 3px #F4EBD6">
+      <div style="font:700 19px 'Cormorant Garamond',serif;color:#F4EBD6;line-height:1">譜</div>
+    </div>
+    <div onClick="{{ toggleSwitcher }}" style="flex:1;min-width:0;cursor:pointer">
+      <div style="display:flex;align-items:center;gap:6px;min-width:0">
+        <div style="font:600 25px/1.05 'Cormorant Garamond',serif;color:#2A3B2C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ clanName }}</div>
+        <sc-if value="{{ canSwitch }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A3E2B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none;margin-top:3px"><path d="M6 9l6 6 6-6"></path></svg></sc-if>
+      </div>
+      <div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.7);margin-top:2px">{{ clanHome }} · {{ clanMeta }}</div>
+    </div>
+    <div onClick="{{ toggleSearch }}" style="width:44px;height:44px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background: {{ searchBtnBg }}">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3A2A1C" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4 4"></path></svg>
+    </div>
+    <div onClick="{{ addTap }}" style="width:44px;height:44px;flex:none;border-radius:50%;background:#2F4A36;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 14px -8px rgba(47,74,54,.8)">
+      <div style="font:300 24px 'Be Vietnam Pro',sans-serif;color:#F4EBD6;line-height:1;margin-top:-2px">+</div>
+    </div>
+  </header>
+
+  <sc-if value="{{ searchOpen }}">
+    <div style="position:relative;z-index:3;flex:none;padding:12px 16px 0">
+      <div style="display:flex;align-items:center;gap:8px;height:44px;padding:0 16px;box-sizing:border-box;border-radius:999px;background:rgba(251,246,234,.92);border:1px solid rgba(90,62,43,.22)">
+        <input value="{{ q }}" onChange="{{ onQ }}" onKeyDown="{{ onQKey }}" placeholder="Tìm người trong họ…" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C">
+        <sc-if value="{{ qHas }}"><div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6);white-space:nowrap">{{ qCount }}</div></sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <div class="gp-chips" style="position:relative;z-index:3;flex:none;display:flex;gap:6px;overflow-x:auto;padding:12px 16px 0;scrollbar-width:none">
+    <sc-for list="{{ gens }}" as="g" hint-placeholder-count="7">
+      <div onClick="{{ g.pick }}" style="flex:none;height:34px;padding:0 14px;border-radius:999px;display:flex;align-items:center;font:500 12px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ g.bg }};color: {{ g.fg }};border:1px solid {{ g.bd }}">{{ g.label }}</div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ showLegend }}" hint-placeholder-val="{{ true }}">
+    <div style="position:relative;z-index:3;flex:none;display:flex;align-items:center;gap:12px;padding:10px 20px 0;font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.72);flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:11px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(135deg,#E8C977,#A7782C)"></div>Thủy tổ</div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="padding:0 4px;height:11px;border-radius:999px;background:#C9A04A;font:700 7px/11px 'Be Vietnam Pro',sans-serif;color:#2A1D14;letter-spacing:.08em">BẠN</div>Vị trí của bạn</div>
+      <sc-if value="{{ isGop }}">
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:3px;border-radius:2px;background:#4A3322"></div>Bên nội</div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:3px;border-radius:2px;background:#9E5B3C"></div>Bên ngoại</div>
+      </sc-if>
+      <sc-if value="{{ notGop }}"><div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:2px;background:#9E3B2C"></div>Tộc trưởng</div></sc-if>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:11px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#2F4A36"></div>Còn sống</div>
+      <sc-if value="{{ notGop }}"><div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:0;border-top:1.5px dashed #5A3E2B"></div>Vợ chồng</div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:1.5px;background:#5A3E2B"></div>Dứt nhánh</div></sc-if>
+    </div>
+  </sc-if>
+
+  <div style="position:relative;z-index:1;flex:1;min-height:0;margin-top:10px;border-top:1px solid rgba(90,62,43,.16)">
+    <div ref="{{ scRef }}" class="gp-sc" style="position:absolute;inset:0;overflow:auto;cursor:grab;user-select:none;-webkit-user-select:none;scrollbar-width:none;-webkit-overflow-scrolling:touch">
+      <div style="position:relative;transition:width .3s ease,height .3s ease;width: {{ stageW }};height: {{ stageH }};margin-bottom:150px">
+        <div style="position:absolute;left:8%;top:0;width:84%;height:52%;border-radius:50%;background:radial-gradient(closest-side,rgba(92,138,90,.26),rgba(92,138,90,.08) 70%,transparent);filter:blur(18px);pointer-events:none"></div>
+        <div style="position:absolute;left:25%;bottom:0;width:50%;height:14%;border-radius:50%;background:radial-gradient(closest-side,rgba(90,62,43,.22),transparent);filter:blur(10px);pointer-events:none"></div>
+        <svg viewBox="0 -100 1000 900" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+          <path d="M500 648 C492 700 470 752 400 790 M500 648 C505 710 530 760 610 792 M500 660 C488 720 452 770 330 796 M500 662 C512 730 560 772 690 798 M500 670 C498 730 490 770 470 800 M500 670 C506 734 516 772 540 800" fill="none" stroke="#4A3322" stroke-width="5" stroke-linecap="round" opacity=".75"></path>
+          <path d="M474 800 C482 748 484 700 490 652 L510 652 C516 700 518 748 526 800 Z" fill="#4A3322"></path>
+          <sc-for list="{{ branches }}" as="b" hint-placeholder-count="20">
+            <path d="{{ b.d }}" fill="none" stroke="{{ b.c }}" stroke-linecap="round" style="stroke-width: {{ b.w }}"></path>
+            <path d="{{ b.d }}" fill="none" stroke="{{ b.c2 }}" stroke-linecap="round" opacity=".55" style="stroke-width: {{ b.w2 }}"></path>
+          </sc-for>
+          <sc-for list="{{ lineage }}" as="b" hint-placeholder-count="0">
+            <path d="{{ b.d }}" fill="none" stroke="#E0B75C" stroke-linecap="round" opacity=".95" style="stroke-width: {{ b.w }}"></path>
+          </sc-for>
+          <sc-for list="{{ spouses }}" as="s" hint-placeholder-count="2">
+            <path d="{{ s.d }}" fill="none" stroke="#5A3E2B" stroke-width="1.8" stroke-dasharray="4 4" stroke-linecap="round"></path>
+          </sc-for>
+          <sc-for list="{{ leaves }}" as="l" hint-placeholder-count="0">
+            <ellipse cx="{{ l.x }}" cy="{{ l.y }}" rx="{{ l.rx }}" ry="{{ l.ry }}" transform="{{ l.tf }}" fill="{{ l.c }}" opacity="{{ l.o }}"></ellipse>
+          </sc-for>
+        </svg>
+        <div style="position:absolute;left:50%;bottom:1%;pointer-events:none;transform:translateX(-50%);font:italic 500 15px 'Cormorant Garamond',serif;color:rgba(74,51,34,.7);white-space:nowrap">Uống nước nhớ nguồn</div>
+
+        <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="12">
+          <div style="position:absolute;width:0;height:0;transition:opacity .25s ease;left: {{ n.l }};top: {{ n.t }};opacity: {{ n.op }};z-index: {{ n.z }}">
+            <sc-if value="{{ n.isMe }}"><div style="position:absolute;left:-21px;width:42px;height:18px;border-radius:999px;background:#C9A04A;box-shadow:0 0 0 2px #F4EBD6,0 4px 8px -4px rgba(58,42,28,.6);display:flex;align-items:center;justify-content:center;font:700 9.5px 'Be Vietnam Pro',sans-serif;letter-spacing:.12em;color:#2A1D14;pointer-events:none;z-index:2;top: {{ n.meT }}">BẠN</div></sc-if>
+            <sc-if value="{{ n.sel }}"><div style="position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(224,183,92,.6),rgba(224,183,92,0));pointer-events:none;width: {{ n.haloS }};height: {{ n.haloS }};left: {{ n.haloO }};top: {{ n.haloO }}"></div></sc-if>
+            <div onClick="{{ n.pick }}" style="position:absolute;cursor:pointer;transition:transform .2s ease;filter:drop-shadow(0 3px 5px rgba(58,42,28,.28));width: {{ n.w }};height: {{ n.h }};left: {{ n.ml }};top: {{ n.mt }}" style-active="{{ nodeActive }}">
+              <div style="position:absolute;inset:0;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background: {{ n.trim }}"></div>
+              <div style="position:absolute;inset:2px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#F4EBD6"></div>
+              <div style="position:absolute;inset:4px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background: {{ n.ticks }}"></div>
+              <div style="position:absolute;inset:6px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#F4EBD6"></div>
+              <div style="position:absolute;inset:7.5px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);overflow:hidden;background: {{ n.bg }}">
+                <div style="position:absolute;left:11%;width:78%;top:62%;aspect-ratio:1.5;border-radius:50% 50% 12% 12% / 70% 70% 10% 10%;background: {{ n.ao }}"></div>
+                <div style="position:absolute;left:44%;width:12%;top:61%;height:9%;background:rgba(244,235,214,.55);clip-path:polygon(0 0,100% 0,50% 100%)"></div>
+                <div style="position:absolute;left:32%;width:36%;top:28%;aspect-ratio:1;border-radius:50%;background:#E3C79C;box-shadow:inset -2px -3px 0 rgba(138,90,43,.18)"></div>
+                <sc-if value="{{ n.male }}"><div style="position:absolute;left:30%;width:40%;top:24%;height:11%;border-radius:40% 40% 20% 20%;background:repeating-linear-gradient(170deg,#2A1D14 0 2px,#4A3322 2px 3.5px)"></div></sc-if>
+                <sc-if value="{{ n.female }}"><div style="position:absolute;left:41%;width:18%;top:17%;aspect-ratio:1;border-radius:50%;background:#2A1D14"></div><div style="position:absolute;left:31%;width:38%;top:26%;height:11%;border-radius:50% 50% 18% 18%;background:#2A1D14"></div></sc-if>
+              </div>
+              <sc-if value="{{ n.head }}"><div style="position:absolute;right:-8px;top:-3px;width:20px;height:20px;border-radius:3px;background:#9E3B2C;transform:rotate(-8deg);box-shadow:inset 0 0 0 1.5px #9E3B2C,inset 0 0 0 2.5px #F4EBD6;display:flex;align-items:center;justify-content:center;font:700 12px 'Cormorant Garamond',serif;color:#F4EBD6">長</div></sc-if>
+              <sc-if value="{{ n.living }}"><div style="position:absolute;left:50%;bottom:-3px;margin-left:-4px;width:8px;height:8px;border-radius:50%;background:#4F7A57;box-shadow:0 0 0 2px #F4EBD6"></div></sc-if>
+            </div>
+            <div style="position:absolute;left:-65px;width:130px;text-align:center;pointer-events:none;text-shadow:0 0 3px #F6EEDB,0 0 6px #F6EEDB,0 0 10px #F6EEDB;top: {{ n.lblT }}">
+              <div style="font:700 13.5px/1.1 'Cormorant Garamond',serif;color: {{ n.nameC }}">{{ n.name }}</div>
+              <div style="font:500 9px 'Be Vietnam Pro',sans-serif;letter-spacing:.08em;white-space:nowrap;color:rgba(58,42,28,.62);margin-top:1px">{{ n.meta }}</div>
+              <sc-if value="{{ n.ended }}"><div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:3px"><div style="width:10px;height:1.5px;background:#5A3E2B"></div><div style="font:600 8.5px 'Be Vietnam Pro',sans-serif;letter-spacing:.14em;color:#5A3E2B">DỨT NHÁNH</div><div style="width:10px;height:1.5px;background:#5A3E2B"></div></div></sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="position:absolute;right:14px;bottom:146px;z-index:4;display:flex;flex-direction:column;gap:6px">
+      <div onClick="{{ zoomIn }}" style="width:44px;height:44px;border-radius:14px;background:rgba(251,246,234,.94);border:1px solid rgba(90,62,43,.25);display:flex;align-items:center;justify-content:center;font:400 20px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;cursor:pointer;box-shadow:0 4px 10px -6px rgba(58,42,28,.5)">+</div>
+      <div onClick="{{ zoomOut }}" style="width:44px;height:44px;border-radius:14px;background:rgba(251,246,234,.94);border:1px solid rgba(90,62,43,.25);display:flex;align-items:center;justify-content:center;font:400 20px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;cursor:pointer;box-shadow:0 4px 10px -6px rgba(58,42,28,.5)">−</div>
+      <sc-if value="{{ hasMe }}"><div onClick="{{ toMe }}" style="width:44px;height:44px;border-radius:14px;background:#C9A04A;display:flex;align-items:center;justify-content:center;color:#2A1D14;cursor:pointer;box-shadow:0 4px 10px -6px rgba(58,42,28,.7)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c1-3.8 3.8-5.5 7-5.5s6 1.7 7 5.5"></path></svg>
+      </div></sc-if>
+      <div onClick="{{ toRoot }}" style="width:44px;height:44px;border-radius:14px;background:#2F4A36;display:flex;align-items:center;justify-content:center;color:#F4EBD6;cursor:pointer;box-shadow:0 4px 10px -6px rgba(47,74,54,.8)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 4v10"></path><path d="M12 14c-2 1-4 3-5 6"></path><path d="M12 14c2 1 4 3 5 6"></path><path d="M12 14v6"></path></svg>
+      </div>
+    </div>
+
+    <sc-if value="{{ sheetOpen }}">
+      <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;z-index:5;background:rgba(42,29,20,.22)"></div>
+    </sc-if>
+
+    <div style="position:absolute;left:0;right:0;bottom:0;z-index:6;border-radius:24px 24px 0 0;background:#F6EEDB;box-shadow:0 -10px 30px -12px rgba(58,42,28,.45),inset 0 1px 0 rgba(255,255,255,.6);display:flex;flex-direction:column;transition:height .32s cubic-bezier(.3,.8,.3,1);height: {{ sheetH }}">
+      <div onClick="{{ toggleSheet }}" style="flex:none;padding:8px 18px 12px;cursor:pointer">
+        <div style="width:36px;height:4px;border-radius:2px;background:rgba(90,62,43,.28);margin:0 auto 10px"></div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="position:relative;width:56px;height:64px;flex:none;filter:drop-shadow(0 4px 6px rgba(58,42,28,.25))">
+            <div style="position:absolute;inset:0;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background: {{ sel.trim }}"></div>
+            <div style="position:absolute;inset:2px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#F4EBD6"></div>
+            <div style="position:absolute;inset:4px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background: {{ sel.ticks }}"></div>
+            <div style="position:absolute;inset:6px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#F4EBD6"></div>
+            <div style="position:absolute;inset:7.5px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);overflow:hidden;background: {{ sel.bg }}">
+              <div style="position:absolute;left:11%;width:78%;top:62%;aspect-ratio:1.5;border-radius:50% 50% 12% 12% / 70% 70% 10% 10%;background: {{ sel.ao }}"></div>
+              <div style="position:absolute;left:32%;width:36%;top:28%;aspect-ratio:1;border-radius:50%;background:#E3C79C"></div>
+              <sc-if value="{{ sel.male }}"><div style="position:absolute;left:30%;width:40%;top:24%;height:11%;border-radius:40% 40% 20% 20%;background:#2A1D14"></div></sc-if>
+              <sc-if value="{{ sel.female }}"><div style="position:absolute;left:41%;width:18%;top:17%;aspect-ratio:1;border-radius:50%;background:#2A1D14"></div><div style="position:absolute;left:31%;width:38%;top:26%;height:11%;border-radius:50% 50% 18% 18%;background:#2A1D14"></div></sc-if>
+            </div>
+            <sc-if value="{{ sel.head }}"><div style="position:absolute;right:-7px;top:-2px;width:20px;height:20px;border-radius:3px;background:#9E3B2C;transform:rotate(-8deg);box-shadow:inset 0 0 0 1.5px #9E3B2C,inset 0 0 0 2.5px #F4EBD6;display:flex;align-items:center;justify-content:center;font:700 12px 'Cormorant Garamond',serif;color:#F4EBD6">長</div></sc-if>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font:700 22px/1.1 'Cormorant Garamond',serif;color:#2A3B2C">{{ sel.name }}</div>
+            <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.72);margin-top:3px">{{ sel.meta }}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">
+              <div style="padding:2px 9px;border-radius:999px;font:500 10.5px 'Be Vietnam Pro',sans-serif;background: {{ sel.stBg }};color: {{ sel.stFg }}">{{ sel.status }}</div>
+              <sc-if value="{{ sel.role }}"><div style="padding:2px 9px;border-radius:999px;font:500 10.5px 'Be Vietnam Pro',sans-serif;background: {{ sel.roleBg }};color:#F4EBD6">{{ sel.role }}</div></sc-if>
+            </div>
+          </div>
+          <div style="width:36px;height:36px;flex:none;border-radius:50%;background:rgba(90,62,43,.08);display:flex;align-items:center;justify-content:center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5A3E2B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;transition:transform .3s ease;transform: {{ chevTf }}"><path d="M6 15l6-6 6 6"></path></svg>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:0 18px 40px">
+        <div style="border-top:1px solid rgba(90,62,43,.2);padding-top:14px;display:grid;grid-template-columns:84px minmax(0,1fr);row-gap:9px;column-gap:12px;font:400 12.5px/1.5 'Be Vietnam Pro',sans-serif">
+          <sc-if value="{{ sel.kin }}"><div style="color:rgba(58,42,28,.6)">Với bạn</div><div style="color:#8A4A1C;font-weight:600">{{ sel.kin }}</div></sc-if>
+          <div style="color:rgba(58,42,28,.6)">Sinh – mất</div><div style="color:#3A2A1C">{{ sel.years }}</div>
+          <sc-if value="{{ sel.gio }}"><div style="color:rgba(58,42,28,.6)">Ngày giỗ</div><div style="color:#3A2A1C">{{ sel.gio }}</div></sc-if>
+          <sc-if value="{{ sel.live }}"><div style="color:rgba(58,42,28,.6)">Đang sống tại</div><div style="color:#3A2A1C">{{ sel.live }}</div></sc-if>
+          <sc-if value="{{ sel.an }}"><div style="color:rgba(58,42,28,.6)">Nơi an táng</div><div style="color:#3A2A1C">{{ sel.an }}</div></sc-if>
+          <sc-if value="{{ sel.phap }}"><div style="color:rgba(58,42,28,.6)">Pháp danh</div><div style="color:#3A2A1C">{{ sel.phap }}</div></sc-if>
+          <sc-if value="{{ sel.tho }}"><div style="color:rgba(58,42,28,.6)">Bài vị thờ tại</div><div onClick="{{ sel.openTho }}" style="color:#8A4A1C;font-weight:500;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(138,74,28,.35);text-underline-offset:3px">{{ sel.tho }}</div></sc-if>
+          <div style="color:rgba(58,42,28,.6)">Chi</div><div style="color:#3A2A1C">{{ sel.branch }}</div>
+        </div>
+        <sc-if value="{{ sel.note }}">
+          <div style="margin-top:14px;padding:12px 14px;border-radius:4px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.16);font:italic 500 16px/1.5 'Cormorant Garamond',serif;color:#3A2A1C;text-wrap:pretty">{{ sel.note }}</div>
+        </sc-if>
+
+        <sc-if value="{{ sel.dead }}">
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:20px">TƯỞNG NIỆM</div>
+          <div style="margin-top:10px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);padding:14px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:44px;height:44px;flex:none;border-radius:50%;background:rgba(158,59,44,.1);box-shadow:inset 0 0 0 1px rgba(158,59,44,.28);display:flex;align-items:center;justify-content:center;font:700 18px 'Cormorant Garamond',serif;color:#9E3B2C">忌</div>
+              <div style="flex:1;min-width:0">
+                <div style="font:700 18px/1.2 'Cormorant Garamond',serif;color:#2A3B2C">{{ sel.gioTitle }}</div>
+                <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-top:2px">{{ sel.gioSub }}</div>
+              </div>
+            </div>
+            <div onClick="{{ sel.gioTap }}" style="margin-top:12px;min-height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;font:500 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer;background: {{ sel.gioBtnBg }};color: {{ sel.gioBtnFg }};box-shadow: {{ sel.gioBtnBd }}">{{ sel.gioBtn }}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:8px">
+            <div onClick="{{ sel.offer }}" style="min-height:64px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);padding:10px 12px;display:flex;flex-direction:column;justify-content:center;cursor:pointer">
+              <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:14px;border-radius:50% 50% 45% 45%/62% 62% 38% 38%;background:linear-gradient(180deg,#F3C673,#D9963C);flex:none"></div><div style="font:600 12.5px 'Be Vietnam Pro',sans-serif;color:#3A2A1C">Thắp đèn</div></div>
+              <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6);margin-top:4px">Cúng dường hồi hướng</div>
+            </div>
+            <div onClick="{{ sel.chant }}" style="min-height:64px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);padding:10px 12px;display:flex;flex-direction:column;justify-content:center;cursor:pointer">
+              <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:2px;box-shadow:inset 0 0 0 1.5px #5A3E2B;flex:none"></div><div style="font:600 12.5px 'Be Vietnam Pro',sans-serif;color:#3A2A1C">Tụng kinh</div></div>
+              <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6);margin-top:4px">Hồi hướng công đức</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:20px">QUAN HỆ</div>
+        <div style="display:flex;flex-direction:column;margin-top:4px">
+          <sc-for list="{{ sel.rels }}" as="r" hint-placeholder-count="3">
+            <div onClick="{{ r.pick }}" style="display:flex;align-items:center;gap:10px;min-height:44px;border-bottom:1px solid rgba(90,62,43,.1);cursor:pointer">
+              <div style="width:64px;flex:none;font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6)">{{ r.k }}</div>
+              <div style="flex:1;min-width:0;padding:6px 0"><div style="font:600 16px 'Cormorant Garamond',serif;color:#2A3B2C">{{ r.name }}</div><sc-if value="{{ r.live }}"><div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.55);margin-top:1px">{{ r.live }}</div></sc-if></div>
+              <div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.5)">{{ r.gen }}</div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(58,42,28,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none"><path d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:20px">{{ chainLbl }}</div>
+        <div style="display:flex;flex-direction:column;margin-top:10px">
+          <sc-for list="{{ sel.chain }}" as="c" hint-placeholder-count="4">
+            <div onClick="{{ c.pick }}" style="display:flex;align-items:stretch;gap:12px;cursor:pointer">
+              <div style="width:14px;flex:none;display:flex;flex-direction:column;align-items:center">
+                <div style="width:10px;height:11px;margin-top:4px;flex:none;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background: {{ c.dot }}"></div>
+                <sc-if value="{{ c.more }}"><div style="flex:1;width:1.5px;background:rgba(201,160,74,.7);min-height:14px"></div></sc-if>
+              </div>
+              <div style="padding-bottom:10px;min-width:0">
+                <div style="font:600 15px 'Cormorant Garamond',serif;color: {{ c.fg }}">{{ c.name }}</div>
+                <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.55)">{{ c.meta }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <div style="flex:1;height:48px;border-radius:999px;background:#2F4A36;color:#F4EBD6;display:flex;align-items:center;justify-content:center;font:500 13.5px 'Be Vietnam Pro',sans-serif;cursor:pointer">Hồ sơ đầy đủ</div>
+          <div onClick="{{ ctaTap }}" style="flex:1;height:48px;border-radius:999px;border:1px solid rgba(47,74,54,.45);color:#2F4A36;display:flex;align-items:center;justify-content:center;font:500 13.5px 'Be Vietnam Pro',sans-serif;cursor:pointer">{{ sel.cta }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+
+
+
+  <sc-if value="{{ switcherOpen }}">
+    <div onClick="{{ toggleSwitcher }}" style="position:absolute;inset:0;z-index:18;background:rgba(42,29,20,.28)"></div>
+    <div style="position:absolute;left:12px;right:12px;top:106px;z-index:19;border-radius:20px;background:#F6EEDB;box-shadow:0 18px 40px -16px rgba(30,23,18,.6);padding:8px">
+      <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;padding:10px 12px 6px">GIA PHẢ CỦA BẠN</div>
+      <sc-for list="{{ views }}" as="v" hint-placeholder-count="3">
+        <div onClick="{{ v.pick }}" style="display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 12px;border-radius:14px;cursor:pointer;background: {{ v.bg }}">
+          <div style="width:36px;height:36px;flex:none;border-radius:6px;display:flex;align-items:center;justify-content:center;font:700 17px 'Cormorant Garamond',serif;color:#F4EBD6;transform:rotate(-4deg);background: {{ v.seal }}">{{ v.glyph }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font:600 18px/1.15 'Cormorant Garamond',serif;color:#2A3B2C">{{ v.title }}</div>
+            <div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.62);margin-top:2px">{{ v.sub }}</div>
+          </div>
+          <sc-if value="{{ v.on }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F4A36" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+        </div>
+      </sc-for>
+      <div style="height:1px;background:rgba(90,62,43,.14);margin:6px 12px"></div>
+      <div onClick="{{ openPk }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:6px 12px;border-radius:14px;cursor:pointer">
+        <div style="width:36px;height:36px;flex:none;border-radius:6px;display:flex;align-items:center;justify-content:center;font:700 17px 'Cormorant Garamond',serif;color:#9E3B2C;box-shadow:inset 0 0 0 1.5px #9E3B2C">記</div>
+        <div style="flex:1;min-width:0"><div style="font:600 17px/1.15 'Cormorant Garamond',serif;color:#2A3B2C">Phả ký dòng họ</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.62);margin-top:2px">Nguồn gốc, mốc lịch sử, nhà thờ họ, gia huấn</div></div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(58,42,28,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none"><path d="M9 5l7 7-7 7"></path></svg>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ pkOpen }}">
+    <div data-screen-label="Phả ký dòng họ" style="position:absolute;inset:0;z-index:21;background:#F6EEDB;display:flex;flex-direction:column">
+      <div style="flex:none;display:flex;align-items:center;gap:8px;padding:56px 12px 10px;border-bottom:1px solid rgba(90,62,43,.16)">
+        <div onClick="{{ closePk }}" style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3A2A1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M15 5l-7 7 7 7"></path></svg>
+        </div>
+        <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;color:#2A3B2C">Phả ký</div>
+        <div onClick="{{ pkEditTap }}" style="height:44px;min-width:44px;padding:0 10px;display:flex;align-items:center;justify-content:flex-end;font:600 14px 'Be Vietnam Pro',sans-serif;color:#2F4A36;cursor:pointer">{{ pkEditLbl }}</div>
+      </div>
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:0 20px 40px">
+        <sc-if value="{{ pkTabsOn }}">
+          <div style="display:flex;gap:6px;margin-top:14px">
+            <sc-for list="{{ pkTabs }}" as="t" hint-placeholder-count="2">
+              <div onClick="{{ t.pick }}" style="flex:1;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer;background: {{ t.bg }};color: {{ t.fg }};border:1px solid {{ t.bd }}">{{ t.label }}</div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;margin-top:22px">
+          <div style="width:52px;height:52px;border-radius:6px;background:#9E3B2C;display:flex;align-items:center;justify-content:center;transform:rotate(-4deg);box-shadow:inset 0 0 0 2px #9E3B2C,inset 0 0 0 3px #F4EBD6;font:700 26px 'Cormorant Garamond',serif;color:#F4EBD6">{{ pk.seal }}</div>
+          <div style="font:700 30px/1.1 'Cormorant Garamond',serif;color:#2A3B2C;margin-top:14px">{{ pk.title }}</div>
+          <sc-if value="{{ pkView }}"><div style="font:400 12px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.7);margin-top:4px">{{ pk.home }}</div></sc-if>
+          <sc-if value="{{ pkEditing }}"><div style="width:100%;text-align:left;margin-top:14px"><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Quê gốc</div><input value="{{ pk.home }}" onChange="{{ pkOn.home }}" placeholder="Xã, huyện, tỉnh" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div></sc-if>
+          <div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;color:#8A4A1C;margin-top:6px">{{ pk.meta }}</div>
+        </div>
+
+        <sc-if value="{{ pkEditing }}"><div style="margin-top:16px;padding:10px 14px;border-radius:6px;background:rgba(47,74,54,.1);font:400 12px/1.5 'Be Vietnam Pro',sans-serif;color:#2F4A36">Đang sửa phả ký. Bấm <b>Xong</b> để lưu.</div></sc-if>
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:26px">NGUỒN GỐC</div>
+        <div onClick="{{ pk.openFounder }}" style="margin-top:10px;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);cursor:pointer">
+          <div style="width:30px;height:33px;flex:none;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(135deg,#E8C977,#A7782C)"></div>
+          <div style="flex:1;min-width:0"><div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6)">Thủy tổ</div><div style="font:700 18px/1.2 'Cormorant Garamond',serif;color:#2A3B2C">{{ pk.founder }}</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-top:1px">{{ pk.founderYears }}</div></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(58,42,28,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none"><path d="M9 5l7 7-7 7"></path></svg>
+        </div>
+        <sc-if value="{{ pkView }}">
+          <sc-if value="{{ pk.hasOrigin }}"><div style="margin-top:12px;font:500 17px/1.6 'Cormorant Garamond',serif;color:#3A2A1C;text-wrap:pretty">{{ pk.origin }}</div></sc-if>
+          <sc-if value="{{ pk.noOrigin }}"><div onClick="{{ pkEditTap }}" style="margin-top:12px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);cursor:pointer">Chưa có tiểu sử dòng họ. Bấm để viết về quê gốc, thủy tổ và quá trình lập nghiệp.</div></sc-if>
+        </sc-if>
+        <sc-if value="{{ pkEditing }}"><textarea value="{{ pk.origin }}" onChange="{{ pkOnOrigin }}" rows="6" placeholder="Quê gốc, thủy tổ, quá trình lập nghiệp…" style="margin-top:12px;width:100%;box-sizing:border-box;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:10px 12px;outline:0;resize:vertical;font:400 13px/1.6 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></textarea></sc-if>
+
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:26px">MỐC LỊCH SỬ</div>
+        <sc-if value="{{ pkEditing }}">
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+            <sc-for list="{{ pk.tlEd }}" as="e" hint-placeholder-count="3">
+              <div style="display:flex;gap:8px;align-items:flex-start">
+                <input value="{{ e.y }}" onChange="{{ e.onY }}" inputmode="numeric" placeholder="Năm" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;width:72px;flex:none;padding:0 10px">
+                <textarea value="{{ e.t }}" onChange="{{ e.onT }}" rows="2" placeholder="Sự kiện" style="flex:1;min-width:0;box-sizing:border-box;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:10px 12px;outline:0;resize:vertical;font:400 13px/1.5 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></textarea>
+                <div onClick="{{ e.del }}" style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2" stroke-linecap="round" style="display:block"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
+              </div>
+            </sc-for>
+            <div onClick="{{ pk.tlAdd }}" style="min-height:44px;border-radius:6px;border:1px dashed rgba(47,74,54,.45);display:flex;align-items:center;justify-content:center;font:500 12.5px 'Be Vietnam Pro',sans-serif;color:#2F4A36;cursor:pointer">+ Thêm mốc</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ pk.hasTlV }}">
+          <div style="display:flex;flex-direction:column;margin-top:12px">
+            <sc-for list="{{ pk.tl }}" as="e" hint-placeholder-count="4">
+              <div style="display:flex;gap:12px;align-items:stretch">
+                <div style="width:46px;flex:none;font:700 17px/1.2 'Cormorant Garamond',serif;color:#8A4A1C;text-align:right">{{ e.y }}</div>
+                <div style="width:12px;flex:none;display:flex;flex-direction:column;align-items:center">
+                  <div style="width:9px;height:9px;border-radius:50%;background:#C9A04A;margin-top:5px;flex:none"></div>
+                  <sc-if value="{{ e.more }}"><div style="flex:1;width:1.5px;background:rgba(90,62,43,.22);margin-top:3px"></div></sc-if>
+                </div>
+                <div style="flex:1;min-width:0;padding-bottom:16px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;color:#3A2A1C;text-wrap:pretty">{{ e.t }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ pk.noTlV }}"><div style="margin-top:10px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65)">Chưa có mốc nào. Ghi lại năm lập nghiệp, dựng nhà thờ họ, các lần tu bổ.</div></sc-if>
+
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:22px">NHÀ THỜ HỌ</div>
+        <sc-if value="{{ pkEditing }}">
+          <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Tên nhà thờ họ</div><input value="{{ pk.thoName }}" onChange="{{ pkOn.thoName }}" placeholder="Nhà thờ tổ họ …" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Địa chỉ</div><input value="{{ pk.thoAddr }}" onChange="{{ pkOn.thoAddr }}" placeholder="Thôn, xã, huyện, tỉnh" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Ngày chạp họ (âm lịch)</div><input value="{{ pk.chap }}" onChange="{{ pkOn.chap }}" placeholder="Ngày 20 tháng Chạp" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ pk.showTho }}">
+          <div style="margin-top:10px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);overflow:hidden">
+            <div style="position:relative;height:150px;background:rgba(90,62,43,.1)"><image-slot id="{{ pk.thoImg }}" shape="rect" placeholder="Ảnh nhà thờ họ"></image-slot></div>
+            <div style="padding:14px">
+              <div style="font:700 19px/1.2 'Cormorant Garamond',serif;color:#2A3B2C">{{ pk.thoName }}</div>
+              <div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.7);margin-top:3px">{{ pk.thoAddr }}</div>
+              <div style="display:grid;grid-template-columns:96px minmax(0,1fr);row-gap:8px;column-gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(90,62,43,.14);font:400 12.5px/1.5 'Be Vietnam Pro',sans-serif">
+                <div style="color:rgba(58,42,28,.6);align-self:center">Trưởng họ</div><div style="display:flex;align-items:center;gap:8px;min-width:0"><div onClick="{{ pk.openKeeper }}" style="flex:1;min-width:0;color:#8A4A1C;font-weight:500;cursor:pointer">{{ pk.keeper }}</div><div onClick="{{ pk.headPick }}" style="flex:none;height:32px;padding:0 12px;border-radius:999px;display:flex;align-items:center;font:500 11.5px 'Be Vietnam Pro',sans-serif;color:#2F4A36;box-shadow:inset 0 0 0 1px rgba(47,74,54,.4);cursor:pointer">Đổi</div></div>
+                <div style="color:rgba(58,42,28,.6)">Giỗ tổ</div><div style="color:#3A2A1C">{{ pk.gioTo }}</div>
+                <div style="color:rgba(58,42,28,.6)">Chạp họ</div><div style="color:#3A2A1C">{{ pk.chap }}</div>
+              </div>
+              <div onClick="{{ pk.gioTap }}" style="margin-top:14px;min-height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer;background: {{ pk.gioBg }};color: {{ pk.gioFg }};box-shadow: {{ pk.gioBd }}">{{ pk.gioBtn }}</div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ pk.noThoV }}"><div style="margin-top:10px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65)">Chưa có thông tin nhà thờ họ.</div></sc-if>
+
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:22px">GIA HUẤN</div>
+        <sc-if value="{{ pkEditing }}">
+          <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:8px">
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Hoành phi (chữ Hán)</div><input value="{{ pk.hpHan }}" onChange="{{ pkOn.hpHan }}" placeholder="祖德流光" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Phiên âm · nghĩa</div><input value="{{ pk.hp }}" onChange="{{ pkOn.hp }}" placeholder="Tổ đức lưu quang" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+            </div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Câu đối · vế trên</div><input value="{{ pk.cd0 }}" onChange="{{ pkOn.cd0 }}" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Câu đối · vế dưới</div><input value="{{ pk.cd1 }}" onChange="{{ pkOn.cd1 }}" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+            <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px;margin:0 0 -6px">Lời dạy</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ pk.showHp }}">
+          <div style="margin-top:12px;padding:16px 14px;border-radius:4px;background:#5A2A1E;box-shadow:inset 0 0 0 2px #5A2A1E,inset 0 0 0 3px #C9A04A;text-align:center">
+            <div style="font:700 24px/1.2 'Cormorant Garamond',serif;color:#E8C977;letter-spacing:.06em">{{ pk.hpHan }}</div>
+            <div style="font:500 11px 'Be Vietnam Pro',sans-serif;color:rgba(244,235,214,.8);margin-top:4px">{{ pk.hp }}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:8px">
+            <sc-for list="{{ pk.cd }}" as="c" hint-placeholder-count="2">
+              <div style="padding:12px;border-radius:4px;background:rgba(158,59,44,.08);box-shadow:inset 0 0 0 1px rgba(158,59,44,.25);font:italic 500 15px/1.45 'Cormorant Garamond',serif;color:#5A2A1E;text-align:center;text-wrap:pretty">{{ c }}</div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ pkView }}">
+          <sc-if value="{{ pk.hasGh }}"><div style="margin-top:12px;padding:12px 14px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);font:italic 500 16px/1.55 'Cormorant Garamond',serif;color:#3A2A1C;text-wrap:pretty">{{ pk.gh }}</div></sc-if>
+          <sc-if value="{{ pk.noGh }}"><div onClick="{{ pkEditTap }}" style="margin-top:10px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);cursor:pointer">Chưa có gia huấn. Bấm để ghi lời dạy của ông bà.</div></sc-if>
+        </sc-if>
+        <sc-if value="{{ pkEditing }}"><textarea value="{{ pk.gh }}" onChange="{{ pkOnGh }}" rows="4" placeholder="Lời dạy, gia quy của dòng họ…" style="margin-top:12px;width:100%;box-sizing:border-box;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:10px 12px;outline:0;resize:vertical;font:400 13px/1.6 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></textarea></sc-if>
+
+        <sc-if value="{{ pk.hasPeople }}">
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:22px">NGƯỜI TIÊU BIỂU</div>
+          <div style="display:flex;flex-direction:column;margin-top:4px">
+            <sc-for list="{{ pk.people }}" as="r" hint-placeholder-count="3">
+              <div onClick="{{ r.pick }}" style="display:flex;align-items:center;gap:10px;min-height:56px;border-bottom:1px solid rgba(90,62,43,.1);cursor:pointer">
+                <div style="flex:1;min-width:0;padding:8px 0"><div style="font:600 17px 'Cormorant Garamond',serif;color:#2A3B2C">{{ r.name }}</div><div style="font:400 11px/1.45 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.62);margin-top:1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ r.sub }}</div></div>
+                <div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.5);flex:none">{{ r.gen }}</div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(58,42,28,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none"><path d="M9 5l7 7-7 7"></path></svg>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="font:400 11px/1.6 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.5);margin-top:22px;text-align:center">{{ pk.foot }}</div>
+      </div>
+      <sc-if value="{{ hpOpen }}">
+        <div onClick="{{ hpClose }}" style="position:absolute;inset:0;background:rgba(42,29,20,.32)"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;max-height:78%;display:flex;flex-direction:column;border-radius:20px 20px 0 0;background:#F6EEDB;box-shadow:0 -18px 40px -16px rgba(30,23,18,.5)">
+          <div style="flex:none;padding:10px 20px 12px;border-bottom:1px solid rgba(90,62,43,.14)">
+            <div style="width:40px;height:4px;border-radius:2px;background:rgba(90,62,43,.25);margin:0 auto 12px"></div>
+            <div style="font:700 21px 'Cormorant Garamond',serif;color:#2A3B2C">Chọn tộc trưởng mới</div>
+            <div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-top:3px;text-wrap:pretty">Theo lệ, tộc trưởng thường là con trai trưởng của chi trưởng. Chỉ hiện nam giới còn sống trong họ.</div>
+          </div>
+          <div style="flex:1;min-height:0;overflow-y:auto;padding:4px 20px 28px">
+            <sc-for list="{{ hpList }}" as="c" hint-placeholder-count="5">
+              <div onClick="{{ c.pick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;border-bottom:1px solid rgba(90,62,43,.1);cursor:pointer">
+                <div style="flex:1;min-width:0"><div style="font:600 17px 'Cormorant Garamond',serif;color:#2A3B2C">{{ c.name }}</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.62);margin-top:1px">{{ c.sub }}</div></div>
+                <sc-if value="{{ c.on }}"><div style="flex:none;padding:3px 9px;border-radius:999px;background:#9E3B2C;font:500 10.5px 'Be Vietnam Pro',sans-serif;color:#F4EBD6">Hiện tại</div></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ hpConfirm }}">
+        <div style="position:absolute;inset:0;background:rgba(42,29,20,.4);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:100%;max-width:340px;border-radius:18px;background:#F6EEDB;padding:20px;box-shadow:0 18px 40px -12px rgba(30,23,18,.6)">
+            <div style="font:700 21px/1.25 'Cormorant Garamond',serif;color:#2A3B2C">Chuyển tộc trưởng?</div>
+            <div style="font:400 13px/1.6 'Be Vietnam Pro',sans-serif;color:#3A2A1C;margin-top:8px;text-wrap:pretty">{{ hpMsg }}</div>
+            <div style="display:flex;gap:8px;margin-top:18px">
+              <div onClick="{{ hpCancel }}" style="flex:1;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;box-shadow:inset 0 0 0 1px rgba(90,62,43,.3);cursor:pointer">Hủy</div>
+              <div onClick="{{ hpOk }}" style="flex:1;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;color:#F4EBD6;background:#9E3B2C;cursor:pointer">Xác nhận</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ setupOpen }}">
+    <div data-screen-label="Tạo gia phả" style="position:absolute;inset:0;z-index:22;background:#F6EEDB;display:flex;flex-direction:column">
+      <div style="flex:none;display:flex;align-items:center;gap:8px;padding:56px 12px 10px;border-bottom:1px solid rgba(90,62,43,.16)">
+        <div onClick="{{ cancelSetup }}" style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3A2A1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M15 5l-7 7 7 7"></path></svg>
+        </div>
+        <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;color:#2A3B2C">Tạo gia phả</div>
+        <div style="width:44px;flex:none"></div>
+      </div>
+      <div ref="{{ sScRef }}" style="flex:1;min-height:0;overflow-y:auto;padding:20px 20px 40px;display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:22px 16px;border-radius:18px;background:#FBF6EA;border:1px solid rgba(90,62,43,.16)">
+          <div style="width:18px;height:20px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#C9A04A"></div>
+          <div style="font:600 26px/1.1 'Cormorant Garamond',serif;color:#2A3B2C;margin-top:4px">{{ sTitle }}</div>
+          <div style="font:400 12px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6)">{{ sSub }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">DÒNG HỌ</div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Tên dòng họ</div><input data-ek="name" value="{{ sName }}" onChange="{{ onSName }}" placeholder="VD: Họ Trần Văn" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1.5px solid {{ sE.name.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"><sc-if value="{{ sE.name.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.name.msg }}</div></sc-if></div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Quê gốc</div><input data-ek="home" value="{{ sHome }}" onChange="{{ onSHome }}" placeholder="VD: Hành Thiện, Nam Định" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1.5px solid {{ sE.home.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"><sc-if value="{{ sE.home.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.home.msg }}</div></sc-if></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">THỦY TỔ · ĐỜI 1</div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Họ và tên</div><input data-ek="fn" value="{{ sFn }}" onChange="{{ onSFn }}" placeholder="VD: Trần Văn Khải" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1.5px solid {{ sE.fn.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"><sc-if value="{{ sE.fn.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.fn.msg }}</div></sc-if></div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Năm sinh</div><input data-ek="fb" value="{{ sFb }}" onChange="{{ onSFb }}" inputmode="numeric" placeholder="VD: 1820" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1.5px solid {{ sE.fb.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"><sc-if value="{{ sE.fb.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.fb.msg }}</div></sc-if></div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Trạng thái</div><div style="display:flex;gap:8px"><sc-for list="{{ sStates }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div></div>
+          <sc-if value="{{ sDead }}">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:10px">
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Năm mất</div><input data-ek="fd" value="{{ sFd }}" onChange="{{ onSFd }}" inputmode="numeric" placeholder="VD: 1890" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1.5px solid {{ sE.fd.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"><sc-if value="{{ sE.fd.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.fd.msg }}</div></sc-if></div>
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Ngày giỗ (âm lịch)</div><input value="{{ sGio }}" onChange="{{ onSGio }}" placeholder="VD: 15 tháng Chạp" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1px solid rgba(90,62,43,.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+            </div>
+          </sc-if>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Vợ thủy tổ (không bắt buộc)</div><input value="{{ sWife }}" onChange="{{ onSWife }}" placeholder="VD: Lê Thị Hiền" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1px solid rgba(90,62,43,.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+        </div>
+        
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div onClick="{{ doCreate }}" style="height:50px;border-radius:999px;background:#2F4A36;color:#F4EBD6;display:flex;align-items:center;justify-content:center;font:500 14px 'Be Vietnam Pro',sans-serif;cursor:pointer">Tạo gia phả</div>
+          <div style="text-align:center;font:400 11.5px/1.5 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.55)">Sau khi tạo, bạn thêm con cháu từng đời bằng nút +</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ hasToast }}">
+    <div style="position:absolute;left:16px;right:16px;top:58px;z-index:25;padding:12px 16px;border-radius:14px;background:#2F4A36;color:#F4EBD6;font:500 13px 'Be Vietnam Pro',sans-serif;box-shadow:0 10px 24px -12px rgba(30,23,18,.6)">{{ toast }}</div>
+  </sc-if>
+  <sc-if value="{{ formOpen }}">
+    <div data-screen-label="Thêm người vào gia phả" style="position:absolute;inset:0;z-index:20;background:#F6EEDB;display:flex;flex-direction:column">
+      <div style="flex:none;display:flex;align-items:center;gap:8px;padding:56px 12px 10px;border-bottom:1px solid rgba(90,62,43,.16)">
+        <div onClick="{{ closeForm }}" style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3A2A1C" stroke-width="2" stroke-linecap="round" style="display:block"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </div>
+        <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;color:#2A3B2C">Thêm người vào gia phả</div>
+        <div onClick="{{ saveForm }}" style="height:44px;padding:0 12px;display:flex;align-items:center;font:600 14px 'Be Vietnam Pro',sans-serif;color:#2F4A36;cursor:pointer">Lưu</div>
+      </div>
+      <div ref="{{ fScRef }}" style="flex:1;min-height:0;overflow-y:auto;padding:18px 20px 40px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">QUAN HỆ</div>
+          <div style="display:flex;gap:8px"><sc-for list="{{ fRelKinds }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:#FBF6EA;border:1px solid rgba(90,62,43,.18)">
+            <div style="width:12px;height:13px;flex:none;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#C9A04A"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font:700 17px 'Cormorant Garamond',serif;color:#2A3B2C">{{ fRelName }}</div>
+              <div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6);margin-top:1px">{{ fRelMeta }}</div>
+            </div>
+            <div onClick="{{ togglePicker }}" style="height:34px;padding:0 14px;border-radius:999px;border:1px solid rgba(47,74,54,.45);display:flex;align-items:center;font:500 12px 'Be Vietnam Pro',sans-serif;color:#2F4A36;cursor:pointer">{{ pickerLbl }}</div>
+          </div>
+          <sc-if value="{{ pickerOpen }}">
+            <div style="max-height:240px;overflow-y:auto;border-radius:14px;background:#FBF6EA;border:1px solid rgba(90,62,43,.18)">
+              <sc-for list="{{ fPeople }}" as="p" hint-placeholder-count="6">
+                <div onClick="{{ p.pick }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:0 14px;border-bottom:1px solid rgba(90,62,43,.08);cursor:pointer;background: {{ p.bg }}">
+                  <div style="font:600 15px 'Cormorant Garamond',serif;color: {{ p.fg }}">{{ p.name }}</div>
+                  <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.55);white-space:nowrap">{{ p.meta }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div data-ek="rel" style="font:italic 500 15px 'Cormorant Garamond',serif;color:#8A4A1C">{{ fPreview }}</div>
+          <sc-if value="{{ fE.rel.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.rel.msg }}</div></sc-if>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">THÔNG TIN</div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Họ và tên</div><input data-ek="name" value="{{ fName }}" onChange="{{ onFName }}" placeholder="VD: Nguyễn Hữu Bảo" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1.5px solid {{ fE.name.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"><sc-if value="{{ fE.name.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.name.msg }}</div></sc-if></div>
+          <div>
+            <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Giới tính</div>
+            <div style="display:flex;gap:8px"><sc-for list="{{ fSexes }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div>
+            <sc-if value="{{ fSexLocked }}"><div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.55);margin-top:6px">Tự chọn theo người phối ngẫu</div></sc-if>
+          </div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Năm sinh</div><input data-ek="b" value="{{ fB }}" onChange="{{ onFB }}" inputmode="numeric" placeholder="VD: 1998" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1.5px solid {{ fE.b.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"><sc-if value="{{ fE.b.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.b.msg }}</div></sc-if></div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Trạng thái</div><div style="display:flex;gap:8px"><sc-for list="{{ fStates }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div></div>
+          <sc-if value="{{ fAlive }}">
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Nơi sinh sống hiện tại</div><input data-ek="live" value="{{ fLive }}" onChange="{{ onFLive }}" placeholder="VD: Cầu Giấy, Hà Nội" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1.5px solid {{ fE.live.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"><sc-if value="{{ fE.live.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.live.msg }}</div></sc-if></div>
+          </sc-if>
+          <sc-if value="{{ fDead }}">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:10px">
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Năm mất</div><input data-ek="d" value="{{ fD }}" onChange="{{ onFD }}" inputmode="numeric" placeholder="VD: 2015" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1.5px solid {{ fE.d.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"><sc-if value="{{ fE.d.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.d.msg }}</div></sc-if></div>
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Ngày giỗ (âm lịch)</div><input value="{{ fGio }}" onChange="{{ onFGio }}" placeholder="VD: 15 tháng Chạp" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1px solid rgba(90,62,43,.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ fDead }}"><div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Nơi an táng</div><input value="{{ fAn }}" onChange="{{ onFAn }}" placeholder="VD: Lăng mộ dòng họ, Hành Thiện" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;border:1px solid rgba(90,62,43,.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div></sc-if>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Ghi chú</div><textarea value="{{ fNote }}" onChange="{{ onFNote }}" placeholder="Công đức, sự tích, nơi an táng…" style="width:100%;box-sizing:border-box;min-height:84px;padding:12px 14px;border-radius:12px;background:#FBF6EA;border:1px solid rgba(90,62,43,.22);outline:0;resize:none;font:400 14px/1.5 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></textarea></div>
+        </div>
+
+        
+        <div onClick="{{ saveForm }}" style="height:50px;flex:none;border-radius:999px;background:#2F4A36;color:#F4EBD6;display:flex;align-items:center;justify-content:center;font:500 14px 'Be Vietnam Pro',sans-serif;cursor:pointer">Thêm vào gia phả</div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;viewer&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Nguyễn Hữu Nam&quot;,&quot;Nguyễn Hữu Khôi&quot;,&quot;Nguyễn Hữu Quang&quot;],&quot;default&quot;:&quot;Nguyễn Hữu Nam&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;create&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onBack&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;},&quot;showLegend&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;fullNames&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { setup: this.props.create ? { name: '', home: '', fn: '', fb: '', alive: false, fd: '', fgio: '', wife: '', err: '' } : null, clan: { name: 'Họ Nguyễn Hữu', home: 'Hành Thiện' }, base: null, view: 'noi', switcher: false, sel: Component.VIEWERS[this.props.viewer] || 'p18', gen: 0, q: '', zoom: 1, nav: 0, sheet: false, search: false, extra: [], form: null, picker: false, toast: '' };
+  static VIEWERS = { 'Nguyễn Hữu Nam': 'p18', 'Nguyễn Hữu Khôi': 'p20', 'Nguyễn Hữu Quang': 'p22' };
+  me() { return Component.VIEWERS[this.props.viewer] || 'p18'; }
+  hov(list, k) { const o = (this.state.headOv || {})[k]; return o ? list.map(m => (m.id === o) === !!m.head ? m : { ...m, head: m.id === o }) : list; }
+  noi() { return this.hov((this.state.base || Component.M).concat(this.state.extra.filter(m => m.cl !== 'ngoai')), 'noi'); }
+  tran() { return this.hov(Component.T.concat(this.state.extra.filter(m => m.cl === 'ngoai')), 'ngoai'); }
+  dsList() { return this.state.base ? [this.noi()] : [this.noi(), this.tran()]; }
+  members(v = this.state.view) { return v === 'gop' ? this.pedigree() : v === 'ngoai' ? this.tran() : this.noi(); }
+  rec(id) { for (const ds of this.dsList()) { const r = ds.find(x => x.id === id); if (r) return r; } return null; }
+  parentsOf(id) {
+    const out = [];
+    for (const ds of this.dsList()) {
+      const r = ds.find(x => x.id === id && !x.sp); if (!r || !r.p) continue;
+      const P = ds.find(x => x.id === r.p); if (!P) continue;
+      out.push(P); const S = ds.find(x => x.sp === P.id); if (S) out.push(S);
+    }
+    const seen = new Set(); return out.filter(p => !seen.has(p.id) && seen.add(p.id)).sort((a, b) => (a.s === 'm' ? 0 : 1) - (b.s === 'm' ? 0 : 1));
+  }
+  ancestors(id) {
+    const A = new Map([[id, { d: 0, side: '' }]]), q = [id];
+    while (q.length) { const c = q.shift(), cur = A.get(c); if (cur.d >= 8) continue;
+      this.parentsOf(c).forEach(P => { if (A.has(P.id)) return; A.set(P.id, { d: cur.d + 1, side: cur.d === 0 ? (P.s === 'm' ? 'nội' : 'ngoại') : cur.side }); q.push(P.id); }); }
+    return A;
+  }
+  kinBlood(t, A) {
+    const me = this.rec(this.me()), T = this.rec(t); if (!me || !T) return '';
+    const B = this.ancestors(t); let best = null;
+    A.forEach((ai, id) => { if (B.has(id)) { const sc = ai.d + B.get(id).d; if (!best || sc < best.sc) best = { sc, da: ai.d, dt: B.get(id).d, side: ai.side }; } });
+    if (!best) return '';
+    const { da, dt, side } = best, male = T.s === 'm', older = T.b < me.b, diff = da - dt;
+    if (da === 0) return ['', 'Con', 'Cháu', 'Chắt'][dt] || 'Hậu duệ';
+    if (diff === 0) return da === 1 ? (older ? (male ? 'Anh trai' : 'Chị gái') : (male ? 'Em trai' : 'Em gái')) : (older ? (male ? 'Anh họ' : 'Chị họ') : 'Em họ');
+    if (diff === 1) {
+      const par = this.parentsOf(this.me()).find(p => side === 'nội' ? p.s === 'm' : p.s === 'f'), ob = par && T.b < par.b;
+      const base = side === 'nội' ? (male ? (ob ? 'Bác' : 'Chú') : (ob ? 'Bác' : 'Cô')) : (male ? 'Cậu' : 'Dì');
+      return da === 2 ? base : base + ' họ';
+    }
+    if (diff === 2) return (male ? 'Ông' : 'Bà') + ' họ ' + side;
+    if (diff >= 3) return 'Cụ họ ' + side;
+    return da === 1 && diff === -1 ? 'Cháu' : 'Cháu họ';
+  }
+  kin(t) {
+    const meId = this.me(); if (!this.rec(meId)) return '';
+    if (t === meId) return 'Chính bạn';
+    const A = this.ancestors(meId), a = A.get(t), T = this.rec(t);
+    if (a && T) { const m = T.s === 'm', g = m ? 'ông ' : 'bà ';
+      return a.d === 1 ? (m ? 'Cha' : 'Mẹ') : a.d === 2 ? (m ? 'Ông ' : 'Bà ') + a.side : a.d === 3 ? 'Cụ ' + g + a.side : a.d === 4 ? 'Kỵ ' + g + a.side : 'Tổ ' + g + a.side; }
+    const b = this.kinBlood(t, A); if (b) return b;
+    for (const ds of this.dsList()) {
+      const x = ds.find(r => r.id === t && r.sp); if (!x) continue;
+      const pk = this.kinBlood(x.sp, A) || (A.has(x.sp) ? '' : ''); if (!pk) continue;
+      const suf = / họ$/.test(pk) ? ' họ' : '', core = pk.replace(/ họ$/, ''), f = x.s === 'f';
+      const MAP = { 'Bác': f ? 'Bác gái' : 'Bác trai', 'Chú': 'Thím', 'Cô': 'Dượng', 'Cậu': 'Mợ', 'Dì': 'Dượng', 'Anh trai': 'Chị dâu', 'Em trai': 'Em dâu', 'Chị gái': 'Anh rể', 'Em gái': 'Em rể', 'Anh': 'Chị dâu', 'Chị': 'Anh rể', 'Em': f ? 'Em dâu' : 'Em rể', 'Con': f ? 'Con dâu' : 'Con rể', 'Cháu': f ? 'Cháu dâu' : 'Cháu rể' };
+      return MAP[core] ? MAP[core] + suf : (f ? 'Vợ ' : 'Chồng ') + pk.charAt(0).toLowerCase() + pk.slice(1);
+    }
+    return '';
+  }
+  pedigree() {
+    const meId = this.me(), items = [], q = [{ id: meId, hi: 1, lv: 1, child: null, side: '' }];
+    while (q.length) { const c = q.shift(), r = this.rec(c.id); if (!r) continue;
+      items.push({ ...r, y: undefined, sp: undefined, g: c.lv, p: c.child || undefined, hi: c.hi, side: c.side, cl: c.side === 'ngoại' ? 'ngoai' : 'noi' });
+      if (c.lv >= 6) continue;
+      this.parentsOf(c.id).forEach(P => { const fa = P.s === 'm'; q.push({ id: P.id, hi: c.hi * 2 + (fa ? 0 : 1), lv: c.lv + 1, child: c.id, side: c.lv === 1 ? (fa ? 'nội' : 'ngoại') : c.side }); }); }
+    items.forEach(m => { if (m.g === 1) { m.x = 500; return; }
+      const row = items.filter(o => o.g === m.g && o.side === m.side).sort((a, b) => a.hi - b.hi), i = row.indexOf(m);
+      m.x = Math.round((m.side === 'nội' ? 40 : 520) + (i + 0.5) * 440 / row.length); });
+    return items;
+  }
+  setView(v) {
+    const M = this.members(v), meId = this.me(), root = v === 'gop' ? meId : v === 'ngoai' ? 't1' : 'p1';
+    const sel = M.some(m => m.id === this.state.sel) ? this.state.sel : M.some(m => m.id === meId) ? meId : root;
+    this.setState({ view: v, switcher: false, gen: 0, q: '', sheet: false, sel }, () => setTimeout(() => this.focus(sel, false), 60));
+  }
+  componentDidUpdate(pp) { if (pp.viewer !== this.props.viewer) { const id = this.me(); this.setState({ view: 'noi', sel: id, switcher: false, sheet: false }); setTimeout(() => this.focus(id, false), 60); } }
+  setS(k, v) { this.setState(st => ({ setup: { ...st.setup, [k]: v, err: '', ek: '' } })); }
+  showErr(slot, ref, msg, ek) {
+    this.setState(st => ({ [slot]: { ...st[slot], err: msg, ek } }), () => {
+      const sc = ref.current, el = sc && sc.querySelector('[data-ek="' + ek + '"]');
+      if (!sc || !el) return;
+      const top = el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - 60;
+      sc.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      if (el.tagName === 'INPUT') el.focus({ preventScroll: true });
+    });
+  }
+  errMap(f, keys) { const o = {}; keys.forEach(k => { const on = !!f && f.ek === k; o[k] = { bd: on ? '#9E3B2C' : 'rgba(90,62,43,.22)', msg: on ? f.err : '' }; }); return o; }
+  createClan() {
+    const f = this.state.setup, err = (e, k) => this.showErr('setup', this._sSc, e, k);
+    let name = f.name.trim(); const fn = f.fn.trim(), b = parseInt(f.fb, 10), d = parseInt(f.fd, 10);
+    if (!name) return err('Vui lòng nhập tên dòng họ.', 'name');
+    if (!f.home.trim()) return err('Vui lòng nhập quê gốc.', 'home');
+    if (!fn) return err('Vui lòng nhập họ tên thủy tổ.', 'fn');
+    if (!b || b < 1300 || b > 2026) return err(f.fb ? 'Năm sinh chưa hợp lệ (1300–2026).' : 'Vui lòng nhập năm sinh thủy tổ.', 'fb');
+    if (!f.alive && (!d || d < b || d > 2026)) return err(f.fd ? 'Năm mất phải sau năm sinh và không quá 2026.' : 'Vui lòng nhập năm mất (có thể ước lượng).', 'fd');
+    if (!/^họ\s/i.test(name)) name = 'Họ ' + name;
+    const base = [{ id: 'p1', n: fn, g: 1, x: 500, s: 'm', b, d: f.alive ? undefined : d, gio: f.alive ? '' : f.fgio.trim() }];
+    if (f.wife.trim()) base.push({ id: 's1', n: f.wife.trim(), g: 1, x: 625, y: 668, s: 'f', sp: 'p1' });
+    this.setState({ setup: null, clan: { name, home: f.home.trim() }, base, extra: [], sel: 'p1', gen: 0, q: '', toast: 'Đã tạo gia phả ' + name + '. Bấm + để thêm con cháu.' });
+    setTimeout(() => { this.focus('p1', false); this.bindDrag(); }, 80);
+    clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 3600);
+  }
+  openForm() {
+    const M = this.members(), r = M.find(m => m.id === this.state.sel);
+    this.setState({ form: { rel: 'child', rid: r.id, name: '', sex: 'm', b: '', alive: true, d: '', gio: '', live: '', an: '', note: '', err: '' }, picker: false, sheet: false });
+  }
+  setF(k, v) { this.setState(st => ({ form: { ...st.form, [k]: v, err: '', ek: '' } })); }
+  place(M, g, x0, offs) {
+    const gOf = m => m.sp ? (M.find(c => c.id === m.sp) || m).g : m.g;
+    const xs = M.filter(m => gOf(m) === g).map(m => m.x);
+    for (const o of offs) { const c = x0 + o; if (c >= 40 && c <= 960 && xs.every(v => Math.abs(v - c) >= 72)) return c; }
+    return Math.max(40, Math.min(960, x0 + offs[0]));
+  }
+  save() {
+    const f = this.state.form, M = this.members(), by = {}; M.forEach(m => { by[m.id] = m; });
+    const err = (e, k) => this.showErr('form', this._fSc, e, k);
+    const name = f.name.trim(), b = parseInt(f.b, 10), d = parseInt(f.d, 10);
+    if (!name) return err('Vui lòng nhập họ và tên.', 'name');
+    if (!b || b < 1700 || b > 2026) return err(f.b ? 'Năm sinh chưa hợp lệ (1700–2026).' : 'Vui lòng nhập năm sinh.', 'b');
+    if (!f.alive && (!d || d < b || d > 2026)) return err(f.d ? 'Năm mất phải sau năm sinh và không quá 2026.' : 'Vui lòng nhập năm mất.', 'd');
+    if (f.alive && !f.live.trim()) return err('Vui lòng nhập nơi sinh sống hiện tại.', 'live');
+    const r = by[f.rid], id = 'n' + Date.now();
+    const base = { id, n: name, b, d: f.alive ? undefined : d, gio: f.alive ? '' : f.gio.trim(), live: f.alive ? f.live.trim() : '', an: f.alive ? '' : f.an.trim(), note: f.note.trim(), cl: this.state.view };
+    let m;
+    if (f.rel === 'child') {
+      const par = r.sp ? by[r.sp] : r, g = par.g + 1;
+      if (g > 7) return err('Gia phả hiện hiển thị tối đa 7 đời.', 'rel');
+      const kidsX = M.filter(c => c.p === par.id).map(c => c.x);
+      const x0 = kidsX.length ? Math.max(...kidsX) : par.x;
+      m = { ...base, g, p: par.id, s: f.sex, x: this.place(M, g, x0, kidsX.length ? [80, 150, -80, -150, 220, -220, 300, -300] : [0, 75, -75, 150, -150, 225, -225]) };
+    } else {
+      if (r.sp) return err(r.n + ' là ' + (r.s === 'f' ? 'dâu' : 'rể') + ' trong họ. Hãy chọn người mang huyết thống.', 'rel');
+      if (M.some(c => c.sp === r.id)) return err(r.n + ' đã có ' + (r.s === 'f' ? 'chồng' : 'vợ') + ' trong gia phả.', 'rel');
+      const Y = r.y ?? Component.GY[r.g];
+      m = { ...base, g: r.g, sp: r.id, s: r.s === 'm' ? 'f' : 'm', y: Y + 20, x: this.place(M, r.g, r.x, [80, -80, 150, -150, 220, -220]) };
+    }
+    this.setState(st => ({ extra: st.extra.concat([m]), form: null, picker: false, sel: id, gen: 0, q: '', toast: 'Đã thêm ' + name + ' vào đời ' + m.g }));
+    setTimeout(() => this.focus(id), 80);
+    clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 3200);
+  }
+  static PK = {
+    noi: { seal: '譜', home: 'Hành Thiện, Xuân Trường, Nam Định', founder: 'p1', keeper: 'p13',
+      origin: 'Cụ Thủy tổ Nguyễn Hữu Phúc quê gốc Thanh Hóa, theo đoàn dân khai hoang ra vùng bãi bồi sông Ninh Cơ, lập ấp Hành Thiện. Cụ dạy con cháu vừa làm ruộng vừa học chữ. Đến nay họ có sáu đời, con cháu sống ở Nam Định, Hà Nội, TP.HCM và Đồng Nai, hằng năm vẫn về nhà thờ tổ dịp chạp họ.',
+      tl: [['1836', 'Cụ Nguyễn Hữu Phúc lập ấp Hành Thiện bên sông Ninh Cơ.'], ['1872', 'Dựng nhà thờ tổ ba gian bằng gỗ lim.'], ['1946', 'Con cháu tản cư, chia thành chi Giáp và chi Ất.'], ['1994', 'Đại tu nhà thờ tổ, khắc lại hoành phi câu đối.'], ['2011', 'Cụ Nguyễn Hữu Minh nhận giữ nhà thờ tổ.'], ['2026', 'Số hóa gia phả, con cháu cùng cập nhật trên InnerLamp.']],
+      thoName: 'Nhà thờ tổ họ Nguyễn Hữu', thoAddr: 'Xóm Trung, Hành Thiện, Xuân Trường, Nam Định', chap: 'Ngày 20 tháng Chạp',
+      hpHan: '祖德流光', hp: 'Tổ đức lưu quang · Đức tổ tiên tỏa sáng mãi', cd: ['Tổ đức lưu phương thiên tải thịnh', 'Tôn công tích đức vạn niên vinh'],
+      gh: 'Làm người trước hết phải hiếu với cha mẹ, kính với tổ tiên. Anh em trong họ thuận hòa, con cháu chăm học, sống ngay thẳng.' },
+    ngoai: { seal: '譜', home: 'Giao Thủy, Nam Định', founder: 't1', keeper: 't12',
+      origin: 'Cụ Trần Văn Khiêm lập nghiệp ở Giao Thủy, mở nghề làm muối ven biển. Nghề muối nuôi bốn đời con cháu họ Trần trước khi nhiều nhà chuyển sang nuôi trồng thủy sản.',
+      tl: [['1860', 'Cụ Trần Văn Khiêm về Giao Thủy, mở ruộng muối đầu tiên.'], ['1898', 'Dựng nhà thờ họ Trần.'], ['1990', 'Tu bổ nhà thờ họ sau bão.'], ['2015', 'Cụ Trần Văn Hùng làm trưởng họ.']],
+      thoName: 'Nhà thờ họ Trần', thoAddr: 'Giao Thủy, Nam Định', chap: 'Ngày 15 tháng Chạp',
+      hpHan: '世德流芳', hp: 'Thế đức lưu phương · Đức các đời lưu thơm', cd: ['Tổ tông công đức thiên niên thịnh', 'Tử hiếu tôn hiền vạn đại vinh'],
+      gh: 'Cần cù giữ nghề, tiết kiệm trong nhà, rộng lòng với xóm giềng.' },
+  };
+  static PD = { p1: { phap: 'Phúc Thiện', tho: 'Chùa Keo Hành Thiện' }, s1: { phap: 'Diệu Hiền', tho: 'Chùa Keo Hành Thiện' }, t1: { phap: 'Minh Khiêm', tho: 'Chùa Phú Nhai' } };
+  say(t) { this.setState({ toast: t }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 3200); }
+  static gioCountdown(gio) {
+    const f = window.ilSolar2Lunar; if (!f || !gio) return '';
+    const M = { 'giêng': 1, 'một': 1, 'hai': 2, 'ba': 3, 'tư': 4, 'bốn': 4, 'năm': 5, 'sáu': 6, 'bảy': 7, 'tám': 8, 'chín': 9, 'mười': 10, 'mười một': 11, 'một một': 11, 'chạp': 12, 'mười hai': 12 };
+    const t = String(gio).toLowerCase().trim();
+    let d, m, mm = t.match(/^(\d{1,2})\s*tháng\s*(.+)$/);
+    if (mm) { d = +mm[1]; m = /^\d+$/.test(mm[2]) ? +mm[2] : M[mm[2].trim()]; }
+    else if ((mm = t.match(/^(\d{1,2})\s*[\/-]\s*(\d{1,2})/))) { d = +mm[1]; m = +mm[2]; }
+    if (!d || !m) return '';
+    const base = new Date(); base.setHours(12, 0, 0, 0);
+    for (let i = 0; i < 400; i++) {
+      const x = new Date(base); x.setDate(base.getDate() + i);
+      const L = f(x.getDate(), x.getMonth() + 1, x.getFullYear(), 7);
+      if (!L.leap && L.m === m && (L.d === d || (d === 30 && L.d === 29 && f(x.getDate() + 1 > 28 ? new Date(x.getTime() + 864e5).getDate() : x.getDate() + 1, new Date(x.getTime() + 864e5).getMonth() + 1, new Date(x.getTime() + 864e5).getFullYear(), 7).d === 1))) {
+        const ds = String(x.getDate()).padStart(2, '0') + '/' + String(x.getMonth() + 1).padStart(2, '0');
+        return (i === 0 ? 'Hôm nay' : i === 1 ? 'Ngày mai' : 'Còn ' + i + ' ngày') + ' · ' + ds + ' dương lịch · ';
+      }
+    }
+    return '';
+  }
+  addGio(m, kin) {
+    const on = { ...(this.state.gioOn || {}) };
+    if (on[m.id]) { if (this.props.onOpenGio) this.props.onOpenGio(); else this.say('Ngày giỗ ' + m.n + ' đã có trong Sổ giỗ.'); return; }
+    on[m.id] = true; this.setState({ gioOn: on });
+    if (this.props.onAddGio) this.props.onAddGio({ name: m.n, rel: kin, gio: m.gio, y: m.d });
+    this.say('Đã thêm giỗ ' + m.n + ' vào Sổ giỗ · nhắc trước 1 ngày.');
+  }
+  pkVals(M, by, gop, meId, kinOf, gl) {
+    const s = this.state;
+    const openPk = () => this.setState({ pk: true, pkEdit: false, hpOpen: false, hpTo: null, switcher: false, sheet: false, pkK: s.base ? 'base' : s.view === 'ngoai' ? 'ngoai' : 'noi' });
+    if (!s.pk) return { pkOpen: false, openPk };
+    const k = s.pkK || 'noi', ed = (s.pkEd || {})[k] || {};
+    const pool = k === 'ngoai' ? this.tran() : this.noi(), pb = {}; pool.forEach(m => { pb[m.id] = m; });
+    const D = k === 'base' ? { seal: '譜', home: s.clan.home, founder: 'p1', origin: '', tl: [], gh: '' } : Component.PK[k];
+    const title = k === 'ngoai' ? 'Họ Trần' : s.clan.name;
+    const F = pb[D.founder], K = pool.find(m => m.head && !m.sp);
+    const origin = ed.origin ?? D.origin, gh = ed.gh ?? D.gh;
+    const V = f => ed[f] ?? D[f] ?? '';
+    const tl = ed.tl ?? (D.tl || []), cd = [ed.cd0 ?? (D.cd || [])[0] ?? '', ed.cd1 ?? (D.cd || [])[1] ?? ''];
+    const hk = k === 'ngoai' ? 'ngoai' : 'noi';
+    const cands = pool.filter(m => !m.d && !m.sp && m.s === 'm' && m.g > 1).sort((a, b) => a.g - b.g || a.x - b.x);
+    const setTl = fn => this.setState(st => { const cur = ((st.pkEd || {})[k] || {}).tl ?? (D.tl || []); return { pkEd: { ...(st.pkEd || {}), [k]: { ...((st.pkEd || {})[k] || {}), tl: fn(cur.map(e => e.slice())) } } }; });
+    const hc = s.hpTo && pb[s.hpTo];
+    const maxG = Math.max(...pool.map(m => m.g));
+    const go = id => () => { const v = k === 'ngoai' ? 'ngoai' : 'noi'; this.setState({ pk: false, view: s.base ? s.view : v, gen: 0, q: '', sel: id }, () => setTimeout(() => this.focus(id), 80)); };
+    const gioOn = F && (s.gioOn || {})[F.id];
+    const people = pool.filter(m => !m.sp && (m.note || m.head)).slice(0, 4);
+    const setEd = (f, v) => this.setState(st => ({ pkEd: { ...(st.pkEd || {}), [k]: { ...((st.pkEd || {})[k] || {}), [f]: v } } }));
+    return {
+      pkOpen: true, openPk, closePk: () => this.setState({ pk: false, pkEdit: false }),
+      pkEditing: !!s.pkEdit, pkView: !s.pkEdit, pkEditLbl: s.pkEdit ? 'Xong' : 'Sửa',
+      pkEditTap: () => { if (s.pkEdit) this.say('Đã lưu phả ký ' + title + '.'); this.setState({ pkEdit: !s.pkEdit }); },
+      pkOnOrigin: e => setEd('origin', e.target.value), pkOnGh: e => setEd('gh', e.target.value),
+      pkOn: Object.fromEntries(['home', 'thoName', 'thoAddr', 'chap', 'hpHan', 'hp', 'cd0', 'cd1'].map(f => [f, e => setEd(f, e.target.value)])),
+      hpOpen: !!s.hpOpen, hpClose: () => this.setState({ hpOpen: false }),
+      hpList: cands.map(m => ({ name: m.n, sub: 'Đời ' + m.g + ' · sinh ' + m.b + (m.live ? ' · ' + m.live : ''), on: K && K.id === m.id, pick: () => { if (!(K && K.id === m.id)) this.setState({ hpOpen: false, hpTo: m.id }); } })),
+      hpConfirm: !!hc, hpMsg: hc ? (K ? K.n + ' sẽ thôi giữ vai trò tộc trưởng. ' : '') + hc.n + ' (đời ' + hc.g + ') sẽ là tộc trưởng mới của ' + title + ' và người giữ nhà thờ họ.' : '',
+      hpCancel: () => this.setState({ hpTo: null }),
+      hpOk: () => { const n = hc.n; this.setState(st => ({ hpTo: null, headOv: { ...(st.headOv || {}), [hk]: hc.id } })); this.say('Đã chuyển tộc trưởng sang ' + n + '.'); },
+      pkTabsOn: !s.base,
+      pkTabs: [['noi', s.clan.name + ' · nội'], ['ngoai', 'Họ Trần · ngoại']].map(([v, label]) => { const on = v === k; return { label, pick: () => this.setState({ pkK: v, pkEdit: false }), bg: on ? '#5A3E2B' : 'rgba(251,246,234,.75)', fg: on ? '#F4EBD6' : '#4A3322', bd: on ? '#5A3E2B' : 'rgba(90,62,43,.22)' }; }),
+      pk: { seal: D.seal, title, home: V('home'), meta: maxG + ' đời · ' + pool.length + ' người' + (F ? ' · từ năm ' + (tl[0] && tl[0][0] ? tl[0][0] : F.b) : ''),
+        founder: F ? F.n : 'Chưa rõ', founderYears: F ? F.b + (F.d ? ' – ' + F.d : '') + (F.gio ? ' · giỗ ' + F.gio : '') : '', openFounder: F ? go(F.id) : () => {},
+        origin: origin || '', hasOrigin: !!origin, noOrigin: !origin,
+        tl: tl.filter(e => e[0] || e[1]).slice().sort((a, b) => (+a[0] || 0) - (+b[0] || 0)).map((e, i, a) => ({ y: e[0], t: e[1], more: i < a.length - 1 })),
+        hasTlV: !s.pkEdit && tl.length > 0, noTlV: !s.pkEdit && !tl.length,
+        tlEd: tl.map((e, i) => ({ y: e[0], t: e[1], onY: ev => { const v = ev.target.value.replace(/\D/g, '').slice(0, 4); setTl(a => { a[i][0] = v; return a; }); }, onT: ev => { const v = ev.target.value; setTl(a => { a[i][1] = v; return a; }); }, del: () => setTl(a => a.filter((_, j) => j !== i)) })),
+        tlAdd: () => setTl(a => a.concat([['', '']])),
+        showTho: !s.pkEdit && !!V('thoName'), noThoV: !s.pkEdit && !V('thoName'), thoImg: 'pk-tho-' + k, thoName: V('thoName'), thoAddr: V('thoAddr'),
+        keeper: K ? K.n : 'Chưa cử', openKeeper: K ? go(K.id) : () => {}, headPick: () => this.setState({ hpOpen: true }), gioTo: F && F.gio ? F.gio + ' âm lịch' : 'Chưa rõ', chap: V('chap'),
+        gioBtn: gioOn ? '✓ Đã nhắc giỗ tổ trong Sổ giỗ' : 'Nhắc giỗ tổ hằng năm',
+        gioBg: gioOn ? 'transparent' : '#2F4A36', gioFg: gioOn ? '#2F4A36' : '#F4EBD6', gioBd: gioOn ? 'inset 0 0 0 1px rgba(47,74,54,.4)' : 'none',
+        gioTap: () => F && F.gio && this.addGio(F, 'Khác'),
+        showHp: !s.pkEdit && !!V('hpHan'), hpHan: V('hpHan'), hp: V('hp'), cd: cd.filter(Boolean), cd0: cd[0], cd1: cd[1],
+        gh: gh || '', hasGh: !!gh, noGh: !gh,
+        people: people.map(m => ({ name: m.n, sub: (m.id === D.founder ? 'Thủy tổ · ' : m.head ? 'Trưởng họ · ' : '') + (m.note || ''), gen: 'Đời ' + m.g, pick: go(m.id) })), hasPeople: people.length > 0,
+        foot: 'Phả ký do người quản lý gia phả biên soạn. Con cháu có thể đề xuất chỉnh sửa.' },
+    };
+  }
+  static GY = { 1: 640, 2: 530, 3: 420, 4: 315, 5: 215, 6: 85, 7: -30 };
+  static SW = 1000; static SH = 1058;
+  static M = [
+    { id: 'p1', n: 'Nguyễn Hữu Phúc', g: 1, x: 500, s: 'm', b: 1812, d: 1879, gio: '15 tháng Chạp', note: 'Từ Thanh Hóa ra khai khẩn bãi bồi sông Ninh Cơ, lập ấp Hành Thiện năm 1838 và dựng nhà thờ tổ.' },
+    { id: 's1', n: 'Lê Thị Hiền', g: 1, x: 625, y: 668, s: 'f', b: 1818, d: 1885, sp: 'p1', gio: '3 tháng Tám' },
+    { id: 'p2', n: 'Nguyễn Hữu Lộc', g: 2, x: 330, p: 'p1', s: 'm', b: 1838, d: 1901, gio: '9 tháng Giêng' },
+    { id: 'p3', n: 'Nguyễn Hữu Thọ', g: 2, x: 680, p: 'p1', s: 'm', b: 1842, d: 1910, gio: '21 tháng Năm' },
+    { id: 's3', n: 'Phạm Thị Thục', g: 2, x: 440, y: 548, s: 'f', b: 1841, d: 1912, sp: 'p2', gio: '27 tháng Tư' },
+    { id: 's4', n: 'Đỗ Thị Nết', g: 2, x: 790, y: 548, s: 'f', b: 1846, d: 1921, sp: 'p3', gio: '5 tháng Chín' },
+    { id: 'p4', n: 'Nguyễn Hữu Tài', g: 3, x: 205, p: 'p2', s: 'm', b: 1864, d: 1932, gio: '2 tháng Mười' },
+    { id: 'p5', n: 'Nguyễn Hữu Đức', g: 3, x: 420, p: 'p2', s: 'm', b: 1868, d: 1940, gio: '17 tháng Tư' },
+    { id: 'p6', n: 'Nguyễn Hữu Nghĩa', g: 3, x: 620, p: 'p3', s: 'm', b: 1870, d: 1945, gio: '28 tháng Sáu' },
+    { id: 'p7', n: 'Nguyễn Thị Nhàn', g: 3, x: 830, p: 'p3', s: 'f', b: 1874, d: 1950, gio: '6 tháng Ba' },
+    { id: 's5', n: 'Vũ Thị Cúc', g: 3, x: 305, y: 438, s: 'f', b: 1867, d: 1941, sp: 'p4', gio: '13 tháng Hai' },
+    { id: 's6', n: 'Hoàng Thị Lựu', g: 3, x: 515, y: 438, s: 'f', b: 1871, d: 1948, sp: 'p5', gio: '20 tháng Mười' },
+    { id: 's7', n: 'Bùi Thị Gấm', g: 3, x: 718, y: 438, s: 'f', b: 1873, d: 1952, sp: 'p6', gio: '1 tháng Bảy' },
+    { id: 's8', n: 'Trịnh Văn Quế', g: 3, x: 925, y: 438, s: 'm', b: 1870, d: 1939, sp: 'p7', gio: '16 tháng Ba' },
+    { id: 'p8', n: 'Nguyễn Hữu Khang', g: 4, x: 120, p: 'p4', s: 'm', b: 1890, d: 1962, gio: '12 tháng Ba' },
+    { id: 'p9', n: 'Nguyễn Hữu An', g: 4, x: 285, p: 'p4', s: 'm', b: 1894, d: 1968, gio: '25 tháng Chín' },
+    { id: 'p10', n: 'Nguyễn Hữu Bình', g: 4, x: 440, p: 'p5', s: 'm', b: 1899, d: 1972, gio: '8 tháng Bảy' },
+    { id: 'p11', n: 'Nguyễn Hữu Trí', g: 4, x: 615, p: 'p6', s: 'm', b: 1901, d: 1979, gio: '14 tháng Hai' },
+    { id: 'p12', n: 'Nguyễn Thị Lan', g: 4, x: 785, p: 'p6', s: 'f', b: 1905, d: 1988, gio: '30 tháng Tám' },
+    { id: 's9', n: 'Lương Thị Tâm', g: 4, x: 198, y: 335, s: 'f', b: 1894, d: 1970, sp: 'p8', gio: '7 tháng Năm' },
+    { id: 's10', n: 'Đinh Thị Hoa', g: 4, x: 362, y: 335, s: 'f', b: 1897, d: 1975, sp: 'p9', gio: '22 tháng Chạp' },
+    { id: 's11', n: 'Ngô Thị Liên', g: 4, x: 520, y: 335, s: 'f', b: 1903, d: 1981, sp: 'p10', gio: '10 tháng Tư' },
+    { id: 's12', n: 'Phan Thị Ngọc', g: 4, x: 695, y: 335, s: 'f', b: 1905, d: 1986, sp: 'p11', gio: '18 tháng Mười' },
+    { id: 'p13', live: 'Hành Thiện, Xuân Trường, Nam Định', n: 'Nguyễn Hữu Minh', g: 5, x: 95, p: 'p8', s: 'm', b: 1946, head: true, note: 'Giữ nhà thờ tổ từ năm 2011, chủ trì lễ giỗ tổ và việc tu bổ gia phả.' },
+    { id: 's2', live: 'Hành Thiện, Xuân Trường, Nam Định', n: 'Trần Thị Hạnh', g: 5, x: 215, y: 250, s: 'f', b: 1950, sp: 'p13' },
+    { id: 'p14', n: 'Nguyễn Hữu Hòa', g: 5, x: 335, p: 'p9', s: 'm', b: 1938, d: 2011, gio: '4 tháng Mười một' },
+    { id: 'p15', n: 'Nguyễn Thị Mai', g: 5, x: 495, p: 'p10', s: 'f', b: 1942, d: 2019, gio: '19 tháng Giêng' },
+    { id: 'p16', n: 'Nguyễn Hữu Tuấn', g: 5, x: 600, p: 'p11', s: 'm', b: 1935, d: 2008, gio: '11 tháng Sáu' },
+    { id: 'p17', n: 'Nguyễn Hữu Dũng', g: 5, x: 750, p: 'p11', s: 'm', b: 1940, d: 2016, gio: '23 tháng Tám' },
+    { id: 's13', n: 'Tạ Thị Yến', g: 5, x: 405, y: 240, s: 'f', b: 1941, d: 2020, sp: 'p14', gio: '29 tháng Hai' },
+    { id: 's14', live: 'Quận 7, TP. Hồ Chí Minh', n: 'Cao Thị Bích', g: 5, x: 672, y: 240, s: 'f', b: 1939, sp: 'p16' },
+    { id: 's15', live: 'Biên Hòa, Đồng Nai', n: 'Mai Thị Thoa', g: 5, x: 835, y: 240, s: 'f', b: 1944, sp: 'p17' },
+    { id: 'p18', live: 'Cầu Giấy, Hà Nội', n: 'Nguyễn Hữu Nam', g: 6, x: 60, p: 'p13', s: 'm', b: 1972 },
+    { id: 'p19', live: 'TP. Nam Định', n: 'Nguyễn Thị Thu', g: 6, x: 195, p: 'p13', s: 'f', b: 1976 },
+    { id: 'p20', live: 'Hải Châu, Đà Nẵng', n: 'Nguyễn Hữu Khôi', g: 6, x: 340, p: 'p14', s: 'm', b: 1965 },
+    { id: 'p21', live: 'Quận 7, TP. Hồ Chí Minh', n: 'Nguyễn Hữu Phong', g: 6, x: 610, p: 'p16', s: 'm', b: 1962 },
+    { id: 'p22', live: 'Biên Hòa, Đồng Nai', n: 'Nguyễn Hữu Quang', g: 6, x: 790, p: 'p17', s: 'm', b: 1968 },
+  ];
+  static T = [
+    { id: 't1', n: 'Trần Văn Khiêm', g: 1, x: 500, s: 'm', b: 1836, d: 1904, gio: '8 tháng Hai', note: 'Lập nghiệp ở Giao Thủy, mở nghề làm muối ven biển.' },
+    { id: 'ts1', n: 'Vũ Thị Lành', g: 1, x: 625, y: 668, s: 'f', b: 1840, d: 1911, sp: 't1', gio: '14 tháng Sáu' },
+    { id: 't2', n: 'Trần Văn Lễ', g: 2, x: 330, p: 't1', s: 'm', b: 1862, d: 1931, gio: '3 tháng Ba' },
+    { id: 'ts2', n: 'Phạm Thị Duyên', g: 2, x: 440, y: 548, s: 'f', b: 1866, d: 1940, sp: 't2', gio: '19 tháng Bảy' },
+    { id: 't3', n: 'Trần Văn Nghi', g: 2, x: 690, p: 't1', s: 'm', b: 1867, d: 1938, gio: '27 tháng Chín' },
+    { id: 'ts3', n: 'Lê Thị Gái', g: 2, x: 800, y: 548, s: 'f', b: 1870, d: 1944, sp: 't3', gio: '2 tháng Năm' },
+    { id: 't4', n: 'Trần Văn Cẩn', g: 3, x: 230, p: 't2', s: 'm', b: 1890, d: 1958, gio: '11 tháng Tư' },
+    { id: 'ts4', n: 'Đặng Thị Mơ', g: 3, x: 335, y: 438, s: 'f', b: 1894, d: 1966, sp: 't4', gio: '6 tháng Mười' },
+    { id: 't5', n: 'Trần Thị Đào', g: 3, x: 455, p: 't2', s: 'f', b: 1895, d: 1921, gio: '9 tháng Chạp' },
+    { id: 't6', n: 'Trần Văn Bảo', g: 3, x: 650, p: 't3', s: 'm', b: 1896, d: 1963, gio: '21 tháng Giêng' },
+    { id: 'ts6', n: 'Nguyễn Thị Thơm', g: 3, x: 760, y: 438, s: 'f', b: 1899, d: 1975, sp: 't6', gio: '15 tháng Tám' },
+    { id: 't9', n: 'Trần Văn Hiếu', g: 4, x: 170, p: 't4', s: 'm', b: 1922, d: 1990, gio: '24 tháng Hai' },
+    { id: 'ts9', n: 'Lê Thị Sen', g: 4, x: 275, y: 335, s: 'f', b: 1925, d: 2001, sp: 't9', gio: '7 tháng Bảy' },
+    { id: 't10', n: 'Trần Văn Thuận', g: 4, x: 400, p: 't4', s: 'm', b: 1926, d: 1999, gio: '30 tháng Mười' },
+    { id: 'ts10', n: 'Hoàng Thị Nga', g: 4, x: 505, y: 335, s: 'f', b: 1930, d: 2010, sp: 't10', gio: '12 tháng Ba' },
+    { id: 't11', n: 'Trần Văn Lực', g: 4, x: 680, p: 't6', s: 'm', b: 1930, d: 2012, gio: '5 tháng Mười một' },
+    { id: 'ts11', n: 'Bùi Thị Quyên', g: 4, x: 785, y: 335, s: 'f', b: 1933, d: 2018, sp: 't11', gio: '18 tháng Tư' },
+    { id: 't12', live: 'Giao Thủy, Nam Định', n: 'Trần Văn Hùng', g: 5, x: 90, p: 't9', s: 'm', b: 1947, head: true, note: 'Trưởng họ Trần, giữ nhà thờ họ ở Giao Thủy.' },
+    { id: 'ts12', live: 'Giao Thủy, Nam Định', n: 'Phạm Thị Lụa', g: 5, x: 190, y: 240, s: 'f', b: 1950, sp: 't12' },
+    { id: 's2', live: 'Hành Thiện, Xuân Trường, Nam Định', n: 'Trần Thị Hạnh', g: 5, x: 300, p: 't9', s: 'f', b: 1950 },
+    { id: 'p13', live: 'Hành Thiện, Xuân Trường, Nam Định', n: 'Nguyễn Hữu Minh', g: 5, x: 410, y: 240, s: 'm', b: 1946, sp: 's2' },
+    { id: 't13', live: 'Hà Đông, Hà Nội', n: 'Trần Văn Toàn', g: 5, x: 545, p: 't10', s: 'm', b: 1955 },
+    { id: 't14', live: 'TP. Nam Định', n: 'Trần Thị Liễu', g: 5, x: 760, p: 't11', s: 'f', b: 1958 },
+    { id: 't15', live: 'Long Biên, Hà Nội', n: 'Trần Văn Đạt', g: 6, x: 70, p: 't12', s: 'm', b: 1975 },
+    { id: 'p18', live: 'Cầu Giấy, Hà Nội', n: 'Nguyễn Hữu Nam', g: 6, x: 270, p: 's2', s: 'm', b: 1972, ngoai: true },
+    { id: 'p19', live: 'TP. Nam Định', n: 'Nguyễn Thị Thu', g: 6, x: 380, p: 's2', s: 'f', b: 1976, ngoai: true },
+  ];
+  componentDidMount() { setTimeout(() => { this.focus(this.state.sel, false); this.bindDrag(); }, 60); }
+  componentWillUnmount() { this._unDrag && this._unDrag(); }
+  bindDrag() {
+    const el = this._sc && this._sc.current; if (!el || this._unDrag) return;
+    let down = false, moved = false, sx = 0, sy = 0, sl = 0, st = 0, id = null;
+    const dn = e => { if (e.pointerType === 'touch' || e.button !== 0) return; down = true; moved = false; sx = e.clientX; sy = e.clientY; sl = el.scrollLeft; st = el.scrollTop; id = e.pointerId; };
+    const mv = e => { if (!down) return; const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (!moved && Math.hypot(dx, dy) > 4) { moved = true; el.style.cursor = 'grabbing'; try { el.setPointerCapture(id); } catch (_) {} }
+      if (moved) { el.scrollLeft = sl - dx; el.scrollTop = st - dy; e.preventDefault(); } };
+    const up = () => { if (!down) return; down = false; el.style.cursor = 'grab'; try { el.releasePointerCapture(id); } catch (_) {} };
+    const ck = e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } };
+    el.addEventListener('pointerdown', dn); el.addEventListener('pointermove', mv);
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('click', ck, true);
+    el.addEventListener('dragstart', e => e.preventDefault());
+    this._unDrag = () => { el.removeEventListener('pointerdown', dn); el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.removeEventListener('click', ck, true); };
+  }
+  norm(s) { return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase(); }
+  focus(id, smooth = true) {
+    const el = this._sc && this._sc.current, m = this.members().find(x => x.id === id); if (!el || !m) return;
+    const z = this.state.zoom, x = m.x / 1000 * Component.SW * z, y = ((m.y ?? Component.GY[m.g]) + 100) / 900 * Component.SH * z;
+    el.scrollTo({ left: x - el.clientWidth / 2, top: y - (el.clientHeight - 140) / 2, behavior: smooth ? 'smooth' : 'auto' });
+  }
+  select(id, fromSheet) {
+    this.setState({ sel: id, sheet: fromSheet ? false : this.state.sheet });
+    setTimeout(() => this.focus(id), fromSheet ? 200 : 0);
+  }
+  setZoom(z) { this.setState({ zoom: z }, () => setTimeout(() => this.focus(this.state.sel, false), 320)); }
+  renderVals() {
+    const s = this.state, M = this.members(), GY = Component.GY, by = {};
+    const gop = s.view === 'gop', meId = this.me(), rootId = gop ? meId : s.view === 'ngoai' ? 't1' : 'p1';
+    const hasMe = M.some(m => m.id === meId);
+    const AN = m => m.d ? (m.an || ((gop ? m.cl : s.view) === 'ngoai' ? 'Nghĩa trang họ Trần, Giao Thủy' : s.base ? 'Nghĩa trang dòng họ, ' + s.clan.home : 'Lăng mộ họ Nguyễn Hữu, Hành Thiện')) : '';
+    const kinC = {}; const kinOf = id => (kinC[id] ??= this.kin(id));
+    M.forEach(m => { by[m.id] = m; });
+    const Y = m => m.y ?? GY[m.g];
+    const pick = id => () => this.select(id, false);
+    const pickS = id => () => this.select(id, true);
+    const selM = by[s.sel];
+    const core = selM.sp ? by[selM.sp] : selM;
+    const chain = []; for (let c = core; c; c = by[c.p]) chain.unshift(c);
+    const inLine = new Set(chain.map(c => c.id));
+    const W = gop ? { 2: 9, 3: 6.5, 4: 4.6, 5: 3.4, 6: 2.6 } : { 2: 16, 3: 11, 4: 7.5, 5: 5, 6: 3.4, 7: 2.6 };
+    const branches = [], lineage = [], leaves = [];
+    const LC = ['#3E6B47', '#5C8A5A', '#2F4A36', '#7FA36E', '#4F7A57'];
+    let li = 0;
+    const leaf = (x, y, rot, sc) => { const c = LC[li % 5], k = li++; leaves.push({ x: x.toFixed(1), y: y.toFixed(1), rx: (8 * sc).toFixed(1), ry: (3.4 * sc).toFixed(1), tf: 'rotate(' + rot.toFixed(0) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + ')', c, o: (0.55 + (k % 4) * 0.1).toFixed(2) }); };
+    M.filter(m => m.p).forEach((m, bi) => {
+      const p = by[m.p], x1 = p.x, y1 = Y(p), x2 = m.x, y2 = Y(m), dy = y1 - y2;
+      const c1 = [x1, y1 - dy * 0.55], c2 = [x2, y2 + dy * 0.55];
+      const d = 'M' + x1 + ' ' + y1 + ' C' + c1[0] + ' ' + c1[1] + ' ' + c2[0] + ' ' + c2[1] + ' ' + x2 + ' ' + y2;
+      const w = W[m.g];
+      const ng = gop && m.side === 'ngoại';
+      branches.push({ d, w: w + 'px', w2: (w * 0.35).toFixed(1) + 'px', c: ng ? '#8A4A34' : '#4A3322', c2: ng ? '#C98A66' : '#8A6444' });
+      if (inLine.has(m.id)) lineage.push({ d, w: Math.max(2.2, w * 0.38).toFixed(1) + 'px' });
+      [0.3, 0.48, 0.64, 0.8].forEach((t, j) => {
+        const u = 1 - t;
+        const bx = u * u * u * x1 + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * x2;
+        const by_ = u * u * u * y1 + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * y2;
+        const tx = 3 * u * u * (c1[0] - x1) + 6 * u * t * (c2[0] - c1[0]) + 3 * t * t * (x2 - c2[0]);
+        const ty = 3 * u * u * (c1[1] - y1) + 6 * u * t * (c2[1] - c1[1]) + 3 * t * t * (y2 - c2[1]);
+        const L = Math.hypot(tx, ty) || 1, nx = -ty / L, ny = tx / L, side = (j + bi) % 2 ? 1 : -1, off = w / 2 + 7;
+        leaf(bx + nx * off * side, by_ + ny * off * side, Math.atan2(ty, tx) * 180 / Math.PI + side * 38, 0.9 + m.g / 10);
+      });
+    });
+    M.filter(m => !M.some(c => c.p === m.id) && !m.sp && !m.d).forEach((m, i) => {
+      [-150, -115, -70, -30, 20].forEach((a, j) => {
+        const r = 44 + (j % 2) * 8, rad = a * Math.PI / 180;
+        leaf(m.x + Math.cos(rad) * r, Y(m) + Math.sin(rad) * r, a + 90 + ((i + j) % 2 ? 25 : -25), 1.25);
+      });
+    });
+    const spouses = M.filter(m => m.sp).map(m => { const a = by[m.sp]; return { d: 'M' + a.x + ' ' + Y(a) + ' L' + m.x + ' ' + Y(m) }; });
+    const qn = s.search && s.q.trim() ? this.norm(s.q.trim()) : '';
+    const hits = qn ? M.filter(m => this.norm(m.n).includes(qn)) : [];
+    const look = m => {
+      const living = !m.d, founder = m.id === rootId, f = m.s === 'f';
+      return {
+        trim: founder ? 'linear-gradient(135deg,#F0D489,#A7782C 50%,#E3BE68)' : gop ? (m.side === 'ngoại' ? '#9E5B3C' : '#3A4A36') : m.head ? 'linear-gradient(135deg,#3E6B47,#22372A)' : living ? '#2F4A36' : '#5A3E2B',
+        ticks: founder ? 'repeating-conic-gradient(from 0deg,#B8893A 0 5deg,#F3E3B8 5deg 10deg)' : living ? 'repeating-conic-gradient(from 0deg,#4F7A57 0 5deg,#EEE6CC 5deg 10deg)' : 'repeating-conic-gradient(from 0deg,#8A6A4A 0 5deg,#EFE3C8 5deg 10deg)',
+        bg: founder ? 'linear-gradient(180deg,#F6E7BC,#E9D29A)' : living ? 'linear-gradient(180deg,#EEF0DC,#D9E0C4)' : 'linear-gradient(180deg,#F1E6CC,#E3D2AE)',
+        ao: founder ? '#7A2E22' : f ? (living ? '#8A4A3A' : '#7A3B2E') : living ? '#2F4A36' : '#4A3526',
+        male: !f, female: f, head: !!m.head, living,
+      };
+    };
+    const full = this.props.fullNames ?? false;
+    const nodes = M.map(m => {
+      const founder = m.id === rootId;
+      const w = founder ? 80 : m.head ? 62 : m.sp ? 46 : m.g === 6 ? 48 : 52, h = Math.round(w * 1.15);
+      const gg = m.sp ? by[m.sp].g : m.g;
+      let op = 1;
+      if (s.gen && gg !== s.gen) op = 0.25;
+      if (qn && !this.norm(m.n).includes(qn)) op = 0.2;
+      const sel = m.id === s.sel;
+      const ended = !gop && m.g > 1 && !m.sp && !!m.d && !M.some(c => c.p === m.id);
+      const short = founder || full ? m.n : m.n.split(' ').slice(-2).join(' ');
+      const halo = w * 1.9;
+      const isMe = m.id === meId && !(s.view === 'ngoai' && false);
+      return { ...look(m), pick: pick(m.id), sel, isMe, meT: (-h / 2 - 22) + 'px', op, z: sel ? 5 : founder ? 4 : 2,
+        l: (m.x / 10) + '%', t: ((Y(m) + 100) / 9) + '%', w: w + 'px', h: h + 'px', ml: (-w / 2) + 'px', mt: (-h / 2) + 'px',
+        haloS: halo + 'px', haloO: (-halo / 2) + 'px', lblT: (h / 2 + 4) + 'px',
+        name: short, nameC: sel ? '#8A4A1C' : '#2A3B2C',
+        meta: gop ? (founder ? 'CHÍNH BẠN' : kinOf(m.id).toUpperCase()) : founder ? 'THỦY TỔ · ĐỜI 1' : m.ngoai ? 'CHÁU NGOẠI · ĐỜI ' + m.g : m.head ? 'TỘC TRƯỞNG · ĐỜI ' + m.g : m.sp ? (m.s === 'f' ? 'DÂU' : 'RỂ') + ' · ĐỜI ' + gg : 'ĐỜI ' + m.g, ended };
+    });
+    const kids = id => M.filter(c => c.p === id);
+    const spouseOf = id => M.find(c => c.sp === id);
+    const rels = [];
+    if (gop) {
+      M.filter(c => c.p === selM.id).forEach(c => rels.push({ k: c.s === 'f' ? 'Mẹ' : 'Cha', m: c }));
+      if (selM.p) rels.push({ k: by[selM.p].s === 'f' ? 'Con gái' : 'Con trai', m: by[selM.p] });
+    } else if (selM.sp) {
+      rels.push({ k: selM.s === 'f' ? 'Chồng' : 'Vợ', m: by[selM.sp] });
+      kids(selM.sp).forEach(c => rels.push({ k: c.s === 'f' ? 'Con gái' : 'Con trai', m: c }));
+    } else {
+      if (selM.p) { rels.push({ k: 'Cha', m: by[selM.p] }); const mo = spouseOf(selM.p); if (mo) rels.push({ k: 'Mẹ', m: mo }); }
+      const sp = spouseOf(selM.id); if (sp) rels.push({ k: sp.s === 'f' ? 'Vợ' : 'Chồng', m: sp });
+      if (selM.p) kids(selM.p).filter(c => c.id !== selM.id).forEach(c => rels.push({ k: c.s === 'f' ? 'Chị em' : 'Anh em', m: c }));
+      kids(selM.id).forEach(c => rels.push({ k: c.s === 'f' ? 'Con gái' : 'Con trai', m: c }));
+    }
+    const LV = ['', 'Bạn', 'Cha mẹ', 'Ông bà', 'Cụ', 'Kỵ', 'Tổ'];
+    const gl = m => gop ? (LV[m.g] || '') + (m.side ? ' · ' + m.side : '') : 'Đời ' + (m.sp ? by[m.sp].g : m.g);
+    const L = look(selM), founder = selM.id === rootId;
+    const bm = chain[1];
+    const selEnded = !gop && selM.g > 1 && !selM.sp && !!selM.d && !M.some(c => c.p === selM.id);
+    const rk = M.filter(c => c.p === rootId && !c.sp).sort((a, b) => a.x - b.x);
+    const branch = gop ? (founder ? 'Gốc của cây nội – ngoại' : 'Bên ' + selM.side) : selEnded ? 'Dứt nhánh · không có hậu duệ' : founder || selM.sp === rootId ? 'Thủy tổ · gốc chung' : bm ? (rk[0] && rk[0].id === bm.id ? 'Chi trưởng' : 'Chi thứ') + ' · nhánh cụ ' + bm.n.split(' ').pop() : '';
+    const fullChain = selM.sp ? chain.concat([selM]) : chain;
+    const NAV = [];
+    const ZL = [0.7, 1, 1.35];
+    const zi = ZL.indexOf(s.zoom);
+    this._sc = this._sc || React.createRef(); this._sSc = this._sSc || React.createRef(); this._fSc = this._fSc || React.createRef();
+    const maxG = Math.max(...M.map(m => m.g));
+    const su = s.setup, sopt = on => ({ bg: on ? '#2F4A36' : 'rgba(251,246,234,.9)', fg: on ? '#F4EBD6' : '#3A2A1C', bd: on ? '#2F4A36' : 'rgba(90,62,43,.22)' });
+    const setupVals = !su ? { setupOpen: false } : {
+      setupOpen: true,
+      cancelSetup: () => this.props.onBack && this.props.onBack(),
+      doCreate: () => this.createClan(),
+      sName: su.name, onSName: e => this.setS('name', e.target.value),
+      sHome: su.home, onSHome: e => this.setS('home', e.target.value),
+      sFn: su.fn, onSFn: e => this.setS('fn', e.target.value),
+      sFb: su.fb, onSFb: e => this.setS('fb', e.target.value.replace(/\D/g, '').slice(0, 4)),
+      sStates: [[false, 'Đã mất'], [true, 'Còn sống']].map(([k, label]) => ({ label, pick: () => this.setS('alive', k), ...sopt(su.alive === k) })),
+      sDead: !su.alive,
+      sFd: su.fd, onSFd: e => this.setS('fd', e.target.value.replace(/\D/g, '').slice(0, 4)),
+      sGio: su.fgio, onSGio: e => this.setS('fgio', e.target.value),
+      sWife: su.wife, onSWife: e => this.setS('wife', e.target.value),
+      sTitle: su.name.trim() ? (/^họ\s/i.test(su.name.trim()) ? su.name.trim() : 'Họ ' + su.name.trim()) : 'Họ …',
+      sSub: [su.home.trim(), su.fn.trim() ? 'Thủy tổ ' + su.fn.trim() : ''].filter(Boolean).join(' · ') || 'Quê gốc · Thủy tổ',
+      sErr: su.err, sHasErr: !!su.err, sE: this.errMap(su, ['name', 'home', 'fn', 'fb', 'fd']), sScRef: this._sSc,
+    };
+    const f = s.form, fr = f ? by[f.rid] : null;
+    const opt = (on) => ({ bg: on ? '#2F4A36' : 'rgba(251,246,234,.9)', fg: on ? '#F4EBD6' : '#3A2A1C', bd: on ? '#2F4A36' : 'rgba(90,62,43,.22)' });
+    let fPreview = '', fSexLocked = false;
+    if (f) {
+      if (f.rel === 'child') { const par = fr.sp ? by[fr.sp] : fr, sp = M.find(c => c.sp === par.id); fPreview = 'Đời ' + (par.g + 1) + ' · con của ' + par.n + (sp ? ' và ' + sp.n : ''); }
+      else { fSexLocked = true; fPreview = 'Đời ' + fr.g + ' · ' + (fr.s === 'm' ? 'vợ' : 'chồng') + ' của ' + fr.n; }
+    }
+    const fSex = f ? (f.rel === 'spouse' && fr ? (fr.s === 'm' ? 'f' : 'm') : f.sex) : 'm';
+    const formVals = !f ? { formOpen: false } : {
+      formOpen: true,
+      closeForm: () => this.setState({ form: null, picker: false }),
+      saveForm: () => this.save(),
+      fRelKinds: [['child', 'Con của'], ['spouse', 'Vợ / chồng của']].map(([k, label]) => ({ label, pick: () => this.setF('rel', k), ...opt(f.rel === k) })),
+      fRelName: fr.n, fRelMeta: (fr.sp ? 'Đời ' + by[fr.sp].g + ' · ' + (fr.s === 'f' ? 'dâu' : 'rể') : 'Đời ' + fr.g) + (fr.d ? ' · đã mất' : ' · còn sống'),
+      togglePicker: () => this.setState({ picker: !s.picker }), pickerOpen: s.picker, pickerLbl: s.picker ? 'Xong' : 'Đổi',
+      fPeople: M.map(m => ({ name: m.n, meta: m.sp ? 'Đời ' + by[m.sp].g + ' · ' + (m.s === 'f' ? 'dâu' : 'rể') : 'Đời ' + m.g, on: m.id === f.rid,
+        fg: m.id === f.rid ? '#8A4A1C' : '#2A3B2C', bg: m.id === f.rid ? 'rgba(224,183,92,.18)' : 'transparent',
+        pick: () => { this.setF('rid', m.id); this.setState({ picker: false }); } })),
+      fName: f.name, onFName: e => this.setF('name', e.target.value),
+      fSexes: [['m', 'Nam'], ['f', 'Nữ']].map(([k, label]) => ({ label, pick: () => { if (!fSexLocked) this.setF('sex', k); }, ...opt(fSex === k) })),
+      fSexLocked, fB: f.b, onFB: e => this.setF('b', e.target.value.replace(/\D/g, '').slice(0, 4)),
+      fStates: [[true, 'Còn sống'], [false, 'Đã mất']].map(([k, label]) => ({ label, pick: () => this.setF('alive', k), ...opt(f.alive === k) })),
+      fAlive: f.alive, fDead: !f.alive,
+      fD: f.d, onFD: e => this.setF('d', e.target.value.replace(/\D/g, '').slice(0, 4)),
+      fGio: f.gio, onFGio: e => this.setF('gio', e.target.value),
+      fLive: f.live, onFLive: e => this.setF('live', e.target.value), fAn: f.an, onFAn: e => this.setF('an', e.target.value),
+      fNote: f.note, onFNote: e => this.setF('note', e.target.value),
+      fPreview, fErr: f.err, fHasErr: !!f.err, fE: this.errMap(f, ['name', 'b', 'd', 'live', 'rel']), fScRef: this._fSc,
+    };
+    return {
+      scRef: this._sc, rootH: this.props.onBack ? '100%' : '100vh', ...formVals, ...setupVals,  toast: s.toast, hasToast: !!s.toast,
+      clanName: gop ? 'Nội – ngoại' : s.view === 'ngoai' ? 'Họ Trần' : s.clan.name,
+      clanHome: gop ? 'Tính từ ' + (by[meId] ? by[meId].n.split(' ').slice(-2).join(' ') : 'bạn') : s.view === 'ngoai' ? 'Giao Thủy' : s.clan.home,
+      clanMeta: gop ? maxG + ' lớp · ' + M.length + ' người' : maxG + ' đời · ' + M.length + ' người',
+      isGop: gop, notGop: !gop, hasMe,
+      canSwitch: !s.base, switcherOpen: s.switcher,
+      toggleSwitcher: () => { if (!s.base) this.setState({ switcher: !s.switcher }); },
+      views: (() => {
+        const moTran = this.parentsOf(meId).some(p => p.s === 'f' && Component.T.some(t => t.id === p.id && !t.sp));
+        const nN = this.noi(), nT = this.tran(), nG = this.pedigree();
+        const list = [
+          { k: 'noi', title: s.clan.name, sub: 'Bên nội · ' + s.clan.home + ' · ' + Math.max(...nN.map(m => m.g)) + ' đời · ' + nN.length + ' người', glyph: '譜', seal: '#9E3B2C' },
+          moTran ? { k: 'ngoai', title: 'Họ Trần', sub: 'Bên ngoại · Giao Thủy · ' + Math.max(...nT.map(m => m.g)) + ' đời · ' + nT.length + ' người', glyph: '譜', seal: '#8A4A34' } : null,
+          { k: 'gop', title: 'Nội – ngoại của bạn', sub: 'Tổ tiên hai bên, tính từ bạn · ' + nG.length + ' người', glyph: '合', seal: '#A7782C' },
+        ].filter(Boolean);
+        return list.map(v => ({ ...v, on: v.k === s.view, bg: v.k === s.view ? 'rgba(224,183,92,.18)' : 'transparent', pick: () => this.setView(v.k) }));
+      })(),
+      toMe: () => { this.setState({ gen: 0, q: '', sheet: false }); this.select(meId, false); },
+      ...this.pkVals(M, by, gop, meId, kinOf, gl),
+      chainLbl: gop ? 'ĐƯỜNG NỐI VỚI BẠN' : 'HUYẾT THỐNG TỪ THỦY TỔ',
+      addTap: () => { if (gop) { this.setState({ toast: 'Mở gia phả bên nội hoặc bên ngoại để thêm người.' }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 3000); } else this.openForm(); },
+      ctaTap: () => { if (gop) { if (!founder) { const v = selM.side === 'ngoại' ? 'ngoai' : 'noi'; this.setState({ view: v, gen: 0, sheet: false, sel: selM.id }, () => setTimeout(() => this.focus(selM.id), 60)); } } else if (!selM.d) this.openForm(); else if (selM.gio) this.addGio(selM, (hasMe ? kinOf(selM.id) : '') || 'Khác'); }, onBack: () => this.props.onBack && this.props.onBack(),
+      showLegend: this.props.showLegend ?? true,
+      nav: NAV.map((label, i) => ({ label, i0: i === 0, i1: i === 1, i2: i === 2, i3: i === 3, i4: i === 4, pick: () => this.setState({ nav: i }),
+        bg: s.nav === i ? 'rgba(47,74,54,.16)' : 'transparent', fg: s.nav === i ? '#2F4A36' : 'rgba(74,51,34,.7)' })),
+      nodeActive: { transform: 'scale(.94)' },
+      searchOpen: s.search, searchBtnBg: s.search ? 'rgba(90,62,43,.12)' : 'transparent',
+      toggleSearch: () => this.setState({ search: !s.search, q: '' }),
+      q: s.q, qHas: !!qn, qCount: hits.length + ' người',
+      onQ: e => this.setState({ q: e.target.value }),
+      onQKey: e => { if (e.key === 'Enter' && hits[0]) { e.target.blur(); this.select(hits[0].id, true); } },
+      gens: [0].concat(Array.from({ length: maxG }, (_, i) => i + 1)).map(g => { const on = s.gen === g; return { label: g ? (gop ? LV[g] : 'Đời ' + g) : 'Tất cả', pick: () => this.setState({ gen: g }),
+        bg: on ? '#5A3E2B' : 'rgba(251,246,234,.75)', fg: on ? '#F4EBD6' : '#4A3322', bd: on ? '#5A3E2B' : 'rgba(90,62,43,.22)' }; }),
+      branches, lineage, leaves, spouses, nodes,
+      stageW: Component.SW * s.zoom + 'px', stageH: Component.SH * s.zoom + 'px',
+      zoomIn: () => zi < ZL.length - 1 && this.setZoom(ZL[zi + 1]),
+      zoomOut: () => zi > 0 && this.setZoom(ZL[zi - 1]),
+      toRoot: () => { this.setState({ gen: 0, q: '', sheet: false }); this.select(rootId, false); },
+      sheetOpen: s.sheet, sheetH: s.sheet ? '78%' : '132px', chevTf: s.sheet ? 'rotate(180deg)' : 'rotate(0deg)',
+      toggleSheet: () => this.setState({ sheet: !s.sheet }), closeSheet: () => this.setState({ sheet: false }),
+      sel: { ...L, name: selM.n,
+        meta: gop ? gl(selM) + ' · ' + (selM.s === 'f' ? 'Nữ' : 'Nam') : gl(selM) + (selM.sp ? (selM.s === 'f' ? ' · con dâu' : ' · con rể') : '') + ' · ' + (selM.s === 'f' ? 'Nữ' : 'Nam'),
+        status: selM.d ? 'Đã mất' : 'Còn sống', stBg: selM.d ? 'rgba(90,62,43,.14)' : 'rgba(79,122,87,.18)', stFg: selM.d ? '#5A3E2B' : '#2F4A36',
+        role: gop ? (founder ? 'Bạn' : '') : founder ? 'Thủy tổ' : selM.head ? 'Tộc trưởng' : '', roleBg: founder ? '#A7782C' : '#9E3B2C',
+        years: selM.d ? selM.b + ' – ' + selM.d + ' · thọ ' + (selM.d - selM.b + 1) + ' tuổi' : 'Sinh năm ' + selM.b + ' · ' + (2026 - selM.b) + ' tuổi',
+        gio: selM.gio ? selM.gio + ' âm lịch' : '', live: selM.d ? '' : (selM.live || 'Chưa cập nhật'), an: AN(selM), kin: hasMe || gop ? kinOf(selM.id) : '', branch, note: selM.note || '',
+        rels: rels.map(r => ({ k: r.k, name: r.m.n, gen: gl(r.m), live: r.m.d ? '' : (r.m.live || ''), pick: pickS(r.m.id) })),
+        chain: fullChain.map((c, i) => ({ name: c.n, meta: gop ? kinOf(c.id) : gl(c) + (c.id === rootId ? ' · Thủy tổ' : c.head ? ' · Tộc trưởng' : c.sp ? (c.s === 'f' ? ' · con dâu' : ' · con rể') : ''),
+          pick: pickS(c.id), more: i < fullChain.length - 1, dot: c.id === s.sel ? '#9E3B2C' : '#C9A04A', fg: c.id === s.sel ? '#8A4A1C' : '#2A3B2C' })),
+        dead: !!selM.d, phap: (Component.PD[selM.id] || {}).phap || selM.phap || '', tho: (Component.PD[selM.id] || {}).tho || selM.tho || '',
+        openTho: () => this.props.onTemple ? this.props.onTemple() : this.say('Mở trang chùa ' + ((Component.PD[selM.id] || {}).tho || '')),
+        gioTitle: selM.gio ? 'Giỗ ' + selM.gio : 'Chưa rõ ngày giỗ',
+        gioSub: selM.gio ? Component.gioCountdown(selM.gio) + 'Âm lịch · giỗ lần thứ ' + Math.max(1, 2026 - selM.d) + ((s.gioOn || {})[selM.id] ? ' · đã có nhắc' : '') : 'Bổ sung ngày giỗ để được nhắc hằng năm',
+        gioBtn: !selM.gio ? 'Bổ sung ngày giỗ' : (s.gioOn || {})[selM.id] ? '✓ Đã có trong Sổ giỗ · Mở' : 'Nhắc giỗ hằng năm',
+        gioBtnBg: selM.gio && !(s.gioOn || {})[selM.id] ? '#2F4A36' : 'transparent', gioBtnFg: selM.gio && !(s.gioOn || {})[selM.id] ? '#F4EBD6' : '#2F4A36', gioBtnBd: selM.gio && !(s.gioOn || {})[selM.id] ? 'none' : 'inset 0 0 0 1px rgba(47,74,54,.4)',
+        gioTap: () => selM.gio ? this.addGio(selM, (hasMe || gop ? kinOf(selM.id) : '') || 'Khác') : this.say('Chỉnh sửa người này để bổ sung ngày giỗ.'),
+        offer: () => this.props.onOffer ? this.props.onOffer(selM.n) : this.say('Thắp đèn hồi hướng cho ' + selM.n),
+        chant: () => this.props.onChant ? this.props.onChant(selM.n) : this.say('Tụng kinh hồi hướng cho ' + selM.n),
+        cta: gop ? (founder ? 'Hồ sơ của bạn' : 'Mở trong ' + (selM.side === 'ngoại' ? 'họ Trần' : s.clan.name.replace(/^Họ/, 'họ'))) : selM.d ? 'Nhắc ngày giỗ' : 'Thêm con cháu' },
+    };
+  }
+}
+</script>
+</body>
+</html>

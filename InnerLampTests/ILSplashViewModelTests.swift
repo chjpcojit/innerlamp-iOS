@@ -64,6 +64,25 @@ final class ILSplashViewModelTests: XCTestCase {
 
         XCTAssertEqual(receivedEvent, .goToOnboarding)
     }
+
+    func test_splashFinished_withStoredSession_firesGoToMainNavigationEvent() {
+        mockUseCase.hasSessionResult = true
+        let splashFinishedSubject = PassthroughSubject<Void, Never>()
+        let output = sut.transform(input: .init(
+            viewDidLoad: Empty().eraseToAnyPublisher(),
+            splashFinished: splashFinishedSubject.eraseToAnyPublisher()
+        ))
+        output.state.sink { _ in }.store(in: &cancellables)
+
+        var receivedEvent: ILSplashNavEvent?
+        sut.navigationEventPublisher
+            .sink { receivedEvent = $0 }
+            .store(in: &cancellables)
+
+        splashFinishedSubject.send(())
+
+        XCTAssertEqual(receivedEvent, .goToMain)
+    }
 }
 
 // MARK: - Mock ILSplashUseCase
@@ -79,5 +98,10 @@ final class MockILSplashUseCase: ILSplashUseCase {
     func isOnboardingCompleted() -> Bool {
         isOnboardingCompletedCalled = true
         return isOnboardingCompletedResult
+    }
+
+    var hasSessionResult = false
+    func hasSession() -> Bool {
+        hasSessionResult
     }
 }

@@ -5,14 +5,15 @@
 
 import UIKit
 
-/// Nhóm 4 hàng điều hướng cuối màn Tôi (Chuông tỉnh thức / Cài đặt / Thông báo / Đạo tràng của
-/// tôi) trong 1 thẻ bo góc. Là composition riêng của màn Tôi từ `ILSettingRow` dùng chung.
+/// Nhóm 5 hàng điều hướng cuối màn Tôi (Chuông tỉnh thức / Cài đặt / Thông báo / Gia phả / Đạo
+/// tràng của tôi) trong 1 thẻ bo góc. Là composition riêng của màn Tôi từ `ILSettingRow` dùng chung.
 final class ILProfileMenuCardView: UIView {
 
     // MARK: - Properties
     var onReminderTapped: (() -> Void)?
     var onSettingsTapped: (() -> Void)?
     var onNotificationsTapped: (() -> Void)?
+    var onFamilyTreeTapped: (() -> Void)?
     var onCommunityTapped: (() -> Void)?
 
     // MARK: - UI Elements
@@ -28,6 +29,11 @@ final class ILProfileMenuCardView: UIView {
 
     private lazy var notificationsRow = ILSettingRow(
         title: "profile.menu.notifications".localized,
+        kind: .chevron
+    )
+
+    private lazy var familyTreeRow = ILSettingRow(
+        title: "profile.menu.familyTree".localized,
         kind: .chevron
     )
 
@@ -56,7 +62,7 @@ final class ILProfileMenuCardView: UIView {
         layer.borderColor = ILColors.border.cgColor
         clipsToBounds = true
 
-        let stack = UIStackView(arrangedSubviews: [reminderRow, settingsRow, notificationsRow, communityRow])
+        let stack = UIStackView(arrangedSubviews: [reminderRow, settingsRow, notificationsRow, familyTreeRow, communityRow])
         stack.axis = .vertical
         stack.alignment = .fill
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -72,6 +78,7 @@ final class ILProfileMenuCardView: UIView {
         reminderRow.onTap = { [weak self] in self?.onReminderTapped?() }
         settingsRow.onTap = { [weak self] in self?.onSettingsTapped?() }
         notificationsRow.onTap = { [weak self] in self?.onNotificationsTapped?() }
+        familyTreeRow.onTap = { [weak self] in self?.onFamilyTreeTapped?() }
         communityRow.onTap = { [weak self] in self?.onCommunityTapped?() }
     }
 

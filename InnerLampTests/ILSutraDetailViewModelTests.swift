@@ -13,6 +13,7 @@ final class ILSutraDetailViewModelTests: XCTestCase {
 
     private var mockUseCase: MockILSutraDetailUseCase!
     private var sut: ILSutraDetailViewModel!
+    private var output: ILSutraDetailViewModel.Output!
     private var cancellables: Set<AnyCancellable>!
 
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
@@ -25,7 +26,7 @@ final class ILSutraDetailViewModelTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mockUseCase = MockILSutraDetailUseCase()
-        sut = ILSutraDetailViewModel(useCase: mockUseCase, sutraID: "sutra.phapcu")
+        sut = ILSutraDetailViewModel(useCase: mockUseCase, sutraID: "kinh-tu-bi")
         cancellables = []
 
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
@@ -34,10 +35,21 @@ final class ILSutraDetailViewModelTests: XCTestCase {
         chantTappedSubject = PassthroughSubject<Void, Never>()
         playTappedSubject = PassthroughSubject<Void, Never>()
         chapterTappedSubject = PassthroughSubject<Void, Never>()
+
+        // `transform` binds the inputs, so it must run exactly once per ViewModel.
+        output = sut.transform(input: ILSutraDetailViewModel.Input(
+            viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
+            backTapped: backTappedSubject.eraseToAnyPublisher(),
+            downloadTapped: downloadTappedSubject.eraseToAnyPublisher(),
+            chantTapped: chantTappedSubject.eraseToAnyPublisher(),
+            playTapped: playTappedSubject.eraseToAnyPublisher(),
+            chapterTapped: chapterTappedSubject.eraseToAnyPublisher()
+        ))
     }
 
     override func tearDown() {
         cancellables = nil
+        output = nil
         chapterTappedSubject = nil
         playTappedSubject = nil
         chantTappedSubject = nil
@@ -49,181 +61,166 @@ final class ILSutraDetailViewModelTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makeInput() -> ILSutraDetailViewModel.Input {
-        ILSutraDetailViewModel.Input(
-            viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
-            backTapped: backTappedSubject.eraseToAnyPublisher(),
-            downloadTapped: downloadTappedSubject.eraseToAnyPublisher(),
-            chantTapped: chantTappedSubject.eraseToAnyPublisher(),
-            playTapped: playTappedSubject.eraseToAnyPublisher(),
-            chapterTapped: chapterTappedSubject.eraseToAnyPublisher()
-        )
-    }
-
-    private func observeLatestState() -> () -> ILSutraDetailStateModel? {
-        let output = sut.transform(input: makeInput())
+    private func loadState() -> ILSutraDetailStateModel? {
         var latest: ILSutraDetailStateModel?
+        let loaded = expectation(description: "detail loaded")
         output.state
             .sink { state in
-                if case .success(let model) = state { latest = model }
+                if case .success(let model) = state {
+                    latest = model
+                    loaded.fulfill()
+                }
             }
             .store(in: &cancellables)
-        return { latest }
+        viewDidLoadSubject.send(())
+        wait(for: [loaded], timeout: 2)
+        return latest
     }
 
-    func test_viewDidLoad_populatesSutraDetail() {
-        let latest = observeLatestState()
+    private func firstEvent() -> () -> ILSutraDetailNavEvent? {
+        var received: ILSutraDetailNavEvent?
+        sut.navigationEventPublisher.sink { received = $0 }.store(in: &cancellables)
+        return { received }
+    }
 
-        viewDidLoadSubject.send(())
+    func test_viewDidLoad_loadsSutraByIDAndMapsDetail() {
+        let state = loadState()
 
-        XCTAssertTrue(mockUseCase.getInitialStateCalled)
-        let state = latest()
-        XCTAssertEqual(state?.kicker, "KINH VĂN · SONG NGỮ")
-        XCTAssertEqual(state?.title, "Kinh Pháp Cú")
+        XCTAssertEqual(mockUseCase.loadedIDs, ["kinh-tu-bi"])
+        XCTAssertEqual(state?.title, "Kinh Từ Bi")
+        XCTAssertEqual(state?.originalName, "Karaṇīyamettasutta")
+        XCTAssertEqual(
+            state?.kicker,
+            ["sutraDetail.kicker.verse".localized, "sutras.category.theravada".localized]
+                .joined(separator: "sutraDetail.kickerSeparator".localized).uppercased()
+        )
         XCTAssertEqual(
             state?.metaText,
-            String(
-                format: "sutraDetail.metaFormat".localized,
-                26, 423, "Thầy Minh Đạo",
-                ILSutraDetailViewModel.formatDuration(minutes: 130)
-            )
+            [String(format: "sutraDetail.lineCountFormat".localized, 73), ILSutraDetailViewModel.formatDuration(minutes: 130)]
+                .joined(separator: "sutraDetail.metaSeparator".localized)
         )
-        XCTAssertEqual(state?.tags.count, 2)
-        XCTAssertEqual(state?.progressPercentText, String(format: "sutraDetail.progress.percent".localized, 34))
-        XCTAssertEqual(state?.progressValue ?? 0, 0.34, accuracy: 0.001)
-        XCTAssertEqual(state?.tocCountText, String(format: "sutraDetail.tocCount".localized, 26))
-        XCTAssertEqual(state?.chapters.count, 2)
-        XCTAssertEqual(state?.chantButtonTitle, "sutraDetail.chant".localized)
+        XCTAssertEqual(state?.descriptionText, "Tiểu Bộ\("sutraDetail.descriptionSeparator".localized)Snp 1.8")
         XCTAssertEqual(state?.downloadButtonTitle, "sutraDetail.download".localized)
     }
 
-    func test_tags_areOrderedWithFilledFirst() {
-        let latest = observeLatestState()
-        viewDidLoadSubject.send(())
+    func test_viewDidLoad_showsTranslatorSourceAndLicense() {
+        let state = loadState()
 
-        let tags = latest()?.tags ?? []
-        XCTAssertEqual(tags.map(\.title), ["sutraDetail.tag.daily".localized, "sutraDetail.tag.phonetic".localized])
-        XCTAssertEqual(tags.map(\.isFilled), [true, false])
+        XCTAssertEqual(
+            state?.translatorText,
+            [
+                String(format: "sutraDetail.translator".localized, "Thích Minh Châu"),
+                String(format: "sutraDetail.source".localized, "SuttaCentral"),
+                String(format: "sutraDetail.license".localized, "CC0 1.0")
+            ].joined(separator: "\n")
+        )
     }
 
-    func test_chapterSubtitle_marksOnlyCurrentChapter() {
-        let latest = observeLatestState()
-        viewDidLoadSubject.send(())
+    func test_tags_listDailyChantThenPurposes() {
+        let state = loadState()
 
-        let chapters = latest()?.chapters ?? []
-        XCTAssertEqual(chapters.count, 2)
-
-        let current = chapters[0]
-        XCTAssertTrue(current.isCurrent)
         XCTAssertEqual(
-            current.subtitle,
-            String(format: "sutraDetail.chapter.verseRange".localized, 1, 20) + "sutraDetail.chapter.currentSuffix".localized
+            state?.tags.map(\.title),
+            ["sutras.category.daily".localized, "sutras.category.blessing".localized]
         )
-        XCTAssertEqual(current.durationText, String(format: "sutraDetail.chapter.duration".localized, 9))
+    }
 
-        let nonCurrent = chapters[1]
-        XCTAssertFalse(nonCurrent.isCurrent)
-        XCTAssertEqual(nonCurrent.subtitle, String(format: "sutraDetail.chapter.verseRange".localized, 21, 32))
+    func test_noAudioOrProgressFromServer_usesReadCTAAndHidesProgress() {
+        let state = loadState()
+
+        XCTAssertEqual(state?.hasAudio, false)
+        XCTAssertEqual(state?.hasProgress, false)
+        XCTAssertEqual(state?.chantButtonTitle, "sutraDetail.read".localized)
+    }
+
+    func test_sections_becomeTableOfContentsWithLineCounts() {
+        mockUseCase.sutra = ILSutraFixtures.detail(chapters: [
+            ILSutraDetailChapterEntity(id: "section.1", number: "1", title: "Phẩm Một", lineCount: 20),
+            ILSutraDetailChapterEntity(id: "section.2", number: "2", title: "Phẩm Hai", lineCount: 12)
+        ])
+        let state = loadState()
+
+        XCTAssertEqual(state?.tocCountText, String(format: "sutraDetail.tocCount.chapters".localized, 2))
+        XCTAssertEqual(state?.chapters.map(\.title), ["Phẩm Một", "Phẩm Hai"])
+        XCTAssertEqual(state?.chapters.first?.subtitle, String(format: "sutraDetail.chapter.lineCount".localized, 20))
+        XCTAssertEqual(state?.chapters.first?.durationText, "")
+        XCTAssertEqual(state?.chapters.first?.isCurrent, false)
+    }
+
+    func test_noSections_leavesTableOfContentsEmpty() {
+        let state = loadState()
+
+        XCTAssertEqual(state?.chapters, [])
+        XCTAssertEqual(state?.tocCountText, "")
+    }
+
+    func test_missingDurationAndUnknownTradition_areDroppedFromKickerAndMeta() {
+        let base = ILSutraFixtures.detail()
+        mockUseCase.sutra = ILSutraDetailSutraEntity(
+            id: base.id, title: base.title, originalTitle: "", kind: nil, tradition: nil,
+            collection: "", reference: "", isDailyChant: false, purposes: [], durationMinutes: nil,
+            translator: "", sourceName: "", sourceURL: nil, license: "", lineCount: 9, chapters: []
+        )
+        let state = loadState()
+
+        XCTAssertEqual(state?.kicker, "")
+        XCTAssertEqual(state?.metaText, String(format: "sutraDetail.lineCountFormat".localized, 9))
+        XCTAssertEqual(state?.descriptionText, "")
+        XCTAssertEqual(state?.translatorText, "")
+        XCTAssertEqual(state?.tags, [])
+    }
+
+    func test_viewDidLoad_failure_emitsFailure() {
+        mockUseCase.error = ILCatalogError.notFound
+        let failed = expectation(description: "failure emitted")
+        output.state
+            .sink { if case .failure(let error) = $0, case ILCatalogError.notFound = error { failed.fulfill() } }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        wait(for: [failed], timeout: 2)
     }
 
     func test_backTapped_firesBackNavigationEvent() {
-        _ = sut.transform(input: makeInput())
-        var receivedEvent: ILSutraDetailNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
-
+        let event = firstEvent()
         backTappedSubject.send(())
-
-        XCTAssertEqual(receivedEvent, .back)
+        XCTAssertEqual(event(), .back)
     }
 
     func test_chantTapped_firesOpenReaderNavigationEvent() {
-        _ = sut.transform(input: makeInput())
-        var receivedEvent: ILSutraDetailNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
-
+        let event = firstEvent()
         chantTappedSubject.send(())
-
-        XCTAssertEqual(receivedEvent, .openReader)
+        XCTAssertEqual(event(), .openReader)
     }
 
     func test_chapterTapped_firesOpenReaderNavigationEvent() {
-        _ = sut.transform(input: makeInput())
-        var receivedEvent: ILSutraDetailNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
-
+        let event = firstEvent()
         chapterTappedSubject.send(())
-
-        XCTAssertEqual(receivedEvent, .openReader)
+        XCTAssertEqual(event(), .openReader)
     }
 
     func test_playTapped_firesOpenPlayerNavigationEvent() {
-        _ = sut.transform(input: makeInput())
-        var receivedEvent: ILSutraDetailNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
-
+        let event = firstEvent()
         playTappedSubject.send(())
-
-        XCTAssertEqual(receivedEvent, .openPlayer)
+        XCTAssertEqual(event(), .openPlayer)
     }
 
     func test_downloadTapped_firesDownloadNavigationEvent() {
-        _ = sut.transform(input: makeInput())
-        var receivedEvent: ILSutraDetailNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
-
+        let event = firstEvent()
         downloadTappedSubject.send(())
-
-        XCTAssertEqual(receivedEvent, .download)
+        XCTAssertEqual(event(), .download)
     }
 }
 
 // MARK: - Mock ILSutraDetailUseCase
 final class MockILSutraDetailUseCase: ILSutraDetailUseCase {
-    var getInitialStateCalled = false
+    var sutra: ILSutraDetailSutraEntity = ILSutraFixtures.detail()
+    var error: Error?
+    private(set) var loadedIDs: [String] = []
 
-    func getInitialState(sutraID: String) -> ILSutraDetailEntity {
-        getInitialStateCalled = true
-        return ILSutraDetailEntity(
-            sutras: [Self.sutra],
-            currentSutraID: sutraID,
-            currentChapterID: "chapter.1",
-            readingProgress: 0.34
-        )
+    func loadSutra(id: String) async throws -> ILSutraDetailEntity {
+        loadedIDs.append(id)
+        if let error { throw error }
+        return ILSutraDetailEntity(sutra: sutra)
     }
-
-    func currentSutra(in entity: ILSutraDetailEntity) -> ILSutraDetailSutraEntity? {
-        entity.sutras.first { $0.id == entity.currentSutraID }
-    }
-
-    private static let sutra = ILSutraDetailSutraEntity(
-        id: "sutra.phapcu",
-        kicker: "KINH VĂN · SONG NGỮ",
-        title: "Kinh Pháp Cú",
-        narrator: "Thầy Minh Đạo",
-        numberOfChapters: 26,
-        numberOfVerses: 423,
-        durationMinutes: 130,
-        description: "Mô tả mẫu",
-        tags: [.daily, .phonetic],
-        chapters: [
-            ILSutraDetailChapterEntity(
-                id: "chapter.1", number: "I", title: "Phẩm Song Yếu",
-                verseStart: 1, verseEnd: 20, durationMinutes: 9
-            ),
-            ILSutraDetailChapterEntity(
-                id: "chapter.2", number: "II", title: "Phẩm Không Phóng Dật",
-                verseStart: 21, verseEnd: 32, durationMinutes: 7
-            )
-        ]
-    )
 }

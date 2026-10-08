@@ -37,6 +37,7 @@ final class ILTempleStatusCardView: UIView {
         statusLabel.text = statusText
         statusLabel.textColor = isOpen ? ILColors.greenText : ILColors.inkSecondary
         noteLabel.text = "· \(noteText)"
+        noteLabel.isHidden = noteText.isEmpty
         distanceLabel.text = distanceText
 
         hoursStack.arrangedSubviews.forEach {

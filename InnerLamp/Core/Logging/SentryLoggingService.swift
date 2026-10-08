@@ -41,7 +41,7 @@ nonisolated public final class SentryLoggingService: LoggingService {
         let crumb = Breadcrumb()
         crumb.category = category.rawValue
         crumb.message = PIIMasker.maskMessage(message)
-        crumb.data = data.map(PIIMasker.maskMetadata)
+        data.map(PIIMasker.maskMetadata)?.forEach { crumb.setData(value: $1, key: $0) }
         crumb.level = .info
         SentrySDK.addBreadcrumb(crumb)
     }

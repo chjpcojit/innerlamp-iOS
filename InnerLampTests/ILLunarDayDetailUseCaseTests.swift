@@ -98,6 +98,20 @@ final class ILLunarDayDetailUseCaseTests: XCTestCase {
         XCTAssertFalse(entity.wealthStarDirection.isEmpty)
     }
 
+    func test_getDetail_craneDirection_matchesCycleAndIsNilWhenInHeaven() {
+        // Across a full 60-day Can Chi cycle the 16 "in heaven" days must yield nil.
+        let all = (0..<60).compactMap { offset -> ILLunarDayDetailEntity? in
+            let day = Calendar(identifier: .gregorian).date(byAdding: .day, value: offset, to: date(2024, 9, 1))
+            return day.map { sut.getDetail(for: $0) }
+        }
+        XCTAssertEqual(all.count, 60)
+        XCTAssertEqual(all.filter { $0.craneStarDirection == nil }.count, 16)
+        for entity in all {
+            XCTAssertEqual(entity.craneStarDirection,
+                           ILLunarCalendar.craneStarDirection(can: entity.dayCanIndex, chi: entity.dayChiIndex))
+        }
+    }
+
     // MARK: - Variation across days
 
     /// The three user-facing "computed" sections — giờ hoàng đạo (good hours), tuổi xung khắc

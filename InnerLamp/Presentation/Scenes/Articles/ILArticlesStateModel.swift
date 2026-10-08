@@ -13,6 +13,7 @@ struct ILArticlesArticleModel: Equatable, Identifiable {
     let title: String
     let author: String
     let readText: String
+    var thumbnailURL: String? = nil
 }
 
 /// UI state for the "All articles" screen — Presentation layer, owned and mutated exclusively by

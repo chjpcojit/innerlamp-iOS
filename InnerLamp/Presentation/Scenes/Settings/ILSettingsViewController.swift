@@ -13,6 +13,7 @@ final class ILSettingsViewController: BaseViewController {
     private var cancellables = Set<AnyCancellable>()
 
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
+    private let viewWillAppearSubject = PassthroughSubject<Void, Never>()
     private let backTappedSubject = PassthroughSubject<Void, Never>()
     private let profileTappedSubject = PassthroughSubject<Void, Never>()
     private let bellToggleChangedSubject = PassthroughSubject<Bool, Never>()
@@ -79,6 +80,7 @@ final class ILSettingsViewController: BaseViewController {
     // MARK: - Lifecycle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        viewWillAppearSubject.send(())
         navigationController?.setNavigationBarHidden(true, animated: animated)
         // Cài đặt là màn con không hiện thanh điều hướng đáy (theo design handoff) — che bar của tab.
         (tabBarController as? ILMainTabBarController)?.setBottomNavHidden(true, animated: animated)
@@ -164,6 +166,7 @@ final class ILSettingsViewController: BaseViewController {
 
         let input = ILSettingsViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
+            viewWillAppear: viewWillAppearSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             profileTapped: profileTappedSubject.eraseToAnyPublisher(),
             bellToggleChanged: bellToggleChangedSubject.eraseToAnyPublisher(),

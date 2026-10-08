@@ -11,9 +11,16 @@ import UIKit
 /// `--il-sunk2 → --il-tint → --il-canvas` (tan dần vào nền trang, đổi theo light/dark), ngày âm
 /// lớn 72px, tháng/năm âm, ngày dương + pill "loại ngày" và dòng lời khuyên ở đáy.
 ///
+/// Khi server trả ảnh (`GET /v1/calendar/image`), ảnh phủ kín hero phía trên gradient (gradient vẫn là
+/// placeholder khi chưa có ảnh/ảnh lỗi) và một lớp phủ mờ dần về màu nền trang giữ cho chữ ở đáy hero
+/// đọc được; dòng ghi công tác giả/giấy phép nằm dưới cùng.
+///
+/// Ảnh = `imageView` của `ILStretchyHeaderView`: ghim trên cùng và co giãn khi kéo xuống; gradient
+/// placeholder nằm ở `backgroundView`, lớp phủ + chữ ở `contentView`. `imageHeight` là 0 khi chưa có ảnh.
+///
 /// Header (nút ‹) không nằm ở đây mà là `ILNavBar` trong suốt đè lên trên — xem
 /// `ILLunarDayDetailViewController`.
-final class ILLunarDayDetailHeroView: UIView {
+final class ILLunarDayDetailHeroView: ILStretchyHeaderView {
 
     private enum Layout {
         static let height: CGFloat = 380
@@ -23,6 +30,11 @@ final class ILLunarDayDetailHeroView: UIView {
 
     // MARK: - UI Elements
     private let gradientLayer = CAGradientLayer()
+
+    private let scrimLayer = CAGradientLayer()
+    private let scrimView = UIView()
+    private var currentImageURL: String?
+    private let creditLabel = UILabel()
 
     private let eyebrowDot = UIView()
     private let eyebrowLabel = UILabel()
@@ -57,7 +69,9 @@ final class ILLunarDayDetailHeroView: UIView {
         solar: String,
         typeTone: ILLunarDayDetailTypeTone,
         typeText: String,
-        adviceText: String
+        adviceText: String,
+        imageURL: String?,
+        creditText: String
     ) {
         eyebrowLabel.attributedText = ILTypography.makeAttributedString(
             text: eyebrowText,
@@ -72,6 +86,17 @@ final class ILLunarDayDetailHeroView: UIView {
         typeDot.backgroundColor = dotColor(for: typeTone)
         typeLabel.text = typeText
         adviceLabel.text = adviceText
+
+        // `configure` runs on every state emission (verse / image loads); `setImage` clears the
+        // bitmap and refetches, so only call it when the URL actually changed.
+        if imageURL != currentImageURL {
+            currentImageURL = imageURL
+            imageView.setImage(urlString: imageURL)
+            imageHeight = imageURL == nil ? 0 : Layout.height
+            scrimView.isHidden = imageURL == nil
+        }
+        creditLabel.text = creditText
+        creditLabel.isHidden = creditText.isEmpty
     }
 
     private func dotColor(for tone: ILLunarDayDetailTypeTone) -> UIColor {
@@ -84,14 +109,30 @@ final class ILLunarDayDetailHeroView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        translatesAutoresizingMaskIntoConstraints = false
-        clipsToBounds = true
+        // Ảnh của ngày; nền trong suốt để gradient phía sau làm placeholder.
+        imageView.backgroundColor = .clear
 
         gradientLayer.colors = [ILColors.sunk2.cgColor, ILColors.tint.cgColor, ILColors.canvas.cgColor]
         gradientLayer.locations = [0.0, 0.55, 1.0]
         gradientLayer.startPoint = CGPoint(x: 0.5, y: 0)
         gradientLayer.endPoint = CGPoint(x: 0.5, y: 1)
-        layer.insertSublayer(gradientLayer, at: 0)
+        backgroundView.layer.insertSublayer(gradientLayer, at: 0)
+
+        scrimView.translatesAutoresizingMaskIntoConstraints = false
+        scrimView.isUserInteractionEnabled = false
+        scrimView.isHidden = true
+        scrimLayer.locations = [0.0, 0.35, 0.6, 1.0]
+        scrimLayer.startPoint = CGPoint(x: 0.5, y: 0)
+        scrimLayer.endPoint = CGPoint(x: 0.5, y: 1)
+        scrimView.layer.addSublayer(scrimLayer)
+        applyScrimColors()
+        contentView.addSubview(scrimView)
+        NSLayoutConstraint.activate([
+            scrimView.topAnchor.constraint(equalTo: topAnchor),
+            scrimView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            scrimView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            scrimView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
 
         // Eyebrow: chấm vàng + "ÂM LỊCH".
         eyebrowDot.backgroundColor = ILColors.featAccent
@@ -177,15 +218,21 @@ final class ILLunarDayDetailHeroView: UIView {
         adviceLabel.textColor = ILColors.inkTertiary
         adviceLabel.numberOfLines = 0
 
-        let contentStack = UIStackView(arrangedSubviews: [eyebrowRow, dayRow, solarRow, adviceLabel])
+        creditLabel.font = ILTypography.caption
+        creditLabel.textColor = ILColors.inkTertiary
+        creditLabel.numberOfLines = 0
+        creditLabel.isHidden = true
+
+        let contentStack = UIStackView(arrangedSubviews: [eyebrowRow, dayRow, solarRow, adviceLabel, creditLabel])
         contentStack.axis = .vertical
         contentStack.alignment = .fill
         contentStack.spacing = 10
         contentStack.setCustomSpacing(14, after: dayRow)
         contentStack.setCustomSpacing(6, after: solarRow)
+        contentStack.setCustomSpacing(8, after: adviceLabel)
         contentStack.isUserInteractionEnabled = false
         contentStack.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(contentStack)
+        contentView.addSubview(contentStack)
 
         NSLayoutConstraint.activate([
             heightAnchor.constraint(equalToConstant: Layout.height),
@@ -203,6 +250,14 @@ final class ILLunarDayDetailHeroView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         gradientLayer.frame = bounds
+        scrimLayer.frame = bounds
+    }
+
+    /// Trong suốt ở đỉnh (ảnh lộ rõ) → màu nền trang ở đáy (chữ đọc được). `CGColor` tĩnh nên phải
+    /// resolve theo trait hiện tại.
+    private func applyScrimColors() {
+        let canvas = ILColors.canvas.resolvedColor(with: traitCollection)
+        scrimLayer.colors = [0.0, 0.55, 0.92, 1.0].map { canvas.withAlphaComponent($0).cgColor }
     }
 
     // `CAGradientLayer` màu là CGColor tĩnh, không tự đảo theo trait — resolve lại khi hệ thống
@@ -213,6 +268,7 @@ final class ILLunarDayDetailHeroView: UIView {
             ILColors.tint.resolvedColor(with: traitCollection).cgColor,
             ILColors.canvas.resolvedColor(with: traitCollection).cgColor
         ]
+        applyScrimColors()
         eyebrowDot.layer.borderColor = ILColors.featAccent.withAlphaComponent(0.5).cgColor
         typePill.layer.borderColor = ILColors.border.cgColor
     }

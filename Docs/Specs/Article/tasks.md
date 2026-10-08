@@ -1,13 +1,13 @@
 # Tasks — Article
 
-Version: 1.0
-Last updated: 2026-09-27
-Status: in-progress (Phase 1–2 done; Phase 3–4 pending)
+Version: 1.3
+Last updated: 2026-10-06
+Status: in-progress (Phase 1–3 implemented incl. hero image (v1.3), device QA pending; Phase 4 pending)
 
 > See `changelog.md` in this folder for the version history of this spec.
 
-> Note: this feature has no network layer today; Phase 3 tracks replacing the
-> static catalog with a real articles API.
+> Note: Phase 3 replaced the original static catalog with the real articles
+> API (v1.2).
 
 ## Phase 1 — UI (static layout, mock state)
 
@@ -36,21 +36,29 @@ Status: in-progress (Phase 1–2 done; Phase 3–4 pending)
 - [x] Unit tests: `InnerLampTests/ILArticleViewModelTests.swift` (5 tests) —
       load article, toggle save, switch read-next, nav back, nav share
 
-## Phase 3 — API integration (pending; blocked on contract)
+## Phase 3 — API integration (contract confirmed 2026-09-30, see `design.md`)
 
-> ⚠️ Not confirmed: the articles API contract(s) (see `requirements.md` Pending).
-> Everything below is blocked until a contract exists.
-
-- [ ] Define the articles API contract(s) with the backend team
-- [ ] Create `ILArticleDTO` + `ILArticleMapper` (once the contract is confirmed)
-- [ ] Create `ArticleEndpoint` under `Data/DataSources/Remote/`
-- [ ] Create `ILArticleRepository` protocol + `ILArticleRepositoryImpl` wrapping
-      `NetworkService`
-- [ ] Replace the static catalog in `ILArticleUseCaseImpl` with real data + real
-      hero images
+- [x] Define the articles API contract(s) with the backend team (confirmed by
+      [BE-Developer], `design.md` → "API contract")
+- [x] Create `ILArticleDTO` + `ILArticleMapper` (shared summary/detail DTOs)
+- [x] Create `ArticleDetailEndpoint` + `TopArticlesEndpoint` +
+      `ArticlesPageEndpoint` under `Data/DataSources/Remote/`
+- [x] Create `ILArticleRepository` protocol + `ILArticleRepositoryImpl` wrapping
+      `NetworkService` (shared by Home / Articles / Article)
+- [x] Map `ARTICLE_NOT_FOUND` in `ILCatalogErrorMapping`
+- [x] Replace the static catalog in `ILArticleUseCaseImpl` with `loadArticle(id:)`
+      + "Đọc tiếp" derived from top articles; show source attribution and
+      loading/error state in `ILArticleViewModel`/`ViewController`
+- [x] Load the hero from `image_url`: `ILArticleStateModel.heroImageURL`,
+      mapped in `ILArticleViewModel`, rendered by `ILArticleHeroImageView` via
+      `ILRemoteImageView` (placeholder kept on nil/failed load)
+- [ ] Unit test: `ILArticleViewModelTests` asserts `heroImageURL` is mapped
+      (nil and non-nil) — not written yet
 - [ ] Persist `savedArticleIDs` (UserDefaultsService / Core Data) once a saved-
       articles screen exists
-- [ ] Update `ILArticleViewModelTests` + add a mock repository
+- [x] Update `ILArticleViewModelTests` + add a mock repository (`ILArticleUseCaseTests`,
+      `ILArticleRepositoryTests`; written and type-checked — see changelog v1.2 for
+      the run status)
 - [ ] Visual QA on simulator/device (scroll layout, hero, dark mode)
 - [ ] Manual test against a real/staging backend once available
 

@@ -15,6 +15,19 @@ enum ILBuddhistTradition: String, Equatable, CaseIterable {
     case universal = "UNIVERSAL"
 }
 
+/// Phân loại một sự kiện định kỳ — khớp cột `category` (`MAJOR` / `COMMEMORATION` / `FOLK`) trong
+/// bảng `buddhist_event_templates`. Khác `ILBuddhistTradition` (truyền thống nào tổ chức): đây là
+/// loại sự kiện. Raw value dùng đúng chuỗi lưu trong Core Data.
+enum ILBuddhistEventCategory: String, Equatable, CaseIterable {
+    /// Đại lễ (Phật Đản, Vu Lan, Vesak, Thành đạo, Nhập Niết-bàn, Rằm tháng Giêng, vía Quán Thế Âm
+    /// đản sinh / thành đạo / xuất gia).
+    case major = "MAJOR"
+    /// Vía và ngày kỷ niệm Phật giáo khác (vía Bồ Tát, An cư kiết hạ, Magha Puja, Kathina…).
+    case commemoration = "COMMEMORATION"
+    /// Tết dân gian Việt Nam — không phải lễ Phật giáo (Nguyên Đán, Hàn Thực, Đoan Ngọ, Trung Thu…).
+    case folk = "FOLK"
+}
+
 /// Một sự kiện Phật giáo định kỳ hằng năm theo âm lịch (mẫu sự kiện, chưa gắn vào một năm cụ thể).
 ///
 /// Chỉ chứa dữ liệu nghiệp vụ thô: `lunarDay` / `lunarMonth` là ngày/tháng âm lịch lặp lại mỗi
@@ -31,6 +44,7 @@ struct ILBuddhistEventTemplateEntity: Equatable, Identifiable {
     /// Tháng âm lịch (1...12).
     let lunarMonth: Int
     let tradition: ILBuddhistTradition
+    let category: ILBuddhistEventCategory
     /// `true` nếu sự kiện vẫn diễn ra khi tháng âm lịch tương ứng là tháng nhuận.
     let isLeapMonthEligible: Bool
 }

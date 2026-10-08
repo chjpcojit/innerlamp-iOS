@@ -1,7 +1,7 @@
 # Design — Home
 
-Version: 1.0
-Last updated: 2026-09-27
+Version: 1.10
+Last updated: 2026-10-07
 Status: in-progress — full UI + local logic with mock data; no dashboard API
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -35,6 +35,7 @@ ILMainTabCoordinator (tab "Trang chủ")
        setViewControllers([ILHomeViewController])   ← root of the Home tab's nav
        .openMala            → showMala()            (push ILMalaCoordinator)
        .openLunarCalendar   → showLunarCalendar()
+       .openMemorial        → showMemorial()        (push ILMemorialCoordinator; see Docs/Specs/Memorial/)
        .openPhotos          → showPhotos()
        .openBell            → showBell()
        .openEvents          → showEvents()
@@ -55,7 +56,22 @@ ILMainTabCoordinator (tab "Trang chủ")
    ratios, and pre-formatted strings).
 4. `ILHomeViewController` renders each section from the state model.
 
-Bead taps are synchronous: `incrementBead` / `resetBeads` mutate the entity and
+### Top articles (target, see `tasks.md` Phase 3)
+
+Same pattern as the temple / deity carousels: `entity.articles` starts empty and
+`ILHomeViewModel` triggers `useCase.loadTopArticles()` on `viewDidLoad`.
+
+1. Trigger: `viewDidLoad`. API: `GET /v1/articles/top` (public, no params, 5
+   items in curated order) — contract in `Docs/Specs/Article/design.md` →
+   "API contract".
+2. Success → `ILHomeArticleEntity` (id, category, title, author, readMinutes)
+   from the Summary; the card's "N phút đọc" text is formatted in the ViewModel.
+   Failure (`ILCatalogError`) or an empty list → the section shows the "Đang
+   cập nhật" placeholder (same for the temple and deity carousels). While the
+   first load is in flight the section shows skeleton cards (changelog v1.6).
+   Tapping a card opens Article by the server `id` (slug).
+
+The bead card no longer counts on Home (v1.9): the whole card opens Mala. `incrementBead` / `resetBeads` stay in the UseCase but are not wired (TD-Home-001). Legacy note: bead taps were synchronous — they mutated the entity and
 re-emit state — no persistence, no network.
 
 ## Deliberately stubbed / mock for now
@@ -63,7 +79,7 @@ re-emit state — no persistence, no network.
 `ILHomeUseCaseImpl.getInitialState()` returns **mock content** for: the daily
 quote (`home.lunar.verse.*`), session/streak statistics (hardcoded `12/20`,
 `42`, a fixed `[0.3, 0.5, …]` progress array), suggested sessions (3 fixed
-items), photos (`pg-1…pg-12`), temples (8 fixed temples), articles (5 fixed
+items), photos (loaded from `GET /v1/gallery/top` via `loadTopPhotos()` since v1.10; `ILHomeUseCaseImpl` takes an `ILPhotosRepository`), temples (8 fixed temples), articles (5 fixed
 articles), and events (2 months of sample events). Each block carries a
 `// TODO: … networkService` comment. The greeting name is read via
 `KeychainService` key `signup_pending_credentials` — a temporary arrangement

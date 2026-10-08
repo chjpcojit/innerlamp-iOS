@@ -26,6 +26,7 @@ final class ILHomeUseCaseTests: XCTestCase {
             lunarDay: 1,
             lunarMonth: 1,
             tradition: .universal,
+            category: .folk,
             isLeapMonthEligible: false
         )
     }
@@ -35,7 +36,7 @@ final class ILHomeUseCaseTests: XCTestCase {
     func test_loadBuddhistEventMonths_spansFullCalendarYear() async throws {
         let mock = MockILBuddhistEventUseCase()
         mock.templates = [template]
-        let sut = ILHomeUseCaseImpl(keychainService: KeychainServiceImpl(), buddhistEventUseCase: mock, deityUseCase: ILDeityUseCaseImpl(), sutraQuoteUseCase: MockILSutraQuoteUseCase())
+        let sut = ILHomeUseCaseImpl(keychainService: KeychainServiceImpl(), buddhistEventUseCase: mock, sutraQuoteUseCase: MockILSutraQuoteUseCase(), templeRepository: MockILTempleRepository(), deityCatalogRepository: MockILDeityCatalogRepository(), articleRepository: MockILArticleRepository(), photosRepository: MockILPhotosRepository())
 
         let date = calendar.date(from: DateComponents(year: 2026, month: 9, day: 27))
         let midYear = try XCTUnwrap(date)
@@ -50,7 +51,7 @@ final class ILHomeUseCaseTests: XCTestCase {
     func test_loadBuddhistEventMonths_returnsEmpty_whenNoTemplates() async throws {
         let mock = MockILBuddhistEventUseCase()
         mock.templates = []
-        let sut = ILHomeUseCaseImpl(keychainService: KeychainServiceImpl(), buddhistEventUseCase: mock, deityUseCase: ILDeityUseCaseImpl(), sutraQuoteUseCase: MockILSutraQuoteUseCase())
+        let sut = ILHomeUseCaseImpl(keychainService: KeychainServiceImpl(), buddhistEventUseCase: mock, sutraQuoteUseCase: MockILSutraQuoteUseCase(), templeRepository: MockILTempleRepository(), deityCatalogRepository: MockILDeityCatalogRepository(), articleRepository: MockILArticleRepository(), photosRepository: MockILPhotosRepository())
 
         let date = calendar.date(from: DateComponents(year: 2026, month: 9, day: 27))
         let midYear = try XCTUnwrap(date)
@@ -85,19 +86,181 @@ final class ILHomeUseCaseTests: XCTestCase {
         XCTAssertNil(ILHomeUseCaseImpl.primaryMemorialDay(of: []))
     }
 
-    func test_getInitialState_mapsFullDeityCatalog() {
-        let deityUseCase = ILDeityUseCaseImpl()
-        let sut = ILHomeUseCaseImpl(
-            keychainService: KeychainServiceImpl(),
-            buddhistEventUseCase: MockILBuddhistEventUseCase(),
-            deityUseCase: deityUseCase,
-            sutraQuoteUseCase: MockILSutraQuoteUseCase()
+    func test_getInitialState_leavesServerCarouselsEmpty() {
+        let entity = makeSUT(sutraQuoteUseCase: MockILSutraQuoteUseCase()).getInitialState()
+
+        XCTAssertTrue(entity.temples.isEmpty, "Temples are loaded asynchronously from the server")
+        XCTAssertTrue(entity.deities.isEmpty, "Deities are loaded asynchronously from the server")
+    }
+
+    // MARK: - Server catalogs
+
+    private func templeSummary(id: String, rank: ILTempleHeritageRank = .worldHeritage) -> ILTempleSummaryEntity {
+        ILTempleSummaryEntity(
+            id: id,
+            name: "Chùa Bích Động",
+            type: .chua,
+            region: .north,
+            thumbnailURL: nil,
+            imageURL: nil,
+            sect: "BẮC_TÔNG",
+            heritageRank: rank,
+            establishedYear: 1428,
+            location: ILTempleLocationEntity(latitude: 20.2, longitude: 105.9, address: "Xã Ninh Hải, Tỉnh Ninh Bình")
         )
+    }
 
-        let entity = sut.getInitialState()
+    private func deitySummary(id: String, kind: ILDeityKind) -> ILDeitySummaryEntity {
+        ILDeitySummaryEntity(
+            id: id,
+            kind: kind,
+            nameVi: "name-\(id)",
+            nameSanskrit: "",
+            nameChinese: "",
+            titleHonorific: "honorific-\(id)",
+            thumbnailURL: "",
+            imageURL: "",
+            coreVirtue: "virtue-\(id)",
+            pureLand: ""
+        )
+    }
 
-        XCTAssertEqual(entity.deities.map(\.id), deityUseCase.getAllDeities().map(\.id))
-        XCTAssertEqual(entity.deities.first?.memorialDay?.lunarDay, 15, "Thích Ca → Phật Đản 15/4")
+    func test_loadTopTemples_mapsServerSummariesInOrder() async throws {
+        let templeRepository = MockILTempleRepository()
+        templeRepository.topResult = .success([templeSummary(id: "t1"), templeSummary(id: "t2", rank: .unranked)])
+        let sut = makeSUT(sutraQuoteUseCase: MockILSutraQuoteUseCase(), templeRepository: templeRepository)
+
+        let temples = try await sut.loadTopTemples()
+
+        XCTAssertEqual(temples.map(\.id), ["t1", "t2"])
+        XCTAssertEqual(temples.first?.name, "Chùa Bích Động")
+        XCTAssertEqual(temples.first?.address, "Xã Ninh Hải, Tỉnh Ninh Bình")
+        XCTAssertEqual(temples.first?.region, .north)
+        XCTAssertEqual(temples.first?.heritageRank, .worldHeritage)
+        XCTAssertEqual(temples.first?.establishedYear, 1428)
+        XCTAssertEqual(temples.last?.heritageRank, .unranked)
+    }
+
+    func test_loadTopTemples_propagatesRepositoryError() async {
+        let templeRepository = MockILTempleRepository()
+        templeRepository.topResult = .failure(ILCatalogError.offline)
+        let sut = makeSUT(sutraQuoteUseCase: MockILSutraQuoteUseCase(), templeRepository: templeRepository)
+
+        do {
+            _ = try await sut.loadTopTemples()
+            XCTFail("Expected ILCatalogError.offline")
+        } catch ILCatalogError.offline {
+            // expected
+        } catch {
+            XCTFail("Unexpected error \(error)")
+        }
+    }
+
+    func test_loadTopDeities_mapsServerSummariesInOrder_withoutMemorialDay() async throws {
+        let deityRepository = MockILDeityCatalogRepository()
+        deityRepository.topResult = .success([
+            deitySummary(id: "buddha_amitabha", kind: .buddha),
+            deitySummary(id: "buddha_shakyamuni", kind: .buddha),
+            deitySummary(id: "bodhisattva_manjushri", kind: .bodhisattva)
+        ])
+        let sut = makeSUT(sutraQuoteUseCase: MockILSutraQuoteUseCase(), deityCatalogRepository: deityRepository)
+
+        let deities = try await sut.loadTopDeities()
+
+        XCTAssertEqual(deities.map(\.id), ["buddha_amitabha", "buddha_shakyamuni", "bodhisattva_manjushri"])
+        XCTAssertEqual(deities.first?.name, "name-buddha_amitabha")
+        XCTAssertEqual(deities.first?.honorific, "honorific-buddha_amitabha")
+        XCTAssertEqual(deities.first?.virtue, "virtue-buddha_amitabha")
+        XCTAssertEqual(deities.last?.kind, .bodhisattva)
+        XCTAssertTrue(deities.allSatisfy { $0.memorialDay == nil }, "Server summary has no memorial days — no bundled join")
+    }
+
+    func test_loadTopDeities_propagatesRepositoryError_withoutBundledFallback() async {
+        let deityRepository = MockILDeityCatalogRepository()
+        deityRepository.topResult = .failure(ILCatalogError.offline)
+        let sut = makeSUT(sutraQuoteUseCase: MockILSutraQuoteUseCase(), deityCatalogRepository: deityRepository)
+
+        do {
+            _ = try await sut.loadTopDeities()
+            XCTFail("Expected ILCatalogError.offline")
+        } catch ILCatalogError.offline {
+            // expected
+        } catch {
+            XCTFail("Unexpected error \(error)")
+        }
+    }
+
+    func test_loadTopArticles_mapsServerSummariesInOrder() async throws {
+        let articleRepository = MockILArticleRepository()
+        articleRepository.topResult = .success([
+            ILArticleTestFixtures.summary(id: "a1", readMinutes: 6),
+            ILArticleTestFixtures.summary(id: "a2", readMinutes: 4)
+        ])
+        let sut = makeSUT(sutraQuoteUseCase: MockILSutraQuoteUseCase(), articleRepository: articleRepository)
+
+        let articles = try await sut.loadTopArticles()
+
+        XCTAssertEqual(articles.map(\.id), ["a1", "a2"])
+        XCTAssertEqual(articles.first?.title, "title-a1")
+        XCTAssertEqual(articles.first?.category, "category-a1")
+        XCTAssertEqual(articles.first?.author, "author-a1")
+        XCTAssertEqual(articles.first?.readMinutes, 6)
+    }
+
+    func test_getInitialState_startsWithNoPhotos() {
+        XCTAssertTrue(makeSUT(sutraQuoteUseCase: MockILSutraQuoteUseCase()).getInitialState().photos.isEmpty,
+                      "Photos are loaded asynchronously from the server")
+    }
+
+    func test_loadTopPhotos_mapsServerPhotosInOrderWithThumbnails() async throws {
+        let photosRepository = MockILPhotosRepository()
+        photosRepository.topResult = .success([
+            ILPhotosPhotoEntity(id: "g1", category: .temple, title: "A", place: "P", thumbnailURL: "http://h/t1.jpg", imageURL: "http://h/f1.jpg"),
+            ILPhotosPhotoEntity(id: "g2", category: .festival, title: "B", place: "P", thumbnailURL: nil, imageURL: nil)
+        ])
+        let sut = makeSUT(sutraQuoteUseCase: MockILSutraQuoteUseCase(), photosRepository: photosRepository)
+
+        let photos = try await sut.loadTopPhotos()
+
+        XCTAssertEqual(photos, [
+            ILHomePhotoEntity(id: "g1", thumbnailURL: "http://h/t1.jpg"),
+            ILHomePhotoEntity(id: "g2", thumbnailURL: nil)
+        ])
+    }
+
+    func test_loadTopPhotos_propagatesRepositoryError() async {
+        let photosRepository = MockILPhotosRepository()
+        photosRepository.topResult = .failure(ILCatalogError.offline)
+        let sut = makeSUT(sutraQuoteUseCase: MockILSutraQuoteUseCase(), photosRepository: photosRepository)
+
+        do {
+            _ = try await sut.loadTopPhotos()
+            XCTFail("Expected offline")
+        } catch ILCatalogError.offline {
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+
+    func test_loadTopArticles_propagatesRepositoryError() async {
+        let articleRepository = MockILArticleRepository()
+        articleRepository.topResult = .failure(ILCatalogError.offline)
+        let sut = makeSUT(sutraQuoteUseCase: MockILSutraQuoteUseCase(), articleRepository: articleRepository)
+
+        do {
+            _ = try await sut.loadTopArticles()
+            XCTFail("Expected ILCatalogError.offline")
+        } catch ILCatalogError.offline {
+            // expected
+        } catch {
+            XCTFail("Unexpected error \(error)")
+        }
+    }
+
+    func test_getInitialState_startsWithNoArticles() {
+        let entity = makeSUT(sutraQuoteUseCase: MockILSutraQuoteUseCase()).getInitialState()
+
+        XCTAssertTrue(entity.articles.isEmpty, "Articles are loaded asynchronously from the server")
     }
 
     // MARK: - Lunar hero verse
@@ -114,12 +277,21 @@ final class ILHomeUseCaseTests: XCTestCase {
         )
     }
 
-    private func makeSUT(sutraQuoteUseCase: ILSutraQuoteUseCase) -> ILHomeUseCaseImpl {
+    private func makeSUT(
+        sutraQuoteUseCase: ILSutraQuoteUseCase,
+        templeRepository: ILTempleRepository = MockILTempleRepository(),
+        deityCatalogRepository: ILDeityCatalogRepository = MockILDeityCatalogRepository(),
+        articleRepository: ILArticleRepository = MockILArticleRepository(),
+        photosRepository: ILPhotosRepository = MockILPhotosRepository()
+    ) -> ILHomeUseCaseImpl {
         ILHomeUseCaseImpl(
             keychainService: KeychainServiceImpl(),
             buddhistEventUseCase: MockILBuddhistEventUseCase(),
-            deityUseCase: ILDeityUseCaseImpl(),
-            sutraQuoteUseCase: sutraQuoteUseCase
+            sutraQuoteUseCase: sutraQuoteUseCase,
+            templeRepository: templeRepository,
+            deityCatalogRepository: deityCatalogRepository,
+            articleRepository: articleRepository,
+            photosRepository: photosRepository
         )
     }
 
@@ -215,5 +387,41 @@ private final class MockILBuddhistEventUseCase: ILBuddhistEventUseCase {
         lastFrom = start
         lastTo = end
         return []
+    }
+}
+
+/// Stands in for the server-backed temple catalog.
+private final class MockILTempleRepository: ILTempleRepository {
+
+    var topResult: Result<[ILTempleSummaryEntity], Error> = .success([])
+
+    func loadTopTemples() async throws -> [ILTempleSummaryEntity] {
+        try topResult.get()
+    }
+
+    func loadTemples(page: Int) async throws -> ILCatalogPageEntity<ILTempleSummaryEntity> {
+        ILCatalogPageEntity(items: [], page: page, hasMore: false)
+    }
+
+    func loadTempleDetail(id: String) async throws -> ILTempleDetailEntity {
+        throw ILCatalogError.notFound
+    }
+}
+
+/// Stands in for the server-backed Buddha / Bodhisattva catalog.
+private final class MockILDeityCatalogRepository: ILDeityCatalogRepository {
+
+    var topResult: Result<[ILDeitySummaryEntity], Error> = .success([])
+
+    func loadTopDeities() async throws -> [ILDeitySummaryEntity] {
+        try topResult.get()
+    }
+
+    func loadDeities(page: Int) async throws -> ILCatalogPageEntity<ILDeitySummaryEntity> {
+        ILCatalogPageEntity(items: [], page: page, hasMore: false)
+    }
+
+    func loadDeityDetail(id: String) async throws -> ILDeityEntity {
+        throw ILCatalogError.notFound
     }
 }

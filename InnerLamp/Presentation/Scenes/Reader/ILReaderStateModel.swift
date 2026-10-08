@@ -5,39 +5,71 @@
 
 import Foundation
 
-/// UI state cho màn Tụng kinh — Presentation layer, do `ILReaderViewModel` sở hữu và cập nhật độc
-/// quyền thông qua `applyEntity(_:)`. Không UIKit, không business logic — `ViewController` chỉ đọc
-/// để hiển thị. Các chuỗi đã format ("Đang phát · Thầy Minh Đạo", "12:04", "1.0×") và nhãn chip
-/// nằm ở đây, không nằm trên `ILReaderEntity` (xem `references/data_layer_boundaries.md`).
+/// One row of the chant list: either a section heading or a chanted line.
+enum ILReaderRowState: Equatable {
+    case heading(String)
+    case line(ILReaderLineRowState)
+}
+
+/// A chanted line as rendered: text, optional English gloss, cue glyph ("◉" / "•" / ""), and
+/// whether it is the highlighted (currently chanted) line.
+struct ILReaderLineRowState: Equatable {
+    let text: String
+    let gloss: String
+    let cueGlyph: String
+    let isCurrent: Bool
+}
+
+/// Pace chip ("1x" / "1.2x" / "1.5x").
+struct ILReaderSpeedOptionState: Equatable {
+    let speed: Double
+    let title: String
+    let isSelected: Bool
+}
+
+/// UI state of the Reader ("Tụng kinh") screen — Presentation layer, owned and updated exclusively
+/// by `ILReaderViewModel`. No UIKit, no business logic: the view controller only renders it.
+/// `themeIndex` / `fontSizeIndex` are plain indexes; the view maps them to colors and fonts.
 struct ILReaderStateModel: Equatable {
-    /// Tựa đề + phụ đề dải header ("Kinh Pháp Cú" / "Phẩm Song Yếu · kệ 1–2").
+    // Header
     var title: String = ""
-    var subtitle: String = ""
-
-    /// Tiến trình đọc trong bộ kinh (0...1) — thanh tiến trình ở đầu màn.
-    var readingProgress: Double = 0
-
-    /// Kệ đang hiển thị (Việt) + bản dịch (Anh).
-    var verseText: String = ""
-    var translationText: String = ""
-    /// Kệ kế tiếp (bản xem trước mờ); rỗng nếu không còn kệ sau.
-    var nextVerseText: String = ""
-
-    /// Nhãn nút hành động "Aa" ở header và 2 chip dưới bản dịch.
+    /// "Đang tụng · <narrator>" / "Tạm dừng · chạm để tụng tiếp" / "Chỉ có văn bản".
+    var statusText: String = ""
     var fontSizeActionTitle: String = ""
-    var shareChipTitle: String = ""
-    var downloadChipTitle: String = ""
 
-    /// Dòng "Đang phát · Thầy Minh Đạo" trên thanh phát.
-    var nowPlayingText: String = ""
-    /// Vị trí phát dạng "12:04".
-    var elapsedText: String = ""
-    /// Tiến trình phát audio (0...1) — thanh tiến trình trên thanh phát.
-    var playbackProgress: Double = 0
-    /// Nhãn tốc độ "1.0×".
-    var speedText: String = ""
-    /// Đang phát (điều khiển icon play/pause).
+    // Auto-scroll toggle row
+    var autoScrollTitle: String = ""
+    var keepAwakeNote: String = ""
+    /// "Chạm để tạm dừng" / "Chạm để tiếp tục".
+    var hintText: String = ""
+    var isAutoScrollEnabled: Bool = true
+
+    // Settings panel
+    var isSettingsVisible: Bool = false
+    var fontSizeTitle: String = ""
+    var fontSizeOptionTitle: String = ""
+    var backgroundTitle: String = ""
+    var themeTitles: [String] = []
+    var fontSizeIndex: Int = 1
+    var themeIndex: Int = 0
+
+    // Chant list
+    var rows: [ILReaderRowState] = []
+    /// Index into `rows` of the highlighted line (headings count as rows); `nil` when no lines.
+    var currentRowIndex: Int?
+    var legendBellText: String = ""
+    var legendKnockText: String = ""
+
+    // Bottom controls
+    var hasAudio: Bool = false
+    var positionText: String = ""
+    var durationText: String = ""
+    var progress: Double = 0
     var isPlaying: Bool = false
+    var seekBackTitle: String = ""
+    var seekForwardTitle: String = ""
+    var speedLabel: String = ""
+    var speedOptions: [ILReaderSpeedOptionState] = []
 
     static let initial = ILReaderStateModel()
 }

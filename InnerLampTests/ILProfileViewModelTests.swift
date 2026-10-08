@@ -22,6 +22,7 @@ final class ILProfileViewModelTests: XCTestCase {
     private var reminderTappedSubject: PassthroughSubject<Void, Never>!
     private var settingsTappedSubject: PassthroughSubject<Void, Never>!
     private var notificationsTappedSubject: PassthroughSubject<Void, Never>!
+    private var familyTreeTappedSubject: PassthroughSubject<Void, Never>!
     private var communityTappedSubject: PassthroughSubject<Void, Never>!
 
     override func setUp() {
@@ -39,6 +40,7 @@ final class ILProfileViewModelTests: XCTestCase {
         reminderTappedSubject = PassthroughSubject<Void, Never>()
         settingsTappedSubject = PassthroughSubject<Void, Never>()
         notificationsTappedSubject = PassthroughSubject<Void, Never>()
+        familyTreeTappedSubject = PassthroughSubject<Void, Never>()
         communityTappedSubject = PassthroughSubject<Void, Never>()
     }
 
@@ -53,6 +55,7 @@ final class ILProfileViewModelTests: XCTestCase {
         reminderTappedSubject = nil
         settingsTappedSubject = nil
         notificationsTappedSubject = nil
+        familyTreeTappedSubject = nil
         communityTappedSubject = nil
         sut = nil
         mockUseCase = nil
@@ -70,6 +73,7 @@ final class ILProfileViewModelTests: XCTestCase {
             reminderTapped: reminderTappedSubject.eraseToAnyPublisher(),
             settingsTapped: settingsTappedSubject.eraseToAnyPublisher(),
             notificationsTapped: notificationsTappedSubject.eraseToAnyPublisher(),
+            familyTreeTapped: familyTreeTappedSubject.eraseToAnyPublisher(),
             communityTapped: communityTappedSubject.eraseToAnyPublisher()
         )
     }
@@ -218,6 +222,15 @@ final class ILProfileViewModelTests: XCTestCase {
         notificationsTappedSubject.send(())
 
         XCTAssertEqual(events(), [.openNotifications])
+    }
+
+    func test_familyTreeTapped_firesOpenFamilyTreeEvent() {
+        _ = sut.transform(input: makeInput())
+        let events = captureNavEvents()
+
+        familyTreeTappedSubject.send(())
+
+        XCTAssertEqual(events(), [.openFamilyTree])
     }
 
     func test_communityTapped_firesOpenCommunityEventWithId() {

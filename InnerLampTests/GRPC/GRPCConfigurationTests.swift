@@ -25,6 +25,9 @@ final class GRPCConfigurationTests: XCTestCase {
     func test_diContainer_grpcService_wrapsTheSharedClient() {
         let container = DIContainer()
 
-        XCTAssertTrue(container.grpcService === container.grpcService)
+        XCTAssertTrue(
+            container.grpcService.client === container.grpcClient,
+            "GRPCService must wrap DIContainer's single shared client, not build its own"
+        )
     }
 }

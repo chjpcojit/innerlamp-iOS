@@ -7,9 +7,11 @@ scaffold artifact — update it (don't recreate it) whenever this feature's file
 
 ## Overview
 
-Tràng hạt · Niệm Phật (màn `mala` trong design handoff) — màn immersive toàn màn hình: số hạt lớn
-+ thanh tiến trình, dây tràng hạt dọc (chạm hoặc kéo một lần → đúng một hạt về giữa vạch), câu niệm
-"Nam mô A Di Đà Phật", nút "Bắt đầu lại" / "Xong". Có light + dark (bộ token `--il-med-*`).
+Tràng hạt · Niệm Phật (màn `mala` trong design handoff `Docs/InnerLamp icon consistency/`) — màn
+immersive toàn màn hình: header "Niệm Phật" (phụ đề "Vòng N · biến x / goal", nút "Xong"), chip mục
+tiêu 21 / 54 / 108 biến, thanh tiến trình, dây đỏ xỏ hạt gỗ dọc (chạm hoặc kéo một lần → đúng một
+hạt về giữa vạch), câu niệm "Nam mô A Di Đà Phật", nút "Bắt đầu lại". Đủ mục tiêu thì hiện popup
+"Tròn N biến" (Niệm tiếp vòng mới / Xong). Có light + dark (bộ token `--il-med-*`).
 `ILMalaCoordinator` do `ILHomeCoordinator` khởi tạo (link "Toàn màn hình" ở thẻ tràng hạt Trang
 chủ), push lên nav của tab Trang chủ và ẩn `ILBottomNavBar` trong lúc hiển thị.
 
@@ -17,24 +19,25 @@ chủ), push lên nav của tab Trang chủ và ẩn `ILBottomNavBar` trong lúc
 
 | Layer | File | Status | Notes |
 |---|---|---|---|
-| Domain — Entity | `ILMalaEntity.swift` | Done | `count`, `goal` (108), `completedRounds`; `ILMalaMilestone` (`.quarter` mỗi 27 hạt, `.roundComplete` ở 108). |
-| Presentation — StateModel | `ILMalaStateModel.swift` | Done | Nhãn `.localized` đã format ("N tràng", "/ 108"), `milestone` của lần đếm gần nhất. |
+| Domain — Entity | `ILMalaEntity.swift` | Done | `count`, `goal` (21/54/108), `round` (từ 1), `isRoundComplete`; `ILMalaMilestone` (`.quarter` mỗi goal/4, `.roundComplete` khi đủ goal). |
+| Presentation — StateModel | `ILMalaStateModel.swift` | Done | Nhãn `.localized` đã format ("Vòng N · biến x / y"), `goalOptions` (chip), nội dung popup, `milestone` của lần đếm gần nhất. |
 | Data — DTO + Mapper | — | N/A (no confirmed API contract yet) | Chưa có API tràng hạt; không tạo speculative. |
-| Domain — UseCase | `ILMalaUseCase.swift` | Done (in-memory) | `advanceBead` (wrap 108 → 1, +1 tràng khi chạm 108), `resetBeads`, `milestone(for:)` là logic thuần. Lưu local chưa làm — xem Known gaps. |
-| Presentation — ViewModel | `ILMalaViewModel.swift` | Done | 5 Input: `viewDidLoad`, `beadAdvanced`, `resetTapped`, `doneTapped`, `backTapped`; `applyEntity(_:milestone:)` map Entity → StateModel; mỗi hạt `playBead()`, đủ tràng `playBell()` qua `ILPracticeSoundPlaying`. |
-| Presentation — ViewController | `ILMalaViewController.swift` | Done | Ghép 4 component dùng chung (bên dưới); rung nhẹ theo `milestone` (âm thanh do ViewModel phát); ẩn/hiện bottom nav theo appear/disappear. |
+| Domain — UseCase | `ILMalaUseCase.swift` | Done (in-memory) | `advanceBead` (dừng ở goal), `resetBeads`, `selectGoal` (đếm lại từ 0), `startNextRound` (round + 1), `milestone(for:)` là logic thuần. Lưu local chưa làm — xem Known gaps. |
+| Presentation — ViewModel | `ILMalaViewModel.swift` | Done | 7 Input: `viewDidLoad`, `beadAdvanced`, `resetTapped`, `goalSelected`, `continueTapped`, `doneTapped`, `backTapped`; `applyEntity(_:milestone:)` map Entity → StateModel; mỗi hạt `playBead()`, đủ tràng `playBell()` qua `ILPracticeSoundPlaying`. |
+| Presentation — ViewController | `ILMalaViewController.swift` | Done | Ghép các component dùng chung (bên dưới) + `Views/ILMalaCompletionView` (popup đủ vòng) + `ILBellChipView` (chip mục tiêu — xem TD-Mala-002); rung nhẹ theo `milestone` (âm thanh do ViewModel phát); ẩn/hiện bottom nav theo appear/disappear. |
 | Presentation — Coordinator | `ILMalaCoordinator.swift` | Done | `.goBack` → pop + `finish()`. Không có delegate (màn lá). |
-| Tests | `ILMalaViewModelTests.swift` | Done | 7 test ViewModel (qua `Input` publisher, mock UseCase) + 7 test `ILMalaUseCaseImpl` (wrap, tràng, mốc). |
+| Tests | `ILMalaViewModelTests.swift` | Written, chưa chạy được | 9 test ViewModel (qua `Input` publisher, mock UseCase) + 10 test `ILMalaUseCaseImpl`. Target `InnerLampTests` đang không build (thiếu module `GRPCProtobuf` ở `GRPCAuthInterceptorTests`, không liên quan Mala). |
 | Wiring | `DIContainer` + `ILHomeCoordinator` | Done | `makeMalaUseCase/ViewModel/Coordinator`; `ILHomeCoordinator.showMala()` (section coordinator, không đi qua `AppCoordinator`). |
 
-Component dùng chung mới trong `DesignSystem/Components/` (đều generic, không nội dung riêng của Mala):
-`ILImmersiveBackgroundView` (nền radial `--il-med-bg`), `ILMalaStrandView` (dây hạt), `ILMalaCountDisplayView`
-(số đếm + thanh tiến trình), `ILImmersiveActionBarView` (2 nút pill đáy). Token mới: `ILColors.med*`,
-`.bead*`, `.link`; `ILMetrics.immersiveHorizontal`/`.spaceStandard`; `ILTypography.immersiveCount`/`.hintItalic`.
+Component dùng chung trong `DesignSystem/Components/` (generic, không nội dung riêng của Mala):
+`ILImmersiveBackgroundView` (nền radial `--il-med-bg`), `ILMalaStrandView` (dây đỏ + hạt gỗ),
+`ILMalaProgressBarView` (thanh tiến trình 150×2, thay `ILMalaCountDisplayView` đã xoá),
+`ILMalaParticleView` (bụi vàng trôi + chấm bi toả ra và vòng sóng mỗi lần lần hạt, mạnh hơn ở hạt mẹ), `ILImmersiveActionBarView` (nút pill đáy; `primaryTitle` rỗng → chỉ còn nút phụ). Token: `ILColors.med*`,
+`.bead*` (mới: `beadCord*`, `beadRim`), `.link`; `ILMetrics.immersiveHorizontal`/`.spaceStandard`.
 
 ## Navigation events
 
-- `.goBack` — nút back trên header hoặc nút "Xong": `ILMalaCoordinator` pop màn và `finish()`.
+- `.goBack` — nút back, nút "Xong" trên header hoặc "Xong" trên popup đủ vòng: `ILMalaCoordinator` pop màn và `finish()`.
 
 ## Known gaps / not implemented yet
 
@@ -43,7 +46,9 @@ Component dùng chung mới trong `DesignSystem/Components/` (đều generic, kh
   `il-screen-builder`, xem TODO trong `ILMalaUseCaseImpl`.
 - **Chuông ở hạt 108** nay đã phát âm thanh thật (`playBell()` qua `ILPracticeSoundPlaying`), mỗi
   hạt cũng phát tiếng click nhẹ (`playBead()`). Chưa có tuỳ chọn âm lượng / chọn âm cho người dùng.
-- Số đếm dùng Be Vietnam Pro Regular thay vì Light (300) như thiết kế — bundle chưa có bản Light.
+- Chưa vẽ vân gỗ trên hạt thường — xem `Docs/Tech-Debt/Mala/TD-Mala-001-bead-grain-texture.md`.
+- Giả định đổi mục tiêu thì đếm lại từ 0 và rung theo goal/4 — `Docs/Assumptions/Mala/AS-Mala-001-goal-switch-and-quarter-haptic.md`.
+- Thiết kế mới bỏ số đếm lớn (số hạt chỉ còn trong phụ đề header); `ILTypography.immersiveCount`/`.hintItalic` có thể không còn dùng — chưa kiểm tra / không xoá (ngoài phạm vi).
 - Vuốt cạnh trái để back (gesture của `BaseNavigationController`) pop mà không qua `.goBack`, nên
   coordinator con chỉ được gỡ khỏi `childCoordinators` khi bấm nút — cùng hạn chế với các màn push
   khác trong app.
@@ -54,3 +59,5 @@ Component dùng chung mới trong `DesignSystem/Components/` (đều generic, kh
 - 2026-09-20 — initial scaffold + implementation by il-screen-builder (theo `Docs/design_handoff_innerlamp`, màn `mala`).
 - 2026-09-26 — thêm âm thanh: mỗi hạt phát click nhẹ (`bead_click.m4a`), đủ tràng phát chuông
   (`bell_strike.m4a`) qua `ILPracticeSoundPlaying` (dùng chung service `Core/Audio` với màn Chuông mõ).
+- 2026-10-03 — redesign theo handoff mới (`Docs/InnerLamp icon consistency/`): header có "Xong", chip 21/54/108, dây đỏ + hạt gỗ, popup "Tròn N biến"; bỏ số đếm lớn/hint/footnote; round không còn wrap về 1 mà chờ người dùng chọn niệm tiếp.
+- 2026-10-03 — thêm hiệu ứng hạt `ILMalaParticleView` (design `mlFx`): chấm bi toả + vòng sóng khi lần hạt.

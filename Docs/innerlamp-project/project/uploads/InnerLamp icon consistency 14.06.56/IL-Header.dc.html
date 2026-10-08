@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+  <div onClick="{{ back }}" style="width:34px;font:400 20px 'Be Vietnam Pro',sans-serif;cursor: {{ cursor }};color: {{ dim }}">{{ backGlyph }}</div>
+  <div style="flex:1;text-align:center;min-width:0">
+    <div style="font:500 13.5px 'Be Vietnam Pro',sans-serif;color: {{ titleColor }}">{{ title }}</div>
+    <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;margin-top:2px;color: {{ dim }}">{{ sub }}</div>
+  </div>
+  <div onClick="{{ action }}" style="width:34px;text-align:right;font:500 12.5px 'Be Vietnam Pro',sans-serif;cursor: {{ actionCursor }};color:var(--il-link)">{{ right }}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:362,&quot;height&quot;:48},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Cài đặt&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sub&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;right&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;close&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onBack&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;},&quot;onAction&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props, dark = !!p.dark;
+    return {
+      title: p.title || '', sub: p.sub || '', right: p.right || '',
+      backGlyph: p.close ? '✕' : '‹',
+      titleColor: dark ? '#F2EBDD' : 'var(--il-ink)',
+      dim: dark ? 'rgba(242,235,221,.45)' : 'var(--il-ink-48)',
+      cursor: p.onBack ? 'pointer' : 'default',
+      actionCursor: p.onAction ? 'pointer' : 'default',
+      back: p.onBack, action: p.onAction,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -25,6 +25,10 @@ final class ILMalaViewModel: ILMalaViewModelProtocol {
         /// Một hạt vừa trượt xong về giữa vạch (chạm hoặc kéo).
         let beadAdvanced: AnyPublisher<Void, Never>
         let resetTapped: AnyPublisher<Void, Never>
+        /// Chip mục tiêu (21 / 54 / 108 biến) được chọn.
+        let goalSelected: AnyPublisher<Int, Never>
+        /// "Niệm tiếp vòng mới" trên popup đủ vòng.
+        let continueTapped: AnyPublisher<Void, Never>
         let doneTapped: AnyPublisher<Void, Never>
         let backTapped: AnyPublisher<Void, Never>
     }
@@ -75,6 +79,14 @@ final class ILMalaViewModel: ILMalaViewModelProtocol {
             .sink { [weak self] _ in self?.handleResetTapped() }
             .store(in: &cancellables)
 
+        input.goalSelected
+            .sink { [weak self] goal in self?.handleGoalSelected(goal) }
+            .store(in: &cancellables)
+
+        input.continueTapped
+            .sink { [weak self] _ in self?.handleContinueTapped() }
+            .store(in: &cancellables)
+
         input.doneTapped
             .sink { [weak self] _ in self?.handleDoneTapped() }
             .store(in: &cancellables)
@@ -94,7 +106,7 @@ final class ILMalaViewModel: ILMalaViewModelProtocol {
     private func handleBeadAdvanced() {
         let advanced = useCase.advanceBead(currentEntity)
         let milestone = useCase.milestone(for: advanced)
-        // Every bead plays a soft click; completing a full round (108) also rings the bell.
+        // Every bead plays a soft click; completing a round (reaching the goal) also rings the bell.
         soundPlayer.playBead()
         if milestone == .roundComplete {
             soundPlayer.playBell()
@@ -106,6 +118,14 @@ final class ILMalaViewModel: ILMalaViewModelProtocol {
         applyEntity(useCase.resetBeads(currentEntity), milestone: nil)
     }
 
+    private func handleGoalSelected(_ goal: Int) {
+        applyEntity(useCase.selectGoal(goal, for: currentEntity), milestone: nil)
+    }
+
+    private func handleContinueTapped() {
+        applyEntity(useCase.startNextRound(currentEntity), milestone: nil)
+    }
+
     private func handleDoneTapped() {
         navigationEventSubject.send(.goBack)
     }
@@ -115,7 +135,7 @@ final class ILMalaViewModel: ILMalaViewModelProtocol {
     }
 
     // MARK: - Entity <-> StateModel mapping
-    /// `Entity -> StateModel` là việc riêng của presentation (nhãn tĩnh, "N tràng", "/ 108") nên
+    /// `Entity -> StateModel` là việc riêng của presentation (nhãn tĩnh, "Vòng N · biến x / y") nên
     /// nằm ở đây, không phải trong một Mapper dùng chung (xem `references/data_layer_boundaries.md`).
     private func applyEntity(_ entity: ILMalaEntity, milestone: ILMalaMilestone?) {
         currentEntity = entity
@@ -130,18 +150,27 @@ final class ILMalaViewModel: ILMalaViewModelProtocol {
     ) -> ILMalaStateModel {
         var state = ILMalaStateModel()
         state.headerTitle = "mala.header.title".localized
-        state.headerSubtitle = String(format: "mala.header.roundsFormat".localized, entity.completedRounds)
+        state.headerSubtitle = String(format: "mala.header.progressFormat".localized, entity.round, entity.count, entity.goal)
+        state.doneTitle = "mala.action.done".localized
 
         state.count = entity.count
         state.goal = entity.goal
-        state.goalText = String(format: "mala.count.goalFormat".localized, entity.goal)
+        state.goalOptions = ILMalaEntity.goalOptions.map {
+            ILMalaStateModel.GoalOption(
+                value: $0,
+                title: String(format: "mala.goal.optionFormat".localized, $0),
+                isSelected: $0 == entity.goal
+            )
+        }
 
         state.mantraText = mantraText ?? "mala.mantra".localized
-        state.hintText = "mala.hint".localized
         state.strandAccessibilityLabel = "mala.strand.accessibility".localized
         state.resetTitle = "mala.action.reset".localized
-        state.doneTitle = "mala.action.done".localized
-        state.footnoteText = "mala.footnote".localized
+
+        state.isRoundComplete = entity.isRoundComplete
+        state.completionTitle = String(format: "mala.complete.titleFormat".localized, entity.goal)
+        state.completionMessage = String(format: "mala.complete.messageFormat".localized, entity.round)
+        state.continueTitle = "mala.complete.continue".localized
 
         state.milestone = milestone
         return state

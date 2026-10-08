@@ -9,6 +9,7 @@
 import XCTest
 import GRPCCore
 import GRPCProtobuf
+import SwiftProtobuf
 @testable import InnerLamp
 
 final class GRPCAuthInterceptorTests: XCTestCase {

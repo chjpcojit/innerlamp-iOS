@@ -49,6 +49,8 @@ final class ILProfileCoordinator: Coordinator {
                     self.showSettings()
                 case .openNotifications:
                     self.showNotifications()
+                case .openFamilyTree:
+                    self.showFamilyTree()
                 case .openCommunity:
                     // TODO: điều hướng sang Trang chùa (`temple`) theo id khi có coordinator.
                     break
@@ -74,6 +76,12 @@ final class ILProfileCoordinator: Coordinator {
 
     private func showStats() {
         let coordinator = container.makeStatsCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    private func showFamilyTree() {
+        let coordinator = container.makeFamilyTreeCoordinator(navigationController: navigationController)
         addChild(coordinator)
         coordinator.start()
     }

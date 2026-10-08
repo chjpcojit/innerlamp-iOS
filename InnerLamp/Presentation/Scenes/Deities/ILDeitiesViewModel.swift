@@ -29,10 +29,15 @@ final class ILDeitiesViewModel: ILDeitiesViewModelProtocol {
         let filterSelected: AnyPublisher<ILDeityKind?, Never>
         /// Chạm 1 thẻ trong lưới — mang theo `id` vị.
         let deityTapped: AnyPublisher<String, Never>
+        /// Nút "Thử lại" trên trạng thái lỗi — nạp lại catalog từ server.
+        let retryTapped: AnyPublisher<Void, Never>
     }
 
     struct Output {
         let state: AnyPublisher<ViewState<ILDeitiesStateModel>, Never>
+        /// The 3 filter chips (Tất cả / Chư Phật / Bồ Tát) — available from the first frame and in
+        /// every screen state (loading, empty, error), independent of the catalog load.
+        let filters: AnyPublisher<[ILDeitiesFilterModel], Never>
     }
 
     // MARK: - Properties
@@ -41,32 +46,32 @@ final class ILDeitiesViewModel: ILDeitiesViewModelProtocol {
     }
 
     private let navigationEventSubject = PassthroughSubject<ILDeitiesNavEvent, Never>()
-    private let stateSubject: CurrentValueSubject<ViewState<ILDeitiesStateModel>, Never>
-    private var currentEntity: ILDeitiesEntity
-    private var currentState: ILDeitiesStateModel
+    private let stateSubject = CurrentValueSubject<ViewState<ILDeitiesStateModel>, Never>(.idle)
+    private lazy var filtersSubject = CurrentValueSubject<[ILDeitiesFilterModel], Never>(
+        Self.makeFilterModels(selected: selectedKind)
+    )
+    private var currentEntity: ILDeitiesEntity = .empty
     /// Bộ lọc đang chọn — UI state, giữ ở ViewModel (không đưa lên Entity).
     private var selectedKind: ILDeityKind?
+    /// `false` until the catalog has loaded — filter taps before that only move the selection.
+    private var hasLoaded = false
+    private var loadTask: Task<Void, Never>?
     private let useCase: ILDeitiesUseCase
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initializer
     init(useCase: ILDeitiesUseCase) {
         self.useCase = useCase
-        let initialEntity = useCase.getInitialState()
-        self.currentEntity = initialEntity
-        let initialState = Self.makeStateModel(
-            from: initialEntity,
-            selectedKind: nil,
-            useCase: useCase
-        )
-        self.currentState = initialState
-        self.stateSubject = CurrentValueSubject(.success(initialState))
     }
 
     // MARK: - Transform
     func transform(input: Input) -> Output {
         input.viewDidLoad
-            .sink { [weak self] _ in self?.handleViewDidLoad() }
+            .sink { [weak self] _ in self?.loadDeities() }
+            .store(in: &cancellables)
+
+        input.retryTapped
+            .sink { [weak self] _ in self?.loadDeities() }
             .store(in: &cancellables)
 
         input.backTapped
@@ -81,34 +86,46 @@ final class ILDeitiesViewModel: ILDeitiesViewModelProtocol {
             .sink { [weak self] id in self?.navigationEventSubject.send(.openDeity(id: id)) }
             .store(in: &cancellables)
 
-        return Output(state: stateSubject.eraseToAnyPublisher())
+        return Output(state: stateSubject.eraseToAnyPublisher(), filters: filtersSubject.eraseToAnyPublisher())
     }
 
     // MARK: - Actions
-    private func handleViewDidLoad() {
-        applyEntity(useCase.getInitialState())
+    /// Nạp catalog từ server (`/v1/deities?page=N`, fallback `/v1/deities/top`): `.loading` →
+    /// `.success` (rỗng → "Đang cập nhật") hoặc `.failure` (có nút "Thử lại").
+    private func loadDeities() {
+        loadTask?.cancel()
+        stateSubject.send(.loading)
+        loadTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let entity = try await self.useCase.loadDeities()
+                guard !Task.isCancelled else { return }
+                self.currentEntity = entity
+                self.hasLoaded = true
+                self.publishState()
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.stateSubject.send(.failure(error))
+            }
+        }
     }
 
     private func handleFilterSelected(_ kind: ILDeityKind?) {
         // Chạm lại chip đang chọn: giữ nguyên (khớp hành vi màn Thư viện).
         guard kind != selectedKind else { return }
         selectedKind = kind
-        publishState()
-    }
-
-    private func applyEntity(_ entity: ILDeitiesEntity) {
-        currentEntity = entity
+        filtersSubject.send(Self.makeFilterModels(selected: kind))
+        guard hasLoaded else { return }
         publishState()
     }
 
     private func publishState() {
-        currentState = Self.makeStateModel(from: currentEntity, selectedKind: selectedKind, useCase: useCase)
-        stateSubject.send(.success(currentState))
+        stateSubject.send(.success(Self.makeStateModel(from: currentEntity, selectedKind: selectedKind, useCase: useCase)))
     }
 
     // MARK: - Entity -> StateModel
-    /// `Entity -> StateModel` là việc riêng của presentation (nhãn chip `.localized`, format ngày
-    /// vía, lọc theo loại) nên nằm ở đây, không phải trong một Mapper dùng chung
+    /// `Entity -> StateModel` là việc riêng của presentation (nhãn chip `.localized`, placeholder
+    /// "Đang cập nhật", lọc theo loại) nên nằm ở đây, không phải trong một Mapper dùng chung
     /// (xem `references/data_layer_boundaries.md`).
     private static func makeStateModel(
         from entity: ILDeitiesEntity,
@@ -116,7 +133,9 @@ final class ILDeitiesViewModel: ILDeitiesViewModelProtocol {
         useCase: ILDeitiesUseCase
     ) -> ILDeitiesStateModel {
         var state = ILDeitiesStateModel()
-        state.subtitle = String(format: "deities.header.subtitleFormat".localized, entity.deities.count)
+        state.subtitle = entity.deities.isEmpty
+            ? "deities.updating".localized
+            : String(format: "deities.header.subtitleFormat".localized, entity.deities.count)
         state.filters = makeFilterModels(selected: selectedKind)
         state.items = useCase.deities(in: entity, kind: selectedKind).map { deity in
             ILDeitiesItemModel(
@@ -125,10 +144,14 @@ final class ILDeitiesViewModel: ILDeitiesViewModelProtocol {
                 kindLabel: kindLabel(for: deity.kind),
                 name: deity.nameVi,
                 role: deity.coreVirtue,
-                memorialText: deity.primaryMemorialDay.map {
-                    String(format: "deities.memorialFormat".localized, $0.lunarDay, $0.lunarMonth)
-                } ?? ""
+                // `ILDeitySummaryEntity` has no memorial days (not in the list API) — placeholder.
+                memorialText: "deities.memorialUpdating".localized,
+                thumbnailURL: deity.thumbnailURL.isEmpty ? deity.imageURL : deity.thumbnailURL
             )
+        }
+        if state.items.isEmpty {
+            state.emptyTitle = "deities.updating".localized
+            state.emptyMessage = "deities.empty.message".localized
         }
         return state
     }
@@ -158,6 +181,10 @@ final class ILDeitiesViewModel: ILDeitiesViewModelProtocol {
     }
 
     static func kindLabel(for kind: ILDeityKind) -> String {
-        kind == .buddha ? "deity.kind.buddha".localized : "deity.kind.bodhisattva".localized
+        switch kind {
+        case .buddha: return "deity.kind.buddha".localized
+        case .bodhisattva: return "deity.kind.bodhisattva".localized
+        case .deva: return "deity.kind.deva".localized
+        }
     }
 }

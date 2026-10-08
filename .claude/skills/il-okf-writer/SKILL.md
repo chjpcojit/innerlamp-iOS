@@ -1,6 +1,7 @@
 ---
 name: il-okf-writer
 description: This skill should be used when the user wants to create or update a knowledge concept in the InnerLamp OKF (Open Knowledge Format) bundle under Docs/Knowledge/ — a post-implementation reference document describing a feature, API endpoint, domain entity, UseCase, architecture pattern, or design-system token/component, with YAML frontmatter (type, title, resource, tags, status, generated, sources, verified), a resource: path pointing at the real code location, and cross-links to related concepts. It enforces that concepts are generated only AFTER the code is implemented and verified (never as a work order — that is il-spec-writer's job under Docs/Specs/), that every resource: path is checked against the filesystem rather than guessed, that status stays draft until the flow is exercised end-to-end, that the verified: field is never written by the AI (only a human adds it during PR review), and that every create/update also refreshes index.md and log.md. It never writes Swift code and never touches Docs/Specs/. Replaces the dangling "Docs/Knowledge/features/<feature>.md (OKF concept)" task item left open in il-spec-writer's Phase 4 template.
+model: claude-sonnet-5-5
 ---
 
 # InnerLamp OKF Writer

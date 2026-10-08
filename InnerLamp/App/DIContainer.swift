@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import GRPCCore
 import UIKit
 
 final class DIContainer {
@@ -24,28 +25,50 @@ final class DIContainer {
     }()
 
     lazy var networkService: NetworkService = {
-        NetworkServiceImpl(
+        let authTokenProvider = KeychainAuthTokenProviding(keychainService: keychainService)
+        let logger = NetworkLogger(loggingService: loggingService)
+        // The refresh call goes through its own transport with no refresher attached, so a 401
+        // from `/auth/refresh` cannot loop back into the refresher.
+        let refreshTransport = NetworkServiceImpl(
             session: NetworkConfiguration.makeSession(),
-            authTokenProvider: KeychainAuthTokenProviding(keychainService: keychainService),
-            logger: NetworkLogger(loggingService: loggingService)
+            authTokenProvider: authTokenProvider,
+            logger: logger
+        )
+        return NetworkServiceImpl(
+            session: NetworkConfiguration.makeSession(),
+            authTokenProvider: authTokenProvider,
+            logger: logger,
+            sessionRefresher: AuthSessionRefresher(
+                keychainService: keychainService,
+                networkService: refreshTransport
+            )
         )
     }()
 
-    /// The one shared, app-wide gRPC channel — built once, held for the app's lifetime, never
-    /// created per call or per feature. See Docs/Specs/GRPC/requirements.md FR-001. The lifetime
-    /// object also owns the event-loop group that backs the channel, so neither is torn down
-    /// while RPCs are in flight.
-    lazy var grpcChannelLifetime: GRPCConfiguration.ChannelLifetime = {
-        GRPCConfiguration.makeChannelLifetime()
-    }()
-
-    lazy var grpcService: GRPCService = {
-        GRPCService(
-            client: GRPCConfiguration.makeClient(channel: grpcChannelLifetime.channel),
+    /// The one shared, app-wide gRPC client — built once, held for the app's lifetime, never
+    /// created per call or per feature. The auth and logging interceptors are attached here, at
+    /// construction. See Docs/Specs/GRPC/requirements.md FR-001.
+    lazy var grpcClient: GRPCConfiguration.Client = {
+        GRPCConfiguration.makeClient(
             authTokenProvider: KeychainAuthTokenProviding(keychainService: keychainService),
             loggingService: loggingService
         )
     }()
+
+    lazy var grpcService: GRPCConfiguration.Service = {
+        GRPCService(client: grpcClient)
+    }()
+
+    /// Starts the shared client's connection loop. Kept out of the lazy initializers above so
+    /// tests that touch `grpcClient`/`grpcService` never open a real connection; the app calls
+    /// this once at scene connect. RPCs issued before the client starts are queued by
+    /// `GRPCClient`, so this does not need to complete before the first call.
+    func startGRPCClient() {
+        let client = grpcClient
+        Task {
+            try? await client.runConnections()
+        }
+    }
 
     lazy var localizationService: LocalizationService = LocalizationServiceImpl.shared
 
@@ -88,6 +111,48 @@ final class DIContainer {
         ILDeityRepositoryImpl(localDataSource: deityLocalDataSource)
     }
 
+    // MARK: - Deity catalog (server /v1/deities*, cached in Core Data)
+    lazy var deityCatalogLocalDataSource: ILDeityCatalogLocalDataSource = {
+        ILDeityCatalogLocalDataSourceImpl(stack: coreDataStack)
+    }()
+
+    func makeDeityCatalogRepository() -> ILDeityCatalogRepository {
+        ILDeityCatalogRepositoryImpl(networkService: networkService, localDataSource: deityCatalogLocalDataSource)
+    }
+
+    // MARK: - Temple catalog (server /v1/temples*, cached in Core Data)
+    lazy var templeLocalDataSource: ILTempleLocalDataSource = {
+        ILTempleLocalDataSourceImpl(stack: coreDataStack)
+    }()
+
+    func makeTempleRepository() -> ILTempleRepository {
+        ILTempleRepositoryImpl(networkService: networkService, localDataSource: templeLocalDataSource)
+    }
+
+    // MARK: - Article catalog (server /v1/articles*, network-only)
+    func makeArticleRepository() -> ILArticleRepository {
+        ILArticleRepositoryImpl(networkService: networkService)
+    }
+
+    // MARK: - Sutra catalog (server /v1/sutras*, network-only)
+    func makeSutraRepository() -> ILSutraRepository {
+        ILSutraRepositoryImpl(networkService: networkService)
+    }
+
+    // MARK: - Photos gallery (server /v1/gallery, network-only)
+    func makePhotosRepository() -> ILPhotosRepository {
+        ILPhotosRepositoryImpl(networkService: networkService)
+    }
+
+    // MARK: - Calendar image (server /v1/calendar/image, network-only)
+    func makeCalendarImageRepository() -> ILCalendarImageRepository {
+        ILCalendarImageRepositoryImpl(networkService: networkService)
+    }
+
+    func makeCalendarImageUseCase() -> ILCalendarImageUseCase {
+        ILCalendarImageUseCaseImpl(repository: makeCalendarImageRepository())
+    }
+
     // MARK: - SutraQuote
     lazy var sutraQuoteLocalDataSource: ILSutraQuoteLocalDataSource = {
         ILSutraQuoteLocalDataSourceImpl(stack: coreDataStack)
@@ -112,7 +177,7 @@ final class DIContainer {
 
     // MARK: - Splash
     func makeSplashUseCase() -> ILSplashUseCase {
-        ILSplashUseCaseImpl(onboardingUseCase: makeOnboardingUseCase())
+        ILSplashUseCaseImpl(onboardingUseCase: makeOnboardingUseCase(), keychainService: keychainService, userDefaultsService: userDefaultsService)
     }
 
     func makeSplashViewModel() -> ILSplashViewModel {
@@ -234,13 +299,16 @@ final class DIContainer {
         ILHomeUseCaseImpl(
             keychainService: keychainService,
             buddhistEventUseCase: makeBuddhistEventUseCase(),
-            deityUseCase: makeDeityUseCase(),
-            sutraQuoteUseCase: makeSutraQuoteUseCase()
+            sutraQuoteUseCase: makeSutraQuoteUseCase(),
+            templeRepository: makeTempleRepository(),
+            deityCatalogRepository: makeDeityCatalogRepository(),
+            articleRepository: makeArticleRepository(),
+            photosRepository: makePhotosRepository()
         )
     }
 
     func makeHomeViewModel() -> ILHomeViewModel {
-        ILHomeViewModel(useCase: makeHomeUseCase())
+        ILHomeViewModel(useCase: makeHomeUseCase(), calendarImageUseCase: makeCalendarImageUseCase())
     }
 
     func makeHomeCoordinator(navigationController: UINavigationController) -> ILHomeCoordinator {
@@ -249,7 +317,7 @@ final class DIContainer {
 
     // MARK: - Deity
     func makeDeityUseCase() -> ILDeityUseCase {
-        ILDeityUseCaseImpl() // static catalog; add real dependencies only alongside their real implementation
+        ILDeityUseCaseImpl(deityCatalogRepository: makeDeityCatalogRepository())
     }
 
     func makeDeityViewModel(deityID: String) -> ILDeityViewModel {
@@ -260,9 +328,22 @@ final class DIContainer {
         ILDeityCoordinator(navigationController: navigationController, container: self, deityID: deityID)
     }
 
+    // MARK: - Sutras (danh sách "Kinh sách")
+    func makeSutrasUseCase() -> ILSutrasUseCase {
+        ILSutrasUseCaseImpl(sutraRepository: makeSutraRepository())
+    }
+
+    func makeSutrasViewModel() -> ILSutrasViewModel {
+        ILSutrasViewModel(useCase: makeSutrasUseCase())
+    }
+
+    func makeSutrasCoordinator(navigationController: UINavigationController) -> ILSutrasCoordinator {
+        ILSutrasCoordinator(navigationController: navigationController, container: self)
+    }
+
     // MARK: - Deities (danh sách "Chư Phật & Bồ Tát")
     func makeDeitiesUseCase() -> ILDeitiesUseCase {
-        ILDeitiesUseCaseImpl(deityUseCase: makeDeityUseCase())
+        ILDeitiesUseCaseImpl(deityCatalogRepository: makeDeityCatalogRepository())
     }
 
     func makeDeitiesViewModel() -> ILDeitiesViewModel {
@@ -271,6 +352,19 @@ final class DIContainer {
 
     func makeDeitiesCoordinator(navigationController: UINavigationController) -> ILDeitiesCoordinator {
         ILDeitiesCoordinator(navigationController: navigationController, container: self)
+    }
+
+    // MARK: - TempleFinder (màn "Chọn chùa tu tập")
+    func makeTempleFinderUseCase() -> ILTempleFinderUseCase {
+        ILTempleFinderUseCaseImpl(templeRepository: makeTempleRepository(), sanghaUseCase: makeSanghaUseCase())
+    }
+
+    func makeTempleFinderViewModel() -> ILTempleFinderViewModel {
+        ILTempleFinderViewModel(useCase: makeTempleFinderUseCase())
+    }
+
+    func makeTempleFinderCoordinator(navigationController: UINavigationController) -> ILTempleFinderCoordinator {
+        ILTempleFinderCoordinator(navigationController: navigationController, container: self)
     }
 
     // MARK: - LunarCalendar
@@ -296,6 +390,7 @@ final class DIContainer {
             useCase: makeLunarDayDetailUseCase(),
             almanacUseCase: makeAlmanacUseCase(),
             sutraQuoteUseCase: makeSutraQuoteUseCase(),
+            calendarImageUseCase: makeCalendarImageUseCase(),
             date: date,
             verse: verse
         )
@@ -400,7 +495,7 @@ final class DIContainer {
 
     // MARK: - Photos
     func makePhotosUseCase() -> ILPhotosUseCase {
-        ILPhotosUseCaseImpl() // add real dependencies only alongside their real implementation
+        ILPhotosUseCaseImpl(photosRepository: makePhotosRepository())
     }
 
     func makePhotosViewModel() -> ILPhotosViewModel {
@@ -411,9 +506,27 @@ final class DIContainer {
         ILPhotosCoordinator(navigationController: navigationController, container: self)
     }
 
+    // MARK: - PhotoViewer
+    func makePhotoViewerViewModel(items: [ILPhotoViewerItemModel], startID: String) -> ILPhotoViewerViewModel? {
+        ILPhotoViewerViewModel(items: items, startID: startID)
+    }
+
+    func makePhotoViewerCoordinator(
+        navigationController: UINavigationController,
+        items: [ILPhotoViewerItemModel],
+        startID: String
+    ) -> ILPhotoViewerCoordinator {
+        ILPhotoViewerCoordinator(
+            navigationController: navigationController,
+            container: self,
+            items: items,
+            startID: startID
+        )
+    }
+
     // MARK: - Article
     func makeArticleUseCase() -> ILArticleUseCase {
-        ILArticleUseCaseImpl() // static catalog; add real dependencies only alongside their real implementation
+        ILArticleUseCaseImpl(articleRepository: makeArticleRepository())
     }
 
     func makeArticleViewModel(articleID: String) -> ILArticleViewModel {
@@ -426,7 +539,7 @@ final class DIContainer {
 
     // MARK: - Articles
     func makeArticlesUseCase() -> ILArticlesUseCase {
-        ILArticlesUseCaseImpl() // static catalog; add real dependencies only alongside their real implementation
+        ILArticlesUseCaseImpl(articleRepository: makeArticleRepository())
     }
 
     func makeArticlesViewModel() -> ILArticlesViewModel {
@@ -452,7 +565,7 @@ final class DIContainer {
 
     // MARK: - Library
     func makeLibraryUseCase() -> ILLibraryUseCase {
-        ILLibraryUseCaseImpl(deityUseCase: makeDeityUseCase())
+        ILLibraryUseCaseImpl(deityCatalogRepository: makeDeityCatalogRepository())
     }
 
     func makeLibraryViewModel() -> ILLibraryViewModel {
@@ -476,9 +589,22 @@ final class DIContainer {
         ILTalkCoordinator(navigationController: navigationController, container: self, talkID: talkID)
     }
 
+    // MARK: - Talks (danh sách "Pháp thoại")
+    func makeTalksUseCase() -> ILTalksUseCase {
+        ILTalksUseCaseImpl()
+    }
+
+    func makeTalksViewModel() -> ILTalksViewModel {
+        ILTalksViewModel(useCase: makeTalksUseCase())
+    }
+
+    func makeTalksCoordinator(navigationController: UINavigationController) -> ILTalksCoordinator {
+        ILTalksCoordinator(navigationController: navigationController, container: self)
+    }
+
     // MARK: - SutraDetail
     func makeSutraDetailUseCase() -> ILSutraDetailUseCase {
-        ILSutraDetailUseCaseImpl() // static catalog; add real dependencies only alongside their real implementation
+        ILSutraDetailUseCaseImpl(sutraRepository: makeSutraRepository())
     }
 
     func makeSutraDetailViewModel(sutraID: String) -> ILSutraDetailViewModel {
@@ -504,7 +630,7 @@ final class DIContainer {
 
     // MARK: - Sangha
     func makeSanghaUseCase() -> ILSanghaUseCase {
-        ILSanghaUseCaseImpl() // add real dependencies only alongside their real implementation
+        ILSanghaUseCaseImpl(userDefaultsService: userDefaultsService)
     }
 
     func makeSanghaViewModel() -> ILSanghaViewModel {
@@ -541,9 +667,144 @@ final class DIContainer {
         ILEventsCoordinator(navigationController: navigationController, container: self)
     }
 
+    // MARK: - Memorial (Sổ giỗ chạp — server `/v1/memorials` + Core Data offline cache)
+    lazy var memorialLocalDataSource: ILMemorialLocalDataSource = {
+        ILMemorialLocalDataSourceImpl(stack: coreDataStack)
+    }()
+
+    func makeMemorialRepository() -> ILMemorialRepository {
+        ILMemorialRepositoryImpl(networkService: networkService, localDataSource: memorialLocalDataSource)
+    }
+
+    func makeMemorialUseCase() -> ILMemorialUseCase {
+        ILMemorialUseCaseImpl(repository: makeMemorialRepository())
+    }
+
+    func makeMemorialViewModel() -> ILMemorialViewModel {
+        ILMemorialViewModel(useCase: makeMemorialUseCase())
+    }
+
+    /// `entry == nil` opens the form blank (add mode).
+    func makeMemorialEditViewModel(entry: ILMemorialEntity?) -> ILMemorialEditViewModel {
+        ILMemorialEditViewModel(useCase: makeMemorialUseCase(), entry: entry)
+    }
+
+    func makeMemorialCoordinator(navigationController: UINavigationController) -> ILMemorialCoordinator {
+        ILMemorialCoordinator(navigationController: navigationController, container: self)
+    }
+
+    // MARK: - FamilyTree (Gia phả — no data source yet, see TD-FamilyTree-001)
+    func makeFamilyTreeUseCase() -> ILFamilyTreeUseCase {
+        ILFamilyTreeUseCaseImpl()
+    }
+
+    func makeFamilyTreeViewModel() -> ILFamilyTreeViewModel {
+        // @ai: tech debt — placeholder viewer, see TD-FamilyTree-010
+        ILFamilyTreeViewModel(
+            useCase: makeFamilyTreeUseCase(),
+            viewerResolver: ILPlaceholderFamilyTreeViewerResolver()
+        )
+    }
+
+    func makeFamilyTreeCoordinator(navigationController: UINavigationController) -> ILFamilyTreeCoordinator {
+        ILFamilyTreeCoordinator(navigationController: navigationController, container: self)
+    }
+
+    // MARK: - FamilyTreeCreate (Tạo gia phả — save has no data source yet, see TD-FamilyTreeCreate-001)
+    func makeFamilyTreeCreateUseCase() -> ILFamilyTreeCreateUseCase {
+        ILFamilyTreeCreateUseCaseImpl()
+    }
+
+    func makeFamilyTreeCreateViewModel() -> ILFamilyTreeCreateViewModel {
+        ILFamilyTreeCreateViewModel(useCase: makeFamilyTreeCreateUseCase())
+    }
+
+    func makeFamilyTreeCreateCoordinator(navigationController: UINavigationController) -> ILFamilyTreeCreateCoordinator {
+        ILFamilyTreeCreateCoordinator(navigationController: navigationController, container: self)
+    }
+
+    // MARK: - FamilyTreeAddMember (Thêm người vào gia phả — save has no data source yet, see TD-FamilyTreeAddMember-001)
+    func makeFamilyTreeAddMemberUseCase() -> ILFamilyTreeAddMemberUseCase {
+        ILFamilyTreeAddMemberUseCaseImpl()
+    }
+
+    func makeFamilyTreeAddMemberViewModel(
+        tree: ILFamilyTreeEntity,
+        relativeID: String,
+        relation: ILFamilyAddRelation
+    ) -> ILFamilyTreeAddMemberViewModel {
+        ILFamilyTreeAddMemberViewModel(
+            useCase: makeFamilyTreeAddMemberUseCase(), tree: tree, relativeID: relativeID, relation: relation
+        )
+    }
+
+    func makeFamilyTreeAddMemberCoordinator(
+        navigationController: UINavigationController,
+        tree: ILFamilyTreeEntity,
+        relativeID: String,
+        relation: ILFamilyAddRelation
+    ) -> ILFamilyTreeAddMemberCoordinator {
+        ILFamilyTreeAddMemberCoordinator(
+            navigationController: navigationController, container: self,
+            tree: tree, relativeID: relativeID, relation: relation
+        )
+    }
+
+    // MARK: - FamilyTreeMember (Hồ sơ thành viên — save has no data source yet, see TD-FamilyTreeMember-001)
+    func makeFamilyTreeMemberUseCase() -> ILFamilyTreeMemberUseCase {
+        ILFamilyTreeMemberUseCaseImpl()
+    }
+
+    func makeFamilyTreeMemberViewModel(
+        tree: ILFamilyTreeEntity,
+        memberID: String,
+        kinship: String?
+    ) -> ILFamilyTreeMemberViewModel {
+        ILFamilyTreeMemberViewModel(
+            useCase: makeFamilyTreeMemberUseCase(), tree: tree, memberID: memberID, kinship: kinship
+        )
+    }
+
+    func makeFamilyTreeMemberCoordinator(
+        navigationController: UINavigationController,
+        tree: ILFamilyTreeEntity,
+        memberID: String,
+        kinship: String?
+    ) -> ILFamilyTreeMemberCoordinator {
+        ILFamilyTreeMemberCoordinator(
+            navigationController: navigationController, container: self,
+            tree: tree, memberID: memberID, kinship: kinship
+        )
+    }
+
+    // MARK: - FamilyTreeChronicle (Phả ký dòng họ — save has no data source yet, see TD-FamilyTreeChronicle-001)
+    func makeFamilyTreeChronicleUseCase() -> ILFamilyTreeChronicleUseCase {
+        ILFamilyTreeChronicleUseCaseImpl()
+    }
+
+    func makeFamilyTreeChronicleViewModel(
+        trees: [ILFamilyTreeEntity],
+        initialTreeID: String
+    ) -> ILFamilyTreeChronicleViewModel {
+        ILFamilyTreeChronicleViewModel(
+            useCase: makeFamilyTreeChronicleUseCase(), trees: trees, initialTreeID: initialTreeID
+        )
+    }
+
+    func makeFamilyTreeChronicleCoordinator(
+        navigationController: UINavigationController,
+        trees: [ILFamilyTreeEntity],
+        initialTreeID: String
+    ) -> ILFamilyTreeChronicleCoordinator {
+        ILFamilyTreeChronicleCoordinator(
+            navigationController: navigationController, container: self,
+            trees: trees, initialTreeID: initialTreeID
+        )
+    }
+
     // MARK: - Festivals
     func makeFestivalsUseCase() -> ILFestivalsUseCase {
-        ILFestivalsUseCaseImpl()
+        ILFestivalsUseCaseImpl(buddhistEventUseCase: makeBuddhistEventUseCase())
     }
 
     func makeFestivalsViewModel() -> ILFestivalsViewModel {
@@ -556,7 +817,7 @@ final class DIContainer {
 
     // MARK: - Temple
     func makeTempleUseCase() -> ILTempleUseCase {
-        ILTempleUseCaseImpl() // static catalog; add real dependencies only alongside their real implementation
+        ILTempleUseCaseImpl(templeRepository: makeTempleRepository())
     }
 
     func makeTempleViewModel(templeID: String) -> ILTempleViewModel {
@@ -582,7 +843,7 @@ final class DIContainer {
 
     // MARK: - Settings
     func makeSettingsUseCase() -> ILSettingsUseCase {
-        ILSettingsUseCaseImpl() // add real dependencies only alongside their real implementation
+        ILSettingsUseCaseImpl(languageUseCase: makeLanguageUseCase())
     }
 
     func makeSettingsViewModel() -> ILSettingsViewModel {
@@ -591,6 +852,19 @@ final class DIContainer {
 
     func makeSettingsCoordinator(navigationController: UINavigationController) -> ILSettingsCoordinator {
         ILSettingsCoordinator(navigationController: navigationController, container: self)
+    }
+
+    // MARK: - Language
+    func makeLanguageUseCase() -> ILLanguageUseCase {
+        ILLanguageUseCaseImpl(userDefaultsService: userDefaultsService, themeService: themeService)
+    }
+
+    func makeLanguageViewModel() -> ILLanguageViewModel {
+        ILLanguageViewModel(useCase: makeLanguageUseCase())
+    }
+
+    func makeLanguageCoordinator(navigationController: UINavigationController) -> ILLanguageCoordinator {
+        ILLanguageCoordinator(navigationController: navigationController, container: self)
     }
 
     // MARK: - EditProfile

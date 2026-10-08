@@ -6,60 +6,57 @@
 import Foundation
 
 protocol ILArticlesUseCase {
-    /// First page of the article list (design handoff: start with the first 20 of 60 articles —
-    /// currently backed by a static catalog, see TODO in the impl).
-    func getInitialState() -> ILArticlesEntity
+    /// First page (`GET /v1/articles?page=1`) of the article list.
+    /// Throws `ILCatalogError` (`.offline` when the server is unreachable).
+    func loadFirstPage() async throws -> ILArticlesEntity
 
-    /// Loads the next page of articles. Out of scope for il-screen-builder — the real
-    /// implementation would call `NetworkService` (article catalog, see README design handoff
-    /// "Data cần API"), so it is left as a one-line-TODO stub with an `async throws` signature.
-    func loadMoreArticles() async throws
+    /// Appends the page after `entity.lastLoadedPage` and returns the merged entity. Returns
+    /// `entity` unchanged when there is nothing more to load.
+    func loadNextPage(after entity: ILArticlesEntity) async throws -> ILArticlesEntity
 }
 
 final class ILArticlesUseCaseImpl: ILArticlesUseCase {
 
-    /// Page size and total match the design handoff "Tất cả bài viết" screen (20 articles per
-    /// page, 60 total). Replace with values returned by the article API once it exists.
-    static let pageSize = 20
-    static let totalCount = 60
+    private let articleRepository: ILArticleRepository
 
-    // TODO: when a real article API exists, source the catalog (and `totalCount`) from
-    // networkService instead of the static catalog below.
-    init() {}
+    init(articleRepository: ILArticleRepository) {
+        self.articleRepository = articleRepository
+    }
 
-    func getInitialState() -> ILArticlesEntity {
-        let catalog = Self.makeArticleCatalog()
+    func loadFirstPage() async throws -> ILArticlesEntity {
+        let page = try await articleRepository.loadArticles(page: 1)
+        return Self.makeEntity(appending: page, to: .empty)
+    }
+
+    func loadNextPage(after entity: ILArticlesEntity) async throws -> ILArticlesEntity {
+        guard entity.hasMore else { return entity }
+        let page = try await articleRepository.loadArticles(page: entity.lastLoadedPage + 1)
+        return Self.makeEntity(appending: page, to: entity)
+    }
+
+    private static func makeEntity(appending page: ILArticlePageEntity, to entity: ILArticlesEntity) -> ILArticlesEntity {
+        // The server's slugs are unique, but never render the same row twice if a page overlaps
+        // (e.g. the catalog changed between two requests).
+        let knownIDs = Set(entity.articles.map(\.id))
+        let newRows = page.items
+            .filter { !knownIDs.contains($0.id) }
+            .map {
+                ILArticlesItemEntity(
+                    id: $0.id,
+                    category: $0.category,
+                    title: $0.title,
+                    author: $0.author,
+                    readMinutes: $0.readMinutes,
+                    thumbnailURL: $0.thumbnailURL ?? $0.imageURL
+                )
+            }
+        let articles = entity.articles + newRows
         return ILArticlesEntity(
-            articles: catalog,
-            loadedCount: catalog.count,
-            totalCount: Self.totalCount
+            articles: articles,
+            loadedCount: articles.count,
+            totalCount: page.totalCount,
+            lastLoadedPage: page.page,
+            hasMore: page.hasMore
         )
     }
-
-    // Out of scope for this skill — do NOT call NetworkService here, do NOT fabricate a response.
-    // Keep the signature, reduce the body to a one-line TODO print.
-    func loadMoreArticles() async throws {
-        print("TODO: implement loadMoreArticles — network/repository call, not built by il-screen-builder")
-    }
-
-    // MARK: - Catalog
-
-    /// Static catalog of 5 articles matching `ILArticleUseCaseImpl` (same `art-1` → `art-5` ids,
-    /// so tapping a row opens the correct Article detail screen). Display content is localized,
-    /// same approach as `ILHomeUseCaseImpl` / `ILArticleUseCaseImpl`.
-    private static func makeArticleCatalog() -> [ILArticlesItemEntity] {
-        (0..<5).map { index in
-            let prefix = "article.article.\(index)"
-            return ILArticlesItemEntity(
-                id: "art-\(index + 1)",
-                category: "\(prefix).category".localized,
-                title: "\(prefix).title".localized,
-                author: "\(prefix).author".localized,
-                readMinutes: Self.readMinutes[index]
-            )
-        }
-    }
-
-    /// Reading minutes per article (matches `ILArticleUseCaseImpl.readMinutes`).
-    private static let readMinutes = [6, 4, 5, 5, 7]
 }

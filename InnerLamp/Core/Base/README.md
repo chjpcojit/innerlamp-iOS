@@ -11,6 +11,7 @@ Base/
 ├── Coordinator.swift               # Coordinator protocol & child coordinator management
 ├── BaseNavigationController.swift  # UINavigationController: auto slide (right->left) + custom swipe-back
 ├── BaseTabBarController.swift      # UITabBarController: auto crossfade on tab switch
+├── Animation/ILEntranceAnimator.swift  # First-open entrance effect (fade + slide up 20-40pt, staggered)
 └── Transition/                     # Pluggable transition system (used by the 2 Base*Controllers above)
     ├── NavigationTransitionAnimating.swift  # Root protocol for every effect (+ `reversed` for pop default)
     ├── CrossFadeTransition.swift            # Fade effect
@@ -34,6 +35,16 @@ final class SampleViewController: BaseViewController {
 ```
 
 `showLoading()/hideLoading()/showError(_:)` are provided (the loading indicator is currently `TODO`, not yet implemented).
+
+### Entrance animation (opt-in, first appear only)
+
+Override `entranceAnimationTargets()` and return the views to animate, top to bottom. `BaseViewController` hides them in the first `viewWillAppear` and plays `ILEntranceAnimator` right away, alongside the screen transition (so there is no blank wait): each view fades in while sliding up from 20pt (first) to 40pt (last), starting 0.08s after the previous one, so lower layers travel further and land later. Re-appearing (back navigation, tab re-select) never replays; Reduce Motion skips it. Screens that do not override it are untouched.
+
+```swift
+override func entranceAnimationTargets() -> [UIView] { [headerView, heroCard, listView] }
+```
+
+Return only above-the-fold views and avoid views that already animate their own `alpha`/`transform`.
 
 ## BaseViewModel
 

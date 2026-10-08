@@ -9,6 +9,8 @@ import Combine
 enum ILPhotosNavEvent: Equatable {
     /// Nút ‹ ở header — đóng màn Ảnh chùa đẹp.
     case back
+    /// Chạm 1 ảnh — mở màn xem ảnh trên danh sách đang hiển thị, bắt đầu từ `selectedID`.
+    case openPhoto(photos: [ILPhotosPhotoModel], selectedID: String)
 }
 
 protocol ILPhotosViewModelProtocol: ViewModelType {
@@ -24,7 +26,11 @@ final class ILPhotosViewModel: ILPhotosViewModelProtocol {
         let viewDidLoad: AnyPublisher<Void, Never>
         /// Danh mục được chạm trên chip lọc (`nil` = "Tất cả").
         let categorySelected: AnyPublisher<ILPhotosCategory?, Never>
+        /// Fired when the grid nears the bottom of its content.
+        let loadMoreTriggered: AnyPublisher<Void, Never>
         let backTapped: AnyPublisher<Void, Never>
+        /// Id of the photo whose tile was tapped.
+        let photoSelected: AnyPublisher<String, Never>
     }
 
     struct Output {
@@ -38,20 +44,19 @@ final class ILPhotosViewModel: ILPhotosViewModelProtocol {
 
     private let navigationEventSubject = PassthroughSubject<ILPhotosNavEvent, Never>()
     private let stateSubject: CurrentValueSubject<ViewState<ILPhotosStateModel>, Never>
-    private var currentEntity: ILPhotosEntity
+    private var currentEntity: ILPhotosEntity = .empty
     private var currentState: ILPhotosStateModel
     private let useCase: ILPhotosUseCase
     private var cancellables = Set<AnyCancellable>()
+    /// Bumped on every category change so a response for an earlier selection is discarded.
+    private var requestGeneration = 0
+    /// Category of the newest first-page request (may be ahead of `currentEntity` while loading).
+    private var requestedCategory: ILPhotosCategory?
 
     // MARK: - Initializer
     init(useCase: ILPhotosUseCase) {
         self.useCase = useCase
-        let initialEntity = useCase.getInitialState()
-        self.currentEntity = initialEntity
-        let initialState = Self.makeStateModel(
-            from: initialEntity,
-            photos: useCase.filteredPhotos(in: initialEntity)
-        )
+        let initialState = Self.makeStateModel(from: .empty)
         self.currentState = initialState
         self.stateSubject = CurrentValueSubject(.success(initialState))
     }
@@ -59,27 +64,96 @@ final class ILPhotosViewModel: ILPhotosViewModelProtocol {
     // MARK: - Transform
     func transform(input: Input) -> Output {
         input.viewDidLoad
-            .sink { [weak self] _ in self?.handleViewDidLoad() }
+            .sink { [weak self] _ in self?.loadFirstPage(category: nil) }
             .store(in: &cancellables)
 
         input.categorySelected
             .sink { [weak self] category in self?.handleCategorySelected(category) }
             .store(in: &cancellables)
 
+        input.loadMoreTriggered
+            .sink { [weak self] _ in self?.handleLoadMore() }
+            .store(in: &cancellables)
+
         input.backTapped
             .sink { [weak self] _ in self?.navigationEventSubject.send(.back) }
+            .store(in: &cancellables)
+
+        input.photoSelected
+            .sink { [weak self] id in self?.handlePhotoSelected(id) }
             .store(in: &cancellables)
 
         return Output(state: stateSubject.eraseToAnyPublisher())
     }
 
     // MARK: - Actions
-    private func handleViewDidLoad() {
-        applyEntity(useCase.getInitialState())
+    private func handlePhotoSelected(_ id: String) {
+        let photos = currentState.photos
+        guard photos.contains(where: { $0.id == id }) else { return }
+        navigationEventSubject.send(.openPhoto(photos: photos, selectedID: id))
     }
 
     private func handleCategorySelected(_ category: ILPhotosCategory?) {
-        applyEntity(useCase.selectCategory(category, in: currentEntity))
+        // Re-tapping the selected chip retries only when nothing is shown (e.g. the first load failed).
+        guard category != requestedCategory || currentEntity.photos.isEmpty else { return }
+        loadFirstPage(category: category)
+    }
+
+    /// Loads page 1 for `category`. The photos of the previous selection stay on screen (only the
+    /// chip moves) until the response arrives, so the grid can crossfade straight to the new
+    /// photos instead of flashing empty. Any request still in flight for the previous selection is
+    /// invalidated by `requestGeneration`.
+    private func loadFirstPage(category: ILPhotosCategory?) {
+        requestGeneration += 1
+        let generation = requestGeneration
+        requestedCategory = category
+
+        currentState = Self.makeStateModel(from: currentEntity)
+        currentState.categories = Self.makeCategoryModels(selected: category)
+        currentState.isLoadingMore = true
+        stateSubject.send(.success(currentState))
+
+        runRequest(generation: generation, revertsSelectionOnFailure: true) { [useCase] in
+            try await useCase.loadFirstPage(category: category)
+        }
+    }
+
+    private func handleLoadMore() {
+        // Guard against duplicate/concurrent loads and against loading past the end of the list.
+        guard currentState.hasMore, !currentState.isLoadingMore else { return }
+
+        let entity = currentEntity
+        currentState.isLoadingMore = true
+        stateSubject.send(.success(currentState))
+
+        runRequest(generation: requestGeneration) { [useCase] in try await useCase.loadNextPage(after: entity) }
+    }
+
+    /// Runs one page request. On failure the photos already loaded are kept, the spinner is cleared
+    /// and the error is surfaced afterwards. A failed category switch also moves the chip back to
+    /// the category whose photos are still shown.
+    private func runRequest(
+        generation: Int,
+        revertsSelectionOnFailure: Bool = false,
+        _ request: @escaping () async throws -> ILPhotosEntity
+    ) {
+        Task { [weak self] in
+            do {
+                let entity = try await request()
+                guard let self, generation == self.requestGeneration else { return }
+                self.applyEntity(entity)
+            } catch {
+                guard let self, generation == self.requestGeneration else { return }
+                if revertsSelectionOnFailure {
+                    self.requestedCategory = self.currentEntity.selectedCategory
+                    self.currentState = Self.makeStateModel(from: self.currentEntity)
+                } else {
+                    self.currentState.isLoadingMore = false
+                }
+                self.stateSubject.send(.success(self.currentState))
+                self.stateSubject.send(.failure(error))
+            }
+        }
     }
 
     // MARK: - Entity -> StateModel
@@ -88,27 +162,27 @@ final class ILPhotosViewModel: ILPhotosViewModelProtocol {
     /// `references/data_layer_boundaries.md`).
     private func applyEntity(_ entity: ILPhotosEntity) {
         currentEntity = entity
-        currentState = Self.makeStateModel(from: entity, photos: useCase.filteredPhotos(in: entity))
+        requestedCategory = entity.selectedCategory
+        currentState = Self.makeStateModel(from: entity)
         stateSubject.send(.success(currentState))
     }
 
-    private static func makeStateModel(
-        from entity: ILPhotosEntity,
-        photos: [ILPhotosPhotoEntity]
-    ) -> ILPhotosStateModel {
+    private static func makeStateModel(from entity: ILPhotosEntity) -> ILPhotosStateModel {
         var state = ILPhotosStateModel()
 
         state.categories = Self.makeCategoryModels(selected: entity.selectedCategory)
-        state.photos = photos.map { photo in
+        state.photos = entity.photos.map {
             ILPhotosPhotoModel(
-                id: photo.id,
-                title: photo.title,
-                place: photo.place,
-                imageHeight: photo.imageHeight,
-                categoryLabel: labelKey(for: photo.category).localized
+                id: $0.id,
+                title: $0.title,
+                place: $0.place,
+                thumbnailURL: $0.thumbnailURL,
+                imageURL: $0.imageURL,
+                categoryLabel: labelKey(for: $0.category).localized
             )
         }
-        state.subtitle = makeSubtitle(count: photos.count, selected: entity.selectedCategory)
+        state.subtitle = makeSubtitle(count: entity.totalCount, selected: entity.selectedCategory)
+        state.hasMore = entity.hasMore
 
         return state
     }

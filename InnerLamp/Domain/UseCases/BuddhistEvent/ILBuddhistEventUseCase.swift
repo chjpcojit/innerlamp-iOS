@@ -15,7 +15,8 @@ protocol ILBuddhistEventUseCase {
     /// Each day in `[start, end)` is mapped to its lunar date via `ILLunarCalendar.solarToLunar`
     /// and matched against every template whose `lunarDay`/`lunarMonth` coincide. A template only
     /// matches a leap month when `isLeapMonthEligible` is `true` (the Vietnamese holidays in the
-    /// seed catalog never are). Returns occurrences sorted chronologically.
+    /// seed catalog never are). A `lunarDay` of 30 falls on day 29 in a short (29-day) month, via
+    /// `ILLunarCalendar.matchesLunarDay`. Returns occurrences sorted chronologically.
     ///
     /// Pure and deterministic: given the same templates, range and calendar the result never changes.
     func occurrences(
@@ -52,7 +53,8 @@ final class ILBuddhistEventUseCaseImpl: ILBuddhistEventUseCase {
 
         while day < lastDay {
             let lunar = ILLunarCalendar.solarToLunar(date: day, calendar: calendar)
-            for template in templates where template.lunarMonth == lunar.month && template.lunarDay == lunar.day {
+            for template in templates where template.lunarMonth == lunar.month
+                && ILLunarCalendar.matchesLunarDay(template.lunarDay, lunar: lunar, on: day, calendar: calendar) {
                 // A leap month is a distinct occurrence; only eligible templates fire there.
                 if lunar.isLeapMonth && !template.isLeapMonthEligible { continue }
                 result.append(ILBuddhistEventOccurrenceEntity(date: day, template: template))

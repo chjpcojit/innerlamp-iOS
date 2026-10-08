@@ -53,11 +53,12 @@ final class ILLibraryCoordinator: Coordinator {
                     case .meditation:
                         // Ô "Thiền định" — mở Trung tâm thiền (`medhub`).
                         self.showMeditationHub()
-                    case .sutras, .talk:
-                        // TODO: 2 ô truy cập nhanh còn lại mở màn danh sách riêng (Kinh sách,
-                        // Pháp thoại) — chưa có coordinator tương ứng, xem "Pending" trong
-                        // Docs/Specs/Library/requirements.md.
-                        break
+                    case .sutras:
+                        // Ô "Kinh sách" và link "Xem tất cả" ở nhóm Kinh thường tụng — mở màn `sutras`.
+                        self.showSutras()
+                    case .talk:
+                        // Ô "Pháp thoại" — mở màn danh sách `Talks`.
+                        self.showTalks()
                     }
                 case .openDeity(let id):
                     self.showDeity(id)
@@ -78,6 +79,20 @@ final class ILLibraryCoordinator: Coordinator {
             navigationController: navigationController,
             sutraID: sutraID
         )
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    /// Mở màn danh sách "Kinh sách" — từ ô truy cập nhanh hoặc link "Xem tất cả".
+    private func showSutras() {
+        let coordinator = container.makeSutrasCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    /// Mở màn danh sách "Pháp thoại" — từ ô truy cập nhanh "Pháp thoại".
+    private func showTalks() {
+        let coordinator = container.makeTalksCoordinator(navigationController: navigationController)
         addChild(coordinator)
         coordinator.start()
     }

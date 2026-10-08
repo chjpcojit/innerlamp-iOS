@@ -57,6 +57,7 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
     private let stateSubject: CurrentValueSubject<ViewState<ILLibraryStateModel>, Never>
     private var catalog: ILLibraryEntity
     private var currentState: ILLibraryStateModel
+    private var deitiesLoaded = false
     private let useCase: ILLibraryUseCase
     private var cancellables = Set<AnyCancellable>()
 
@@ -65,7 +66,7 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
         self.useCase = useCase
         let initialCatalog = useCase.getCatalog()
         self.catalog = initialCatalog
-        let initialState = ILLibraryViewModel.makeStateModel(catalog: initialCatalog)
+        let initialState = ILLibraryViewModel.makeStateModel(catalog: initialCatalog, deitiesLoaded: false)
         self.currentState = initialState
         self.stateSubject = CurrentValueSubject(.success(initialState))
     }
@@ -109,8 +110,29 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
 
     // MARK: - Actions
     private func handleViewDidLoad() {
+        let deities = catalog.deities
         catalog = useCase.getCatalog()
+        catalog.deities = deities
         publishState()
+        loadTopDeities()
+    }
+
+    /// Server-only carousel (`/v1/deities/top`, cached offline): an error or empty list shows
+    /// "Đang cập nhật" instead of mock data — same behaviour as Home.
+    private func loadTopDeities() {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.catalog.deities = try await self.useCase.loadTopDeities()
+            } catch {
+                #if DEBUG
+                print("[Library] loadTopDeities failed: \(error)")
+                #endif
+                self.catalog.deities = []
+            }
+            self.deitiesLoaded = true
+            self.publishState()
+        }
     }
 
     private func handleFeaturedTapped() {
@@ -124,14 +146,14 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
     }
 
     private func publishState() {
-        currentState = ILLibraryViewModel.makeStateModel(catalog: catalog)
+        currentState = ILLibraryViewModel.makeStateModel(catalog: catalog, deitiesLoaded: deitiesLoaded)
         stateSubject.send(.success(currentState))
     }
 
     // MARK: - Entity -> StateModel mapping
     /// Việc riêng của presentation (nhãn ô truy cập nhanh, format ngày vía, format thời lượng) nên
     /// nằm ở đây, không phải trong Mapper dùng chung (xem `references/data_layer_boundaries.md`).
-    private static func makeStateModel(catalog: ILLibraryEntity) -> ILLibraryStateModel {
+    private static func makeStateModel(catalog: ILLibraryEntity, deitiesLoaded: Bool) -> ILLibraryStateModel {
         var model = ILLibraryStateModel()
         model.quickAccess = quickAccessTiles()
         model.featured = catalog.featured.map {
@@ -147,15 +169,18 @@ final class ILLibraryViewModel: ILLibraryViewModelProtocol {
         model.deities = catalog.deities.map { deity in
             let memorialText = deity.memorialDay.map {
                 String(format: "home.deity.memorialFormat".localized, $0.lunarDay, $0.lunarMonth)
-            } ?? ""
+            } ?? "home.deity.memorialUpdating".localized
             return ILHomeDeityModel(
                 id: deity.id,
                 kind: deity.kind,
-                kindLabel: deity.kind == .buddha ? "deity.kind.buddha".localized : "deity.kind.bodhisattva".localized,
+                kindLabel: ILDeitiesViewModel.kindLabel(for: deity.kind),
                 name: deity.name,
-                memorialText: memorialText
+                memorialText: memorialText,
+                thumbnailURL: deity.thumbnailURL
             )
         }
+        model.deitiesLoading = !deitiesLoaded && catalog.deities.isEmpty
+        model.deitiesEmptyText = deitiesLoaded && catalog.deities.isEmpty ? "home.deity.updating".localized : ""
         model.sutrasSectionTitle = "library.section.sutra".localized
         model.sutrasViewAllText = "library.section.sutra.viewAll".localized
         model.rows = catalog.items.map {

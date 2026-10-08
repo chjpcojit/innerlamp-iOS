@@ -21,11 +21,7 @@ final class ILLibraryViewController: BaseViewController {
     private let itemTappedSubject = PassthroughSubject<String, Never>()
 
     // MARK: - UI Elements
-    private lazy var headerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = ILColors.canvas
-        return view
-    }()
+    private let headerBand = ILStickyHeaderBand()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -34,12 +30,6 @@ final class ILLibraryViewController: BaseViewController {
         label.text = "library.title".localized
         label.accessibilityTraits = .header
         return label
-    }()
-
-    private lazy var headerDivider: UIView = {
-        let view = UIView()
-        view.backgroundColor = ILColors.border
-        return view
     }()
 
     private lazy var scrollView: UIScrollView = {
@@ -81,19 +71,25 @@ final class ILLibraryViewController: BaseViewController {
         navigationController?.setNavigationBarHidden(true, animated: animated)
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        applyHeaderInset()
+    }
+
     // MARK: - Setup
     override func setupViews() {
         super.setupViews()
         view.backgroundColor = ILColors.canvas
 
-        [headerView, scrollView, skeletonView].forEach {
+        // Band last so it sits above the scroll view and the skeleton.
+        [scrollView, skeletonView, headerBand].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
-        [titleLabel, headerDivider].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            headerView.addSubview($0)
-        }
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        headerBand.addSubview(titleLabel)
+        scrollView.contentInsetAdjustmentBehavior = .never
+        headerBand.bind(to: scrollView)
 
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
@@ -121,26 +117,23 @@ final class ILLibraryViewController: BaseViewController {
         super.setupConstraints()
 
         NSLayoutConstraint.activate([
-            headerView.topAnchor.constraint(equalTo: view.topAnchor),
-            headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            headerBand.topAnchor.constraint(equalTo: view.topAnchor),
+            headerBand.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerBand.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
             titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: ILMetrics.spaceMedium),
-            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: ILMetrics.screenHorizontal),
-            titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -ILMetrics.screenHorizontal),
-            titleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -ILMetrics.spaceMedium + 2),
+            titleLabel.leadingAnchor.constraint(equalTo: headerBand.leadingAnchor, constant: ILMetrics.screenHorizontal),
+            titleLabel.trailingAnchor.constraint(equalTo: headerBand.trailingAnchor, constant: -ILMetrics.screenHorizontal),
+            titleLabel.bottomAnchor.constraint(equalTo: headerBand.bottomAnchor, constant: -ILMetrics.spaceMedium + 2),
 
-            headerDivider.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
-            headerDivider.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
-            headerDivider.bottomAnchor.constraint(equalTo: headerView.bottomAnchor),
-            headerDivider.heightAnchor.constraint(equalToConstant: 1),
-
-            scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            // Scroll view chạy dưới header để nội dung mờ xuyên qua kính; chiều cao header được áp
+            // thành top content inset trong `viewDidLayoutSubviews`.
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            skeletonView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            skeletonView.topAnchor.constraint(equalTo: headerBand.bottomAnchor),
             skeletonView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             skeletonView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             skeletonView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
@@ -211,7 +204,19 @@ final class ILLibraryViewController: BaseViewController {
         deitiesHeader.title = model.deitiesTitle
         deitiesHeader.trailingText = model.deitiesViewAllText
         deitiesCarousel.deities = model.deities
+        deitiesCarousel.emptyText = model.deitiesEmptyText
+        deitiesCarousel.isLoading = model.deitiesLoading
 
         listView.configure(with: model)
+    }
+
+    /// Đẩy nội dung xuống dưới header; lần layout đầu thì đặt offset ở đỉnh nội dung thay vì dưới header.
+    private func applyHeaderInset() {
+        let top = headerBand.bounds.height
+        guard top > 0, scrollView.contentInset.top != top else { return }
+        let wasAtTop = scrollView.contentOffset.y <= -scrollView.contentInset.top
+        scrollView.contentInset.top = top
+        scrollView.verticalScrollIndicatorInsets.top = top
+        if wasAtTop { scrollView.contentOffset.y = -top }
     }
 }

@@ -17,6 +17,8 @@ final class ILMalaViewModelTests: XCTestCase {
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
     private var beadAdvancedSubject: PassthroughSubject<Void, Never>!
     private var resetTappedSubject: PassthroughSubject<Void, Never>!
+    private var goalSelectedSubject: PassthroughSubject<Int, Never>!
+    private var continueTappedSubject: PassthroughSubject<Void, Never>!
     private var doneTappedSubject: PassthroughSubject<Void, Never>!
     private var backTappedSubject: PassthroughSubject<Void, Never>!
 
@@ -30,6 +32,8 @@ final class ILMalaViewModelTests: XCTestCase {
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
         beadAdvancedSubject = PassthroughSubject<Void, Never>()
         resetTappedSubject = PassthroughSubject<Void, Never>()
+        goalSelectedSubject = PassthroughSubject<Int, Never>()
+        continueTappedSubject = PassthroughSubject<Void, Never>()
         doneTappedSubject = PassthroughSubject<Void, Never>()
         backTappedSubject = PassthroughSubject<Void, Never>()
     }
@@ -39,6 +43,8 @@ final class ILMalaViewModelTests: XCTestCase {
         viewDidLoadSubject = nil
         beadAdvancedSubject = nil
         resetTappedSubject = nil
+        goalSelectedSubject = nil
+        continueTappedSubject = nil
         doneTappedSubject = nil
         backTappedSubject = nil
         sut = nil
@@ -52,6 +58,8 @@ final class ILMalaViewModelTests: XCTestCase {
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             beadAdvanced: beadAdvancedSubject.eraseToAnyPublisher(),
             resetTapped: resetTappedSubject.eraseToAnyPublisher(),
+            goalSelected: goalSelectedSubject.eraseToAnyPublisher(),
+            continueTapped: continueTappedSubject.eraseToAnyPublisher(),
             doneTapped: doneTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher()
         )
@@ -69,7 +77,7 @@ final class ILMalaViewModelTests: XCTestCase {
     }
 
     func test_initialState_matchesUseCaseDefaultAndStaticLabels() {
-        mockUseCase.stubEntity = ILMalaEntity(count: 27, goal: 108, completedRounds: 2)
+        mockUseCase.stubEntity = ILMalaEntity(count: 27, goal: 108, round: 2)
         sut = ILMalaViewModel(useCase: mockUseCase, soundPlayer: mockSoundPlayer)
         let box = observeState(sut.transform(input: makeInput()))
 
@@ -79,9 +87,11 @@ final class ILMalaViewModelTests: XCTestCase {
         XCTAssertEqual(box.latest?.count, 27)
         XCTAssertEqual(box.latest?.goal, 108)
         XCTAssertEqual(box.latest?.headerTitle, "mala.header.title".localized)
-        XCTAssertEqual(box.latest?.headerSubtitle, String(format: "mala.header.roundsFormat".localized, 2))
-        XCTAssertEqual(box.latest?.goalText, String(format: "mala.count.goalFormat".localized, 108))
+        XCTAssertEqual(box.latest?.headerSubtitle, String(format: "mala.header.progressFormat".localized, 2, 27, 108))
+        XCTAssertEqual(box.latest?.goalOptions.map(\.value), [21, 54, 108])
+        XCTAssertEqual(box.latest?.goalOptions.filter(\.isSelected).map(\.value), [108])
         XCTAssertEqual(box.latest?.mantraText, "mala.mantra".localized)
+        XCTAssertEqual(box.latest?.isRoundComplete, false)
         XCTAssertNil(box.latest?.milestone)
     }
 
@@ -107,8 +117,8 @@ final class ILMalaViewModelTests: XCTestCase {
         XCTAssertEqual(box.latest?.milestone, .quarter)
     }
 
-    func test_beadAdvanced_completingRound_updatesHeaderSubtitle() {
-        mockUseCase.stubEntity = ILMalaEntity(count: 107, goal: 108, completedRounds: 2)
+    func test_beadAdvanced_completingRound_showsCompletionAndRingsBell() {
+        mockUseCase.stubEntity = ILMalaEntity(count: 107, goal: 108, round: 3)
         mockUseCase.stubMilestone = .roundComplete
         sut = ILMalaViewModel(useCase: mockUseCase, soundPlayer: mockSoundPlayer)
         let box = observeState(sut.transform(input: makeInput()))
@@ -117,7 +127,10 @@ final class ILMalaViewModelTests: XCTestCase {
         beadAdvancedSubject.send(())
 
         XCTAssertEqual(box.latest?.count, 108)
-        XCTAssertEqual(box.latest?.headerSubtitle, String(format: "mala.header.roundsFormat".localized, 3))
+        XCTAssertEqual(box.latest?.headerSubtitle, String(format: "mala.header.progressFormat".localized, 3, 108, 108))
+        XCTAssertEqual(box.latest?.isRoundComplete, true)
+        XCTAssertEqual(box.latest?.completionTitle, String(format: "mala.complete.titleFormat".localized, 108))
+        XCTAssertEqual(box.latest?.completionMessage, String(format: "mala.complete.messageFormat".localized, 3))
         XCTAssertEqual(box.latest?.milestone, .roundComplete)
         XCTAssertTrue(mockSoundPlayer.playBeadCalled)
         XCTAssertTrue(mockSoundPlayer.playBellCalled)
@@ -134,6 +147,35 @@ final class ILMalaViewModelTests: XCTestCase {
         XCTAssertTrue(mockUseCase.resetBeadsCalled)
         XCTAssertEqual(box.latest?.count, 0)
         XCTAssertNil(box.latest?.milestone)
+    }
+
+    func test_goalSelected_changesGoalThroughUseCaseAndResetsCount() {
+        mockUseCase.stubEntity = ILMalaEntity(count: 30, goal: 108, round: 1)
+        sut = ILMalaViewModel(useCase: mockUseCase, soundPlayer: mockSoundPlayer)
+        let box = observeState(sut.transform(input: makeInput()))
+
+        viewDidLoadSubject.send(())
+        goalSelectedSubject.send(54)
+
+        XCTAssertEqual(mockUseCase.selectedGoal, 54)
+        XCTAssertEqual(box.latest?.goal, 54)
+        XCTAssertEqual(box.latest?.count, 0)
+        XCTAssertEqual(box.latest?.goalOptions.filter(\.isSelected).map(\.value), [54])
+    }
+
+    func test_continueTapped_startsNextRoundAndHidesCompletion() {
+        mockUseCase.stubEntity = ILMalaEntity(count: 108, goal: 108, round: 1)
+        sut = ILMalaViewModel(useCase: mockUseCase, soundPlayer: mockSoundPlayer)
+        let box = observeState(sut.transform(input: makeInput()))
+
+        viewDidLoadSubject.send(())
+        XCTAssertEqual(box.latest?.isRoundComplete, true)
+        continueTappedSubject.send(())
+
+        XCTAssertTrue(mockUseCase.startNextRoundCalled)
+        XCTAssertEqual(box.latest?.count, 0)
+        XCTAssertEqual(box.latest?.isRoundComplete, false)
+        XCTAssertEqual(box.latest?.headerSubtitle, String(format: "mala.header.progressFormat".localized, 2, 0, 108))
     }
 
     func test_doneTapped_firesGoBackNavigationEvent() {
@@ -167,27 +209,47 @@ final class ILMalaUseCaseTests: XCTestCase {
     private let sut = ILMalaUseCaseImpl()
 
     func test_advanceBead_incrementsCount() {
-        let result = sut.advanceBead(ILMalaEntity(count: 5, goal: 108, completedRounds: 0))
+        let result = sut.advanceBead(ILMalaEntity(count: 5, goal: 108, round: 1))
         XCTAssertEqual(result.count, 6)
-        XCTAssertEqual(result.completedRounds, 0)
+        XCTAssertEqual(result.round, 1)
     }
 
     func test_advanceBead_reachingGoal_completesRound() {
-        let result = sut.advanceBead(ILMalaEntity(count: 107, goal: 108, completedRounds: 2))
+        let result = sut.advanceBead(ILMalaEntity(count: 20, goal: 21, round: 2))
+        XCTAssertEqual(result.count, 21)
+        XCTAssertTrue(result.isRoundComplete)
+        XCTAssertEqual(result.round, 2)
+    }
+
+    func test_advanceBead_atGoal_staysAtGoal() {
+        let result = sut.advanceBead(ILMalaEntity(count: 108, goal: 108, round: 3))
         XCTAssertEqual(result.count, 108)
-        XCTAssertEqual(result.completedRounds, 3)
+        XCTAssertEqual(result.round, 3)
     }
 
-    func test_advanceBead_pastGoal_startsNewRoundAtOne() {
-        let result = sut.advanceBead(ILMalaEntity(count: 108, goal: 108, completedRounds: 3))
-        XCTAssertEqual(result.count, 1)
-        XCTAssertEqual(result.completedRounds, 3)
-    }
-
-    func test_resetBeads_zeroesCountButKeepsCompletedRounds() {
-        let result = sut.resetBeads(ILMalaEntity(count: 60, goal: 108, completedRounds: 4))
+    func test_resetBeads_zeroesCountButKeepsRound() {
+        let result = sut.resetBeads(ILMalaEntity(count: 60, goal: 108, round: 4))
         XCTAssertEqual(result.count, 0)
-        XCTAssertEqual(result.completedRounds, 4)
+        XCTAssertEqual(result.round, 4)
+    }
+
+    func test_selectGoal_validOption_changesGoalAndResetsCount() {
+        let result = sut.selectGoal(54, for: ILMalaEntity(count: 30, goal: 108, round: 2))
+        XCTAssertEqual(result.goal, 54)
+        XCTAssertEqual(result.count, 0)
+        XCTAssertEqual(result.round, 2)
+    }
+
+    func test_selectGoal_unknownOption_isIgnored() {
+        let entity = ILMalaEntity(count: 30, goal: 108, round: 2)
+        XCTAssertEqual(sut.selectGoal(10, for: entity), entity)
+    }
+
+    func test_startNextRound_resetsCountAndIncrementsRound() {
+        let result = sut.startNextRound(ILMalaEntity(count: 108, goal: 108, round: 1))
+        XCTAssertEqual(result.count, 0)
+        XCTAssertEqual(result.round, 2)
+        XCTAssertEqual(result.goal, 108)
     }
 
     func test_milestone_atQuarters_isQuarter() {
@@ -228,7 +290,24 @@ final class MockILMalaUseCase: ILMalaUseCase {
         advanceBeadCalled = true
         var newEntity = entity
         newEntity.count += 1
-        if newEntity.count == entity.goal { newEntity.completedRounds += 1 }
+        return newEntity
+    }
+
+    var selectedGoal: Int?
+    func selectGoal(_ goal: Int, for entity: ILMalaEntity) -> ILMalaEntity {
+        selectedGoal = goal
+        var newEntity = entity
+        newEntity.goal = goal
+        newEntity.count = 0
+        return newEntity
+    }
+
+    var startNextRoundCalled = false
+    func startNextRound(_ entity: ILMalaEntity) -> ILMalaEntity {
+        startNextRoundCalled = true
+        var newEntity = entity
+        newEntity.count = 0
+        newEntity.round += 1
         return newEntity
     }
 

@@ -7,11 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3FBE09B6306AC37000D96CF4 /* GRPCCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBE09B5306AC37000D96CF4 /* GRPCCore */; };
 		3FBEC6C6306AB47E00D96CF4 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6C5306AB47E00D96CF4 /* Sentry */; };
-		3FBEC6C9306AB52D00D96CF4 /* GRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6C8306AB52D00D96CF4 /* GRPC */; };
 		3FBEC6D6306AB5CD00D96CF4 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6D5306AB5CD00D96CF4 /* SwiftProtobuf */; };
-		3FBEC6E0306AB5CD00D96CF4 /* GRPC in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6E2306AB5CD00D96CF4 /* GRPC */; };
-		3FBEC6E1306AB5CD00D96CF4 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6E3306AB5CD00D96CF4 /* SwiftProtobuf */; };
+		3FC1000000000000000000C1 /* GRPCNIOTransportHTTP2 in Frameworks */ = {isa = PBXBuildFile; productRef = 3FC1000000000000000000B1 /* GRPCNIOTransportHTTP2 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,11 +50,18 @@
 				Presentation/Scenes/Articles/README.md,
 				Presentation/Scenes/Bell/README.md,
 				Presentation/Scenes/Deities/README.md,
+				Presentation/Scenes/Deity/README.md,
 				Presentation/Scenes/EditProfile/README.md,
 				Presentation/Scenes/Events/README.md,
+				Presentation/Scenes/FamilyTree/README.md,
+				Presentation/Scenes/FamilyTreeAddMember/README.md,
+				Presentation/Scenes/FamilyTreeChronicle/README.md,
+				Presentation/Scenes/FamilyTreeCreate/README.md,
+				Presentation/Scenes/FamilyTreeMember/README.md,
 				Presentation/Scenes/Festivals/README.md,
 				Presentation/Scenes/ForgotPassword/README.md,
 				Presentation/Scenes/Home/README.md,
+				Presentation/Scenes/Language/README.md,
 				Presentation/Scenes/Library/README.md,
 				Presentation/Scenes/Login/README.md,
 				Presentation/Scenes/LunarCalendar/README.md,
@@ -64,10 +70,12 @@
 				Presentation/Scenes/MeditationHub/README.md,
 				Presentation/Scenes/MeditationSession/README.md,
 				Presentation/Scenes/MeditationSetup/README.md,
+				Presentation/Scenes/Memorial/README.md,
 				Presentation/Scenes/Notifications/README.md,
 				Presentation/Scenes/Onboarding/README.md,
 				Presentation/Scenes/Otp/README.md,
 				Presentation/Scenes/Photos/README.md,
+				Presentation/Scenes/PhotoViewer/README.md,
 				Presentation/Scenes/Player/README.md,
 				Presentation/Scenes/Post/README.md,
 				Presentation/Scenes/Profile/README.md,
@@ -78,8 +86,11 @@
 				Presentation/Scenes/Splash/README.md,
 				Presentation/Scenes/Stats/README.md,
 				Presentation/Scenes/SutraDetail/README.md,
+				Presentation/Scenes/Sutras/README.md,
 				Presentation/Scenes/Talk/README.md,
+				Presentation/Scenes/Talks/README.md,
 				Presentation/Scenes/Temple/README.md,
+				Presentation/Scenes/TempleFinder/README.md,
 			);
 			target = 3F39AA20305165770008341C /* InnerLamp */;
 		};
@@ -112,7 +123,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				3FBEC6C6306AB47E00D96CF4 /* Sentry in Frameworks */,
-				3FBEC6C9306AB52D00D96CF4 /* GRPC in Frameworks */,
+				3FBE09B6306AC37000D96CF4 /* GRPCCore in Frameworks */,
+				3FC1000000000000000000C1 /* GRPCNIOTransportHTTP2 in Frameworks */,
 				3FBEC6D6306AB5CD00D96CF4 /* SwiftProtobuf in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -121,8 +133,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3FBEC6E0306AB5CD00D96CF4 /* GRPC in Frameworks */,
-				3FBEC6E1306AB5CD00D96CF4 /* SwiftProtobuf in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -177,8 +187,9 @@
 			name = InnerLamp;
 			packageProductDependencies = (
 				3FBEC6C5306AB47E00D96CF4 /* Sentry */,
-				3FBEC6C8306AB52D00D96CF4 /* GRPC */,
 				3FBEC6D5306AB5CD00D96CF4 /* SwiftProtobuf */,
+				3FBE09B5306AC37000D96CF4 /* GRPCCore */,
+				3FC1000000000000000000B1 /* GRPCNIOTransportHTTP2 */,
 			);
 			productName = InnerLamp;
 			productReference = 3F39AA21305165770008341C /* InnerLamp.app */;
@@ -196,14 +207,13 @@
 			);
 			dependencies = (
 				3F39AA3C305165790008341C /* PBXTargetDependency */,
+				3FC1000000000000000000D1 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				3F39AA3D305165790008341C /* InnerLampTests */,
 			);
 			name = InnerLampTests;
 			packageProductDependencies = (
-				3FBEC6E2306AB5CD00D96CF4 /* GRPC */,
-				3FBEC6E3306AB5CD00D96CF4 /* SwiftProtobuf */,
 			);
 			productName = InnerLampTests;
 			productReference = 3F39AA3A305165790008341C /* InnerLampTests.xctest */;
@@ -264,8 +274,10 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				3FBEC6C4306AB47E00D96CF4 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
-				3FBEC6C7306AB52D00D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift" */,
 				3FBEC6D4306AB5CD00D96CF4 /* XCRemoteSwiftPackageReference "swift-protobuf" */,
+				3FBE09B2306AC37000D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift-2" */,
+				3FC1000000000000000000A1 /* XCRemoteSwiftPackageReference "grpc-swift-nio-transport" */,
+				3FC1000000000000000000A2 /* XCRemoteSwiftPackageReference "grpc-swift-protobuf" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3F39AA22305165770008341C /* Products */;
@@ -338,6 +350,10 @@
 			target = 3F39AA20305165770008341C /* InnerLamp */;
 			targetProxy = 3F39AA45305165790008341C /* PBXContainerItemProxy */;
 		};
+		3FC1000000000000000000D1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 3FC1000000000000000000B5 /* GRPCProtobufGenerator */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -357,7 +373,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -392,7 +408,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -660,6 +676,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		3FBE09B2306AC37000D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift-2" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/grpc/grpc-swift-2";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.3;
+			};
+		};
 		3FBEC6C4306AB47E00D96CF4 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/getsentry/sentry-cocoa.git";
@@ -670,14 +694,6 @@
 			traits = (
 			);
 		};
-		3FBEC6C7306AB52D00D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/grpc/grpc-swift";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.27.6;
-			};
-		};
 		3FBEC6D4306AB5CD00D96CF4 /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-protobuf";
@@ -686,33 +702,49 @@
 				minimumVersion = 1.38.1;
 			};
 		};
+		3FC1000000000000000000A1 /* XCRemoteSwiftPackageReference "grpc-swift-nio-transport" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/grpc/grpc-swift-nio-transport";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.10.0;
+			};
+		};
+		3FC1000000000000000000A2 /* XCRemoteSwiftPackageReference "grpc-swift-protobuf" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/grpc/grpc-swift-protobuf";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		3FBE09B5306AC37000D96CF4 /* GRPCCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3FBE09B2306AC37000D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift-2" */;
+			productName = GRPCCore;
+		};
 		3FBEC6C5306AB47E00D96CF4 /* Sentry */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 3FBEC6C4306AB47E00D96CF4 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
 			productName = Sentry;
-		};
-		3FBEC6C8306AB52D00D96CF4 /* GRPC */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 3FBEC6C7306AB52D00D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift" */;
-			productName = GRPC;
 		};
 		3FBEC6D5306AB5CD00D96CF4 /* SwiftProtobuf */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 3FBEC6D4306AB5CD00D96CF4 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
 			productName = SwiftProtobuf;
 		};
-		3FBEC6E2306AB5CD00D96CF4 /* GRPC */ = {
+		3FC1000000000000000000B1 /* GRPCNIOTransportHTTP2 */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 3FBEC6C7306AB52D00D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift" */;
-			productName = GRPC;
+			package = 3FC1000000000000000000A1 /* XCRemoteSwiftPackageReference "grpc-swift-nio-transport" */;
+			productName = GRPCNIOTransportHTTP2;
 		};
-		3FBEC6E3306AB5CD00D96CF4 /* SwiftProtobuf */ = {
+		3FC1000000000000000000B5 /* GRPCProtobufGenerator */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 3FBEC6D4306AB5CD00D96CF4 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
-			productName = SwiftProtobuf;
+			package = 3FC1000000000000000000A2 /* XCRemoteSwiftPackageReference "grpc-swift-protobuf" */;
+			productName = "plugin:GRPCProtobufGenerator";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

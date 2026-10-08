@@ -13,7 +13,7 @@ final class ILArticlesListView: UIView {
 
     // MARK: - Properties
     var articles: [ILArticlesArticleModel] = [] {
-        didSet { rebuildCards() }
+        didSet { updateCards(from: oldValue) }
     }
 
     var footerState: ILLoadMoreFooterView.State = .hidden {
@@ -61,22 +61,35 @@ final class ILArticlesListView: UIView {
         ])
     }
 
-    private func rebuildCards() {
-        cardsStack.arrangedSubviews.forEach {
-            cardsStack.removeArrangedSubview($0)
-            $0.removeFromSuperview()
-        }
+    /// Diffs against the previous list so a load-more only appends the new cards. Rebuilding every
+    /// card on each state emission re-creates N views and resets their images (a re-decode per card),
+    /// which stalls the main thread right when the user is scrolling.
+    private func updateCards(from oldArticles: [ILArticlesArticleModel]) {
+        guard articles != oldArticles else { return }
 
-        for article in articles {
-            let card = ILArticleCardView()
-            card.configure(
-                category: article.category,
-                title: article.title,
-                author: article.author,
-                readText: article.readText
-            )
-            card.onTap = { [weak self] in self?.onArticleTap?(article) }
-            cardsStack.addArrangedSubview(card)
+        let isAppendOnly = articles.count >= oldArticles.count
+            && Array(articles.prefix(oldArticles.count)) == oldArticles
+        guard isAppendOnly else {
+            cardsStack.arrangedSubviews.forEach {
+                cardsStack.removeArrangedSubview($0)
+                $0.removeFromSuperview()
+            }
+            articles.forEach(appendCard)
+            return
         }
+        articles.dropFirst(oldArticles.count).forEach(appendCard)
+    }
+
+    private func appendCard(for article: ILArticlesArticleModel) {
+        let card = ILArticleCardView()
+        card.configure(
+            category: article.category,
+            title: article.title,
+            author: article.author,
+            readText: article.readText,
+            imageURL: article.thumbnailURL
+        )
+        card.onTap = { [weak self] in self?.onArticleTap?(article) }
+        cardsStack.addArrangedSubview(card)
     }
 }

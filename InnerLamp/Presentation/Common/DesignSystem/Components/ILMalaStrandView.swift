@@ -5,7 +5,7 @@
 
 import UIKit
 
-/// Dây tràng hạt dọc, dùng trên nền immersive. Hạt gần vạch giữa to và rõ nhất, xa dần thì nhỏ và
+/// Dây tràng hạt dọc (sợi dây đỏ nâu xỏ các hạt gỗ), dùng trên nền immersive. Hạt gần vạch giữa to và rõ nhất, xa dần thì nhỏ và
 /// mờ, mép trên/dưới tan vào nền. Chạm hoặc kéo lên/xuống một lần → đúng một hạt trượt về giữa
 /// vạch, gọi `onAdvance` một lần rồi caller tăng `count`.
 ///
@@ -13,7 +13,8 @@ import UIKit
 /// - Kéo: dây đi theo ngón tay (nửa tốc độ); quá 22pt thì "chốt" một hạt theo hướng kéo
 ///   (kéo xuống → hạt phía trên về giữa, kéo lên → hạt phía dưới về giữa); nhả sớm hơn thì trượt về chỗ cũ.
 ///
-/// Hạt mẹ (mỗi `motherInterval` hạt) nằm cố định trên dây nên trượt về giữa đúng lúc — không nhảy
+/// Mỗi hạt thường xoay nhẹ và đậm/nhạt khác nhau (giá trị giả ngẫu nhiên cố định theo id hạt).
+/// Hạt mẹ (mỗi `motherInterval` hạt) to hơn và nằm cố định trên dây nên trượt về giữa đúng lúc — không nhảy
 /// vị trí khi kết thúc animation dù kéo theo hướng nào.
 public final class ILMalaStrandView: UIView {
 
@@ -50,7 +51,9 @@ public final class ILMalaStrandView: UIView {
     private let markerDiameter: CGFloat = 74
     private let tickWidth: CGFloat = 22
     private let tickInset: CGFloat = 8
-    private let stringWidth: CGFloat = 1.5
+    private let stringWidth: CGFloat = 3
+    private let stringStripePeriod: CGFloat = 7
+    private let motherBeadScale: CGFloat = 1.12
     private let dragSnapDistance: CGFloat = 22
     private let tapMaxDistance: CGFloat = 6
     private let dragFollowRatio: CGFloat = 0.5
@@ -77,7 +80,7 @@ public final class ILMalaStrandView: UIView {
 
     // MARK: - Layers
     private let maskLayer = CAGradientLayer()
-    private let stringLayer = CAGradientLayer()
+    private let stringLayer = CALayer()
     private let markerLayer = CAShapeLayer()
     private let leftTickLayer = CALayer()
     private let rightTickLayer = CALayer()
@@ -108,7 +111,10 @@ public final class ILMalaStrandView: UIView {
         maskLayer.locations = [0, 0.16, 0.84, 1]
         layer.mask = maskLayer
 
-        stringLayer.locations = [0, 0.14, 0.86, 1]
+        stringLayer.shadowColor = ILColors.beadShadow.cgColor
+        stringLayer.shadowOpacity = 0.64
+        stringLayer.shadowOffset = .zero
+        stringLayer.shadowRadius = 2
         layer.addSublayer(stringLayer)
 
         markerLayer.fillColor = UIColor.clear.cgColor
@@ -118,6 +124,7 @@ public final class ILMalaStrandView: UIView {
         layer.addSublayer(leftTickLayer)
         layer.addSublayer(rightTickLayer)
 
+        stringLayer.backgroundColor = UIColor(patternImage: makeStringPattern()).cgColor
         updateColors()
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILMalaStrandView, _) in
             view.applyColorAppearanceChange()
@@ -151,6 +158,20 @@ public final class ILMalaStrandView: UIView {
         CATransaction.commit()
     }
 
+    /// Họa tiết sọc ngang lặp lại của sợi dây: đậm 3pt, sáng 2pt, tối 2pt (chu kỳ 7pt).
+    private func makeStringPattern() -> UIImage {
+        let size = CGSize(width: stringWidth, height: stringStripePeriod)
+        return UIGraphicsImageRenderer(size: size).image { context in
+            let stripes: [(UIColor, CGFloat)] = [(ILColors.beadCordMid, 3), (ILColors.beadCordLight, 2), (ILColors.beadCordDark, 2)]
+            var y: CGFloat = 0
+            for (color, height) in stripes {
+                color.setFill()
+                context.fill(CGRect(x: 0, y: y, width: size.width, height: height))
+                y += height
+            }
+        }
+    }
+
     private func applyColorAppearanceChange() {
         updateColors()
     }
@@ -163,9 +184,6 @@ public final class ILMalaStrandView: UIView {
     private func updateColors() {
         // Các CGColor bên dưới không tự đảo theo trait — resolve thủ công.
         let traits = traitCollection
-        let clear = UIColor.clear.cgColor
-        let line = ILColors.medStrandLine.resolvedColor(with: traits).cgColor
-        stringLayer.colors = [clear, line, line, clear]
         markerLayer.strokeColor = ILColors.medMarkerRing.resolvedColor(with: traits).cgColor
         leftTickLayer.backgroundColor = ILColors.medMarkerTick.resolvedColor(with: traits).cgColor
         rightTickLayer.backgroundColor = ILColors.medMarkerTick.resolvedColor(with: traits).cgColor
@@ -197,11 +215,15 @@ public final class ILMalaStrandView: UIView {
             let row = index - span
             let y = centerY + CGFloat(row) * pitch - offset
             let distance = abs(y - centerY)
-            let size = baseBeadSize + maxBeadGrowth * max(0, 1 - distance / growthFalloff)
+            let id = anchor + row
+            let isMother = isMotherBead(id: id)
+            let baseSize = baseBeadSize + maxBeadGrowth * max(0, 1 - distance / growthFalloff)
+            let size = isMother ? baseSize * motherBeadScale : baseSize
             let opacity = max(minBeadOpacity, Float(1 - distance / (centerY * 0.95)))
 
             bead.configure(
-                isMother: isMotherBead(id: anchor + row),
+                id: id,
+                isMother: isMother,
                 size: size,
                 center: CGPoint(x: centerX, y: y),
                 opacity: opacity
@@ -353,14 +375,17 @@ private final class DisplayLinkProxy {
 }
 
 // MARK: - BeadLayer
-/// Một hạt: thân gradient radial, hai lớp giả inset-shadow (sáng phía trên, tối phía dưới), viền
-/// và bóng đổ. Hạt mẹ dùng gradient vàng, hạt thường dùng gradient nâu.
+/// Một hạt: thân gradient radial, điểm sáng gắt + ánh phản chiếu ở rìa, lớp tối giả inset-shadow,
+/// viền và bóng đổ. Hạt mẹ dùng gradient vàng, hạt thường dùng gradient nâu đỏ với độ đậm nhạt và
+/// góc xoay riêng (giả ngẫu nhiên cố định theo id).
 private final class BeadLayer: CALayer {
 
     private let bodyLayer = CAGradientLayer()
     private let shineLayer = CAGradientLayer()
+    private let rimLayer = CAGradientLayer()
     private let shadeLayer = CAGradientLayer()
-    private var isMother: Bool?
+    private var styledID: Int?
+    private var styledAsMother: Bool?
 
     override init() {
         super.init()
@@ -380,18 +405,33 @@ private final class BeadLayer: CALayer {
 
         shadowColor = ILColors.beadShadow.cgColor
         shadowOpacity = 1
-        shadowOffset = CGSize(width: 0, height: 4)
-        shadowRadius = 7
+        shadowOffset = CGSize(width: 0, height: 6)
+        shadowRadius = 6
 
         bodyLayer.type = .radial
         bodyLayer.locations = [0, 0.58, 1]
-        bodyLayer.startPoint = CGPoint(x: 0.34, y: 0.28)
-        // Bán kính tới góc xa nhất (1, 1) của hạt tròn: hypot(0.66, 0.72) ≈ 0.977.
-        bodyLayer.endPoint = CGPoint(x: 0.34 + 0.977, y: 0.28 + 0.977)
+        bodyLayer.startPoint = CGPoint(x: 0.40, y: 0.34)
+        // Bán kính tới góc xa nhất (1, 1) của hạt tròn: hypot(0.60, 0.66) ≈ 0.892.
+        bodyLayer.endPoint = CGPoint(x: 0.40 + 0.892, y: 0.34 + 0.892)
         addSublayer(bodyLayer)
 
-        shineLayer.colors = [ILColors.beadHighlight.cgColor, UIColor.clear.cgColor]
-        shineLayer.locations = [0, 0.25]
+        rimLayer.type = .radial
+        rimLayer.colors = [ILColors.beadRim.cgColor, UIColor.clear.cgColor]
+        rimLayer.locations = [0, 1]
+        rimLayer.startPoint = CGPoint(x: 0.66, y: 0.88)
+        rimLayer.endPoint = CGPoint(x: 0.66 + 0.34, y: 0.88 + 0.34)
+        addSublayer(rimLayer)
+
+        shineLayer.type = .radial
+        shineLayer.colors = [
+            ILColors.beadHighlight.cgColor,
+            ILColors.beadHighlight.withAlphaComponent(0.35).cgColor,
+            UIColor.clear.cgColor
+        ]
+        shineLayer.locations = [0, 0.45, 1]
+        shineLayer.startPoint = CGPoint(x: 0.32, y: 0.24)
+        // Bán kính 0.20 × khoảng cách tới góc xa nhất (≈ 1.02) — điểm sáng nhỏ, gắt.
+        shineLayer.endPoint = CGPoint(x: 0.32 + 0.20, y: 0.24 + 0.20)
         addSublayer(shineLayer)
 
         shadeLayer.colors = [UIColor.clear.cgColor, ILColors.beadShade.cgColor]
@@ -399,27 +439,63 @@ private final class BeadLayer: CALayer {
         addSublayer(shadeLayer)
     }
 
-    func configure(isMother: Bool, size: CGFloat, center: CGPoint, opacity: Float) {
+    func configure(id: Int, isMother: Bool, size: CGFloat, center: CGPoint, opacity: Float) {
         bounds = CGRect(x: 0, y: 0, width: size, height: size)
         position = center
         cornerRadius = size / 2
         shadowPath = UIBezierPath(ovalIn: bounds).cgPath
         self.opacity = opacity
 
-        for sublayer in [bodyLayer, shineLayer, shadeLayer] {
-            sublayer.frame = bounds
+        // `bounds` + `position` (not `frame`): the sublayers carry a rotation transform.
+        for sublayer in [bodyLayer, rimLayer, shineLayer, shadeLayer] {
+            sublayer.bounds = bounds
+            sublayer.position = CGPoint(x: size / 2, y: size / 2)
             sublayer.cornerRadius = size / 2
             sublayer.masksToBounds = true
         }
 
-        guard self.isMother != isMother else { return }
-        self.isMother = isMother
+        guard styledID != id || styledAsMother != isMother else { return }
+        styledID = id
+        styledAsMother = isMother
+
         if isMother {
             bodyLayer.colors = [ILColors.beadMotherLight.cgColor, ILColors.beadMotherMid.cgColor, ILColors.goldDeep.cgColor]
             borderColor = ILColors.beadMotherBorder.cgColor
+            setBodyRotation(0)
         } else {
-            bodyLayer.colors = [ILColors.beadLight.cgColor, ILColors.beadMid.cgColor, ILColors.beadDark.cgColor]
+            let seed = BeadLayer.pseudoRandom(for: id)
+            let brightness = 0.85 + 0.3 * seed
+            bodyLayer.colors = [ILColors.beadLight, ILColors.beadMid, ILColors.beadDark].map {
+                $0.scaledBrightness(brightness).cgColor
+            }
             borderColor = ILColors.beadBorder.cgColor
+            setBodyRotation((seed * 40 - 20) * .pi / 180)
         }
+    }
+
+    /// Xoay thân + điểm sáng quanh tâm hạt để mỗi hạt có hướng sáng hơi khác nhau.
+    private func setBodyRotation(_ radians: CGFloat) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        let transform = CGAffineTransform(rotationAngle: radians)
+        for sublayer in [bodyLayer, rimLayer, shineLayer, shadeLayer] {
+            sublayer.setAffineTransform(transform)
+        }
+        CATransaction.commit()
+    }
+
+    /// 0...1, cố định theo `id` (cùng công thức `fract(|sin(k·12.9898)·43758.5453|)` của thiết kế).
+    private static func pseudoRandom(for id: Int) -> CGFloat {
+        let value = abs(sin(Double(id) * 12.9898) * 43758.5453)
+        return CGFloat(value - value.rounded(.down))
+    }
+}
+
+private extension UIColor {
+    /// Nhân độ sáng (HSB) — giữ nguyên hue/saturation; dùng để làm mỗi hạt đậm nhạt khác nhau.
+    func scaledBrightness(_ factor: CGFloat) -> UIColor {
+        var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
+        guard getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) else { return self }
+        return UIColor(hue: hue, saturation: saturation, brightness: min(1, brightness * factor), alpha: alpha)
     }
 }

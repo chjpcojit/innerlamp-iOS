@@ -20,37 +20,36 @@ Trang chủ.
 
 | Layer | File | Status | Notes |
 |---|---|---|---|
-| Domain — Entity | `ILPhotosEntity.swift` | Done | `ILPhotosCategory` (4 danh mục) + `ILPhotosPhotoEntity` (id, danh mục, tiêu đề, địa điểm, chiều cao ảnh). Bộ lọc "Tất cả" = `selectedCategory == nil`. Không có field UI. |
-| Presentation — StateModel | `ILPhotosStateModel.swift` | Done | Chip lọc (`ILPhotosCategoryModel`), ảnh đã lọc (`ILPhotosPhotoModel`), phụ đề header đã format. |
-| Data — DTO + Mapper | — | N/A (no confirmed API contract yet) | Catalog ảnh là nội dung tĩnh, chưa có API ảnh chùa thật. |
-| Domain — UseCase | `ILPhotosUseCase.swift` | Done | Logic thuần, không network/disk: dựng catalog 12 ảnh, chọn danh mục, lọc ảnh. Không có method nào cần stub. |
-| Presentation — ViewModel | `ILPhotosViewModel.swift` | Done | 3 `Input` publisher (viewDidLoad, categorySelected, backTapped); `Entity -> StateModel` ở `makeStateModel` (nhãn danh mục + phụ đề). |
+| Domain — Entity | `ILPhotosEntity.swift` | Done | `ILPhotosCategory`, `ILPhotosPhotoEntity` (id, category, title, place, thumbnail/image URL), `ILPhotosPageEntity`, `ILPhotosEntity` (photos + `selectedCategory` + paging position). "Tất cả" = `selectedCategory == nil`. No UI fields. |
+| Presentation — StateModel | `ILPhotosStateModel.swift` | Done | Filter chips, photos (with thumbnail URL), formatted subtitle (server total), `isLoadingMore` / `hasMore`. |
+| Data — DTO + Mapper + Endpoint + Repository | `ILPhotosDTO.swift`, `ILPhotosMapper.swift`, `PhotosPageEndpoint.swift`, `ILPhotosRepositoryImpl.swift` | Done (build only) | `GET /v1/gallery?page=&type=` (contract: `Docs/Specs/Photos/design.md`); errors map to `ILCatalogError`. |
+| Domain — UseCase | `ILPhotosUseCase.swift` | Done | `loadFirstPage(category:)` / `loadNextPage(after:)` over `ILPhotosRepository`; de-duplicates by id. |
+| Presentation — ViewModel | `ILPhotosViewModel.swift` | Done | 4 `Input` publishers (viewDidLoad, categorySelected, loadMoreTriggered, backTapped); drops a response that belongs to a previous category. |
 | Presentation — ViewController | `ILPhotosViewController.swift` | Done | Header ‹ + hairline, dải chip lọc cuộn ngang, lưới masonry; dùng token `ILColors`/`ILTypography`/`ILMetrics`. UI chia `Views/` (thẻ ảnh, lưới masonry). |
 | Presentation — Coordinator | `ILPhotosCoordinator.swift` | Done | `.back` → pop + `finish()`. Không có delegate. |
 | Shared token | `DesignSystem/Tokens/ILTypography.swift` | Done | Thêm preset `photoCaptionTitle` (Lora 13.5px) cho tiêu đề ảnh. |
-| Tests | `ILPhotosViewModelTests.swift` | Done | 4 test ViewModel (mock UseCase, drive qua `Input`): load toàn bộ + filter + reset + nav back. |
+| Tests | `ILPhotosViewModelTests.swift`, `ILPhotosRepositoryTests.swift` | Written, not run | ViewModel (load, category, stale response, load more, errors, back) with a mock UseCase; Repository + UseCase against the real wire shape. |
 | Wiring | `DIContainer` + `ILHomeCoordinator` | Done | `makePhotos{UseCase,ViewModel,Coordinator}`; `ILHomeCoordinator.showPhotos()`; `ILHomeNavEvent.openPhotos` (Input `photosTapped` của `ILHomeViewModel`). |
 
 ## Navigation events
 
 - `.back` — nút ‹ ở header (Input `backTapped`): `ILPhotosCoordinator` pop màn và `finish()`.
+- `.openPhoto(photos:selectedID:)` — chạm 1 ô ảnh (Input `photoSelected`): `ILPhotosCoordinator` mở `ILPhotoViewerCoordinator` làm child.
 
 Điều hướng vào màn này: `ILHomeNavEvent.openPhotos` (Input `photosTapped` của `ILHomeViewModel`),
 gửi từ nút "Xem tất cả" và chạm ô ảnh ở khối "Ảnh chùa đẹp" Trang chủ.
 
 ## Known gaps / not implemented yet
 
-- **Chưa có ảnh thật** — ô ảnh dùng nền tint ấm + nhãn danh mục làm placeholder (khớp ghi chú
-  "Ảnh chùa/sự kiện hiện là gradient tối; cần ảnh thật từ phía sản phẩm" ở README design handoff).
-- **Lightbox xem ảnh** (mô tả ở README design handoff) chưa build: prototype không có markup/onClick
-  cho lightbox, nên các ô ảnh hiện không tương tác được.
-- **Catalog 12 ảnh là nội dung tĩnh** lấy từ `Component.PHOTOS` của prototype — cần thay bằng API
-  ảnh chùa thật khi có (xem TODO ở `ILPhotosUseCaseImpl`).
-- Chiều cao mỗi ô ảnh (`imageHeight`) là dữ liệu tỷ lệ tạm theo prototype; khi có ảnh thật nên
-  thay bằng kích thước/aspect ratio thật của ảnh.
+- Lightbox xem ảnh: đã build ở `Scenes/PhotoViewer/` (ô ảnh → `ILPhotosNavEvent.openPhoto`).
+- No author / license attribution (CC BY images) — needs a detail screen: `Docs/Tech-Debt/Photos/TD-Photos-001`.
+- Tiles use a fixed 4:3 ratio because the API returns no image size: `Docs/Assumptions/Photos/AS-Photos-001`.
+- Home's "Ảnh chùa đẹp" strip is still static: `Docs/Tech-Debt/Photos/TD-Photos-002`.
 - Chưa kiểm tra bằng mắt trên simulator/thiết bị: build + unit test pass, nhưng lưới masonry,
   dải chip cuộn ngang và dark mode chưa được xem thực tế.
 
 ## Changelog
 
 - 2026-09-26 — initial build by il-screen-builder from `Docs/design_handoff_innerlamp` (`photos`): Entity/UseCase/StateModel/ViewModel/Coordinator/ViewController, 2 feature views, `ILTypography.photoCaptionTitle`, Home wiring, tests
+- 2026-10-07 — real gallery API (`GET /v1/gallery`): Repository/DTO/Mapper/Endpoint, paging + server-side category filter, `ILRemoteImageView` thumbnails, load-more footer; tests rewritten
+- 2026-10-07 — tiles tappable: `photoSelected` Input, `.openPhoto` nav event, hero tag on tiles, `imageURL`/`categoryLabel` on `ILPhotosPhotoModel`; bottom nav restored only when this screen is popped

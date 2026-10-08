@@ -39,14 +39,39 @@ final class ILTalkPlayerCardView: UIView {
 
     private lazy var rewindButton: UIButton = makeSeekButton()
     private lazy var forwardButton: UIButton = makeSeekButton()
-    private let playPauseButton = ILPlayPauseButton(diameter: 58)
+    private let playPauseButton = ILPlayPauseButton(
+        diameter: 58,
+        // Design: CSS triangle 18×22 with `margin-left:5px` in a centered circle → +2.5pt optical
+        // shift; pause bars 4.5×19. Base glyph is scaled ×1.2 (15×18 → 18×21.6, bars 4.8×19.2).
+        glyphScale: 1.2,
+        playGlyphSize: CGSize(width: 15, height: 18),
+        playGlyphOffsetX: 2.5
+    )
 
-    private lazy var controlsRow: UIStackView = {
+    private lazy var controlsStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [rewindButton, playPauseButton, forwardButton])
         stack.axis = .horizontal
         stack.alignment = .center
         stack.spacing = 22
+        stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
+    }()
+
+    /// Centers the 15s / play / 30s group in the card (design: `justify-content:center`) instead of
+    /// letting the stack stretch the seek buttons across the full width.
+    private lazy var controlsRow: UIView = {
+        let container = UIView()
+        container.addSubview(controlsStack)
+        NSLayoutConstraint.activate([
+            controlsStack.topAnchor.constraint(equalTo: container.topAnchor),
+            controlsStack.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            controlsStack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            controlsStack.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor),
+            controlsStack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor),
+            // Equal-width seek buttons keep the play button on the exact horizontal center.
+            rewindButton.widthAnchor.constraint(equalTo: forwardButton.widthAnchor)
+        ])
+        return container
     }()
 
     private lazy var contentStack: UIStackView = {

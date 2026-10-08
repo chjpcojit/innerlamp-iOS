@@ -11,7 +11,7 @@ final class ILArticleNextArticleListView: UIView {
 
     // MARK: - Properties
     var articles: [ILArticleNextArticleModel] = [] {
-        didSet { rebuildRows() }
+        didSet { if articles != oldValue { rebuildRows() } }
     }
 
     var onArticleTap: ((String) -> Void)?

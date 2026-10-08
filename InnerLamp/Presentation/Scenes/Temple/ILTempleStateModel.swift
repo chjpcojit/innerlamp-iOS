@@ -5,9 +5,21 @@
 
 import Foundation
 
-/// 1 thời khóa sắp tới trong Trang chùa — bản sao presentation của `ILTempleSessionEntity`.
-/// Giữ nguyên `tone`/`glyph` dạng enum Domain, `ViewController` map sang `ILColors.Tone` /
-/// `ILRow.Glyph` (giống cách `ILHomeSuggestedSessionModel`).
+/// Icon tone of an upcoming-session row — `ViewController` maps it to `ILColors.Tone` (the
+/// ViewModel cannot import UIKit).
+enum ILTempleSessionTone: Equatable {
+    case gold
+    case green
+}
+
+/// Icon glyph of an upcoming-session row — `ViewController` maps it to `ILRow.Glyph`.
+enum ILTempleSessionGlyph: Equatable {
+    case book
+    case circle
+}
+
+/// 1 thời khóa sắp tới trong Trang chùa. `ViewController` map `tone`/`glyph` sang
+/// `ILColors.Tone` / `ILRow.Glyph` (giống cách `ILHomeSuggestedSessionModel`).
 struct ILTempleSessionModel: Equatable, Identifiable {
     let id: String
     let title: String
@@ -60,6 +72,10 @@ struct ILTempleContactModel: Equatable, Identifiable {
 
 /// UI state cho màn Trang chùa — Presentation layer, do `ILTempleViewModel` sở hữu và cập nhật
 /// độc quyền. Không UIKit, không business logic — `ViewController` chỉ đọc để hiển thị.
+///
+/// Only data from the server profile (`GET /v1/temples/{id}`) is filled in. A field the API does
+/// not send stays empty (or `hasValue == false`); the section is still shown and the
+/// `ViewController` renders the "Đang cập nhật" placeholder in it.
 struct ILTempleStateModel: Equatable {
 
     // MARK: - Header + hero
@@ -69,10 +85,13 @@ struct ILTempleStateModel: Equatable {
     var sectChip: String = ""
     var name: String = ""
     var hasAlias: Bool = false
-    /// "Diên Hựu tự · Liên Hoa Đài"
+    /// "Còn gọi: Linh Mụ Tự"
     var aliasLine: String = ""
-    /// "Quận Bình Thạnh, TP. Hồ Chí Minh"
+    /// "Phường Kim Long, TP. Huế"
     var placeLine: String = ""
+    /// Raw server `image_url` for the hero backdrop — `nil` when the temple has no photo (the
+    /// gradient hero shows alone).
+    var heroImageURL: String?
 
     // MARK: - 3 nút
     var followButtonTitle: String = ""
@@ -80,11 +99,11 @@ struct ILTempleStateModel: Equatable {
     var offerButtonTitle: String = ""
 
     // MARK: - Thẻ trạng thái
-    var isOpen: Bool = true
+    var isOpen: Bool = false
     var openStatusText: String = ""
-    /// "đóng lúc 20:00" / "mở lại 5:00"
+    /// "đóng lúc 18:00" / "mở lại 6:00" — empty when the hours are unknown.
     var openNoteText: String = ""
-    /// "Cách bạn 3,2 km"
+    /// "Cách bạn 3,2 km" — empty until the user's real location is available.
     var distanceText: String = ""
     var hourRows: [ILTempleHourRowModel] = []
 
@@ -92,6 +111,7 @@ struct ILTempleStateModel: Equatable {
     var facts: [ILTempleFactModel] = []
 
     // MARK: - Giới thiệu
+    /// Empty when the API has no biography (placeholder shown).
     var descriptionText: String = ""
     var isBiographyExpanded: Bool = false
     var biographyToggleTitle: String = ""
@@ -100,14 +120,15 @@ struct ILTempleStateModel: Equatable {
     var orgInfo: [ILTempleOrgInfoModel] = []
 
     // MARK: - Kiến trúc & di sản
-    var archStyle: String = ""
-    var materials: String = ""
+    /// `architecture_heritage` paragraph — empty when unknown (placeholder shown).
+    var architectureText: String = ""
     var highlights: [String] = []
 
     // MARK: - Tiện ích
     var amenities: [ILTempleAmenityModel] = []
 
     // MARK: - Lưu ý khi viếng thăm
+    /// Empty when unknown (placeholder shown).
     var visitRules: [ILTempleRuleModel] = []
 
     // MARK: - Sự kiện & khóa học
@@ -115,16 +136,16 @@ struct ILTempleStateModel: Equatable {
     var sessions: [ILTempleSessionModel] = []
 
     // MARK: - Vị trí & liên hệ
-    /// "128 Nguyễn Văn Đậu, Phường 5, Quận Bình Thạnh, TP. Hồ Chí Minh"
+    /// "Đồi Hà Khê, Phường Kim Long, TP. Huế, Tỉnh Thừa Thiên Huế"
     var addressLine: String = ""
-    /// "Miền Nam · Đông Nam Bộ"
+    /// "Miền Trung"
     var regionLine: String = ""
-    /// "10.8030° B, 106.6960° Đ"
+    /// "16.4529° B, 107.5458° Đ"
     var coordinateText: String = ""
     var contacts: [ILTempleContactModel] = []
 
     // MARK: - Chân trang
-    /// "Cập nhật 09/2026"
+    /// "Cập nhật 09/2026" — empty when unknown (that part is hidden).
     var updatedText: String = ""
 
     static let initial = ILTempleStateModel()

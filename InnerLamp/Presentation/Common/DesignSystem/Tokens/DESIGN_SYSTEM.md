@@ -265,6 +265,14 @@ modalNav.onClose = { [weak self] in self?.dismiss(animated: true) }
 
 > `ILHeaderView` (header cũ, nút `‹`/`✕` dạng chữ) đã bị xoá sau khi di trú toàn bộ màn phụ sang `ILNavBar`.
 
+`nav.usesTransparentButtons = true` bỏ nền + viền của các nút (dùng cho màn hero ảnh, nút nằm thẳng trên ảnh; đổi `isDark` theo nền bên dưới). Mặc định `false`.
+
+#### Dải header kính mờ — [`ILStickyHeaderBand`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILStickyHeaderBand.swift)
+Dải nền sau `ILNavBar` dán cố định: lớp blur + lớp tint canvas, đi từ phẳng → kính mờ khi nội dung cuộn chui xuống dưới. Màn thêm nav bar bằng `addSubview` (band tự ghim blur/tint phía sau) rồi gọi `bind(to: scrollView)` (tiến độ = quãng cuộn qua `contentInset.top` / `ILMetrics.headerBlurFadeDistance`), hoặc `setProgress(_:)` khi tiến độ lấy từ nơi khác (hero ảnh). Độ mạnh chỉnh một chỗ ở `ILMetrics.headerBlurMaxIntensity` / `headerGlassTintAlpha`.
+
+#### Hero ảnh co giãn — [`ILStretchyHeaderView`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILStretchyHeaderView.swift)
+Lớp cơ sở cho hero ảnh đầu màn cuộn (chi tiết chùa, ...): ảnh ghim trên cùng, kéo xuống thì phóng to từ mép trên, cuộn lên quá 50% chiều cao ảnh thì `onBlurProgress` báo 0…1 (đủ 1 khi ảnh qua mép trên màn hình); màn đưa giá trị này vào `ILStickyHeaderBand.setProgress(_:)` (dải header dán cố định) nên chỉ một dải cao bằng header bị mờ. Màn con kế thừa, dựng nền ở `backgroundView` (dưới ảnh), chữ/lớp phủ ở `contentView` (trên ảnh), đặt `imageHeight` (0 = không ảnh → không co giãn/mờ) và gọi `update(contentOffsetY:)` từ `scrollViewDidScroll`.
+
 ### 5.7. [`ILAvatarView`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILAvatarView.swift)
 Avatar đại diện dạng chữ cái viết tắt với các tone màu và tự động tính cỡ chữ theo đường kính (24–96px).
 
@@ -304,6 +312,7 @@ The 6 shared error popups from the design handoff's "Popup lỗi" screen. Pick t
 | `ILAlert` case | Type | When | Dismiss |
 |---|---|---|---|
 | `.toast(title:message:)` | `ILToastView` (top, light) | Light error, no action | Auto after 3.2s (countdown bar), "×", swipe up |
+| `.success(title:message:)` | `ILToastView` (top, light, green tone) | Confirmation of a finished action (saved, deleted). Use this instead of an in-screen banner so layout never shifts | Auto after 3.2s (countdown bar), "×", swipe up |
 | `.banner(title:message:primary:secondary:)` | `ILAlertBannerView` (top, dark rose) | Error needing a decision | A pill, swipe up |
 | `.snackbar(message:action:)` | `ILSnackbarView` (bottom, dark) | One line, at most one action | Auto after 3.2s, action, swipe down |
 | `.sheet(title:message:errorCode:primary:secondary:)` | `ILErrorSheetViewController` | Long context + error code | A button, tap scrim, drag down |
@@ -335,6 +344,7 @@ From the design handoff's `loading` screen and the paginated "arts" list. Per th
 | Component | Looks like | API |
 |---|---|---|
 | `ILSkeletonLoadingView` | Pulsing lamp + "Đang thắp đèn…", then title bar, hero block, 2 tiles, 4 rows — `ilpulse` (opacity .55 ↔ .95, 1.6s), staggered | `setLoading(_:animated:)`, `caption` |
+| `ILSkeletonBarView` | One pulsing rounded block (same `ilpulse` timing) — compose several into a card-shaped skeleton for a **section** that loads on its own (Home carousels / article list) | `init(color:cornerRadius:pulseDelay:)` |
 | `ILLoadMoreFooterView` | 14pt gold spinner (0.9s/turn) + "Đang tải thêm…", or "Bạn đã xem hết" | `state = .hidden / .loading / .end`, `loadingText`, `endText` |
 
 Rules:
@@ -357,6 +367,15 @@ private func render(state: ViewState<ILLibraryStateModel>) {
 ```
 
 ---
+
+### 5.12. Ô nhập tìm kiếm & dải chip cuộn — [`ILSearchInputView`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILSearchInputView.swift) & [`ILChipScrollView`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILChipScrollView.swift)
+
+- `ILSearchInputView(placeholder:)`: ô tìm kiếm dạng viên thuốc có chữ nhập thật (khác `ILSearchBarView` chỉ là nút mở màn Tìm kiếm). API: `text`, `trailingText` (số kết quả, ẩn khi rỗng), `showsClearButton` (nút × tròn xóa nội dung, mặc định tắt; bật ở màn Kinh sách), `onTextChanged`, `onReturn`, `focus()` / `unfocus()`.
+- `ILChipScrollView`: dải `ILChip` chọn-một cuộn ngang. API: `configure(titles:selectedIndex:)`, `onSelect(index)`.
+
+### 5.13. Bảng màu & kích thước "Gia phả"
+
+Cây gia phả là tranh minh họa nên dùng bảng màu cố định (không đổi theo dark mode): `ILColors.FamilyTree.*` (41 color set `ILTree*` trong `Assets.xcassets/Colors`, gồm các điểm dừng gradient huy hiệu/vòng vạch/nền tấm), preset chữ `ILTypography.tree*` (Lora thay cho Cormorant Garamond của prototype), và hình học canvas/sheet trong `ILMetrics.FamilyTree`.
 
 ## 6. Quy Tắc Dành Cho AI & Lập Trình Viên
 

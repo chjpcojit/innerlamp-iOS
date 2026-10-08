@@ -1,9 +1,9 @@
 # Requirements — LunarDayDetail
 
-Version: 1.0
-Last updated: 2026-09-27
-Status: implemented — pure client-side lunar computation, no backend; only visual
-QA and a few copy/asset confirmations remain open
+Version: 2.0
+Last updated: 2026-10-07
+Status: lunar data implemented (pure client-side computation); hero image from
+`GET /v1/calendar/image` specified, implementation pending
 Feature folder: `InnerLamp/Presentation/Scenes/LunarDayDetail/`
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -23,7 +23,8 @@ hours, clash ages, and travel directions — computed from the selected solar da
 
 - WHEN the LunarDayDetail screen loads, THE SYSTEM SHALL compute and display the
   full lunar data for the solar `Date` passed in from the Home lunar card, with
-  no network or disk access (all values derived from `ILLunarCalendar`).
+  no network access (all values derived from `ILLunarCalendar`; the hero image
+  below is the only server-backed content and never gates this data).
 - WHEN the screen renders the hero, THE SYSTEM SHALL show the lunar day number,
   the lunar month label (with a "nhuận" marker when it is a leap month), the
   lunar year's can-chi, and the full solar date as the subtitle.
@@ -43,12 +44,34 @@ hours, clash ages, and travel directions — computed from the selected solar da
   plus an explanatory note naming the day's can-chi and the clashing branch.
 - WHEN the screen renders the travel directions, THE SYSTEM SHALL show the Hỷ
   thần (joy star) and Tài thần (wealth star) directions with their Vietnamese
-  name, meaning, and Hán glyph (喜 / 財).
+  name, meaning, and Hán glyph (喜 / 財), plus the Hạc thần (crane star)
+  direction to avoid (Hán glyph 鶴); on the 16 of 60 can-chi days when Hạc thần
+  is "in heaven", THE SYSTEM SHALL show "Trên trời" with the note "Không kỵ hướng
+  nào". The three cards sit in one 3-column row (matching the design handoff);
+  the design labels the third card "Hắc thần", the app keeps the traditional
+  name "Hạc thần" (鶴神).
 - WHEN the screen renders the advice line, THE SYSTEM SHALL show a rule-based
   advice label per the lunar day: Mùng Một / Rằm as "ngày trai giới", days 8 /
   14 / 23 / 30 as "ngày trai", and everything else as "ngày thường".
 - WHEN the header is scrolled past 110 px, THE SYSTEM SHALL transition the
   transparent header to an opaque background.
+- WHEN the LunarDayDetail screen loads, THE SYSTEM SHALL request the hero image
+  for the screen's solar date with `GET /v1/calendar/image?date=YYYY-MM-DD`
+  (public, no `Authorization`), in parallel with — and without delaying — the
+  local lunar data above.
+- WHEN the hero image response arrives, THE SYSTEM SHALL show the image as the
+  hero background (aspect-fill, under a scrim that fades into the page canvas so
+  the lunar day, solar date, day-type pill and advice line stay legible in light
+  and dark mode) and SHALL show an attribution line "Ảnh: <author> · <license>".
+- THE SYSTEM SHALL pass the solar date explicitly (`yyyy-MM-dd`, Gregorian
+  components of the screen's `Date`), SHALL use the returned `image_url` verbatim
+  (never rebuilding its host), and SHALL show the same image for the same date.
+- IF the screen's solar year is outside 1900–2100, THEN THE SYSTEM SHALL NOT
+  call the endpoint and SHALL keep the gradient hero.
+- IF the image request fails (offline, `400 INVALID_DATE`, server error,
+  malformed payload) or the image URL itself fails to load, THEN THE SYSTEM SHALL
+  keep the gradient hero, hide the attribution line, and SHALL NOT show an error
+  or block any other section of the screen.
 - WHEN the user taps the back (‹) button, THE SYSTEM SHALL pop back to the Home
   screen and finish this feature's coordinator.
 
@@ -60,16 +83,21 @@ hours, clash ages, and travel directions — computed from the selected solar da
   LunarCalendar feature (`Docs/Specs/LunarCalendar/`).
 - Any server-backed "verse of the day" / daily-teaching API — not in this
   feature (see Pending).
+- Showing the calendar image on the LunarCalendar month screen ("Lịch âm") —
+  only the day-detail hero uses it (see resolved question 2026-10-07).
+- A tappable attribution / license link (see `tasks.md` Phase 4 and
+  `Docs/Tech-Debt/LunarDayDetail/`).
 
 ## Pending (not yet implemented — see `tasks.md`)
 
-- Real hero cover imagery — the prototype's image slot is rendered as a
-  `--il-sunk2 → --il-tint → --il-canvas` gradient placeholder; a real
-  temple/moon/lotus image needs to come from the product side
-  (`tasks.md` Phase 4).
+- Real hero cover imagery — specified in v2.0 (server image per date, see the
+  acceptance criteria above); implementation is tracked in `tasks.md` Phase 3.
+  The gradient stays as the placeholder and as the failure fallback.
 
-  > ⚠️ Not confirmed: whether the hero stays a gradient or gets a real image
-  > asset, and what that asset is — blocks the final hero visual.
+  > ⚠️ Not confirmed: whether the attribution line may stay plain text, or the
+  > CC BY / CC BY-SA licenses require a tappable link (`license_url` /
+  > `source_url`) — blocks legal sign-off, not the build. Recorded as
+  > `TD-LunarDayDetail-001`.
 - Non-Vietnamese localization of the can-chi / direction / month labels —
   currently only `vi.json` is populated; English / 中文 fall back to the key.
 - Visual QA on simulator/device — build + unit tests have not been re-run since
@@ -89,3 +117,10 @@ hours, clash ages, and travel directions — computed from the selected solar da
   owned by `ILHomeCoordinator`, reached via
   `ILHomeNavEvent.openLunarDayDetail(date:)`. Resolved 2026-09-27 by the
   `il-screen-builder` build.
+- ~~Which screen is "trang ngày âm" for the new calendar image?~~ → The
+  LunarDayDetail ("Chi tiết ngày âm") hero, which already had a ⚠️ pending image
+  slot and receives a solar `Date`. Resolved 2026-10-07 by interpreting the
+  request; recorded as `AS-LunarDayDetail-002` (Unvalidated).
+- ~~Does the backend serve a lunar-calendar image?~~ → Yes, as of 2026-10-07:
+  `GET /v1/calendar/image?date=YYYY-MM-DD` (`[BE]-InnerLamp`). Contract in
+  `design.md` → "API contract".

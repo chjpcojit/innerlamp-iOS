@@ -80,6 +80,8 @@ final class ILBellActionBarView: UIView {
             stack.leadingAnchor.constraint(equalTo: leadingAnchor),
             stack.trailingAnchor.constraint(equalTo: trailingAnchor),
 
+            // Design: both pills are `flex: 1`, so the round toggle sits at the exact center.
+            leftButton.widthAnchor.constraint(equalTo: ringBellButton.widthAnchor),
             leftButton.heightAnchor.constraint(equalToConstant: ILMetrics.inputHeight),
             ringBellButton.heightAnchor.constraint(equalToConstant: ILMetrics.inputHeight),
 
@@ -106,6 +108,7 @@ final class ILBellActionBarView: UIView {
         }
         config.cornerStyle = .capsule
         config.background.strokeWidth = 1
+        config.background.strokeColor = stroke
         if let fill {
             config.background.backgroundColor = fill
         }
@@ -142,33 +145,49 @@ final class ILBellActionBarView: UIView {
 private final class ILBellToggleIconView: UIView {
 
     var isPlaying: Bool = false {
-        didSet { setNeedsDisplay() }
+        didSet { updatePath() }
     }
 
-    private let color = ILColors.lampFlameDark
+    private let shapeLayer = CAShapeLayer()
 
-    override func draw(_ rect: CGRect) {
-        guard let context = UIGraphicsGetCurrentContext() else { return }
-        context.setFillColor(color.cgColor)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .clear
+        shapeLayer.fillColor = ILColors.lampFlameDark.cgColor
+        layer.addSublayer(shapeLayer)
 
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in
+            self.shapeLayer.fillColor = ILColors.lampFlameDark.resolvedColor(with: self.traitCollection).cgColor
+        }
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        shapeLayer.frame = bounds
+        updatePath()
+    }
+
+    private func updatePath() {
+        let rect = bounds
+        let path = UIBezierPath()
         if isPlaying {
             // Two vertical bars (pause).
             let barWidth = rect.width * 0.30
             let gap = rect.width * 0.16
             let leftX = (rect.width - barWidth * 2 - gap) / 2
-            let barRect1 = CGRect(x: leftX, y: 0, width: barWidth, height: rect.height)
-            let barRect2 = CGRect(x: leftX + barWidth + gap, y: 0, width: barWidth, height: rect.height)
-            context.fill(barRect1)
-            context.fill(barRect2)
+            path.append(UIBezierPath(rect: CGRect(x: leftX, y: 0, width: barWidth, height: rect.height)))
+            path.append(UIBezierPath(rect: CGRect(x: leftX + barWidth + gap, y: 0, width: barWidth, height: rect.height)))
         } else {
             // Right-pointing triangle (play).
-            let triangle = CGMutablePath()
-            triangle.move(to: CGPoint(x: rect.width * 0.15, y: 0))
-            triangle.addLine(to: CGPoint(x: rect.width, y: rect.height / 2))
-            triangle.addLine(to: CGPoint(x: rect.width * 0.15, y: rect.height))
-            triangle.closeSubpath()
-            context.addPath(triangle)
-            context.fillPath()
+            path.move(to: CGPoint(x: rect.width * 0.15, y: 0))
+            path.addLine(to: CGPoint(x: rect.width, y: rect.height / 2))
+            path.addLine(to: CGPoint(x: rect.width * 0.15, y: rect.height))
+            path.close()
         }
+        shapeLayer.path = path.cgPath
     }
 }

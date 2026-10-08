@@ -45,9 +45,11 @@ enum ILLunarDayDetailDirectionKind: Equatable {
     case joy
     /// Tài thần (hướng tốt) — vàng accent.
     case wealth
+    /// Hạc thần (hướng xấu cần tránh) — đỏ hắc đạo (`ILColors.inauspicious`).
+    case crane
 }
 
-/// 1 ô "Hướng xuất hành" (Hỷ thần / Tài thần).
+/// 1 ô "Hướng xuất hành" (Hỷ thần / Tài thần / Hạc thần).
 struct ILLunarDayDetailDirectionModel: Equatable, Identifiable {
     let id: String
     let key: String
@@ -110,6 +112,8 @@ struct ILLunarDayDetailElementModel: Equatable, Identifiable {
 /// thô nằm trên `ILLunarDayDetailEntity` (xem `references/data_layer_boundaries.md`).
 struct ILLunarDayDetailStateModel: Equatable {
     var eyebrowText: String = ""
+    /// Short lunar date ("15 Tháng Tám") shown in the header once the hero has scrolled away.
+    var headerTitle: String = ""
     var heroDay: String = ""
     var heroMonth: String = ""
     var heroYear: String = ""
@@ -117,6 +121,10 @@ struct ILLunarDayDetailStateModel: Equatable {
     var typeTone: ILLunarDayDetailTypeTone = .auspicious
     var typeLabel: String = ""
     var adviceText: String = ""
+    /// Server picture of the day shown behind the hero; `nil` keeps the gradient placeholder.
+    var heroImageURL: String? = nil
+    /// "Ảnh: <author> · <license>"; empty hides the caption.
+    var heroImageCredit: String = ""
 
     var infoRows: [ILLunarDayDetailInfoRowModel] = []
 

@@ -9,14 +9,19 @@ import UIKit
 /// light/dark, tan dần vào `canvas`), quầng sáng vàng ở đỉnh, 2 chip (cấp di tích · hệ phái), tên
 /// chùa Lora, dòng "Còn gọi: …" (ẩn nếu không có tên dân gian) và dòng địa điểm.
 ///
+/// Ảnh chùa ghim trên cùng, co giãn khi kéo xuống và mờ dần khi cuộn lên — do
+/// `ILStretchyHeaderView` đảm nhiệm; gradient + quầng sáng nằm ở `backgroundView` (dưới ảnh).
+///
 /// Header (nút ‹) không nằm ở đây mà là `ILNavBar` trong suốt đè lên trên — xem
 /// `ILTempleViewController`.
-final class ILTempleHeroView: UIView {
+final class ILTempleHeroView: ILStretchyHeaderView {
 
     private enum Layout {
         static let horizontalInset: CGFloat = 20
         static let bottomInset: CGFloat = 36
         static let topInset: CGFloat = 110
+        static let photoHeight: CGFloat = 220
+        static let imageToContentSpacing: CGFloat = 16
         static let glowDiameter: CGFloat = 340
         static let glowTopInset: CGFloat = 20
         static let chipHeight: CGFloat = 21
@@ -26,6 +31,9 @@ final class ILTempleHeroView: UIView {
     // MARK: - UI Elements
     private let gradientLayer = CAGradientLayer()
     private let glowLayer = CAGradientLayer()
+    /// Temple photo = `imageView` of `ILStretchyHeaderView`: full width, `Layout.photoHeight` tall,
+    /// filled edge to edge. `imageHeight` is 0 when the temple has no photo, so the hero is unchanged then.
+    private var contentTopConstraint: NSLayoutConstraint?
 
     private let rankChipLabel = ILTempleHeroChipLabel(textColor: ILColors.templeHeaderInk)
     private let sectChipLabel = ILTempleHeroChipLabel(textColor: ILColors.templeHeaderSub)
@@ -49,8 +57,14 @@ final class ILTempleHeroView: UIView {
     // MARK: - Configuration
     func configure(
         rankChip: String, sectChip: String, name: String,
-        hasAlias: Bool, aliasLine: String, placeLine: String
+        hasAlias: Bool, aliasLine: String, placeLine: String, imageURL: String?
     ) {
+        let hasImage = imageURL?.isEmpty == false
+        imageView.setImage(urlString: hasImage ? imageURL : nil)
+        imageHeight = hasImage ? Layout.photoHeight : 0
+        contentTopConstraint?.constant = hasImage
+            ? Layout.photoHeight + Layout.imageToContentSpacing
+            : Layout.topInset
         rankChipLabel.text = rankChip
         sectChipLabel.text = sectChip
         titleLabel.text = name
@@ -61,9 +75,6 @@ final class ILTempleHeroView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        translatesAutoresizingMaskIntoConstraints = false
-        clipsToBounds = true
-
         // Nền `--il-th-bg`: 3 chặng gradient tan dần vào `canvas` — không có đường cắt với nội
         // dung bên dưới.
         gradientLayer.colors = [
@@ -74,7 +85,7 @@ final class ILTempleHeroView: UIView {
         gradientLayer.locations = [0.0, 0.58, 1.0]
         gradientLayer.startPoint = CGPoint(x: 0.5, y: 0)
         gradientLayer.endPoint = CGPoint(x: 0.5, y: 1)
-        layer.insertSublayer(gradientLayer, at: 0)
+        backgroundView.layer.insertSublayer(gradientLayer, at: 0)
 
         // Quầng sáng vàng ở đỉnh hero (`--il-th-glow`).
         glowLayer.type = .radial
@@ -82,7 +93,7 @@ final class ILTempleHeroView: UIView {
         glowLayer.startPoint = CGPoint(x: 0.5, y: 0.5)
         glowLayer.endPoint = CGPoint(x: 1.0, y: 1.0)
         glowLayer.cornerRadius = Layout.glowDiameter / 2
-        layer.insertSublayer(glowLayer, above: gradientLayer)
+        backgroundView.layer.insertSublayer(glowLayer, above: gradientLayer)
 
         // Không thêm UIView() đệm ở cuối: `contentStack` dùng `alignment = .leading` (không
         // `.fill`) nên `chipsRow` chỉ nhận đúng kích thước intrinsic của nó — một UIView() đệm co
@@ -119,12 +130,16 @@ final class ILTempleHeroView: UIView {
         contentStack.isUserInteractionEnabled = false
         contentStack.translatesAutoresizingMaskIntoConstraints = false
 
-        addSubview(contentStack)
+        contentView.addSubview(contentStack)
+
+        // Text starts below the photo (or `topInset` from the top when there is none).
+        let contentTop = contentStack.topAnchor.constraint(greaterThanOrEqualTo: topAnchor, constant: Layout.topInset)
+        contentTopConstraint = contentTop
 
         NSLayoutConstraint.activate([
+            contentTop,
             contentStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.horizontalInset),
             contentStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Layout.horizontalInset),
-            contentStack.topAnchor.constraint(greaterThanOrEqualTo: topAnchor, constant: Layout.topInset),
             contentStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Layout.bottomInset)
         ])
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILTempleHeroView, _) in

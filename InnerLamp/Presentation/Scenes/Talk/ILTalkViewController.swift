@@ -24,6 +24,8 @@ final class ILTalkViewController: BaseViewController {
     private let scrollView = UIScrollView()
     private let contentView = UIView()
 
+    /// Glass band behind the nav bar: see-through over the hero, blurs once the content scrolls under it.
+    private let headerBand = ILStickyHeaderBand(tintRestAlpha: 0)
     private let navBar = ILNavBar(showBack: true)
 
     private let heroView = ILTalkHeroView()
@@ -44,6 +46,15 @@ final class ILTalkViewController: BaseViewController {
     }()
 
     private let chapterListView = ILTalkChapterListView()
+    private let chaptersEmptyView = ILTalkChaptersEmptyView()
+
+    /// Holds the chapter list or the empty block — the hidden one collapses, so the meditate
+    /// card always anchors to a single view.
+    private lazy var sectionsStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [chapterListView, chaptersEmptyView])
+        stack.axis = .vertical
+        return stack
+    }()
 
     private let meditateCard = ILTalkMeditateCardView()
 
@@ -90,22 +101,24 @@ final class ILTalkViewController: BaseViewController {
         scrollView.showsVerticalScrollIndicator = false
         scrollView.alwaysBounceVertical = true
         scrollView.contentInsetAdjustmentBehavior = .never
+        headerBand.bind(to: scrollView)
+        headerBand.addSubview(navBar)
 
         scrollView.addSubview(contentView)
 
         [
-            heroView, playerCard, descriptionLabel, sectionsTitleLabel, chapterListView, meditateCard
+            heroView, playerCard, descriptionLabel, sectionsTitleLabel, sectionsStack, meditateCard
         ].forEach { contentView.addSubview($0) }
 
         view.addSubview(scrollView)
-        view.addSubview(navBar)
+        view.addSubview(headerBand)
     }
 
     override func setupConstraints() {
         super.setupConstraints()
         [
-            scrollView, contentView, navBar, heroView, playerCard, descriptionLabel,
-            sectionsTitleLabel, chapterListView, meditateCard
+            scrollView, contentView, headerBand, navBar, heroView, playerCard, descriptionLabel,
+            sectionsTitleLabel, sectionsStack, meditateCard
         ].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
 
         let horizontal = ILMetrics.screenHorizontal
@@ -122,10 +135,15 @@ final class ILTalkViewController: BaseViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
 
-            // Header ‹ đè lên hero, dán cố định khi cuộn.
+            // Header ‹ đè lên hero, dán cố định khi cuộn (xem `ILStickyHeaderBand`).
+            headerBand.topAnchor.constraint(equalTo: view.topAnchor),
+            headerBand.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerBand.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+
             navBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: ILMetrics.spaceSmall / 2),
-            navBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: horizontal),
-            navBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -horizontal),
+            navBar.leadingAnchor.constraint(equalTo: headerBand.leadingAnchor, constant: horizontal),
+            navBar.trailingAnchor.constraint(equalTo: headerBand.trailingAnchor, constant: -horizontal),
+            navBar.bottomAnchor.constraint(equalTo: headerBand.bottomAnchor, constant: -ILMetrics.rowSpacing),
 
             // Hero full-bleed nằm trên cùng nội dung cuộn.
             heroView.topAnchor.constraint(equalTo: contentView.topAnchor),
@@ -144,11 +162,11 @@ final class ILTalkViewController: BaseViewController {
             sectionsTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
             sectionsTitleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
 
-            chapterListView.topAnchor.constraint(equalTo: sectionsTitleLabel.bottomAnchor, constant: 12),
-            chapterListView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
-            chapterListView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
+            sectionsStack.topAnchor.constraint(equalTo: sectionsTitleLabel.bottomAnchor, constant: 12),
+            sectionsStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
+            sectionsStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
 
-            meditateCard.topAnchor.constraint(equalTo: chapterListView.bottomAnchor, constant: 18),
+            meditateCard.topAnchor.constraint(equalTo: sectionsStack.bottomAnchor, constant: 18),
             meditateCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
             meditateCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
             meditateCard.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -ILMetrics.spaceLarge)
@@ -214,6 +232,10 @@ final class ILTalkViewController: BaseViewController {
 
         sectionsTitleLabel.text = model.sectionsTitle
         chapterListView.chapters = model.chapters
+        chapterListView.isHidden = model.chapters.isEmpty
+        chaptersEmptyView.isHidden = !model.chapters.isEmpty
+        chaptersEmptyView.title = model.sectionsEmptyTitle
+        chaptersEmptyView.subtitle = model.sectionsEmptySubtitle
 
         meditateCard.title = model.meditateTitle
         meditateCard.subtitle = model.meditateSubtitle

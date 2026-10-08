@@ -26,12 +26,13 @@ Dương lịch), thẻ "Ngày [Cát/Hung]" (đánh giá ngày + thang 5 bậc + 
 |---|---|---|---|
 | Domain — Entity | `ILLunarDayDetailEntity.swift` | Done | Ngày dương/âm, cờ Hoàng đạo, Can/Chi ngày, 6 giờ hoàng đạo, tuổi xung khắc, hướng xuất hành, câu kinh. Không có field UI. |
 | Presentation — StateModel | `ILLunarDayDetailStateModel.swift` | Done | Text đã `.localized`/format (hero, loại ngày, lời khuyên, bảng info, almanac, ngũ hành, giờ, tuổi, hướng). |
-| Data — DTO + Mapper | — | N/A (no confirmed API contract yet) | Toàn bộ là tính toán thuần trên `ILLunarCalendar`; chưa có API "lời dạy hôm nay"/lịch sự kiện. |
+| Data — Endpoint + DTO + Mapper + Repository | `CalendarImageEndpoint.swift`, `ILCalendarImageDTO.swift`, `ILCalendarImageMapper.swift`, `ILCalendarImageRepositoryImpl.swift` | Done | Chỉ cho ảnh hero (`GET /v1/calendar/image?date=yyyy-MM-dd`, công khai). Dữ liệu âm lịch vẫn là tính toán thuần trên `ILLunarCalendar`, không qua Data layer. |
 | Domain — UseCase | `ILLunarDayDetailUseCase.swift` | Done | Logic thuần, không network/disk: tính âm lịch, Can Chi, giờ hoàng đạo, xung khắc, hướng, câu kinh. |
-| Presentation — ViewModel | `ILLunarDayDetailViewModel.swift` | Done | 2 `Input` (viewDidLoad, backTapped); `Entity -> StateModel` ở `makeStateModel`; tiêm `ILAlmanacUseCase` (đánh giá ngày chung, `profile: nil`). |
+| Domain — Entity/Repository/UseCase (ảnh hero) | `ILCalendarImageEntity.swift`, `ILCalendarImageRepository.swift`, `ILCalendarImageUseCase.swift` | Done | `loadImage(for:)` trả `nil` (không gọi mạng) khi năm ngoài 1900–2100; lỗi → `ILCatalogError`. |
+| Presentation — ViewModel | `ILLunarDayDetailViewModel.swift` | Done | 2 `Input` (viewDidLoad, backTapped); `Entity -> StateModel` ở `makeStateModel`; tiêm `ILAlmanacUseCase` (đánh giá ngày chung, `profile: nil`). Tiêm thêm `ILCalendarImageUseCase`: `viewDidLoad` nạp ảnh hero đúng 1 lần, thất bại chỉ log DEBUG (hero giữ gradient, không `.failure`). |
 | Presentation — ViewController | `ILLunarDayDetailViewController.swift` | Done | Hero full-bleed + bảng info (4 hàng) + thẻ "Ngày [Cát/Hung]" + ngũ hành & nạp âm + câu kinh + giờ hoàng đạo + xung khắc + hướng; header trong suốt → đặc khi cuộn >110px. UI chia `Views/` (hero, info, almanac, elements, verse, good hours, clash, directions). |
 | Presentation — Coordinator | `ILLunarDayDetailCoordinator.swift` | Done | `.back` → pop + `finish()`. Không có delegate. |
-| Tests | `ILLunarDayDetailViewModelTests.swift`, `ILLunarDayDetailUseCaseTests.swift` | Done | 8 test ViewModel (mock UseCase, drive qua `Input`) + test UseCase (tính lịch thật: Tết 10/2/2024, rằm 24/2/2024, chọn câu kinh, nạp âm). |
+| Tests | `ILLunarDayDetailViewModelTests.swift`, `ILLunarDayDetailUseCaseTests.swift`, `ILCalendarImageTests.swift` | Written, not yet run | 8 test ViewModel (mock UseCase, drive qua `Input`) + 5 test ảnh hero (thành công + credit, lỗi giữ gradient, năm ngoài khoảng, chỉ nạp 1 lần) + test UseCase (tính lịch thật) + 9 test `ILCalendarImageTests` (endpoint/DTO/mapper/lỗi/năm). Target `InnerLampTests` chưa build được trên CLI vì lỗi module gRPC có từ trước; các file test mới đã typecheck riêng. |
 | Wiring | `DIContainer` + `ILHomeCoordinator` | Done | `makeLunarDayDetail{UseCase,ViewModel,Coordinator}`; `ILHomeCoordinator.showLunarDayDetail(_:)`. |
 
 ## Navigation events
@@ -45,9 +46,12 @@ mở màn này qua `ILLunarCalendarCoordinatorDelegate.lunarCalendarDidRequestDa
 
 ## Known gaps / not implemented yet
 
-- **Ảnh bìa hero là placeholder** — prototype dùng `image-slot` (ảnh chùa/trăng/hoa sen). Chưa có
-  ảnh thật nên thay bằng gradient `--il-sunk2 → --il-tint → --il-canvas` (khớp ghi chú
-  "Ảnh chùa/sự kiện hiện là gradient tối; cần ảnh thật từ phía sản phẩm" ở README design handoff).
+- **Ảnh bìa hero** — lấy từ server theo ngày dương (`GET /v1/calendar/image`), phủ gradient mờ dần
+  về nền trang để chữ đọc được; gradient `--il-sunk2 → --il-tint → --il-canvas` vẫn là placeholder
+  và là fallback khi offline/lỗi/năm ngoài 1900–2100. Còn nợ: dòng ghi công chưa bấm được
+  (`TD-LunarDayDetail-001`), `image_url` đang là host LAN dev (`TD-LunarDayDetail-002`), dòng ghi
+  công vẫn hiện nếu tải ảnh lỗi (`TD-LunarDayDetail-003`). **Chưa kiểm tra bằng mắt trên thiết bị**
+  (độ rõ chữ trên ảnh sáng/tối, nút ‹ trên ảnh).
 - **Verse of the day**: when opened from the Home hero card, the screen shows the same Core Data
   quote as the card (passed via `openLunarDayDetail(date:verse:)`). When opened from the Lunar
   Calendar (no verse passed), it loads the fixed quote of that date from Core Data
@@ -63,6 +67,15 @@ mở màn này qua `ILLunarCalendarCoordinatorDelegate.lunarCalendarDidRequestDa
   thực tế.
 
 ## Changelog
+
+- 2026-10-07 — ảnh hero từ server: `GET /v1/calendar/image?date=` (Endpoint/DTO/Mapper/Repository +
+  `ILCalendarImageUseCase`), ViewModel tiêm use case và nạp 1 lần ở `viewDidLoad`, StateModel
+  `heroImageURL`/`heroImageCredit`, hero view thêm `ILRemoteImageView` + lớp phủ mờ dần + dòng ghi
+  công, DIContainer, `vi.json` (`lunarDayDetail.hero.imageCredit*`), tests, spec v2.0, AS-002/003,
+  TD-001/002/003.
+- 2026-10-07 — thêm lại "Hạc thần" (hướng cần tránh) vào phần hướng xuất hành: Entity
+  `craneStarDirection: String?` (`nil` khi lên trời), StateModel `.crane`, ViewModel thẻ thứ 3,
+  View 3 cột (glyph trên tên, Hạc thần tone đỏ `inauspicious`, chữ "Nên tránh hướng này"/"Trên trời"/"Không kỵ hướng nào" theo design; giữ tên "Hạc thần" thay vì "Hắc thần"), tests. Bảng Tài thần giữ nguyên (xem AS-LunarDayDetail-001).
 
 - 2026-09-28 — **realign về đúng design handoff (`lunar`)**: bỏ phần "Sao (Thần Sát)", "Trạch cát"
   (cá nhân hoá) và "Hạc thần"; bảng info về 4 hàng (Ngày · Tháng · Năm · Dương lịch); thêm thẻ

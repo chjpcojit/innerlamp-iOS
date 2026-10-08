@@ -20,17 +20,13 @@ final class ILArticleViewController: BaseViewController {
     private let saveTappedSubject = PassthroughSubject<Void, Never>()
     private let shareTappedSubject = PassthroughSubject<Void, Never>()
     private let nextArticleTappedSubject = PassthroughSubject<String, Never>()
+    private let sourceTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
-    private let headerContainer = UIView()
+    private let headerContainer = ILStickyHeaderBand()
 
     private lazy var headerView = ILNavBar(showBack: true)
 
-    private lazy var headerDivider: UIView = {
-        let divider = UIView()
-        divider.backgroundColor = ILColors.border
-        return divider
-    }()
 
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -99,6 +95,17 @@ final class ILArticleViewController: BaseViewController {
 
     private lazy var quoteView = ILArticleQuoteView()
 
+    /// "Nguồn: Báo Giác Ngộ" — the article is a summary of a press original; tapping opens
+    /// `source_url` when the server provided a valid link.
+    private lazy var sourceLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
+    }()
+
     private lazy var saveButton = ILButton(title: "article.save".localized, variant: .ghost)
     private lazy var shareButton = ILButton(title: "article.share".localized, variant: .primary)
 
@@ -136,6 +143,11 @@ final class ILArticleViewController: BaseViewController {
         (tabBarController as? ILMainTabBarController)?.setBottomNavHidden(false, animated: animated)
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        applyHeaderInset()
+    }
+
     // MARK: - Setup
     override func setupViews() {
         super.setupViews()
@@ -144,8 +156,9 @@ final class ILArticleViewController: BaseViewController {
         headerView.onBack = { [weak self] in self?.backTappedSubject.send(()) }
 
         headerContainer.addSubview(headerView)
-        headerContainer.addSubview(headerDivider)
+        headerContainer.bind(to: scrollView)
 
+        scrollView.contentInsetAdjustmentBehavior = .never
         scrollView.showsVerticalScrollIndicator = false
         scrollView.alwaysBounceVertical = true
 
@@ -157,26 +170,28 @@ final class ILArticleViewController: BaseViewController {
 
         nextArticlesList.onArticleTap = { [weak self] id in self?.handleNextArticleTapped(id) }
 
+        sourceLabel.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleSourceTapped)))
+
         authorAvatar.addSubview(authorInitialsLabel)
 
         scrollView.addSubview(contentView)
 
         [
             heroImageView, titleLabel, authorStack, metaDivider, bodyStack,
-            quoteView, actionsStack, readMoreHeader, nextArticlesList
+            quoteView, sourceLabel, actionsStack, readMoreHeader, nextArticlesList
         ].forEach { contentView.addSubview($0) }
 
-        view.addSubview(headerContainer)
         view.addSubview(scrollView)
         view.addSubview(skeletonView)
+        view.addSubview(headerContainer)
     }
 
     override func setupConstraints() {
         super.setupConstraints()
         [
-            headerContainer, headerView, headerDivider, scrollView, contentView,
+            headerView, scrollView, contentView,
             heroImageView, titleLabel, authorStack, authorInitialsLabel, metaDivider,
-            bodyStack, quoteView, actionsStack, readMoreHeader, nextArticlesList
+            bodyStack, quoteView, sourceLabel, actionsStack, readMoreHeader, nextArticlesList
         ].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
 
         let horizontal = ILMetrics.screenHorizontal
@@ -190,18 +205,16 @@ final class ILArticleViewController: BaseViewController {
             headerView.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: horizontal),
             headerView.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -horizontal),
 
-            headerDivider.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: ILMetrics.rowSpacing),
-            headerDivider.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor),
-            headerDivider.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor),
-            headerDivider.heightAnchor.constraint(equalToConstant: 1),
-            headerDivider.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor),
+            headerView.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: -ILMetrics.rowSpacing),
 
-            scrollView.topAnchor.constraint(equalTo: headerContainer.bottomAnchor),
+            // The scroll view runs under the header so content can blur through it; the header
+            // height is applied as a top content inset in `viewDidLayoutSubviews`.
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            skeletonView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            skeletonView.topAnchor.constraint(equalTo: headerContainer.bottomAnchor),
             skeletonView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             skeletonView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             skeletonView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
@@ -243,7 +256,11 @@ final class ILArticleViewController: BaseViewController {
             quoteView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             quoteView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 
-            actionsStack.topAnchor.constraint(equalTo: quoteView.bottomAnchor, constant: ILMetrics.spaceLarge),
+            sourceLabel.topAnchor.constraint(equalTo: quoteView.bottomAnchor, constant: ILMetrics.spaceMedium),
+            sourceLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            sourceLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+
+            actionsStack.topAnchor.constraint(equalTo: sourceLabel.bottomAnchor, constant: ILMetrics.spaceLarge),
             actionsStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             actionsStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 
@@ -266,7 +283,8 @@ final class ILArticleViewController: BaseViewController {
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             saveTapped: saveTappedSubject.eraseToAnyPublisher(),
             shareTapped: shareTappedSubject.eraseToAnyPublisher(),
-            nextArticleTapped: nextArticleTappedSubject.eraseToAnyPublisher()
+            nextArticleTapped: nextArticleTappedSubject.eraseToAnyPublisher(),
+            sourceTapped: sourceTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
 
@@ -299,7 +317,7 @@ final class ILArticleViewController: BaseViewController {
         headerView.title = model.headerCategory
         headerView.subtitle = model.headerReadText
 
-        heroImageView.configure(category: model.headerCategory)
+        heroImageView.configure(category: model.headerCategory, imageURL: model.heroImageURL)
 
         titleLabel.attributedText = ILTypography.makeParagraph(
             text: model.title,
@@ -316,6 +334,11 @@ final class ILArticleViewController: BaseViewController {
 
         quoteView.quote = model.quote
         quoteView.source = model.quoteSource
+
+        sourceLabel.text = model.sourceText
+        sourceLabel.isHidden = model.sourceText.isEmpty
+        sourceLabel.textColor = model.sourceURL == nil ? ILColors.inkTertiary : ILColors.link
+        sourceLabel.isUserInteractionEnabled = model.sourceURL != nil
 
         saveButton.title = model.saveButtonTitle
         shareButton.title = model.shareButtonTitle
@@ -342,11 +365,27 @@ final class ILArticleViewController: BaseViewController {
         }
     }
 
+    // MARK: - Header glass
+    /// Pushes content below the header and, on first layout / inset change, parks the offset at
+    /// the top of the content (just under the header) instead of beneath it.
+    private func applyHeaderInset() {
+        let top = headerContainer.bounds.height
+        guard top > 0, scrollView.contentInset.top != top else { return }
+        let wasAtTop = scrollView.contentOffset.y <= -scrollView.contentInset.top
+        scrollView.contentInset.top = top
+        scrollView.verticalScrollIndicatorInsets.top = top
+        if wasAtTop { scrollView.contentOffset.y = -top }
+    }
+
     // MARK: - Actions
+    @objc private func handleSourceTapped() {
+        sourceTappedSubject.send(())
+    }
+
     private func handleNextArticleTapped(_ id: String) {
         nextArticleTappedSubject.send(id)
         // `PassthroughSubject.send` chạy đồng bộ nên state đã được render xong — cuộn về đầu
         // bài mới, khớp hành vi `scrollTop = 0` khi chuyển bài trong prototype.
-        scrollView.setContentOffset(.zero, animated: false)
+        scrollView.setContentOffset(CGPoint(x: 0, y: -scrollView.contentInset.top), animated: false)
     }
 }

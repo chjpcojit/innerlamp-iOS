@@ -18,7 +18,20 @@ final class ILHomeDeityCarouselView: UIView {
 
     // MARK: - Properties
     var deities: [ILHomeDeityModel] = [] {
-        didSet { rebuildCards() }
+        // Every Home state update re-assigns this; only rebuild (and reset the scroll position) when
+        // the content actually changed.
+        didSet { if deities != oldValue { rebuildCards() } }
+    }
+
+    /// Placeholder shown instead of the cards when there is no data ("Đang cập nhật"). Empty string
+    /// hides it (still loading, or cards are present).
+    var emptyText: String = "" {
+        didSet { if emptyText != oldValue { updateEmptyState() } }
+    }
+
+    /// `true` while the first load is in flight and there are no cards yet: shows skeleton cards.
+    var isLoading: Bool = false {
+        didSet { if isLoading != oldValue { rebuildCards() } }
     }
 
     var onDeityTap: ((ILHomeDeityModel) -> Void)?
@@ -26,6 +39,10 @@ final class ILHomeDeityCarouselView: UIView {
     // MARK: - UI Elements
     private let scrollView = UIScrollView()
     private let cardsStack = UIStackView()
+    private let emptyLabel = UILabel()
+    /// Only active while the placeholder is visible, so the carousel takes the label's height
+    /// instead of collapsing to zero with no cards.
+    private lazy var emptyLabelBottomConstraint = emptyLabel.bottomAnchor.constraint(equalTo: bottomAnchor)
 
     // MARK: - Initializer
     init() {
@@ -52,7 +69,18 @@ final class ILHomeDeityCarouselView: UIView {
 
         addSubview(scrollView)
 
+        emptyLabel.font = ILTypography.caption
+        emptyLabel.textColor = ILColors.inkSubtle
+        emptyLabel.numberOfLines = 0
+        emptyLabel.isHidden = true
+        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(emptyLabel)
+
         NSLayoutConstraint.activate([
+            emptyLabel.topAnchor.constraint(equalTo: topAnchor),
+            emptyLabel.leadingAnchor.constraint(equalTo: leadingAnchor),
+            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
+
             scrollView.topAnchor.constraint(equalTo: topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
@@ -73,11 +101,29 @@ final class ILHomeDeityCarouselView: UIView {
         }
         scrollView.setContentOffset(.zero, animated: false)
 
+        let showsSkeleton = isLoading && deities.isEmpty
+        scrollView.isScrollEnabled = !showsSkeleton
+        if showsSkeleton {
+            for index in 0..<ILHomeSkeletonCards.carouselCount {
+                let card = ILHomeSkeletonCards.deityCard(index: index, imageHeight: Self.imageHeight)
+                card.widthAnchor.constraint(equalToConstant: Self.cardWidth).isActive = true
+                cardsStack.addArrangedSubview(card)
+            }
+        }
+
         for deity in deities {
             let card = ILHomeDeityCardView(deity: deity)
             card.onTap = { [weak self] in self?.onDeityTap?(deity) }
             cardsStack.addArrangedSubview(card)
         }
+        updateEmptyState()
+    }
+
+    private func updateEmptyState() {
+        let showsPlaceholder = deities.isEmpty && !emptyText.isEmpty
+        emptyLabel.text = emptyText
+        emptyLabel.isHidden = !showsPlaceholder
+        emptyLabelBottomConstraint.isActive = showsPlaceholder
     }
 }
 
@@ -99,7 +145,7 @@ private final class ILHomeDeityCardView: UIControl {
     var onTap: (() -> Void)?
 
     private let deity: ILHomeDeityModel
-    private let imageArea = UIView()
+    private let imageArea = ILRemoteImageView(frame: .zero)
 
     init(deity: ILHomeDeityModel) {
         self.deity = deity
@@ -114,13 +160,14 @@ private final class ILHomeDeityCardView: UIControl {
     private func setupViews() {
         translatesAutoresizingMaskIntoConstraints = false
 
-        // Ảnh placeholder (chưa có ảnh thật) + badge loại.
+        // Ảnh thumbnail từ server (nền `tint` làm placeholder khi chưa có / lỗi) + badge loại.
         imageArea.backgroundColor = ILColors.tint
         imageArea.layer.cornerRadius = ILMetrics.radiusCardSmall
         imageArea.layer.borderWidth = 1
         imageArea.layer.borderColor = ILColors.border.cgColor
         imageArea.clipsToBounds = true
         imageArea.isUserInteractionEnabled = false
+        imageArea.setImage(urlString: deity.thumbnailURL)
         imageArea.translatesAutoresizingMaskIntoConstraints = false
 
         // Badge pill: nền scrim 60% + padding 3/8 (khớp `padding: 3px 8px` trong prototype).

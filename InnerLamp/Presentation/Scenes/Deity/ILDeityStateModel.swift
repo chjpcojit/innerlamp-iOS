@@ -58,6 +58,8 @@ struct ILDeityStateModel: Equatable {
     var sanskritName: String = ""
     /// Danh xưng chữ Hán — in chìm trên nền hero thay cho ảnh tôn tượng (chưa có ảnh thật).
     var watermark: String = ""
+    /// Server image of the statue for the hero background — nil/empty keeps the watermark placeholder.
+    var imageURL: String?
 
     // MARK: Memorial day
     var memorialDay: ILDeityMemorialDayModel?

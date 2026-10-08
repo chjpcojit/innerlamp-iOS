@@ -128,6 +128,7 @@ extension BaseNavigationController: UIGestureRecognizerDelegate {
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         // Không cho vuốt-cạnh bắt đầu pop nếu hiệu ứng của VC đang hiển thị không hỗ trợ
         // interactive dismissal (VD: HeroTransition) — tránh pop "giật cục" ngay khi vừa chạm.
-        viewControllers.count > 1 && effectiveTopPopTransition.supportsInteractiveDismissal
+        let isSwipeBackEnabled = (topViewController as? TransitionProviding)?.isSwipeBackEnabled ?? true
+        return viewControllers.count > 1 && isSwipeBackEnabled && effectiveTopPopTransition.supportsInteractiveDismissal
     }
 }

@@ -6,123 +6,84 @@
 import Foundation
 
 protocol ILFestivalsUseCase {
-    /// Tính các ngày lễ Phật giáo (lễ lớn, vía, Rằm/Mùng Một — ngày trai giới) trong 12 tháng
-    /// dương lịch kể từ `date`, gom theo tháng dương.
+    /// Các ngày lễ Phật giáo (lễ / vía Phật giáo từ catalog Core Data, cộng Rằm/Mùng Một là ngày trai giới)
+    /// từ ngày 1/1 của năm chứa `date` đến hết 2 năm sau đó (3 năm dương lịch), gom theo tháng dương.
+    /// Ngày đã qua có `daysUntil` âm.
     ///
-    /// Tháng nào không có ngày lễ thì không xuất hiện trong kết quả. Giữ `async throws` để sau này
-    /// thay catalog tĩnh bằng API lịch lễ thật mà không đổi hợp đồng.
+    /// Tháng nào không có ngày lễ thì không xuất hiện trong kết quả.
     func loadMonths(from date: Date) async throws -> [ILFestivalMonthEntity]
 }
 
 final class ILFestivalsUseCaseImpl: ILFestivalsUseCase {
 
-    /// Danh mục lễ chung theo design handoff (`LEVENTS` trong `InnerLamp Prototype.dc.html`) —
-    /// khóa `lunarDay*100 + lunarMonth` → key localize tên lễ. Cố ý hẹp hơn catalog Core Data của
-    /// `ILBuddhistEventUseCase` (không gồm Tết dân gian / lễ Nam tông): màn này chỉ hiện lễ Phật
-    /// giáo chung, và các Rằm không có tên lễ riêng hiện thành "ngày trai giới".
-    private static let festivalTitleKeys: [Int: String] = [
-        1 * 100 + 1: "festivals.event.1_1",
-        15 * 100 + 1: "festivals.event.15_1",
-        8 * 100 + 2: "festivals.event.8_2",
-        15 * 100 + 2: "festivals.event.15_2",
-        19 * 100 + 2: "festivals.event.19_2",
-        21 * 100 + 2: "festivals.event.21_2",
-        4 * 100 + 4: "festivals.event.4_4",
-        15 * 100 + 4: "festivals.event.15_4",
-        16 * 100 + 4: "festivals.event.16_4",
-        19 * 100 + 6: "festivals.event.19_6",
-        13 * 100 + 7: "festivals.event.13_7",
-        15 * 100 + 7: "festivals.event.15_7",
-        30 * 100 + 7: "festivals.event.30_7",
-        22 * 100 + 8: "festivals.event.22_8",
-        19 * 100 + 9: "festivals.event.19_9",
-        30 * 100 + 9: "festivals.event.30_9",
-        5 * 100 + 10: "festivals.event.5_10",
-        17 * 100 + 11: "festivals.event.17_11",
-        8 * 100 + 12: "festivals.event.8_12"
-    ]
+    private let buddhistEventUseCase: ILBuddhistEventUseCase
 
-    /// Chùa tổ chức mẫu theo design handoff: `tp-tuquang` (Từ Quang) luôn đứng đầu, 8 chùa còn lại
-    /// theo catalog "Chùa Việt Nam" (`Component.TEMPLES` trong prototype).
-    private static let templeIDs = [
-        "tp-tuquang", "tp-motcot", "tp-tranquoc", "tp-huong", "tp-baidinh",
-        "tp-thienmu", "tp-linhung", "tp-truclam", "tp-vinhnghiem"
-    ]
-
-    /// Các ngày lễ lớn (BIG) trong prototype — khóa `lunarDay*100 + lunarMonth`. Cả 9 chùa đều tổ
-    /// chức. `['15/1','15/2','19/2','15/4','19/6','15/7','19/9','8/12']`.
-    private static let majorKeys: Set<Int> = [
-        15 * 100 + 1, 15 * 100 + 2, 19 * 100 + 2, 15 * 100 + 4,
-        19 * 100 + 6, 15 * 100 + 7, 19 * 100 + 9, 8 * 100 + 12
-    ]
+    init(buddhistEventUseCase: ILBuddhistEventUseCase) {
+        self.buddhistEventUseCase = buddhistEventUseCase
+    }
 
     func loadMonths(from date: Date) async throws -> [ILFestivalMonthEntity] {
         var calendar = Calendar(identifier: .gregorian)
         calendar.firstWeekday = 2
 
         let today = calendar.startOfDay(for: date)
-        guard let currentMonthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: today)),
-              let end = calendar.date(byAdding: .month, value: 12, to: currentMonthStart) else {
+        guard let rangeStart = calendar.date(from: DateComponents(year: calendar.component(.year, from: today), month: 1, day: 1)),
+              let end = calendar.date(byAdding: .year, value: Self.yearsCovered, to: rangeStart) else {
             return []
         }
+
+        // Lễ Phật giáo chung: bỏ Tết dân gian (`.folk`) và lễ Nam tông.
+        let templates = try await buddhistEventUseCase.loadTemplates()
+            .filter { $0.category != .folk && $0.tradition != .theravada }
+        let occurrences = buddhistEventUseCase.occurrences(of: templates, from: rangeStart, to: end, calendar: calendar)
+        let occurrencesByDay = Dictionary(grouping: occurrences) { calendar.startOfDay(for: $0.date) }
 
         var order: [String] = []
         var daysByMonth: [String: [ILFestivalDayEntity]] = [:]
 
-        var day = today
+        var day = rangeStart
         while day < end {
-            let lunar = ILLunarCalendar.solarToLunar(date: day, calendar: calendar)
-            let key = lunar.day * 100 + lunar.month
+            let daysUntil = Self.daysBetween(today, day, calendar: calendar)
 
-            // Lễ không lặp lại trong tháng nhuận — ngày 1/15 của tháng nhuận vẫn là ngày trai giới.
-            if let titleKey = Self.festivalTitleKeys[key], !lunar.isLeapMonth {
-                let kind = Self.majorKeys.contains(key) ? ILFestivalKind.major : .festival
-                Self.append(
-                    ILFestivalDayEntity(
-                        id: Self.dayKey(day, calendar: calendar),
+            if let dayOccurrences = occurrencesByDay[day] {
+                for occurrence in dayOccurrences {
+                    Self.append(
+                        ILFestivalDayEntity(
+                            id: "\(Self.dayKey(day, calendar: calendar))-\(occurrence.template.id)",
+                            date: day,
+                            title: occurrence.template.title,
+                            kind: .festival,
+                            daysUntil: daysUntil
+                        ),
                         date: day,
-                        title: titleKey.localized,
-                        kind: kind,
-                        daysUntil: Self.daysBetween(today, day, calendar: calendar),
-                        hostTempleIDs: Self.hostTempleIDs(for: kind, key: key)
-                    ),
-                    date: day,
-                    calendar: calendar,
-                    order: &order,
-                    daysByMonth: &daysByMonth
-                )
-            } else if lunar.day == 1 {
-                let title = String(format: "festivals.observance.newMoon".localized, Self.lunarMonthName(lunar.month))
-                Self.append(
-                    ILFestivalDayEntity(
-                        id: Self.dayKey(day, calendar: calendar),
+                        calendar: calendar,
+                        order: &order,
+                        daysByMonth: &daysByMonth
+                    )
+                }
+            } else {
+                // Rằm / Mùng Một không có lễ riêng là ngày trai giới (kể cả trong tháng nhuận).
+                let lunar = ILLunarCalendar.solarToLunar(date: day, calendar: calendar)
+                let observanceKey: String? = switch lunar.day {
+                case 1: "festivals.observance.newMoon"
+                case 15: "festivals.observance.fullMoon"
+                default: nil
+                }
+                if let observanceKey {
+                    Self.append(
+                        ILFestivalDayEntity(
+                            id: Self.dayKey(day, calendar: calendar),
+                            date: day,
+                            title: String(format: observanceKey.localized, Self.lunarMonthName(lunar.month)),
+                            kind: .observance,
+                            daysUntil: daysUntil
+                        ),
                         date: day,
-                        title: title,
-                        kind: .observance,
-                        daysUntil: Self.daysBetween(today, day, calendar: calendar),
-                        hostTempleIDs: [Self.templeIDs[0]]
-                    ),
-                    date: day,
-                    calendar: calendar,
-                    order: &order,
-                    daysByMonth: &daysByMonth
-                )
-            } else if lunar.day == 15 {
-                let title = String(format: "festivals.observance.fullMoon".localized, Self.lunarMonthName(lunar.month))
-                Self.append(
-                    ILFestivalDayEntity(
-                        id: Self.dayKey(day, calendar: calendar),
-                        date: day,
-                        title: title,
-                        kind: .observance,
-                        daysUntil: Self.daysBetween(today, day, calendar: calendar),
-                        hostTempleIDs: [Self.templeIDs[0]]
-                    ),
-                    date: day,
-                    calendar: calendar,
-                    order: &order,
-                    daysByMonth: &daysByMonth
-                )
+                        calendar: calendar,
+                        order: &order,
+                        daysByMonth: &daysByMonth
+                    )
+                }
             }
 
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
@@ -143,20 +104,8 @@ final class ILFestivalsUseCaseImpl: ILFestivalsUseCase {
 
     // MARK: - Helpers
 
-    /// Chùa tổ chức theo loại ngày — lễ lớn: cả 9 chùa; vía: Từ Quang + 2 chùa (xác định theo
-    /// khóa ngày âm); ngày trai giới: chỉ Từ Quang. Dữ liệu mẫu, bản thật lấy từ sự kiện chùa
-    /// đăng ký (xem TODO ở `ILHomeUseCaseImpl`).
-    private static func hostTempleIDs(for kind: ILFestivalKind, key: Int) -> [String] {
-        switch kind {
-        case .major:
-            return templeIDs
-        case .festival:
-            let h = key % 97
-            return [templeIDs[0], templeIDs[1 + h % 8], templeIDs[1 + (h + 3) % 8]]
-        case .observance:
-            return [templeIDs[0]]
-        }
-    }
+    /// Năm hiện tại + 2 năm sau.
+    private static let yearsCovered = 3
 
     private static func append(
         _ entity: ILFestivalDayEntity,

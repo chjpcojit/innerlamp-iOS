@@ -42,18 +42,15 @@ final class ILArticlesViewModel: ILArticlesViewModelProtocol {
 
     private let navigationEventSubject = PassthroughSubject<ILArticlesNavEvent, Never>()
     private let stateSubject: CurrentValueSubject<ViewState<ILArticlesStateModel>, Never>
-    private var currentEntity: ILArticlesEntity
-    private var currentState: ILArticlesStateModel
+    private var currentEntity: ILArticlesEntity = .empty
+    private var currentState: ILArticlesStateModel = .initial
     private let useCase: ILArticlesUseCase
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initializer
     init(useCase: ILArticlesUseCase) {
         self.useCase = useCase
-        let initialEntity = useCase.getInitialState()
-        self.currentEntity = initialEntity
-        self.currentState = Self.makeStateModel(from: initialEntity)
-        self.stateSubject = CurrentValueSubject(.success(currentState))
+        self.stateSubject = CurrentValueSubject(.success(.initial))
     }
 
     // MARK: - Transform
@@ -79,12 +76,21 @@ final class ILArticlesViewModel: ILArticlesViewModelProtocol {
 
     // MARK: - Actions
     private func handleViewDidLoad() {
-        applyEntity(useCase.getInitialState())
+        loadPage { [useCase] in try await useCase.loadFirstPage() }
     }
 
     private func handleLoadMore() {
         // Guard against duplicate/concurrent loads and against loading past the end of the list.
         guard currentState.hasMore, !currentState.isLoadingMore else { return }
+        let entity = currentEntity
+        loadPage { [useCase] in try await useCase.loadNextPage(after: entity) }
+    }
+
+    /// Runs one page request. The footer spinner (`isLoadingMore`) covers both the first page and
+    /// later pages. On failure the rows already loaded are kept, the spinner is cleared, and the
+    /// error is surfaced afterwards.
+    private func loadPage(_ request: @escaping () async throws -> ILArticlesEntity) {
+        guard !currentState.isLoadingMore else { return }
 
         currentState.isLoadingMore = true
         stateSubject.send(.success(currentState))
@@ -92,13 +98,10 @@ final class ILArticlesViewModel: ILArticlesViewModelProtocol {
         Task { [weak self] in
             guard let self else { return }
             do {
-                // The real implementation would append the next page here; the stub is a no-op,
-                // so we simply clear the loading flag and re-emit (see data_layer_boundaries.md).
-                try await self.useCase.loadMoreArticles()
-                self.currentState.isLoadingMore = false
-                self.stateSubject.send(.success(self.currentState))
+                self.applyEntity(try await request())
             } catch {
                 self.currentState.isLoadingMore = false
+                self.stateSubject.send(.success(self.currentState))
                 self.stateSubject.send(.failure(error))
             }
         }
@@ -106,7 +109,7 @@ final class ILArticlesViewModel: ILArticlesViewModelProtocol {
 
     // MARK: - Entity -> StateModel
     /// `Entity -> StateModel` is presentation-specific (the "N / M bài" subtitle, the "… phút đọc"
-    /// string) so it lives here, not in a shared Mapper (see references/data_layer_boundaries.md).
+    /// string) so it lives here, not in a shared Mapper.
     private func applyEntity(_ entity: ILArticlesEntity) {
         currentEntity = entity
         currentState = Self.makeStateModel(from: entity)
@@ -126,7 +129,8 @@ final class ILArticlesViewModel: ILArticlesViewModelProtocol {
                 category: $0.category,
                 title: $0.title,
                 author: $0.author,
-                readText: String(format: "articles.readFormat".localized, $0.readMinutes)
+                readText: String(format: "articles.readFormat".localized, $0.readMinutes),
+                thumbnailURL: $0.thumbnailURL
             )
         }
         state.hasMore = entity.hasMore

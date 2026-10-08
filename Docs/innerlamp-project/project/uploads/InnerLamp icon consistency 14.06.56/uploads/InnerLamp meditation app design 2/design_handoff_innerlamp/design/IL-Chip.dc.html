@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div onClick="{{ tap }}" style="display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:999px;white-space:nowrap;transition:background .16s ease,border-color .16s ease,transform .12s ease;cursor: {{ cursor }};background: {{ bg }};border:1px solid {{ bd }}" style-hover="{{ hoverStyle }}" style-active="{{ activeStyle }}">
+  <div style="width:7px;height:7px;border-radius:50%;display: {{ dotShow }};background: {{ dotColor }}"></div>
+  <div style="font:500 12px 'Be Vietnam Pro',sans-serif;color: {{ fg }}">{{ label }}</div>
+  <div style="font:500 11px 'Be Vietnam Pro',sans-serif;display: {{ countShow }};color: {{ countColor }}">{{ count }}</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:220,&quot;height&quot;:56},&quot;label&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Sắp diễn ra&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;default&quot;,&quot;selected&quot;,&quot;disabled&quot;],&quot;default&quot;:&quot;default&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;count&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string | number&quot;},&quot;dot&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;selected&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onTap&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props, dark = !!p.dark;
+    const state = p.state || (p.disabled ? 'disabled' : p.selected ? 'selected' : 'default');
+    const on = state === 'selected';
+    const off = state === 'disabled';
+    return {
+      label: p.label || 'Nhãn',
+      count: p.count == null || p.count === '' ? '' : String(p.count),
+      countShow: p.count == null || p.count === '' ? 'none' : 'block',
+      countColor: dark ? (on ? 'rgba(34,30,25,.5)' : 'rgba(242,235,221,.42)') : (on ? 'var(--il-onink-60)' : 'var(--il-ink-42)'),
+      dotShow: p.dot ? 'block' : 'none',
+      dotColor: on ? (dark ? '#B8862F' : '#D9963C') : '#B8862F',
+      bg: off ? (dark ? 'rgba(242,235,221,.04)' : 'var(--il-ink-04)')
+        : dark ? (on ? '#F5EEE0' : 'rgba(242,235,221,.07)') : (on ? 'var(--il-ink)' : 'var(--il-card)'),
+      fg: off ? (dark ? 'rgba(242,235,221,.3)' : 'var(--il-ink-32)')
+        : dark ? (on ? '#221E19' : 'rgba(242,235,221,.62)') : (on ? 'var(--il-onink)' : 'var(--il-ink-7)'),
+      bd: off ? 'transparent'
+        : dark ? (on ? '#F5EEE0' : 'rgba(242,235,221,.16)') : (on ? 'var(--il-ink)' : 'var(--il-ink-14)'),
+      hoverStyle: off || on ? {} : { background: dark ? 'rgba(242,235,221,.12)' : 'var(--il-hover)', borderColor: dark ? 'rgba(242,235,221,.28)' : 'var(--il-ink-24)' },
+      activeStyle: off ? {} : { transform: 'scale(.96)' },
+      cursor: off || !p.onTap ? 'default' : 'pointer',
+      tap: off ? undefined : p.onTap,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

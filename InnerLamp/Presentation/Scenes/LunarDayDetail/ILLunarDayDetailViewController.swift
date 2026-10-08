@@ -10,22 +10,21 @@ import Combine
 
 final class ILLunarDayDetailViewController: BaseViewController {
 
-    /// Ngưỡng cuộn để header trong suốt chuyển sang nền đặc (khớp design handoff "cuộn quá 110px").
-    private static let headerSolidThreshold: CGFloat = 110
-
     // MARK: - Properties
     private let viewModel: ILLunarDayDetailViewModel
     private var cancellables = Set<AnyCancellable>()
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
     private let backTappedSubject = PassthroughSubject<Void, Never>()
 
+    private var headerTitle = ""
     private var isHeaderSolid = false
 
     // MARK: - UI Elements
     private let scrollView = UIScrollView()
     private let contentView = UIView()
 
-    private let headerContainer = UIView()
+    /// Header sits over the hero: transparent at rest (`tintRestAlpha: 0`), frosted glass once scrolled.
+    private let headerContainer = ILStickyHeaderBand(tintRestAlpha: 0)
     private let navBar = ILNavBar(showBack: true)
 
     private let heroView = ILLunarDayDetailHeroView()
@@ -66,6 +65,11 @@ final class ILLunarDayDetailViewController: BaseViewController {
         (tabBarController as? ILMainTabBarController)?.setBottomNavHidden(false, animated: animated)
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateHeaderTitle()
+    }
+
     // MARK: - Setup
     override func setupViews() {
         super.setupViews()
@@ -73,6 +77,7 @@ final class ILLunarDayDetailViewController: BaseViewController {
 
         navBar.onBack = { [weak self] in self?.backTappedSubject.send(()) }
         headerContainer.addSubview(navBar)
+        headerContainer.bind(to: scrollView)
 
         [goodHoursTitleLabel, clashTitleLabel, directionsTitleLabel, elementsTitleLabel].forEach {
             $0.font = ILTypography.bodyMedium
@@ -102,7 +107,7 @@ final class ILLunarDayDetailViewController: BaseViewController {
     override func setupConstraints() {
         super.setupConstraints()
         [
-            scrollView, contentView, headerContainer, navBar,
+            scrollView, contentView, navBar,
             heroView, infoCardView,
             almanacView,
             elementsTitleLabel, elementsView,
@@ -177,7 +182,8 @@ final class ILLunarDayDetailViewController: BaseViewController {
             directionsView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
             directionsView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -36),
 
-            // Header ‹ đè lên hero, nền chuyển trong suốt → đặc khi cuộn.
+            // Header ‹ đè lên hero, trong suốt → kính mờ khi cuộn (xem `ILStickyHeaderBand`).
+
             headerContainer.topAnchor.constraint(equalTo: view.topAnchor),
             headerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             headerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -185,7 +191,7 @@ final class ILLunarDayDetailViewController: BaseViewController {
             navBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: ILMetrics.spaceSmall / 2),
             navBar.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: horizontal),
             navBar.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -horizontal),
-            navBar.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: -ILMetrics.spaceSmall)
+            navBar.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: -ILMetrics.rowSpacing)
         ])
     }
 
@@ -220,6 +226,9 @@ final class ILLunarDayDetailViewController: BaseViewController {
     }
 
     private func updateUI(with model: ILLunarDayDetailStateModel) {
+        headerTitle = model.headerTitle
+        navBar.title = isHeaderSolid ? headerTitle : ""
+
         heroView.configure(
             eyebrowText: model.eyebrowText,
             day: model.heroDay,
@@ -228,7 +237,9 @@ final class ILLunarDayDetailViewController: BaseViewController {
             solar: model.heroSolar,
             typeTone: model.typeTone,
             typeText: model.typeLabel,
-            adviceText: model.adviceText
+            adviceText: model.adviceText,
+            imageURL: model.heroImageURL,
+            creditText: model.heroImageCredit
         )
 
         infoCardView.rows = model.infoRows
@@ -255,16 +266,22 @@ final class ILLunarDayDetailViewController: BaseViewController {
         directionsTitleLabel.text = model.directionsTitle
         directionsView.directions = model.directions
     }
+
+    // MARK: - Header
+    /// Shows the lunar date in the header once the hero's bottom has scrolled up under it.
+    private func updateHeaderTitle() {
+        let threshold = heroView.frame.maxY - headerContainer.frame.height
+        let shouldBeSolid = threshold > 0 && scrollView.contentOffset.y >= threshold
+        guard shouldBeSolid != isHeaderSolid else { return }
+        isHeaderSolid = shouldBeSolid
+        navBar.title = shouldBeSolid ? headerTitle : ""
+    }
 }
 
 // MARK: - UIScrollViewDelegate
 extension ILLunarDayDetailViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let solid = scrollView.contentOffset.y > Self.headerSolidThreshold
-        guard solid != isHeaderSolid else { return }
-        isHeaderSolid = solid
-        UIView.animate(withDuration: 0.2) {
-            self.headerContainer.backgroundColor = solid ? ILColors.canvas : .clear
-        }
+        heroView.update(contentOffsetY: scrollView.contentOffset.y)
+        updateHeaderTitle()
     }
 }

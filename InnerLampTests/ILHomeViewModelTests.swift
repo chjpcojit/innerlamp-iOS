@@ -10,14 +10,14 @@ import Combine
 final class ILHomeViewModelTests: XCTestCase {
 
     private var mockUseCase: MockILHomeUseCase!
+    private var mockCalendarImage: MockILCalendarImageUseCase!
     private var sut: ILHomeViewModel!
     private var cancellables: Set<AnyCancellable>!
 
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
-    private var beadTappedSubject: PassthroughSubject<Void, Never>!
-    private var resetBeadsTappedSubject: PassthroughSubject<Void, Never>!
     private var malaFullscreenTappedSubject: PassthroughSubject<Void, Never>!
     private var lunarCalendarTappedSubject: PassthroughSubject<Void, Never>!
+    private var memorialTappedSubject: PassthroughSubject<Void, Never>!
     private var lunarHeroTappedSubject: PassthroughSubject<Void, Never>!
     private var dayTappedSubject: PassthroughSubject<String, Never>!
     private var photosTappedSubject: PassthroughSubject<Void, Never>!
@@ -29,19 +29,21 @@ final class ILHomeViewModelTests: XCTestCase {
     private var deityTappedSubject: PassthroughSubject<String, Never>!
     private var deitiesViewAllTappedSubject: PassthroughSubject<Void, Never>!
     private var suggestedSessionTappedSubject: PassthroughSubject<String, Never>!
+    private var notificationTappedSubject: PassthroughSubject<Void, Never>!
+    private var avatarTappedSubject: PassthroughSubject<Void, Never>!
 
     override func setUp() {
         super.setUp()
         mockUseCase = MockILHomeUseCase()
+        mockCalendarImage = MockILCalendarImageUseCase()
         mockUseCase.loadBuddhistEventMonthsResult = mockUseCase.stubEntity.eventMonths
-        sut = ILHomeViewModel(useCase: mockUseCase)
+        sut = ILHomeViewModel(useCase: mockUseCase, calendarImageUseCase: mockCalendarImage)
         cancellables = []
 
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
-        beadTappedSubject = PassthroughSubject<Void, Never>()
-        resetBeadsTappedSubject = PassthroughSubject<Void, Never>()
         malaFullscreenTappedSubject = PassthroughSubject<Void, Never>()
         lunarCalendarTappedSubject = PassthroughSubject<Void, Never>()
+        memorialTappedSubject = PassthroughSubject<Void, Never>()
         lunarHeroTappedSubject = PassthroughSubject<Void, Never>()
         dayTappedSubject = PassthroughSubject<String, Never>()
         photosTappedSubject = PassthroughSubject<Void, Never>()
@@ -53,15 +55,16 @@ final class ILHomeViewModelTests: XCTestCase {
         deityTappedSubject = PassthroughSubject<String, Never>()
         deitiesViewAllTappedSubject = PassthroughSubject<Void, Never>()
         suggestedSessionTappedSubject = PassthroughSubject<String, Never>()
+        notificationTappedSubject = PassthroughSubject<Void, Never>()
+        avatarTappedSubject = PassthroughSubject<Void, Never>()
     }
 
     override func tearDown() {
         cancellables = nil
         viewDidLoadSubject = nil
-        beadTappedSubject = nil
-        resetBeadsTappedSubject = nil
         malaFullscreenTappedSubject = nil
         lunarCalendarTappedSubject = nil
+        memorialTappedSubject = nil
         lunarHeroTappedSubject = nil
         dayTappedSubject = nil
         photosTappedSubject = nil
@@ -73,6 +76,8 @@ final class ILHomeViewModelTests: XCTestCase {
         deityTappedSubject = nil
         deitiesViewAllTappedSubject = nil
         suggestedSessionTappedSubject = nil
+        notificationTappedSubject = nil
+        avatarTappedSubject = nil
         sut = nil
         mockUseCase = nil
         super.tearDown()
@@ -81,10 +86,9 @@ final class ILHomeViewModelTests: XCTestCase {
     private func makeInput() -> ILHomeViewModel.Input {
         ILHomeViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
-            beadTapped: beadTappedSubject.eraseToAnyPublisher(),
-            resetBeadsTapped: resetBeadsTappedSubject.eraseToAnyPublisher(),
             malaFullscreenTapped: malaFullscreenTappedSubject.eraseToAnyPublisher(),
             lunarCalendarTapped: lunarCalendarTappedSubject.eraseToAnyPublisher(),
+            memorialTapped: memorialTappedSubject.eraseToAnyPublisher(),
             lunarHeroTapped: lunarHeroTappedSubject.eraseToAnyPublisher(),
             dayTapped: dayTappedSubject.eraseToAnyPublisher(),
             photosTapped: photosTappedSubject.eraseToAnyPublisher(),
@@ -95,7 +99,9 @@ final class ILHomeViewModelTests: XCTestCase {
             templeTapped: templeTappedSubject.eraseToAnyPublisher(),
             deityTapped: deityTappedSubject.eraseToAnyPublisher(),
             deitiesViewAllTapped: deitiesViewAllTappedSubject.eraseToAnyPublisher(),
-            suggestedSessionTapped: suggestedSessionTappedSubject.eraseToAnyPublisher()
+            suggestedSessionTapped: suggestedSessionTappedSubject.eraseToAnyPublisher(),
+            notificationTapped: notificationTappedSubject.eraseToAnyPublisher(),
+            avatarTapped: avatarTappedSubject.eraseToAnyPublisher()
         )
     }
 
@@ -201,41 +207,6 @@ final class ILHomeViewModelTests: XCTestCase {
         XCTAssertEqual(receivedState?.greetingText, expectedGreeting)
     }
 
-    func test_beadTapped_incrementsMalaCountThroughUseCase() {
-        let output = sut.transform(input: makeInput())
-
-        var receivedState: ILHomeStateModel?
-        output.state
-            .sink { state in
-                if case .success(let model) = state { receivedState = model }
-            }
-            .store(in: &cancellables)
-
-        viewDidLoadSubject.send(())
-        beadTappedSubject.send(())
-
-        XCTAssertTrue(mockUseCase.incrementBeadCalled)
-        XCTAssertEqual(receivedState?.malaCount, 1)
-    }
-
-    func test_resetBeadsTapped_resetsMalaCountThroughUseCase() {
-        let output = sut.transform(input: makeInput())
-
-        var receivedState: ILHomeStateModel?
-        output.state
-            .sink { state in
-                if case .success(let model) = state { receivedState = model }
-            }
-            .store(in: &cancellables)
-
-        viewDidLoadSubject.send(())
-        beadTappedSubject.send(())
-        resetBeadsTappedSubject.send(())
-
-        XCTAssertTrue(mockUseCase.resetBeadsCalled)
-        XCTAssertEqual(receivedState?.malaCount, 0)
-    }
-
     func test_malaFullscreenTapped_firesOpenMalaNavigationEvent() {
         _ = sut.transform(input: makeInput())
         var receivedEvent: ILHomeNavEvent?
@@ -246,6 +217,32 @@ final class ILHomeViewModelTests: XCTestCase {
         malaFullscreenTappedSubject.send(())
 
         XCTAssertEqual(receivedEvent, .openMala)
+    }
+
+    func test_memorialTapped_firesOpenMemorialNavigationEvent() {
+        _ = sut.transform(input: makeInput())
+        var receivedEvent: ILHomeNavEvent?
+        sut.navigationEventPublisher
+            .sink { receivedEvent = $0 }
+            .store(in: &cancellables)
+
+        memorialTappedSubject.send(())
+
+        XCTAssertEqual(receivedEvent, .openMemorial)
+    }
+
+    func test_memorialLinkText_isLocalized() {
+        let output = sut.transform(input: makeInput())
+        var linkText: String?
+        output.state
+            .prefix(1)
+            .sink { state in
+                if case .success(let model) = state { linkText = model.weekMemorialLinkText }
+            }
+            .store(in: &cancellables)
+
+        XCTAssertEqual(linkText, "home.week.memorialLink".localized)
+        XCTAssertEqual(linkText, "Sổ giỗ")
     }
 
     func test_lunarCalendarTapped_firesOpenLunarCalendarNavigationEvent() {
@@ -278,7 +275,7 @@ final class ILHomeViewModelTests: XCTestCase {
 
     func test_lunarHeroTapped_passesNilVerse_whileQuoteNotLoaded() {
         mockUseCase.stubEntity.lunarDate.verse = ILHomeQuoteEntity()
-        sut = ILHomeViewModel(useCase: mockUseCase)
+        sut = ILHomeViewModel(useCase: mockUseCase, calendarImageUseCase: mockCalendarImage)
         _ = sut.transform(input: makeInput())
         var receivedEvent: ILHomeNavEvent?
         sut.navigationEventPublisher
@@ -330,6 +327,61 @@ final class ILHomeViewModelTests: XCTestCase {
         wait(for: [expectation], timeout: 1)
     }
 
+    func test_viewDidLoad_showsCalendarImageOfSelectedDayOnLunarHero() {
+        mockCalendarImage.result = .success(ILCalendarImageEntity(
+            id: "img-1", imageURL: "http://host:8080/static/images/home-calendar/img-1.jpg",
+            author: "Judgefloro", license: "Public domain", licenseURL: nil, sourceURL: nil
+        ))
+        let output = sut.transform(input: makeInput())
+        let expectation = expectation(description: "calendar image applied")
+
+        output.state
+            .sink { state in
+                if case .success(let model) = state, model.lunarHero.imageURL != nil {
+                    XCTAssertEqual(model.lunarHero.imageURL, "http://host:8080/static/images/home-calendar/img-1.jpg")
+                    XCTAssertFalse(model.lunarHero.imageCreditText.isEmpty)
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+
+        wait(for: [expectation], timeout: 1)
+        XCTAssertEqual(mockCalendarImage.requestedDates.count, 1)
+    }
+
+    func test_viewDidLoad_calendarImageFailure_keepsHeroWithoutImage() {
+        mockCalendarImage.result = .failure(ILCatalogError.offline)
+        let output = sut.transform(input: makeInput())
+        var latest: ILHomeStateModel?
+        output.state
+            .sink { if case .success(let model) = $0 { latest = model } }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        let settled = expectation(description: "settled")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { settled.fulfill() }
+        wait(for: [settled], timeout: 1)
+
+        XCTAssertNil(latest?.lunarHero.imageURL)
+        XCTAssertEqual(latest?.lunarHero.imageCreditText, "")
+    }
+
+    func test_dayTapped_requestsImageOnlyOncePerDay() {
+        _ = sut.transform(input: makeInput())
+
+        viewDidLoadSubject.send(())
+        dayTappedSubject.send("day-2")
+        dayTappedSubject.send("today")
+        dayTappedSubject.send("day-2")
+
+        let expectation = expectation(description: "requests settled")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { expectation.fulfill() }
+        wait(for: [expectation], timeout: 1)
+        XCTAssertEqual(mockCalendarImage.requestedDates.count, 2)
+    }
+
     func test_dayTapped_sameDay_doesNotCallSelectDay() {
         _ = sut.transform(input: makeInput())
 
@@ -355,7 +407,7 @@ final class ILHomeViewModelTests: XCTestCase {
             )
         ]
         mockUseCase.stubEntity.selectedDayID = "mung1"
-        sut = ILHomeViewModel(useCase: mockUseCase)
+        sut = ILHomeViewModel(useCase: mockUseCase, calendarImageUseCase: mockCalendarImage)
 
         let output = sut.transform(input: makeInput())
         var receivedState: ILHomeStateModel?
@@ -396,6 +448,30 @@ final class ILHomeViewModelTests: XCTestCase {
         bellTappedSubject.send(())
 
         XCTAssertEqual(receivedEvent, .openBell)
+    }
+
+    func test_notificationTapped_firesOpenNotificationsNavigationEvent() {
+        _ = sut.transform(input: makeInput())
+        var receivedEvent: ILHomeNavEvent?
+        sut.navigationEventPublisher
+            .sink { receivedEvent = $0 }
+            .store(in: &cancellables)
+
+        notificationTappedSubject.send(())
+
+        XCTAssertEqual(receivedEvent, .openNotifications)
+    }
+
+    func test_avatarTapped_firesOpenProfileNavigationEvent() {
+        _ = sut.transform(input: makeInput())
+        var receivedEvent: ILHomeNavEvent?
+        sut.navigationEventPublisher
+            .sink { receivedEvent = $0 }
+            .store(in: &cancellables)
+
+        avatarTappedSubject.send(())
+
+        XCTAssertEqual(receivedEvent, .openProfile)
     }
 
     func test_eventsTapped_firesOpenFestivalsNavigationEvent() {
@@ -475,7 +551,367 @@ final class ILHomeViewModelTests: XCTestCase {
         XCTAssertEqual(receivedState?.deities.first?.kindLabel, "deity.kind.buddha".localized)
         XCTAssertEqual(receivedState?.deities.first?.memorialText, String(format: "home.deity.memorialFormat".localized, 15, 4))
         XCTAssertEqual(receivedState?.deities.last?.kindLabel, "deity.kind.bodhisattva".localized)
-        XCTAssertEqual(receivedState?.deities.last?.memorialText, "", "No memorial day → empty line (hidden)")
+        XCTAssertEqual(
+            receivedState?.deities.last?.memorialText,
+            "home.deity.memorialUpdating".localized,
+            "No memorial day → \"updating\" line"
+        )
+    }
+
+    // MARK: - Server temple / deity carousels
+
+    func test_viewDidLoad_showsTopTemplesFromUseCase_formattedForCards() {
+        mockUseCase.loadTopTemplesResult = .success([
+            ILHomeTempleEntity(
+                id: "temple_north_011",
+                name: "Chùa Bích Động",
+                address: "Xã Ninh Hải, Huyện Hoa Lư, Tỉnh Ninh Bình",
+                region: .north,
+                heritageRank: .worldHeritage,
+                establishedYear: 1428
+            )
+        ])
+        let output = sut.transform(input: makeInput())
+        let expectation = expectation(description: "server temples applied")
+
+        output.state
+            .sink { state in
+                if case .success(let model) = state, model.temples.first?.id == "temple_north_011" {
+                    XCTAssertEqual(model.temples.count, 1)
+                    XCTAssertEqual(model.temples.first?.name, "Chùa Bích Động")
+                    XCTAssertEqual(model.temples.first?.place, "Ninh Bình")
+                    XCTAssertEqual(model.temples.first?.region, "temple.region.north".localized)
+                    XCTAssertEqual(
+                        model.temples.first?.note,
+                        "temple.rank.worldHeritage".localized + " · " + String(format: "home.temple.foundedFormat".localized, 1428)
+                    )
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+
+        wait(for: [expectation], timeout: 1)
+    }
+
+    func test_viewDidLoad_topTemplesFailure_keepsHomeSuccessful() {
+        mockUseCase.loadTopTemplesResult = .failure(ILCatalogError.offline)
+        let output = sut.transform(input: makeInput())
+        var states: [ViewState<ILHomeStateModel>] = []
+        output.state.sink { states.append($0) }.store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        let settled = expectation(description: "async loads settle")
+        DispatchQueue.main.async { settled.fulfill() }
+        wait(for: [settled], timeout: 1)
+
+        XCTAssertFalse(states.contains { if case .failure = $0 { return true } else { return false } })
+    }
+
+    func test_viewDidLoad_showsTopArticlesFromUseCase_formattedForCards() {
+        mockUseCase.loadTopArticlesResult = .success([
+            ILHomeArticleEntity(id: "vipassana-nghe-thuat-song", category: "Thực hành", title: "Vipassana", author: "Thầy A", readMinutes: 7),
+            ILHomeArticleEntity(id: "tu-dieu-de", category: "Giáo lý", title: "Tứ Diệu Đế", author: "Thầy B", readMinutes: 3)
+        ])
+        let output = sut.transform(input: makeInput())
+        let expectation = expectation(description: "server articles applied")
+
+        output.state
+            .sink { state in
+                if case .success(let model) = state, model.articles.first?.id == "vipassana-nghe-thuat-song" {
+                    XCTAssertEqual(model.articles.map(\.id), ["vipassana-nghe-thuat-song", "tu-dieu-de"])
+                    XCTAssertEqual(model.articles.first?.readText, String(format: "home.article.readFormat".localized, 7))
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+
+        wait(for: [expectation], timeout: 1)
+    }
+
+    func test_viewDidLoad_showsTopPhotosWithThumbnailsAndMoreCount() {
+        mockUseCase.loadTopPhotosResult = .success((1...10).map { ILHomePhotoEntity(id: "g\($0)", thumbnailURL: "http://h/t\($0).jpg") })
+        let output = sut.transform(input: makeInput())
+        let expectation = expectation(description: "server photos applied")
+
+        output.state
+            .sink { state in
+                if case .success(let model) = state, model.photos.first?.id == "g1" {
+                    XCTAssertEqual(model.photos.count, 10)
+                    XCTAssertEqual(model.photos.first?.thumbnailURL, "http://h/t1.jpg")
+                    XCTAssertEqual(model.photosMoreText, String(format: "home.photos.moreFormat".localized, 7))
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        wait(for: [expectation], timeout: 2)
+    }
+
+    func test_viewDidLoad_topPhotosFailure_showsNoPhotosAndNoMoreOverlay() {
+        mockUseCase.loadTopPhotosResult = .failure(ILCatalogError.offline)
+        let output = sut.transform(input: makeInput())
+        var latest: ILHomeStateModel?
+        output.state.sink { if case .success(let model) = $0 { latest = model } }.store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        let settled = expectation(description: "async loads settle")
+        DispatchQueue.main.async { settled.fulfill() }
+        wait(for: [settled], timeout: 1)
+
+        XCTAssertEqual(latest?.photos, [])
+        XCTAssertEqual(latest?.photosMoreText, "")
+    }
+
+    func test_viewDidLoad_topArticlesFailure_keepsHomeSuccessful() {
+        mockUseCase.loadTopArticlesResult = .failure(ILCatalogError.offline)
+        let output = sut.transform(input: makeInput())
+        var states: [ViewState<ILHomeStateModel>] = []
+        output.state.sink { states.append($0) }.store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        let settled = expectation(description: "async loads settle")
+        DispatchQueue.main.async { settled.fulfill() }
+        wait(for: [settled], timeout: 1)
+
+        XCTAssertFalse(states.contains { if case .failure = $0 { return true } else { return false } })
+    }
+
+    func test_viewDidLoad_showsTopDeitiesFromUseCase() {
+        mockUseCase.loadTopDeitiesResult = .success([
+            ILHomeDeityEntity(id: "buddha_amitabha", kind: .buddha, name: "A Di Đà Phật", honorific: "", virtue: "", memorialDay: nil)
+        ])
+        let output = sut.transform(input: makeInput())
+        let expectation = expectation(description: "server deities applied")
+
+        output.state
+            .sink { state in
+                if case .success(let model) = state, model.deities.map(\.id) == ["buddha_amitabha"] {
+                    XCTAssertEqual(model.deities.first?.name, "A Di Đà Phật")
+                    XCTAssertEqual(model.deities.first?.memorialText, "home.deity.memorialUpdating".localized)
+                    XCTAssertEqual(model.deitiesEmptyText, "")
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+
+        wait(for: [expectation], timeout: 1)
+    }
+
+    func test_viewDidLoad_topDeitiesFailure_showsUpdatingPlaceholder() {
+        mockUseCase.loadTopDeitiesResult = .failure(ILCatalogError.offline)
+        let output = sut.transform(input: makeInput())
+        let expectation = expectation(description: "updating placeholder shown")
+
+        output.state
+            .sink { state in
+                if case .success(let model) = state, !model.deitiesEmptyText.isEmpty {
+                    XCTAssertTrue(model.deities.isEmpty)
+                    XCTAssertEqual(model.deitiesEmptyText, "home.deity.updating".localized)
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+
+        wait(for: [expectation], timeout: 1)
+    }
+
+    func test_initialState_beforeTopDeitiesLoad_hasNoPlaceholder() {
+        mockUseCase.stubEntity.deities = []
+        sut = ILHomeViewModel(useCase: mockUseCase, calendarImageUseCase: mockCalendarImage)
+        let output = sut.transform(input: makeInput())
+        var firstState: ILHomeStateModel?
+        output.state
+            .prefix(1)
+            .sink { state in
+                if case .success(let model) = state { firstState = model }
+            }
+            .store(in: &cancellables)
+
+        XCTAssertEqual(firstState?.deitiesEmptyText, "", "Still loading — no \"updating\" flash")
+    }
+
+    func test_viewDidLoad_topTemplesFailure_showsUpdatingPlaceholder() {
+        mockUseCase.loadTopTemplesResult = .failure(ILCatalogError.offline)
+        let output = sut.transform(input: makeInput())
+        let expectation = expectation(description: "temples updating placeholder shown")
+
+        output.state
+            .sink { state in
+                if case .success(let model) = state, !model.templesEmptyText.isEmpty {
+                    XCTAssertTrue(model.temples.isEmpty)
+                    XCTAssertEqual(model.templesEmptyText, "home.temple.updating".localized)
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+
+        wait(for: [expectation], timeout: 1)
+    }
+
+    func test_viewDidLoad_topTemplesEmpty_showsUpdatingPlaceholder() {
+        mockUseCase.loadTopTemplesResult = .success([])
+        let output = sut.transform(input: makeInput())
+        let expectation = expectation(description: "temples updating placeholder shown")
+
+        output.state
+            .sink { state in
+                if case .success(let model) = state, !model.templesEmptyText.isEmpty {
+                    XCTAssertEqual(model.templesEmptyText, "home.temple.updating".localized)
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+
+        wait(for: [expectation], timeout: 1)
+    }
+
+    func test_viewDidLoad_topArticlesFailure_showsUpdatingPlaceholder() {
+        mockUseCase.loadTopArticlesResult = .failure(ILCatalogError.offline)
+        let output = sut.transform(input: makeInput())
+        let expectation = expectation(description: "articles updating placeholder shown")
+
+        output.state
+            .sink { state in
+                if case .success(let model) = state, !model.articlesEmptyText.isEmpty {
+                    XCTAssertTrue(model.articles.isEmpty)
+                    XCTAssertEqual(model.articlesEmptyText, "home.article.updating".localized)
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+
+        wait(for: [expectation], timeout: 1)
+    }
+
+    func test_viewDidLoad_dataPresent_hasNoPlaceholders() {
+        let output = sut.transform(input: makeInput())
+        var states: [ILHomeStateModel] = []
+        output.state
+            .sink { state in
+                if case .success(let model) = state { states.append(model) }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        let settled = expectation(description: "async loads settle")
+        DispatchQueue.main.async { settled.fulfill() }
+        wait(for: [settled], timeout: 1)
+
+        XCTAssertFalse(states.contains { !$0.temples.isEmpty && !$0.templesEmptyText.isEmpty })
+        XCTAssertFalse(states.contains { !$0.articles.isEmpty && !$0.articlesEmptyText.isEmpty })
+    }
+
+    func test_initialState_beforeTemplesAndArticlesLoad_hasNoPlaceholder() {
+        mockUseCase.stubEntity.temples = []
+        mockUseCase.stubEntity.articles = []
+        sut = ILHomeViewModel(useCase: mockUseCase, calendarImageUseCase: mockCalendarImage)
+        let output = sut.transform(input: makeInput())
+        var firstState: ILHomeStateModel?
+        output.state
+            .prefix(1)
+            .sink { state in
+                if case .success(let model) = state { firstState = model }
+            }
+            .store(in: &cancellables)
+
+        XCTAssertEqual(firstState?.templesEmptyText, "", "Still loading — no \"updating\" flash")
+        XCTAssertEqual(firstState?.articlesEmptyText, "", "Still loading — no \"updating\" flash")
+    }
+
+    func test_initialState_beforeServerSectionsLoad_showsSkeletons() {
+        mockUseCase.stubEntity.temples = []
+        mockUseCase.stubEntity.deities = []
+        mockUseCase.stubEntity.articles = []
+        sut = ILHomeViewModel(useCase: mockUseCase, calendarImageUseCase: mockCalendarImage)
+        let output = sut.transform(input: makeInput())
+        var firstState: ILHomeStateModel?
+        output.state
+            .prefix(1)
+            .sink { state in
+                if case .success(let model) = state { firstState = model }
+            }
+            .store(in: &cancellables)
+
+        XCTAssertEqual(firstState?.templesLoading, true)
+        XCTAssertEqual(firstState?.deitiesLoading, true)
+        XCTAssertEqual(firstState?.articlesLoading, true)
+    }
+
+    func test_viewDidLoad_afterSectionsAnswer_skeletonsStop() {
+        mockUseCase.loadTopTemplesResult = .failure(ILCatalogError.offline)
+        mockUseCase.loadTopDeitiesResult = .success([])
+        mockUseCase.loadTopArticlesResult = .failure(ILCatalogError.offline)
+        let output = sut.transform(input: makeInput())
+        let expectation = expectation(description: "all sections answered")
+
+        output.state
+            .sink { state in
+                if case .success(let model) = state,
+                   !model.templesEmptyText.isEmpty, !model.deitiesEmptyText.isEmpty, !model.articlesEmptyText.isEmpty {
+                    XCTAssertFalse(model.templesLoading)
+                    XCTAssertFalse(model.deitiesLoading)
+                    XCTAssertFalse(model.articlesLoading)
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+
+        wait(for: [expectation], timeout: 1)
+    }
+
+    func test_viewDidLoad_sectionWithData_neverShowsSkeleton() {
+        let output = sut.transform(input: makeInput())
+        var states: [ILHomeStateModel] = []
+        output.state
+            .sink { state in
+                if case .success(let model) = state { states.append(model) }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        let settled = expectation(description: "async loads settle")
+        DispatchQueue.main.async { settled.fulfill() }
+        wait(for: [settled], timeout: 1)
+
+        XCTAssertFalse(states.contains { !$0.temples.isEmpty && $0.templesLoading })
+        XCTAssertFalse(states.contains { !$0.deities.isEmpty && $0.deitiesLoading })
+        XCTAssertFalse(states.contains { !$0.articles.isEmpty && $0.articlesLoading })
+    }
+
+    func test_shortPlace_takesProvinceWithoutPrefix() {
+        XCTAssertEqual(ILHomeViewModel.shortPlace(from: "Xã Ninh Hải, Huyện Hoa Lư, Tỉnh Ninh Bình"), "Ninh Bình")
+        XCTAssertEqual(ILHomeViewModel.shortPlace(from: "Đường Thanh Niên, Quận Tây Hồ, Hà Nội"), "Hà Nội")
+        XCTAssertEqual(ILHomeViewModel.shortPlace(from: "Quận 3, TP. Hồ Chí Minh"), "TP. Hồ Chí Minh")
+        XCTAssertEqual(ILHomeViewModel.shortPlace(from: ""), "")
+    }
+
+    func test_templeNote_dropsMissingParts() {
+        let founded = String(format: "home.temple.foundedFormat".localized, 1049)
+        XCTAssertEqual(ILHomeViewModel.templeNote(rank: .unranked, establishedYear: 1049), founded)
+        XCTAssertEqual(ILHomeViewModel.templeNote(rank: .other("NEW_RANK"), establishedYear: 0), "")
+        XCTAssertEqual(ILHomeViewModel.templeNote(rank: .nationalRelic, establishedYear: 0), "temple.rank.nationalRelic".localized)
+    }
+
+    func test_regionLabel_showsUnknownRegionRaw() {
+        XCTAssertEqual(ILHomeViewModel.regionLabel(.central), "temple.region.central".localized)
+        XCTAssertEqual(ILHomeViewModel.regionLabel(.other("highlands")), "highlands")
     }
 
     func test_suggestedSessionTapped_meditationKind_firesOpenMeditationSetupNavigationEvent() {
@@ -502,7 +938,7 @@ final class ILHomeViewModelTests: XCTestCase {
                 glyph: .book
             )
         )
-        sut = ILHomeViewModel(useCase: mockUseCase)
+        sut = ILHomeViewModel(useCase: mockUseCase, calendarImageUseCase: mockCalendarImage)
         _ = sut.transform(input: makeInput())
         var receivedEvent: ILHomeNavEvent?
         sut.navigationEventPublisher
@@ -581,11 +1017,12 @@ final class MockILHomeUseCase: ILHomeUseCase {
         ]
         entity.temples = [
             ILHomeTempleEntity(
-                id: "tp-motcot",
-                name: "home.temple.motcot.name".localized,
-                place: "home.temple.motcot.place".localized,
-                region: "home.temple.motcot.region".localized,
-                note: "home.temple.motcot.note".localized
+                id: "temple_north_002",
+                name: "Chùa Một Cột",
+                address: "Phố Chùa Một Cột, Quận Ba Đình, Hà Nội",
+                region: .north,
+                heritageRank: .specialNationalRelic,
+                establishedYear: 1049
             )
         ]
         entity.articles = [
@@ -663,5 +1100,28 @@ final class MockILHomeUseCase: ILHomeUseCase {
     var loadRandomVerseResult = ILHomeQuoteEntity(lines: ["Random verse"], source: "— Kinh Pháp Cú (Dhammapada), câu 5")
     func loadRandomVerse() async -> ILHomeQuoteEntity {
         loadRandomVerseResult
+    }
+
+    /// Defaults to the stub's temples so the async load does not change the initial state.
+    lazy var loadTopTemplesResult: Result<[ILHomeTempleEntity], Error> = .success(stubEntity.temples)
+    func loadTopTemples() async throws -> [ILHomeTempleEntity] {
+        try loadTopTemplesResult.get()
+    }
+
+    /// Defaults to the stub's deities so the async load does not change the initial state.
+    lazy var loadTopDeitiesResult: Result<[ILHomeDeityEntity], Error> = .success(stubEntity.deities)
+    func loadTopDeities() async throws -> [ILHomeDeityEntity] {
+        try loadTopDeitiesResult.get()
+    }
+
+    /// Defaults to the stub's articles so the async load does not change the initial state.
+    lazy var loadTopPhotosResult: Result<[ILHomePhotoEntity], Error> = .success(stubEntity.photos)
+    func loadTopPhotos() async throws -> [ILHomePhotoEntity] {
+        try loadTopPhotosResult.get()
+    }
+
+    lazy var loadTopArticlesResult: Result<[ILHomeArticleEntity], Error> = .success(stubEntity.articles)
+    func loadTopArticles() async throws -> [ILHomeArticleEntity] {
+        try loadTopArticlesResult.get()
     }
 }

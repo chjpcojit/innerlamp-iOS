@@ -7,9 +7,10 @@
 
 import UIKit
 
-/// The center strike pad of the "Chuông mõ" screen: a gold halo (radial gradient), a thin ring, and
-/// a large circular pad showing a tag ("MÕ" / "CHUÔNG"), the running count, and a hint. It exposes
-/// `flashMo()` / `flashBell()` so the `ViewController` can replay the design's strike feedback.
+/// The center of the "Chuông mõ" screen: a stage showing the instrument photo (singing bowl or
+/// wooden fish) with its mallet and a gold halo, then the running count + hint underneath. The
+/// whole control is the strike target. `flashMo()` / `flashBell()` replay the design's strike
+/// feedback (mallet swing, instrument bounce / ring-down, ripples, halo) for the `ViewController`.
 final class ILBellPadView: UIControl {
 
     // MARK: - Properties
@@ -25,27 +26,44 @@ final class ILBellPadView: UIControl {
         didSet { hintLabel.text = hintText }
     }
 
+    /// Bell mode shows the singing bowl + striker; every other mode shows the wooden fish + mallet.
+    var isBellShown: Bool = false {
+        didSet {
+            guard isBellShown != oldValue else { return }
+            applyInstrument()
+        }
+    }
+
     var onTap: (() -> Void)?
 
+    private var lastMoStrikeTime: CFTimeInterval?
+    private var haloResetWorkItem: DispatchWorkItem?
+
     // MARK: - UI Elements
+    private let stageView = UIView()
     private let haloView = UIView()
     private let haloGradient = CAGradientLayer()
-    private let ringView = UIView()
-    private let padView = UIView()
+    private let rippleHost = UIView()
+    private let instrumentView = UIImageView()
+    private let malletView = UIImageView()
     private let tagLabel = UILabel()
     private let numberLabel = UILabel()
     private let hintLabel = UILabel()
 
-    // MARK: - Layout constants (design handoff)
-    private static let outerSize: CGFloat = 236
-    private static let ringInset: CGFloat = 6
-    private static let padSize: CGFloat = 188
-    private static let baseHaloOpacity: Float = 0.18
+    // MARK: - Layout constants (design handoff, stage coordinates)
+    private static let stageSize: CGFloat = 236
+    private static let instrumentFrame = CGRect(x: 18, y: 18, width: 200, height: 200)
+    private static let malletSize = CGSize(width: 34, height: 126)
+    /// Bottom-center of the mallet stick — the pivot of its swing.
+    private static let malletPivot = CGPoint(x: 226, y: 236)
+    private static let malletRestAngle: CGFloat = -8
+    private static let rippleFrame = CGRect(x: 34, y: 34, width: 168, height: 168)
 
     // MARK: - Initializer
     init() {
         super.init(frame: .zero)
         setupViews()
+        applyInstrument()
     }
 
     required init?(coder: NSCoder) {
@@ -54,77 +72,77 @@ final class ILBellPadView: UIControl {
 
     // MARK: - Setup
     private func setupViews() {
-        // Halo — radial gold glow that fades to transparent.
+        stageView.isUserInteractionEnabled = false
+        stageView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(stageView)
+
+        // Halo — radial gold glow, invisible until a strike.
         haloGradient.type = .radial
         haloGradient.colors = [ILColors.medGoldHalo.cgColor, ILColors.medGoldHalo.withAlphaComponent(0).cgColor]
         haloGradient.startPoint = CGPoint(x: 0.5, y: 0.5)
         haloGradient.endPoint = CGPoint(x: 1, y: 1)
         haloGradient.locations = [0, 0.68]
-        haloGradient.opacity = Self.baseHaloOpacity
         haloView.layer.addSublayer(haloGradient)
-        haloView.isUserInteractionEnabled = false
-        haloView.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(haloView)
+        haloView.alpha = 0
+        haloView.frame = CGRect(x: 0, y: 0, width: Self.stageSize, height: Self.stageSize)
+        haloGradient.frame = haloView.bounds
+        stageView.addSubview(haloView)
 
-        // Thin outer ring.
-        ringView.backgroundColor = .clear
-        ringView.layer.borderWidth = 1
-        ringView.layer.borderColor = ILColors.medTrack.cgColor
-        ringView.isUserInteractionEnabled = false
-        ringView.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(ringView)
+        rippleHost.frame = haloView.frame
+        stageView.addSubview(rippleHost)
 
-        // The pad itself.
-        padView.backgroundColor = ILColors.medCard
-        padView.layer.borderWidth = 1.5
-        padView.layer.borderColor = ILColors.medBorder.cgColor
-        padView.isUserInteractionEnabled = false
-        padView.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(padView)
+        instrumentView.contentMode = .scaleAspectFit
+        instrumentView.bounds = CGRect(origin: .zero, size: Self.instrumentFrame.size)
+        instrumentView.layer.shadowColor = UIColor.black.cgColor
+        instrumentView.layer.shadowOpacity = 0.5
+        instrumentView.layer.shadowOffset = CGSize(width: 0, height: 14)
+        instrumentView.layer.shadowRadius = 8
+        stageView.addSubview(instrumentView)
 
-        tagLabel.font = ILTypography.eyebrowSmall
-        tagLabel.textAlignment = .center
-        tagLabel.translatesAutoresizingMaskIntoConstraints = false
+        malletView.bounds = CGRect(origin: .zero, size: Self.malletSize)
+        malletView.layer.anchorPoint = CGPoint(x: 0.5, y: 1)
+        malletView.layer.position = Self.malletPivot
+        malletView.transform = Self.malletRestTransform
+        malletView.layer.shadowColor = UIColor.black.cgColor
+        malletView.layer.shadowOpacity = 0.45
+        malletView.layer.shadowOffset = CGSize(width: -3, height: 6)
+        malletView.layer.shadowRadius = 3
+        stageView.addSubview(malletView)
 
         numberLabel.font = ILTypography.bellPadNumber
         numberLabel.textColor = ILColors.medInk
         numberLabel.textAlignment = .center
-        numberLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let readoutRow = UIStackView(arrangedSubviews: [tagLabel, numberLabel])
+        readoutRow.axis = .horizontal
+        readoutRow.alignment = .lastBaseline
+        readoutRow.spacing = 8
 
         hintLabel.font = ILTypography.subhead
         hintLabel.textColor = ILColors.medInkTertiary
         hintLabel.textAlignment = .center
-        hintLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let padStack = UIStackView(arrangedSubviews: [tagLabel, numberLabel, hintLabel])
-        padStack.axis = .vertical
-        padStack.alignment = .center
-        padStack.spacing = 8
-        padStack.isUserInteractionEnabled = false
-        padStack.translatesAutoresizingMaskIntoConstraints = false
-        padView.addSubview(padStack)
+        let readoutStack = UIStackView(arrangedSubviews: [readoutRow, hintLabel])
+        readoutStack.axis = .vertical
+        readoutStack.alignment = .center
+        readoutStack.spacing = 6
+        readoutStack.isUserInteractionEnabled = false
+        readoutStack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(readoutStack)
 
         NSLayoutConstraint.activate([
-            widthAnchor.constraint(equalToConstant: Self.outerSize),
-            heightAnchor.constraint(equalToConstant: Self.outerSize),
+            stageView.topAnchor.constraint(equalTo: topAnchor),
+            stageView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            stageView.widthAnchor.constraint(equalToConstant: Self.stageSize),
+            stageView.heightAnchor.constraint(equalToConstant: Self.stageSize),
 
-            haloView.topAnchor.constraint(equalTo: topAnchor),
-            haloView.bottomAnchor.constraint(equalTo: bottomAnchor),
-            haloView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            haloView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            readoutStack.topAnchor.constraint(equalTo: stageView.bottomAnchor, constant: 10),
+            readoutStack.centerXAnchor.constraint(equalTo: centerXAnchor),
+            readoutStack.bottomAnchor.constraint(equalTo: bottomAnchor),
+            readoutStack.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor),
+            readoutStack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
 
-            ringView.topAnchor.constraint(equalTo: topAnchor, constant: Self.ringInset),
-            ringView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.ringInset),
-            ringView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Self.ringInset),
-            ringView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Self.ringInset),
-
-            padView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            padView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            padView.widthAnchor.constraint(equalToConstant: Self.padSize),
-            padView.heightAnchor.constraint(equalToConstant: Self.padSize),
-
-            padStack.centerXAnchor.constraint(equalTo: padView.centerXAnchor),
-            padStack.centerYAnchor.constraint(equalTo: padView.centerYAnchor)
+            widthAnchor.constraint(greaterThanOrEqualToConstant: Self.stageSize)
         ])
 
         addTarget(self, action: #selector(handleTap), for: .touchUpInside)
@@ -132,71 +150,155 @@ final class ILBellPadView: UIControl {
         isAccessibilityElement = true
         accessibilityTraits = .button
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILBellPadView, _) in
-            view.applyColorAppearanceChange()
+            view.refreshLayerColors()
         }
-    }
-
-    public override func layoutSubviews() {
-        super.layoutSubviews()
-        haloGradient.frame = haloView.bounds
-        ringView.layer.cornerRadius = ringView.bounds.width / 2
-        padView.layer.cornerRadius = padView.bounds.width / 2
-    }
-
-    private func applyColorAppearanceChange() {
-        refreshLayerColors()
     }
 
     private func refreshLayerColors() {
-        ringView.layer.borderColor = ILColors.medTrack.cgColor
-        padView.layer.borderColor = ILColors.medBorder.cgColor
         haloGradient.colors = [ILColors.medGoldHalo.cgColor, ILColors.medGoldHalo.withAlphaComponent(0).cgColor]
     }
 
-    // MARK: - Strike feedback
-    /// Wooden-fish strike: pad dips to 95% and the border flashes gold.
-    func flashMo() {
-        padView.layer.borderColor = ILColors.medGoldStrikeBorder.cgColor
-        animatePadScale(to: 0.95, then: {
-            self.padView.layer.borderColor = ILColors.medBorder.cgColor
-        })
+    /// Swap the photo + mallet head and re-pivot the instrument (the bowl hangs from its top, the
+    /// wooden fish rocks on its base).
+    private func applyInstrument() {
+        instrumentView.image = isBellShown ? ILIcons.bellChuong : ILIcons.bellMo
+        malletView.image = isBellShown ? ILIcons.bellMalletBell : ILIcons.bellMalletMo
+        instrumentView.layer.removeAllAnimations()
+        malletView.layer.removeAllAnimations()
+        let frame = Self.instrumentFrame
+        let anchorY: CGFloat = isBellShown ? 0.30 : 0.85
+        instrumentView.layer.anchorPoint = CGPoint(x: 0.5, y: anchorY)
+        instrumentView.layer.position = CGPoint(x: frame.midX, y: frame.minY + frame.height * anchorY)
+        instrumentView.transform = .identity
+        malletView.transform = Self.malletRestTransform
     }
 
-    /// Bell strike: halo swells to full opacity + 108% while the border flashes gold.
+    private static var malletRestTransform: CGAffineTransform {
+        CGAffineTransform(rotationAngle: radians(malletRestAngle))
+    }
+
+    private static func radians(_ degrees: CGFloat) -> CGFloat {
+        degrees * .pi / 180
+    }
+
+    // MARK: - Strike feedback
+    /// Wooden-fish strike: mallet swings down, the fish dips and settles, one soft ripple, a faint halo.
+    func flashMo() {
+        let now = CACurrentMediaTime()
+        // During the roll the strikes come faster than the swing is long — shorten it to match.
+        let duration = lastMoStrikeTime.map { min(0.26, max(0.06, (now - $0) * 0.85)) } ?? 0.26
+        lastMoStrikeTime = now
+
+        if !isBellShown {
+            swingMallet(offsets: [0, 0.1, 0.27, 0.5, 1], angles: [-8, 2, -37, -26, -8], duration: duration)
+            dipInstrument(duration: duration)
+        }
+        addRipples(delays: [0.07], duration: 0.52, lineWidth: 1.5, color: ILColors.medGoldRippleMo, peak: 0.8, peakTime: 0.15, startPeakScale: 1.02, endScale: 1.24)
+        pulseHalo(opacity: 0.55, scale: 1, resetAfter: 0.11)
+    }
+
+    /// Bell strike: striker swings, the bowl rings down, three expanding ripples, full halo swell.
     func flashBell() {
-        padView.layer.borderColor = ILColors.medGoldStrikeBorder.cgColor
-        let halo = haloGradient
-        let up = CABasicAnimation(keyPath: "opacity")
-        up.fromValue = Self.baseHaloOpacity
-        up.toValue = Float(1.0)
-        up.duration = 0.12
-        let scale = CABasicAnimation(keyPath: "transform.scale")
-        scale.fromValue = 1.0
-        scale.toValue = 1.08
-        scale.duration = 0.42
-        halo.add(up, forKey: "opacity")
-        halo.add(scale, forKey: "transform.scale")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.42) {
-            self.padView.layer.borderColor = ILColors.medBorder.cgColor
+        if isBellShown {
+            swingMallet(offsets: [0, 0.1, 0.15, 0.32, 1], angles: [-8, 2, -37, -26, -8], duration: 0.48)
+            ringInstrument()
+        }
+        addRipples(delays: [0.07, 0.42, 0.82], duration: 2.6, lineWidth: 2, color: ILColors.medGoldRippleBell, peak: 0.7, peakTime: 0.08, startPeakScale: 1.05, endScale: 2)
+        pulseHalo(opacity: 1, scale: 1.08, resetAfter: 0.42)
+    }
+
+    private func swingMallet(offsets: [Double], angles: [CGFloat], duration: CFTimeInterval) {
+        let swing = CAKeyframeAnimation(keyPath: "transform.rotation.z")
+        swing.values = angles.map { Self.radians($0) }
+        swing.keyTimes = offsets.map { NSNumber(value: $0) }
+        swing.timingFunctions = Array(repeating: CAMediaTimingFunction(name: .easeOut), count: angles.count - 1)
+        swing.duration = duration
+        malletView.layer.add(swing, forKey: "swing")
+    }
+
+    private func dipInstrument(duration: CFTimeInterval) {
+        func transform(scale: CGFloat, dx: CGFloat = 0, dy: CGFloat = 0) -> NSValue {
+            let scaled = CATransform3DMakeScale(scale, scale, 1)
+            return NSValue(caTransform3D: CATransform3DTranslate(scaled, dx, dy, 0))
+        }
+        let dip = CAKeyframeAnimation(keyPath: "transform")
+        dip.values = [transform(scale: 1), transform(scale: 1), transform(scale: 0.962, dx: -2, dy: 2), transform(scale: 1.01), transform(scale: 1)]
+        dip.keyTimes = [0, 0.27, 0.38, 0.62, 1]
+        dip.timingFunctions = Array(repeating: CAMediaTimingFunction(name: .easeOut), count: 4)
+        dip.duration = duration
+        instrumentView.layer.add(dip, forKey: "strike")
+    }
+
+    /// Damped sway of the hanging bowl after the striker hits it (design: 2.2s, linear).
+    private func ringInstrument() {
+        let sway: [CGFloat] = [0, 0, 1.8, -1.5, 1.2, -0.95, 0.75, -0.55, 0.4, -0.28, 0.18, -0.1, 0]
+        let count = Double(sway.count - 2)
+        let ring = CAKeyframeAnimation(keyPath: "transform")
+        ring.values = sway.map { degrees in
+            let rotated = CATransform3DMakeRotation(Self.radians(degrees), 0, 0, 1)
+            return NSValue(caTransform3D: CATransform3DTranslate(rotated, degrees * 0.6, 0, 0))
+        }
+        ring.keyTimes = sway.indices.map { index in
+            NSNumber(value: index == 0 ? 0 : index == 1 ? 0.035 : 0.035 + Double(index - 1) / count * 0.965)
+        }
+        ring.duration = 2.2
+        instrumentView.layer.add(ring, forKey: "strike")
+    }
+
+    private func addRipples(
+        delays: [CFTimeInterval],
+        duration: CFTimeInterval,
+        lineWidth: CGFloat,
+        color: UIColor,
+        peak: Float,
+        peakTime: Double,
+        startPeakScale: CGFloat,
+        endScale: CGFloat
+    ) {
+        for delay in delays {
+            let ripple = CAShapeLayer()
+            ripple.frame = Self.rippleFrame
+            ripple.path = UIBezierPath(ovalIn: ripple.bounds.insetBy(dx: lineWidth / 2, dy: lineWidth / 2)).cgPath
+            ripple.fillColor = UIColor.clear.cgColor
+            ripple.strokeColor = color.cgColor
+            ripple.lineWidth = lineWidth
+            ripple.opacity = 0
+            rippleHost.layer.addSublayer(ripple)
+
+            let scale = CAKeyframeAnimation(keyPath: "transform.scale")
+            scale.values = [1, startPeakScale, endScale]
+            scale.keyTimes = [0, NSNumber(value: peakTime), 1]
+            let fade = CAKeyframeAnimation(keyPath: "opacity")
+            fade.values = [0, peak, 0]
+            fade.keyTimes = [0, NSNumber(value: peakTime), 1]
+            let group = CAAnimationGroup()
+            group.animations = [scale, fade]
+            group.duration = duration
+            group.beginTime = CACurrentMediaTime() + delay
+            group.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.6, 0.3, 1)
+            group.fillMode = .backwards
+
+            CATransaction.begin()
+            CATransaction.setCompletionBlock { [weak ripple] in ripple?.removeFromSuperlayer() }
+            ripple.add(group, forKey: "ripple")
+            CATransaction.commit()
         }
     }
 
-    private func animatePadScale(to scale: CGFloat, then completion: @escaping () -> Void) {
-        UIView.animate(
-            withDuration: 0.06,
-            delay: 0,
-            options: [.curveEaseOut, .allowUserInteraction],
-            animations: { self.padView.transform = CGAffineTransform(scaleX: scale, y: scale) },
-            completion: { _ in
-                UIView.animate(
-                    withDuration: 0.06,
-                    delay: 0,
-                    options: [.curveEaseOut, .allowUserInteraction],
-                    animations: { self.padView.transform = .identity },
-                    completion: { _ in completion() }
-                )
-            }
-        )
+    /// Halo flares on the strike and fades back (design: 0.5s ease, reset 110ms / 420ms later).
+    private func pulseHalo(opacity: CGFloat, scale: CGFloat, resetAfter delay: TimeInterval) {
+        haloResetWorkItem?.cancel()
+        setHalo(opacity: opacity, scale: scale)
+        let reset = DispatchWorkItem { [weak self] in self?.setHalo(opacity: 0, scale: 1) }
+        haloResetWorkItem = reset
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: reset)
+    }
+
+    private func setHalo(opacity: CGFloat, scale: CGFloat) {
+        UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut, .beginFromCurrentState, .allowUserInteraction]) {
+            self.haloView.alpha = opacity
+            self.haloView.transform = CGAffineTransform(scaleX: scale, y: scale)
+        }
     }
 
     @objc private func handleTap() {

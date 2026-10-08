@@ -6,7 +6,17 @@
 import UIKit
 import Combine
 
-final class ILForgotPasswordViewController: BaseViewController {
+final class ILForgotPasswordViewController: BaseViewController, TransitionProviding {
+
+    // Same slide as the default used for view controllers that don't conform to `TransitionProviding`.
+    var pushTransition: NavigationTransitionAnimating? {
+        SlideTransition(direction: .rightToLeft)
+    }
+
+    /// Blocks the edge swipe-back while the reset request is in flight.
+    var isSwipeBackEnabled: Bool { !isSubmitting }
+
+    private var isSubmitting = false
 
     // MARK: - Properties
     private let viewModel: ILForgotPasswordViewModel
@@ -256,10 +266,20 @@ final class ILForgotPasswordViewController: BaseViewController {
         phoneField.isValid = model.isPhoneValid
 
         submitButton.buttonState = model.isSubmitting ? .loading : (model.isSubmitEnabled ? .normal : .disabled)
+        setInteractionLocked(model.isSubmitting)
 
         if let submitError = model.submitError {
             showError(submitError)
         }
+    }
+
+    /// Locks back, phone field and bottom actions while submitting, so the user cannot leave the
+    /// screen or alter the request mid-flight.
+    private func setInteractionLocked(_ locked: Bool) {
+        isSubmitting = locked
+        headerView.isUserInteractionEnabled = !locked
+        scrollView.isUserInteractionEnabled = !locked
+        bottomStack.isUserInteractionEnabled = !locked
     }
 
     // MARK: - Actions

@@ -43,6 +43,9 @@ final class ILArticleCoordinator: Coordinator {
                     // TODO: mở modal chia sẻ câu kinh (màn `share` chưa build — xem README design
                     // handoff, "chia sẻ câu kinh (3 kiểu thiệp)").
                     break
+                case .openURL(let urlString):
+                    guard let url = URL(string: urlString) else { return }
+                    UIApplication.shared.open(url)
                 }
             }
             .store(in: &cancellables)

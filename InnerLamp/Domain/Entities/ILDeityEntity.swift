@@ -5,12 +5,13 @@
 
 import Foundation
 
-/// Loại của một vị trong thư viện "Phật & Bồ Tát" — khớp cột `type` (BUDDHA / BODHISATTVA)
+/// Loại của một vị trong thư viện "Phật & Bồ Tát" — khớp cột `type` (BUDDHA / BODHISATTVA / DEVA)
 /// trong `Docs/Assert/Data/phat_botat.json`. Domain không import UIKit nên `ViewController`
 /// map sang tông màu hiển thị (`ILColors.Tone`) khi cần.
-enum ILDeityKind: Equatable {
+nonisolated enum ILDeityKind: Equatable {
     case buddha
     case bodhisattva
+    case deva
 }
 
 /// 1 ngày vía / lễ kỷ niệm theo âm lịch của một vị Phật / Bồ Tát — nội dung catalog.
@@ -58,6 +59,8 @@ struct ILDeityEntity: Equatable, Identifiable {
     let biographySummary: String
     let greatVows: [String]
     let mantra: ILDeityMantraEntity
+    /// Server image URL of the statue (nil for the bundled/offline catalog) — hero background.
+    var imageURL: String? = nil
 }
 
 /// Lần tới (theo dương lịch) của một ngày vía — kết quả tính của `ILDeityUseCase`, dùng cho thẻ

@@ -103,6 +103,39 @@ final class ILBuddhistEventRepositoryTests: XCTestCase {
         XCTAssertEqual(kathina.tradition, .theravada)
     }
 
+    // MARK: - Category
+
+    func test_loadTemplates_classifiesEveryTemplate() async throws {
+        let templates = try await repository.loadTemplates()
+        let category = Dictionary(uniqueKeysWithValues: templates.map { ($0.id, $0.category) })
+
+        for id in ["phat-dan", "vu-lan", "vesak", "thanh-dao", "phat-nhap-niet-ban", "ram-thang-gieng",
+                   "quan-am-dan-sinh", "quan-am-thanh-dao", "quan-am-xuat-gia"] {
+            XCTAssertEqual(category[id], .major, id)
+        }
+        for id in ["tet-nguyen-dan", "han-thuc", "doan-ngo", "trung-thu", "trung-cuu", "ha-nguyen", "ong-cong-ong-tao"] {
+            XCTAssertEqual(category[id], .folk, id)
+        }
+        for id in ["di-lac", "dia-tang", "a-di-da", "magha-puja", "kathina"] {
+            XCTAssertEqual(category[id], .commemoration, id)
+        }
+        XCTAssertEqual(Set(category.values), Set(ILBuddhistEventCategory.allCases))
+    }
+
+    func test_seeding_correctsCategoryOfExistingRows() async throws {
+        _ = try await repository.loadTemplates()
+        // Simulate a store migrated from a model without `category` (every row gets the default).
+        try await stack.performBackgroundTask { context in
+            let request = NSFetchRequest<ILBuddhistEventTemplateMO>(entityName: ILBuddhistEventTemplateMO.entityName)
+            try context.fetch(request).forEach { $0.category = ILBuddhistEventCategory.commemoration.rawValue }
+        }
+
+        let templates = try await repository.loadTemplates()
+
+        XCTAssertEqual(templates.first { $0.id == "vu-lan" }?.category, .major)
+        XCTAssertEqual(templates.first { $0.id == "trung-thu" }?.category, .folk)
+    }
+
     // MARK: - Helpers
 
     /// Counts rows through the stack rather than the repository, so a bug that duplicated rows

@@ -15,7 +15,6 @@ final class ILFestivalsViewModelTests: XCTestCase {
 
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
     private var tabSelectedSubject: PassthroughSubject<ILFestivalsTab, Never>!
-    private var hostTappedSubject: PassthroughSubject<String, Never>!
     private var backTappedSubject: PassthroughSubject<Void, Never>!
 
     override func setUp() {
@@ -27,7 +26,6 @@ final class ILFestivalsViewModelTests: XCTestCase {
 
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
         tabSelectedSubject = PassthroughSubject<ILFestivalsTab, Never>()
-        hostTappedSubject = PassthroughSubject<String, Never>()
         backTappedSubject = PassthroughSubject<Void, Never>()
     }
 
@@ -35,7 +33,6 @@ final class ILFestivalsViewModelTests: XCTestCase {
         cancellables = nil
         viewDidLoadSubject = nil
         tabSelectedSubject = nil
-        hostTappedSubject = nil
         backTappedSubject = nil
         sut = nil
         mockUseCase = nil
@@ -46,7 +43,6 @@ final class ILFestivalsViewModelTests: XCTestCase {
         ILFestivalsViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             tabSelected: tabSelectedSubject.eraseToAnyPublisher(),
-            hostTapped: hostTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher()
         )
     }
@@ -61,17 +57,16 @@ final class ILFestivalsViewModelTests: XCTestCase {
             label: "Tháng 9, 2026",
             days: [
                 ILFestivalDayEntity(
-                    id: "2026-09-15", date: stubDate, title: "Đại lễ Phật Đản", kind: .major,
-                    daysUntil: 0,
-                    hostTempleIDs: ["tp-tuquang", "tp-motcot", "tp-tranquoc", "tp-huong"]
+                    id: "2026-09-15", date: stubDate, title: "Đại lễ Phật Đản", kind: .festival,
+                    daysUntil: 0
                 ),
                 ILFestivalDayEntity(
                     id: "2026-09-16", date: stubDate, title: "Vía Văn Thù Bồ Tát", kind: .festival,
-                    daysUntil: 2, hostTempleIDs: ["tp-tuquang", "tp-motcot"]
+                    daysUntil: 2
                 ),
                 ILFestivalDayEntity(
                     id: "2026-09-17", date: stubDate, title: "Rằm tháng Tám — ngày trai giới",
-                    kind: .observance, daysUntil: 3, hostTempleIDs: ["tp-tuquang"]
+                    kind: .observance, daysUntil: 3
                 )
             ]
         )
@@ -125,9 +120,7 @@ final class ILFestivalsViewModelTests: XCTestCase {
         XCTAssertEqual(day?.isFestival, true)
         XCTAssertEqual(day?.isToday, true)
         XCTAssertEqual(day?.countdownText, "festivals.item.countdown.today".localized)
-        // 4 chùa tổ chức → 3 chip + "+1 chùa".
-        XCTAssertEqual(day?.hosts.first?.name, "home.temple.tuquang.name".localized)
-        XCTAssertEqual(day?.moreHostsText, String(format: "festivals.item.moreHostsFormat".localized, 1))
+        XCTAssertFalse(day?.lunarSubtitle.isEmpty ?? true)
     }
 
     func test_tabSelected_festivals_filtersOutObservances() {
@@ -161,7 +154,7 @@ final class ILFestivalsViewModelTests: XCTestCase {
                 days: [
                     ILFestivalDayEntity(
                         id: "2026-09-17", date: Self.stubDate, title: "Rằm tháng Tám — ngày trai giới",
-                        kind: .observance, daysUntil: 3, hostTempleIDs: ["tp-tuquang"]
+                        kind: .observance, daysUntil: 3
                     )
                 ]
             )
@@ -175,18 +168,6 @@ final class ILFestivalsViewModelTests: XCTestCase {
 
         XCTAssertEqual(receivedState?.months.isEmpty, true)
         XCTAssertEqual(receivedState?.subtitle, String(format: "festivals.header.subtitleFormat".localized, 0))
-    }
-
-    func test_hostTapped_firesOpenTempleNavigationEvent() {
-        _ = sut.transform(input: makeInput())
-        var receivedEvent: ILFestivalsNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
-
-        hostTappedSubject.send("tp-motcot")
-
-        XCTAssertEqual(receivedEvent, .openTemple(id: "tp-motcot"))
     }
 
     func test_backTapped_firesGoBackNavigationEvent() {

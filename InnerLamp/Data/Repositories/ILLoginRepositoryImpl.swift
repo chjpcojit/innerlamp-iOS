@@ -24,7 +24,8 @@ nonisolated final class ILLoginRepositoryImpl: ILLoginRepository {
     }
 
     func login(_ entity: ILLoginEntity) async throws -> ILAuthSessionEntity {
-        let request = ILLoginMapper.toDTO(entity, device: Self.currentDevice())
+        let device = Self.currentDevice()
+        let request = ILLoginMapper.toDTO(entity, device: device)
 
         do {
             let response = try await networkService.request(
@@ -39,6 +40,7 @@ nonisolated final class ILLoginRepositoryImpl: ILLoginRepository {
 
     /// Builds the `device` object the contract requires (`platform` + `device_model` at minimum).
     /// `os_version`/`app_version` are sent best-effort; the contract marks them optional.
+    @MainActor
     private static func currentDevice() -> ILLoginDeviceDTO {
         #if canImport(UIKit)
         let deviceModel = UIDevice.current.model

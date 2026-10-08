@@ -25,11 +25,16 @@ protocol ILDeityViewModelProtocol: ViewModelType {
     var navigationEventPublisher: AnyPublisher<ILDeityNavEvent, Never> { get }
 }
 
+/// Buddha / Bodhisattva detail screen. On `viewDidLoad` the profile is fetched from the server
+/// (`ILDeityUseCase.loadDeity(id:)` → `GET /v1/deities/{id}`): the state goes `.loading` →
+/// `.success` (or `.failure`, from which `retryTapped` loads again).
 final class ILDeityViewModel: ILDeityViewModelProtocol {
 
     // MARK: - Input / Output
     struct Input {
         let viewDidLoad: AnyPublisher<Void, Never>
+        /// "Thử lại" on the error state — loads the profile again.
+        let retryTapped: AnyPublisher<Void, Never>
         let backTapped: AnyPublisher<Void, Never>
         let biographyToggled: AnyPublisher<Void, Never>
         let vowsToggled: AnyPublisher<Void, Never>
@@ -43,6 +48,8 @@ final class ILDeityViewModel: ILDeityViewModelProtocol {
     }
 
     struct Output {
+        /// Whole-screen state: `.loading` while fetching, `.failure` when the profile could not
+        /// be loaded (the screen shows an error + retry).
         let state: AnyPublisher<ViewState<ILDeityStateModel>, Never>
     }
 
@@ -55,11 +62,13 @@ final class ILDeityViewModel: ILDeityViewModelProtocol {
     static let collapsedVowLimit = 5
 
     private let navigationEventSubject = PassthroughSubject<ILDeityNavEvent, Never>()
-    private let stateSubject: CurrentValueSubject<ViewState<ILDeityStateModel>, Never>
+    private let stateSubject = CurrentValueSubject<ViewState<ILDeityStateModel>, Never>(.idle)
     private let useCase: ILDeityUseCase
     private let deityID: String
-    private var entity: ILDeityEntity
-    private var currentState: ILDeityStateModel
+    /// `nil` until the first successful load.
+    private var entity: ILDeityEntity?
+    private var currentState = ILDeityStateModel.initial
+    private var loadTask: Task<Void, Never>?
     private var isBiographyExpanded = false
     private var areVowsExpanded = false
     private var cancellables = Set<AnyCancellable>()
@@ -68,23 +77,16 @@ final class ILDeityViewModel: ILDeityViewModelProtocol {
     init(useCase: ILDeityUseCase, deityID: String) {
         self.useCase = useCase
         self.deityID = deityID
-        let initialEntity = useCase.getInitialState(deityID: deityID)
-        self.entity = initialEntity
-        let initialState = Self.makeStateModel(
-            from: initialEntity,
-            upcoming: useCase.upcomingMemorialDay(for: initialEntity),
-            sutras: useCase.relatedSutras(for: initialEntity),
-            isBiographyExpanded: false,
-            areVowsExpanded: false
-        )
-        self.currentState = initialState
-        self.stateSubject = CurrentValueSubject(.success(initialState))
     }
 
     // MARK: - Transform
     func transform(input: Input) -> Output {
         input.viewDidLoad
-            .sink { [weak self] _ in self?.handleViewDidLoad() }
+            .sink { [weak self] _ in self?.loadDeity() }
+            .store(in: &cancellables)
+
+        input.retryTapped
+            .sink { [weak self] _ in self?.loadDeity() }
             .store(in: &cancellables)
 
         input.backTapped
@@ -142,12 +144,29 @@ final class ILDeityViewModel: ILDeityViewModelProtocol {
     }
 
     // MARK: - Actions
-    private func handleViewDidLoad() {
-        entity = useCase.getInitialState(deityID: deityID)
-        publishState()
+    /// Fetches the profile. `self` is not held across the network call, so popping the screen
+    /// mid-load releases the ViewModel; a superseded load is cancelled and its result dropped.
+    private func loadDeity() {
+        loadTask?.cancel()
+        stateSubject.send(.loading)
+
+        let useCase = useCase
+        let deityID = deityID
+        loadTask = Task { [weak self] in
+            do {
+                let entity = try await useCase.loadDeity(id: deityID)
+                guard !Task.isCancelled, let self else { return }
+                self.entity = entity
+                publishState()
+            } catch {
+                guard !Task.isCancelled, let self else { return }
+                stateSubject.send(.failure(error))
+            }
+        }
     }
 
     private func publishState() {
+        guard let entity else { return }
         currentState = Self.makeStateModel(
             from: entity,
             upcoming: useCase.upcomingMemorialDay(for: entity),
@@ -174,15 +193,14 @@ final class ILDeityViewModel: ILDeityViewModelProtocol {
         state.headerTitle = entity.nameVi
 
         state.kind = entity.kind
-        state.kindLabel = entity.kind == .buddha
-            ? "deity.kind.buddha".localized
-            : "deity.kind.bodhisattva".localized
+        state.kindLabel = ILDeitiesViewModel.kindLabel(for: entity.kind)
         state.realmLabel = entity.pureLand
         state.name = entity.nameVi
         state.sanskritName = entity.nameSanskrit
         state.watermark = entity.nameChinese
+        state.imageURL = entity.imageURL
 
-        state.memorialDay = upcoming.map(makeMemorialDayModel)
+        state.memorialDay = upcoming.map { makeMemorialDayModel($0) }
         state.festivalsLinkTitle = "deity.memorial.festivals".localized
         state.roleText = entity.coreVirtue
 

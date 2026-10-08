@@ -46,7 +46,42 @@ nonisolated enum ILDeityMapper {
                 shortSinoVietnamese: dto.mantras.shortMantraSinoVietnamese,
                 dharaniName: dto.mantras.longDharaniName,
                 dharaniSnippet: dto.mantras.dharaniPhoneticSnippet
-            )
+            ),
+            imageURL: dto.imageUrl
+        )
+    }
+
+    /// A `DeitySummary` row of the remote catalog (`/v1/deities/top`, `/v1/deities`).
+    static func toDomain(_ dto: ILDeitySummaryDTO) -> ILDeitySummaryEntity {
+        ILDeitySummaryEntity(
+            id: dto.id,
+            kind: toDomain(dto.type),
+            nameVi: dto.nameVi,
+            nameSanskrit: dto.nameSanskrit,
+            nameChinese: dto.nameChinese,
+            titleHonorific: dto.titleHonorific,
+            thumbnailURL: dto.thumbnailUrl,
+            imageURL: dto.imageUrl,
+            coreVirtue: dto.coreVirtue,
+            pureLand: dto.pureLand
+        )
+    }
+
+    /// The summary part of a `DeityDetail` — used to refresh the cached row when a detail is fetched.
+    static func summary(of dto: ILDeityDTO) -> ILDeitySummaryDTO {
+        ILDeitySummaryDTO(
+            id: dto.id,
+            type: dto.type,
+            nameVi: dto.nameVi,
+            nameSanskrit: dto.nameSanskrit,
+            nameChinese: dto.nameChinese,
+            titleHonorific: dto.titleHonorific,
+            // Always present on the server's DeityDetail; optional only because the bundled
+            // catalog file may omit them.
+            thumbnailUrl: dto.thumbnailUrl ?? "",
+            imageUrl: dto.imageUrl ?? "",
+            coreVirtue: dto.coreVirtue,
+            pureLand: dto.pureLand
         )
     }
 
@@ -54,6 +89,7 @@ nonisolated enum ILDeityMapper {
         switch type {
         case .buddha: return .buddha
         case .bodhisattva: return .bodhisattva
+        case .deva: return .deva
         }
     }
 }

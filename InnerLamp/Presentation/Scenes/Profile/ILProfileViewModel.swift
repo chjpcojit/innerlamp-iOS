@@ -16,6 +16,7 @@ enum ILProfileNavEvent: Equatable {
     case openReminder
     case openSettings
     case openNotifications
+    case openFamilyTree
     case openCommunity(id: String)
 }
 
@@ -38,6 +39,7 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
         let reminderTapped: AnyPublisher<Void, Never>
         let settingsTapped: AnyPublisher<Void, Never>
         let notificationsTapped: AnyPublisher<Void, Never>
+        let familyTreeTapped: AnyPublisher<Void, Never>
         let communityTapped: AnyPublisher<Void, Never>
     }
 
@@ -110,6 +112,10 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
 
         input.notificationsTapped
             .sink { [weak self] _ in self?.navigationEventSubject.send(.openNotifications) }
+            .store(in: &cancellables)
+
+        input.familyTreeTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openFamilyTree) }
             .store(in: &cancellables)
 
         input.communityTapped

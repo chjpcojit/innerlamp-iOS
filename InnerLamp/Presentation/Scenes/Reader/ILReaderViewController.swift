@@ -8,53 +8,51 @@ import Combine
 
 final class ILReaderViewController: BaseViewController {
 
+    // MARK: - Constants
+    private static let contentHorizontalInset: CGFloat = 22
+    /// The current line settles at 38% of the visible list height (design `clientHeight * 0.38`).
+    private static let scrollAnchorRatio: CGFloat = 0.38
+    /// Extra scrollable space below the last line (design `padding-bottom: 40vh`).
+    private static let bottomInsetRatio: CGFloat = 0.4
+    private static let estimatedRowHeight: CGFloat = 44
+
     // MARK: - Properties
     private let viewModel: ILReaderViewModel
     private var cancellables = Set<AnyCancellable>()
+    private var state = ILReaderStateModel.initial
+    private var hasRenderedState = false
+
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
     private let backTappedSubject = PassthroughSubject<Void, Never>()
-    private let fontSizeTappedSubject = PassthroughSubject<Void, Never>()
-    private let shareTappedSubject = PassthroughSubject<Void, Never>()
-    private let downloadTappedSubject = PassthroughSubject<Void, Never>()
+    private let settingsTappedSubject = PassthroughSubject<Void, Never>()
+    private let autoScrollToggledSubject = PassthroughSubject<Void, Never>()
+    private let contentTappedSubject = PassthroughSubject<Void, Never>()
     private let playPauseTappedSubject = PassthroughSubject<Void, Never>()
-    private let speedTappedSubject = PassthroughSubject<Void, Never>()
+    private let seekBackTappedSubject = PassthroughSubject<Void, Never>()
+    private let seekForwardTappedSubject = PassthroughSubject<Void, Never>()
+    private let speedSelectedSubject = PassthroughSubject<Double, Never>()
+    private let fontSizeSelectedSubject = PassthroughSubject<Int, Never>()
+    private let themeSelectedSubject = PassthroughSubject<Int, Never>()
 
     // MARK: - UI Elements
     private let headerContainer = UIView()
-
+    private let headerBorder = UIView()
     private lazy var headerView = ILNavBar(showBack: true)
-
-    private lazy var headerDivider: UIView = {
-        let divider = UIView()
-        divider.backgroundColor = ILColors.border
-        return divider
-    }()
-
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
-
-    private let readingProgressBar = ILLinearProgressBarView()
-
-    private let verseView = ILReaderVerseView()
-
-    private lazy var shareChip = ILChip(label: "")
-    private lazy var downloadChip = ILChip(label: "")
-
-    private lazy var chipsStack: UIStackView = {
-        let stack = UIStackView(arrangedSubviews: [shareChip, downloadChip])
-        stack.axis = .horizontal
-        stack.spacing = ILMetrics.spaceSmall
-        stack.alignment = .leading
+    private let autoScrollRow = ILReaderAutoScrollRowView()
+    private let settingsPanel = ILReaderSettingsPanelView()
+    private lazy var headerStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [headerView, autoScrollRow, settingsPanel])
+        stack.axis = .vertical
+        stack.spacing = 10
+        stack.setCustomSpacing(12, after: autoScrollRow)
         return stack
     }()
 
-    private lazy var nextVerseLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 0
-        return label
-    }()
-
-    private let playbackBar = ILReaderPlaybackBarView()
+    private let tableView = UITableView(frame: .zero, style: .plain)
+    private let legendFooter = UIView()
+    private let legendBellLabel = UILabel()
+    private let legendKnockLabel = UILabel()
+    private let controlsView = ILReaderControlsView()
 
     // MARK: - Initializer
     init(viewModel: ILReaderViewModel) {
@@ -71,51 +69,82 @@ final class ILReaderViewController: BaseViewController {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
         (tabBarController as? ILMainTabBarController)?.setBottomNavHidden(true, animated: animated)
+        // "Màn hình luôn sáng" — keep the screen on while chanting.
+        UIApplication.shared.isIdleTimerDisabled = true
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         (tabBarController as? ILMainTabBarController)?.setBottomNavHidden(false, animated: animated)
+        UIApplication.shared.isIdleTimerDisabled = false
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let bottomInset = tableView.bounds.height * Self.bottomInsetRatio
+        if tableView.contentInset.bottom != bottomInset {
+            tableView.contentInset.bottom = bottomInset
+        }
     }
 
     // MARK: - Setup
     override func setupViews() {
         super.setupViews()
-        view.backgroundColor = ILColors.canvasWarm
 
         headerView.onBack = { [weak self] in self?.backTappedSubject.send(()) }
-        headerView.onAction = { [weak self] in self?.fontSizeTappedSubject.send(()) }
+        headerView.onAction = { [weak self] in self?.settingsTappedSubject.send(()) }
+        autoScrollRow.onToggle = { [weak self] in self?.autoScrollToggledSubject.send(()) }
+        settingsPanel.onFontSizeSelect = { [weak self] index in self?.fontSizeSelectedSubject.send(index) }
+        settingsPanel.onThemeSelect = { [weak self] index in self?.themeSelectedSubject.send(index) }
 
-        headerContainer.addSubview(headerView)
-        headerContainer.addSubview(headerDivider)
+        controlsView.onPlayPauseTap = { [weak self] in self?.playPauseTappedSubject.send(()) }
+        controlsView.onSeekBackTap = { [weak self] in self?.seekBackTappedSubject.send(()) }
+        controlsView.onSeekForwardTap = { [weak self] in self?.seekForwardTappedSubject.send(()) }
+        controlsView.onSpeedSelect = { [weak self] speed in self?.speedSelectedSubject.send(speed) }
 
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = true
+        tableView.backgroundColor = .clear
+        tableView.separatorStyle = .none
+        tableView.showsVerticalScrollIndicator = false
+        tableView.allowsSelection = false
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = Self.estimatedRowHeight
+        tableView.tableHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: ILMetrics.screenHorizontal))
+        tableView.dataSource = self
+        tableView.register(ILReaderLineCell.self, forCellReuseIdentifier: ILReaderLineCell.reuseIdentifier)
+        tableView.register(ILReaderHeadingCell.self, forCellReuseIdentifier: ILReaderHeadingCell.reuseIdentifier)
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleContentTap))
+        tap.cancelsTouchesInView = false
+        tableView.addGestureRecognizer(tap)
+        setupLegendFooter()
 
-        shareChip.onTap = { [weak self] in self?.shareTappedSubject.send(()) }
-        downloadChip.onTap = { [weak self] in self?.downloadTappedSubject.send(()) }
-
-        playbackBar.onPlayPauseTap = { [weak self] in self?.playPauseTappedSubject.send(()) }
-        playbackBar.onSpeedTap = { [weak self] in self?.speedTappedSubject.send(()) }
-
-        scrollView.addSubview(contentView)
-
-        [
-            readingProgressBar, verseView, chipsStack, nextVerseLabel
-        ].forEach { contentView.addSubview($0) }
-
+        headerContainer.addSubview(headerStack)
+        headerContainer.addSubview(headerBorder)
+        view.addSubview(tableView)
         view.addSubview(headerContainer)
-        view.addSubview(scrollView)
-        view.addSubview(playbackBar)
+        view.addSubview(controlsView)
+    }
+
+    private func setupLegendFooter() {
+        legendBellLabel.font = ILTypography.label
+        legendKnockLabel.font = ILTypography.label
+        let stack = UIStackView(arrangedSubviews: [legendBellLabel, legendKnockLabel])
+        stack.axis = .horizontal
+        stack.spacing = 14
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        legendFooter.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.centerXAnchor.constraint(equalTo: legendFooter.centerXAnchor),
+            stack.topAnchor.constraint(equalTo: legendFooter.topAnchor, constant: 26)
+        ])
+        legendFooter.frame = CGRect(x: 0, y: 0, width: 0, height: 26 + 16)
+        tableView.tableFooterView = legendFooter
     }
 
     override func setupConstraints() {
         super.setupConstraints()
-        [
-            headerContainer, headerView, headerDivider, scrollView, contentView,
-            readingProgressBar, verseView, chipsStack, nextVerseLabel, playbackBar
-        ].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
-
+        [headerContainer, headerStack, headerBorder, tableView, controlsView].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
         let horizontal = ILMetrics.screenHorizontal
 
         NSLayoutConstraint.activate([
@@ -123,47 +152,24 @@ final class ILReaderViewController: BaseViewController {
             headerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             headerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
-            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: ILMetrics.spaceSmall / 2),
-            headerView.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: horizontal),
-            headerView.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -horizontal),
+            headerStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: ILMetrics.spaceSmall / 2),
+            headerStack.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: horizontal),
+            headerStack.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -horizontal),
+            headerStack.bottomAnchor.constraint(equalTo: headerBorder.topAnchor, constant: -ILMetrics.rowSpacing),
 
-            headerDivider.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: ILMetrics.rowSpacing),
-            headerDivider.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor),
-            headerDivider.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor),
-            headerDivider.heightAnchor.constraint(equalToConstant: 1),
-            headerDivider.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor),
+            headerBorder.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor),
+            headerBorder.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor),
+            headerBorder.heightAnchor.constraint(equalToConstant: 1),
+            headerBorder.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor),
 
-            scrollView.topAnchor.constraint(equalTo: headerContainer.bottomAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: playbackBar.topAnchor),
+            tableView.topAnchor.constraint(equalTo: headerContainer.bottomAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Self.contentHorizontalInset),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Self.contentHorizontalInset),
+            tableView.bottomAnchor.constraint(equalTo: controlsView.topAnchor),
 
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: horizontal),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -horizontal),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -horizontal * 2),
-
-            readingProgressBar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: ILMetrics.spaceStandard),
-            readingProgressBar.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            readingProgressBar.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-
-            verseView.topAnchor.constraint(equalTo: readingProgressBar.bottomAnchor, constant: ILMetrics.spaceLarge),
-            verseView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            verseView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-
-            chipsStack.topAnchor.constraint(equalTo: verseView.bottomAnchor, constant: ILMetrics.spaceStandard),
-            chipsStack.leadingAnchor.constraint(equalTo: verseView.leadingAnchor),
-            chipsStack.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor),
-
-            nextVerseLabel.topAnchor.constraint(equalTo: chipsStack.bottomAnchor, constant: 26),
-            nextVerseLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            nextVerseLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            nextVerseLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -ILMetrics.spaceLarge),
-
-            playbackBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: horizontal),
-            playbackBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -horizontal),
-            playbackBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -ILMetrics.spaceMedium)
+            controlsView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            controlsView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            controlsView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
 
@@ -173,11 +179,15 @@ final class ILReaderViewController: BaseViewController {
         let input = ILReaderViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
-            fontSizeTapped: fontSizeTappedSubject.eraseToAnyPublisher(),
-            shareTapped: shareTappedSubject.eraseToAnyPublisher(),
-            downloadTapped: downloadTappedSubject.eraseToAnyPublisher(),
+            settingsTapped: settingsTappedSubject.eraseToAnyPublisher(),
+            autoScrollToggled: autoScrollToggledSubject.eraseToAnyPublisher(),
+            contentTapped: contentTappedSubject.eraseToAnyPublisher(),
             playPauseTapped: playPauseTappedSubject.eraseToAnyPublisher(),
-            speedTapped: speedTappedSubject.eraseToAnyPublisher()
+            seekBackTapped: seekBackTappedSubject.eraseToAnyPublisher(),
+            seekForwardTapped: seekForwardTappedSubject.eraseToAnyPublisher(),
+            speedSelected: speedSelectedSubject.eraseToAnyPublisher(),
+            fontSizeSelected: fontSizeSelectedSubject.eraseToAnyPublisher(),
+            themeSelected: themeSelectedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
 
@@ -188,6 +198,10 @@ final class ILReaderViewController: BaseViewController {
             .store(in: &cancellables)
 
         viewDidLoadSubject.send(())
+    }
+
+    @objc private func handleContentTap() {
+        contentTappedSubject.send(())
     }
 
     // MARK: - Render
@@ -203,31 +217,115 @@ final class ILReaderViewController: BaseViewController {
     }
 
     private func updateUI(with model: ILReaderStateModel) {
+        let previous = state
+        let isFirstRender = !hasRenderedState
+        state = model
+        hasRenderedState = true
+
+        let palette = ILReaderPalette.palette(forThemeIndex: model.themeIndex)
+        overrideUserInterfaceStyle = palette.interfaceStyle
+        view.backgroundColor = palette.background
+        headerContainer.backgroundColor = palette.background
+        headerBorder.backgroundColor = palette.line
+        legendBellLabel.text = model.legendBellText
+        legendKnockLabel.text = model.legendKnockText
+        legendBellLabel.textColor = palette.subtle
+        legendKnockLabel.textColor = palette.subtle
+
         headerView.title = model.title
-        headerView.subtitle = model.subtitle
+        headerView.subtitle = model.statusText
         headerView.rightActionTitle = model.fontSizeActionTitle
+        autoScrollRow.configure(with: model, palette: palette)
+        settingsPanel.configure(with: model, palette: palette)
+        setSettingsPanelVisible(model.isSettingsVisible, animated: !isFirstRender)
+        controlsView.configure(with: model, palette: palette)
 
-        readingProgressBar.progress = model.readingProgress
+        let needsReload = isFirstRender
+            || previous.themeIndex != model.themeIndex
+            || previous.fontSizeIndex != model.fontSizeIndex
+            || rowTexts(of: previous.rows) != rowTexts(of: model.rows)
+        if needsReload {
+            tableView.reloadData()
+        } else {
+            refreshChangedRows(from: previous.rows, to: model.rows, palette: palette)
+        }
 
-        verseView.verseText = model.verseText
-        verseView.translationText = model.translationText
+        if !isFirstRender,
+           model.isAutoScrollEnabled,
+           let row = model.currentRowIndex,
+           row != previous.currentRowIndex {
+            scrollToRow(row)
+        }
+    }
 
-        shareChip.label = model.shareChipTitle
-        downloadChip.label = model.downloadChipTitle
+    private func setSettingsPanelVisible(_ isVisible: Bool, animated: Bool) {
+        guard settingsPanel.isHidden == isVisible else { return }
+        let changes = {
+            self.settingsPanel.isHidden = !isVisible
+            self.settingsPanel.alpha = isVisible ? 1 : 0
+            self.view.layoutIfNeeded()
+        }
+        if animated {
+            UIView.animate(withDuration: 0.2, animations: changes)
+        } else {
+            changes()
+        }
+    }
 
-        nextVerseLabel.attributedText = model.nextVerseText.isEmpty
-            ? nil
-            : ILTypography.makeParagraph(
-                text: model.nextVerseText,
-                font: ILTypography.scriptureBodyLarge,
-                color: ILColors.inkSubtle,
-                cssLineHeight: 1.6
-            )
+    /// Visible text of each row — a change means the list structure differs and cells must reload.
+    private func rowTexts(of rows: [ILReaderRowState]) -> [String] {
+        rows.map { row in
+            switch row {
+            case .heading(let title): return title
+            case .line(let line): return line.text + "\u{0}" + line.gloss + "\u{0}" + line.cueGlyph
+            }
+        }
+    }
 
-        playbackBar.nowPlayingText = model.nowPlayingText
-        playbackBar.elapsedText = model.elapsedText
-        playbackBar.progress = model.playbackProgress
-        playbackBar.speedText = model.speedText
-        playbackBar.isPlaying = model.isPlaying
+    /// Same structure, only the highlight moved: restyle the affected visible cells with a cross-fade.
+    private func refreshChangedRows(from old: [ILReaderRowState], to new: [ILReaderRowState], palette: ILReaderPalette) {
+        for (index, (oldRow, newRow)) in zip(old, new).enumerated() where oldRow != newRow {
+            guard case .line(let line) = newRow,
+                  let cell = tableView.cellForRow(at: IndexPath(row: index, section: 0)) as? ILReaderLineCell else {
+                continue
+            }
+            cell.configure(with: line, fontSizeIndex: state.fontSizeIndex, palette: palette, animated: true)
+        }
+    }
+
+    private func scrollToRow(_ row: Int) {
+        let indexPath = IndexPath(row: row, section: 0)
+        guard row < tableView.numberOfRows(inSection: 0) else { return }
+        let rowRect = tableView.rectForRow(at: indexPath)
+        let targetY = rowRect.minY - tableView.bounds.height * Self.scrollAnchorRatio
+        let minY = -tableView.adjustedContentInset.top
+        let maxY = max(minY, tableView.contentSize.height - tableView.bounds.height + tableView.adjustedContentInset.bottom)
+        tableView.setContentOffset(CGPoint(x: 0, y: min(max(targetY, minY), maxY)), animated: true)
+    }
+}
+
+// MARK: - UITableViewDataSource
+extension ILReaderViewController: UITableViewDataSource {
+
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        state.rows.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let palette = ILReaderPalette.palette(forThemeIndex: state.themeIndex)
+        switch state.rows[indexPath.row] {
+        case .heading(let title):
+            let cell = tableView.dequeueReusableCell(
+                withIdentifier: ILReaderHeadingCell.reuseIdentifier, for: indexPath
+            ) as? ILReaderHeadingCell ?? ILReaderHeadingCell(style: .default, reuseIdentifier: nil)
+            cell.configure(title: title, palette: palette)
+            return cell
+        case .line(let line):
+            let cell = tableView.dequeueReusableCell(
+                withIdentifier: ILReaderLineCell.reuseIdentifier, for: indexPath
+            ) as? ILReaderLineCell ?? ILReaderLineCell(style: .default, reuseIdentifier: nil)
+            cell.configure(with: line, fontSizeIndex: state.fontSizeIndex, palette: palette, animated: false)
+            return cell
+        }
     }
 }

@@ -35,6 +35,7 @@ final class ILAlertTests: XCTestCase {
 
     func test_autoDismissDelay_onlyToastAndSnackbarSelfDismiss() {
         XCTAssertEqual(ILAlert.toast(title: "t", message: nil).autoDismissDelay, 3.2)
+        XCTAssertEqual(ILAlert.success(title: "t", message: nil).autoDismissDelay, 3.2)
         XCTAssertEqual(ILAlert.snackbar(message: "m", action: action).autoDismissDelay, 3.2)
         XCTAssertNil(ILAlert.banner(title: "t", message: nil, primary: action, secondary: nil).autoDismissDelay)
         XCTAssertNil(ILAlert.sheet(title: "t", message: "m", errorCode: nil, primary: action, secondary: nil).autoDismissDelay)
@@ -44,6 +45,7 @@ final class ILAlertTests: XCTestCase {
 
     func test_isOverlay_floatingKindsOnly() {
         XCTAssertTrue(ILAlert.toast(title: "t", message: nil).isOverlay)
+        XCTAssertTrue(ILAlert.success(title: "t", message: nil).isOverlay)
         XCTAssertTrue(ILAlert.banner(title: "t", message: nil, primary: action, secondary: nil).isOverlay)
         XCTAssertTrue(ILAlert.snackbar(message: "m", action: nil).isOverlay)
         XCTAssertFalse(ILAlert.sheet(title: "t", message: "m", errorCode: "E1", primary: action, secondary: nil).isOverlay)
@@ -57,6 +59,15 @@ final class ILAlertTests: XCTestCase {
         let sut = ILAlertPresenter()
 
         sut.show(.toast(title: "Offline", message: nil), from: hostViewController)
+
+        XCTAssertEqual(overlays().count, 1)
+        XCTAssertTrue(overlays().first is ILToastView)
+    }
+
+    func test_show_success_addsToastOverlayToWindow() {
+        let sut = ILAlertPresenter()
+
+        sut.show(.success(title: "Saved", message: nil), from: hostViewController)
 
         XCTAssertEqual(overlays().count, 1)
         XCTAssertTrue(overlays().first is ILToastView)

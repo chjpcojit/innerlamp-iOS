@@ -13,23 +13,18 @@ final class ILFestivalsViewController: BaseViewController {
     private var cancellables = Set<AnyCancellable>()
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
     private let tabSelectedSubject = PassthroughSubject<ILFestivalsTab, Never>()
-    private let hostTappedSubject = PassthroughSubject<String, Never>()
     private let backTappedSubject = PassthroughSubject<Void, Never>()
+    private var lastHeaderHeight: CGFloat = 0
+    private var monthSections: [String: UIView] = [:]
+    /// Tháng cần cuộn tới khi mở màn lần đầu; xoá sau khi đã cuộn.
+    private var pendingScrollMonthId: String?
+    private var hasScrolledToCurrentMonth = false
 
     // MARK: - UI Elements
-    private lazy var headerContainer: UIView = {
-        let container = UIView()
-        container.backgroundColor = ILColors.canvas
-        return container
-    }()
+    // Pinned header: sits above the scroll view and blurs in as content scrolls under it.
+    private let headerContainer = ILStickyHeaderBand()
 
     private lazy var headerView = ILNavBar(title: "festivals.header.title".localized)
-
-    private lazy var headerDivider: UIView = {
-        let divider = UIView()
-        divider.backgroundColor = ILColors.borderSoft
-        return divider
-    }()
 
     private lazy var allChip = ILChip(label: "festivals.tab.all".localized)
     private lazy var festivalsChip = ILChip(label: "festivals.tab.major".localized)
@@ -46,6 +41,7 @@ final class ILFestivalsViewController: BaseViewController {
     private lazy var scrollView: UIScrollView = {
         let scroll = UIScrollView()
         scroll.showsVerticalScrollIndicator = false
+        scroll.contentInsetAdjustmentBehavior = .never
         return scroll
     }()
 
@@ -86,6 +82,12 @@ final class ILFestivalsViewController: BaseViewController {
         (tabBarController as? ILMainTabBarController)?.setBottomNavHidden(false, animated: animated)
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateScrollInsetForHeader()
+        scrollToPendingMonthIfNeeded()
+    }
+
     // MARK: - Setup
     override func setupViews() {
         super.setupViews()
@@ -94,12 +96,13 @@ final class ILFestivalsViewController: BaseViewController {
         headerView.onBack = { [weak self] in self?.backTappedSubject.send(()) }
         headerContainer.addSubview(headerView)
         headerContainer.addSubview(chipsRow)
-        headerContainer.addSubview(headerDivider)
 
+        // Scroll view first so the sticky header band stays on top of scrolled content.
         [scrollView, headerContainer].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
+        headerContainer.bind(to: scrollView)
 
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
@@ -120,7 +123,7 @@ final class ILFestivalsViewController: BaseViewController {
 
     override func setupConstraints() {
         super.setupConstraints()
-        [headerView, chipsRow, headerDivider].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
+        [headerView, chipsRow].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
 
         NSLayoutConstraint.activate([
             headerContainer.topAnchor.constraint(equalTo: view.topAnchor),
@@ -135,13 +138,9 @@ final class ILFestivalsViewController: BaseViewController {
             chipsRow.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: ILMetrics.screenHorizontal),
             chipsRow.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -ILMetrics.screenHorizontal),
 
-            headerDivider.topAnchor.constraint(equalTo: chipsRow.bottomAnchor, constant: 12),
-            headerDivider.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor),
-            headerDivider.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor),
-            headerDivider.heightAnchor.constraint(equalToConstant: 1),
-            headerDivider.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor),
+            chipsRow.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: -12),
 
-            scrollView.topAnchor.constraint(equalTo: headerContainer.bottomAnchor),
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -160,7 +159,6 @@ final class ILFestivalsViewController: BaseViewController {
         let input = ILFestivalsViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             tabSelected: tabSelectedSubject.eraseToAnyPublisher(),
-            hostTapped: hostTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
@@ -172,6 +170,18 @@ final class ILFestivalsViewController: BaseViewController {
             .store(in: &cancellables)
 
         viewDidLoadSubject.send(())
+    }
+
+    // MARK: - Pinned header
+    /// Content starts below the pinned header: reserve its height as top inset.
+    private func updateScrollInsetForHeader() {
+        let height = headerContainer.frame.height
+        guard height > 0, height != lastHeaderHeight else { return }
+        let wasAtTop = lastHeaderHeight == 0 || scrollView.contentOffset.y <= -lastHeaderHeight + 0.5
+        lastHeaderHeight = height
+        scrollView.contentInset.top = height
+        scrollView.verticalScrollIndicatorInsets.top = height
+        if wasAtTop { scrollView.contentOffset.y = -height }
     }
 
     // MARK: - Render
@@ -190,6 +200,26 @@ final class ILFestivalsViewController: BaseViewController {
         headerView.subtitle = model.subtitle
         updateSelectedChip(model.selectedTab)
         rebuildMonths(model.months)
+        if !hasScrolledToCurrentMonth {
+            pendingScrollMonthId = model.currentMonthId
+            scrollToPendingMonthIfNeeded()
+        }
+    }
+
+    /// Cuộn để tiêu đề tháng hiện tại nằm ngay dưới header, đúng 1 lần. Chờ tới khi header đã
+    /// có chiều cao (inset đã đặt) và section đã có layout.
+    private func scrollToPendingMonthIfNeeded() {
+        guard let monthId = pendingScrollMonthId, lastHeaderHeight > 0,
+              let section = monthSections[monthId] else { return }
+        view.layoutIfNeeded()
+        guard section.frame.height > 0 else { return }
+        pendingScrollMonthId = nil
+        hasScrolledToCurrentMonth = true
+
+        let sectionTop = scrollView.convert(section.frame, from: contentStack).minY
+        let minOffset = -scrollView.contentInset.top
+        let maxOffset = max(minOffset, scrollView.contentSize.height - scrollView.bounds.height + scrollView.contentInset.bottom)
+        scrollView.contentOffset.y = min(max(sectionTop - scrollView.contentInset.top, minOffset), maxOffset)
     }
 
     private func updateSelectedChip(_ tab: ILFestivalsTab) {
@@ -205,9 +235,12 @@ final class ILFestivalsViewController: BaseViewController {
             contentStack.removeArrangedSubview(subview)
             subview.removeFromSuperview()
         }
+        monthSections = [:]
 
         for month in months {
-            contentStack.addArrangedSubview(makeMonthSection(month))
+            let section = makeMonthSection(month)
+            monthSections[month.id] = section
+            contentStack.addArrangedSubview(section)
         }
     }
 
@@ -227,7 +260,6 @@ final class ILFestivalsViewController: BaseViewController {
         for day in month.days {
             let item = ILFestivalsItemView()
             item.configure(with: day)
-            item.onHostTap = { [weak self] id in self?.hostTappedSubject.send(id) }
             stack.addArrangedSubview(item)
         }
         return stack

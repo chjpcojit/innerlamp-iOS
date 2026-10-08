@@ -6,8 +6,7 @@
 import Foundation
 
 /// Màu (tone) avatar của tác giả — enum thuần Foundation, được map sang `ILColors.Tone` ở tầng
-/// View (khớp cách `ILTempleStateModel` giữ `ILTempleSessionTone` ở Domain, không nhét UIKit token
-/// vào StateModel/ViewModel).
+/// View (không nhét UIKit token vào StateModel/ViewModel).
 enum ILPostAuthorTone: Equatable {
     case gold
     case green

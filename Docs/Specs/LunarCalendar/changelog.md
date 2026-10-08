@@ -4,6 +4,15 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v1.1 (2026-09-30)
+
+- `requirements.md`: resolved the ⚠️ day-30 / 29-day-month question. Added
+  short-month and leap-month rules. Last day of a 29-day month is a fast day;
+  Buddhist event templates on day 30 fire on day 29 of a short month.
+- Code: `ILLunarCalendar.isLastDayOfShortMonth` / `matchesLunarDay` shared by
+  `ILLunarCalendarUseCase`, `ILBuddhistEventUseCase` and `ILDeityUseCase`.
+- Added `assumptions.md` (A1-A3).
+
 ## v1.0 (initial)
 
 - Initial spec written retroactively from the already-implemented LunarCalendar

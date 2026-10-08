@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package innerlamp.grpctest;
+
+// Test-only service (Docs/Specs/GRPC/design.md § "Testing" / requirements.md FR-012). Not a
+// business contract — mirrors the confirmed REST login contract (`POST /v1/auth/login`, see
+// `Data/DataSources/Remote/LoginEndpoint.swift` and `Data/DTOs/ILLoginDTO.swift`) field-for-field,
+// so it can exercise Core/GRPC's full unary flow (auth metadata, deadline, GRPCError mapping,
+// logging) against a request/response shape a real feature would actually send — not just the
+// generic EchoTestService. Exists solely for InnerLampTests; a real `Login` gRPC service is out
+// of scope for this spec (see tasks.md "Deferred").
+service LoginTestService {
+  // Unary: valid credentials return a session; anything else fails with `.unauthenticated`,
+  // mirroring the REST login flow's own failure mode for wrong credentials.
+  rpc Login(LoginRequest) returns (LoginResponse);
+}
+
+// Mirrors ILLoginRequestDTO (Data/DTOs/ILLoginDTO.swift).
+message LoginRequest {
+  string phone_number = 1;
+  string password = 2;
+  LoginDevice device = 3;
+}
+
+// Mirrors ILLoginDeviceDTO.
+message LoginDevice {
+  string platform = 1;
+  string device_model = 2;
+  string os_version = 3;
+  string app_version = 4;
+  string device_name = 5;
+}
+
+// Mirrors ILLoginResponseDTO — the `data` of a successful `POST /v1/auth/login`.
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  LoginUser user = 3;
+}
+
+// Mirrors ILLoginUserDTO.
+message LoginUser {
+  int64 id = 1;
+  string email = 2;
+  string phone_number = 3;
+  string dharma_name = 4;
+  string ordination_place = 5;
+}

@@ -28,16 +28,38 @@ protocol ILHomeUseCase {
     /// (`ILSutraQuoteUseCase.randomQuote()`). Không ném lỗi: catalog rỗng hoặc đọc lỗi thì trả câu
     /// tĩnh mặc định để thẻ không bao giờ trống.
     func loadRandomVerse() async -> ILHomeQuoteEntity
+
+    /// Carousel "Chùa Việt Nam" — the featured temples from `GET /v1/temples/top` (network-first,
+    /// cached copy when offline). Throws `ILCatalogError` when neither is available.
+    func loadTopTemples() async throws -> [ILHomeTempleEntity]
+
+    /// Carousel "Thư viện Phật & Bồ Tát" — the featured deities from `GET /v1/deities/top`
+    /// (network-first, cached copy when offline). Server data only: the summary has no memorial
+    /// days, so `memorialDay` is always `nil` (the card shows the "updating" placeholder). Throws
+    /// `ILCatalogError` when neither the server nor the cache answers.
+    func loadTopDeities() async throws -> [ILHomeDeityEntity]
+
+    /// Section "Bài viết Phật pháp hay" — the featured articles from `GET /v1/articles/top`, in the
+    /// server's curated order (network-only). Throws `ILCatalogError` when the server is unreachable.
+    func loadTopArticles() async throws -> [ILHomeArticleEntity]
+
+    /// Block "Ảnh chùa đẹp" — the featured gallery photos from `GET /v1/gallery/top`, in the
+    /// server's curated order (network-only). Throws `ILCatalogError` when the server is unreachable.
+    func loadTopPhotos() async throws -> [ILHomePhotoEntity]
 }
 
 final class ILHomeUseCaseImpl: ILHomeUseCase {
 
     // TODO: khi có API nội dung/thống kê thật, thay phần mock bên dưới bằng
     // networkService.request(endpoint: HomeDashboardEndpoint(...)) (xem Core/Networking/NetworkService.swift).
+    // Temples + deities already come from the server (`loadTopTemples()` / `loadTopDeities()`).
     private let keychainService: KeychainService
     private let buddhistEventUseCase: ILBuddhistEventUseCase
-    private let deityUseCase: ILDeityUseCase
     private let sutraQuoteUseCase: ILSutraQuoteUseCase
+    private let templeRepository: ILTempleRepository
+    private let deityCatalogRepository: ILDeityCatalogRepository
+    private let articleRepository: ILArticleRepository
+    private let photosRepository: ILPhotosRepository
 
     /// Cùng key/struct với `ILSignUpUseCaseImpl`/`ILLoginUseCaseImpl` — dùng tạm để lấy pháp danh
     /// đã đăng ký cho lời chào, tới khi có phiên đăng nhập thật (session/current-user service).
@@ -54,13 +76,19 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
     init(
         keychainService: KeychainService,
         buddhistEventUseCase: ILBuddhistEventUseCase,
-        deityUseCase: ILDeityUseCase,
-        sutraQuoteUseCase: ILSutraQuoteUseCase
+        sutraQuoteUseCase: ILSutraQuoteUseCase,
+        templeRepository: ILTempleRepository,
+        deityCatalogRepository: ILDeityCatalogRepository,
+        articleRepository: ILArticleRepository,
+        photosRepository: ILPhotosRepository
     ) {
         self.keychainService = keychainService
         self.buddhistEventUseCase = buddhistEventUseCase
-        self.deityUseCase = deityUseCase
         self.sutraQuoteUseCase = sutraQuoteUseCase
+        self.templeRepository = templeRepository
+        self.deityCatalogRepository = deityCatalogRepository
+        self.articleRepository = articleRepository
+        self.photosRepository = photosRepository
     }
 
     func getInitialState() -> ILHomeEntity {
@@ -121,45 +149,13 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
             )
         ]
 
-        // TODO: khi có API ảnh chùa thật, thay danh sách mock dưới đây bằng dữ liệu từ
-        // networkService (gallery "Ảnh chùa đẹp", xem README design handoff).
-        entity.photos = (1...12).map { ILHomePhotoEntity(id: "pg-\($0)") }
-
-        // TODO: khi có API chùa thật, thay danh sách mock dưới đây bằng dữ liệu từ
-        // networkService (danh mục "Chùa Việt Nam", xem README design handoff).
-        entity.temples = [
-            ILHomeTempleEntity(id: "tp-motcot", name: "home.temple.motcot.name".localized, place: "home.temple.motcot.place".localized, region: "home.temple.motcot.region".localized, note: "home.temple.motcot.note".localized),
-            ILHomeTempleEntity(id: "tp-tranquoc", name: "home.temple.tranquoc.name".localized, place: "home.temple.tranquoc.place".localized, region: "home.temple.tranquoc.region".localized, note: "home.temple.tranquoc.note".localized),
-            ILHomeTempleEntity(id: "tp-huong", name: "home.temple.huong.name".localized, place: "home.temple.huong.place".localized, region: "home.temple.huong.region".localized, note: "home.temple.huong.note".localized),
-            ILHomeTempleEntity(id: "tp-baidinh", name: "home.temple.baidinh.name".localized, place: "home.temple.baidinh.place".localized, region: "home.temple.baidinh.region".localized, note: "home.temple.baidinh.note".localized),
-            ILHomeTempleEntity(id: "tp-thienmu", name: "home.temple.thienmu.name".localized, place: "home.temple.thienmu.place".localized, region: "home.temple.thienmu.region".localized, note: "home.temple.thienmu.note".localized),
-            ILHomeTempleEntity(id: "tp-linhung", name: "home.temple.linhung.name".localized, place: "home.temple.linhung.place".localized, region: "home.temple.linhung.region".localized, note: "home.temple.linhung.note".localized),
-            ILHomeTempleEntity(id: "tp-truclam", name: "home.temple.truclam.name".localized, place: "home.temple.truclam.place".localized, region: "home.temple.truclam.region".localized, note: "home.temple.truclam.note".localized),
-            ILHomeTempleEntity(id: "tp-vinhnghiem", name: "home.temple.vinhnghiem.name".localized, place: "home.temple.vinhnghiem.place".localized, region: "home.temple.vinhnghiem.region".localized, note: "home.temple.vinhnghiem.note".localized)
-        ]
-
-        // TODO: khi có API bài viết thật, thay danh sách mock dưới đây bằng dữ liệu từ
-        // networkService (danh mục "Bài viết Phật pháp hay", xem README design handoff).
-        entity.articles = [
-            ILHomeArticleEntity(id: "art-1", category: "home.article.0.category".localized, title: "home.article.0.title".localized, author: "home.article.0.author".localized, readMinutes: 6),
-            ILHomeArticleEntity(id: "art-2", category: "home.article.1.category".localized, title: "home.article.1.title".localized, author: "home.article.1.author".localized, readMinutes: 4),
-            ILHomeArticleEntity(id: "art-3", category: "home.article.2.category".localized, title: "home.article.2.title".localized, author: "home.article.2.author".localized, readMinutes: 5),
-            ILHomeArticleEntity(id: "art-4", category: "home.article.3.category".localized, title: "home.article.3.title".localized, author: "home.article.3.author".localized, readMinutes: 5),
-            ILHomeArticleEntity(id: "art-5", category: "home.article.4.category".localized, title: "home.article.4.title".localized, author: "home.article.4.author".localized, readMinutes: 7)
-        ]
-
-        // Thư viện "Phật & Bồ Tát" — bản tóm tắt cho carousel Trang chủ, map từ catalog đầy đủ
-        // của `ILDeityUseCase` (cùng id để chạm thẻ mở đúng màn chi tiết `Deity`).
-        entity.deities = deityUseCase.getAllDeities().map {
-            ILHomeDeityEntity(
-                id: $0.id,
-                kind: $0.kind,
-                name: $0.nameVi,
-                honorific: $0.titleHonorific,
-                virtue: $0.coreVirtue,
-                memorialDay: Self.primaryMemorialDay(of: $0.memorialDays)
-            )
-        }
+        // Temples, deities, articles + photos are loaded asynchronously from the server via
+        // `loadTopTemples()` / `loadTopDeities()` / `loadTopArticles()` / `loadTopPhotos()` — start
+        // empty so `getInitialState()` stays synchronous.
+        entity.photos = []
+        entity.temples = []
+        entity.deities = []
+        entity.articles = []
 
         return entity
     }
@@ -294,6 +290,62 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
         ILHomeQuoteEntity(
             lines: ["home.lunar.verse.line1".localized, "home.lunar.verse.line2".localized],
             source: "home.lunar.verse.source".localized
+        )
+    }
+
+    // MARK: - Temple / deity catalog (server)
+
+    func loadTopTemples() async throws -> [ILHomeTempleEntity] {
+        try await templeRepository.loadTopTemples().map(Self.makeTemple(from:))
+    }
+
+    func loadTopDeities() async throws -> [ILHomeDeityEntity] {
+        try await deityCatalogRepository.loadTopDeities().map(Self.makeDeity(from:))
+    }
+
+    func loadTopArticles() async throws -> [ILHomeArticleEntity] {
+        try await articleRepository.loadTopArticles().map(Self.makeArticle(from:))
+    }
+
+    func loadTopPhotos() async throws -> [ILHomePhotoEntity] {
+        try await photosRepository.loadTopPhotos().map {
+            ILHomePhotoEntity(id: $0.id, thumbnailURL: $0.thumbnailURL)
+        }
+    }
+
+    static func makeArticle(from summary: ILArticleSummaryEntity) -> ILHomeArticleEntity {
+        ILHomeArticleEntity(
+            id: summary.id,
+            category: summary.category,
+            title: summary.title,
+            author: summary.author,
+            readMinutes: summary.readMinutes,
+            thumbnailURL: summary.thumbnailURL ?? summary.imageURL
+        )
+    }
+
+    static func makeTemple(from summary: ILTempleSummaryEntity) -> ILHomeTempleEntity {
+        ILHomeTempleEntity(
+            id: summary.id,
+            name: summary.name,
+            address: summary.location.address,
+            region: summary.region,
+            heritageRank: summary.heritageRank,
+            establishedYear: summary.establishedYear,
+            thumbnailURL: summary.thumbnailURL
+        )
+    }
+
+    static func makeDeity(from summary: ILDeitySummaryEntity) -> ILHomeDeityEntity {
+        ILHomeDeityEntity(
+            id: summary.id,
+            kind: summary.kind,
+            name: summary.nameVi,
+            honorific: summary.titleHonorific,
+            virtue: summary.coreVirtue,
+            // `/v1/deities/top` carries no memorial days — filled once the API adds them.
+            memorialDay: nil,
+            thumbnailURL: summary.thumbnailURL.isEmpty ? summary.imageURL : summary.thumbnailURL
         )
     }
 

@@ -5,48 +5,60 @@
 
 import Foundation
 
-/// Một kệ kinh song ngữ (Việt + Anh) trong màn Tụng kinh — khớp `isReader` trong design handoff
-/// (`Docs/design_handoff_innerlamp/design/InnerLamp Prototype.dc.html`).
-struct ILReaderVerseEntity: Equatable {
-    /// Kệ kinh tiếng Việt, có thể chứa `\n` để xuống dòng theo bản kinh.
-    let vietnamese: String
-    /// Bản dịch tiếng Anh của kệ.
-    let english: String
+/// Ritual cue shown in front of a chanted line — matches `mk` in the design handoff
+/// (`InnerLamp Prototype.dc.html`, block `isReader`).
+enum ILReaderCue: Equatable {
+    case none
+    /// "•" — strike the wooden fish.
+    case knock
+    /// "◉" — ring the bell.
+    case bell
 }
 
-/// Một bộ kinh đầy đủ để tụng: tựa đề, phẩm/kệ đang xem, người tụng mẫu (audio) và các kệ.
+/// One chanted line of a sutra, with an optional English gloss (e.g. "(3 lần)").
+struct ILReaderLineEntity: Equatable {
+    let text: String
+    let gloss: String
+    let cue: ILReaderCue
+}
+
+/// A titled run of lines (e.g. "KHAI KINH", "KỆ 2"). The heading is not a line: it never becomes
+/// the current line and does not count towards progress.
+struct ILReaderSectionEntity: Equatable {
+    let heading: String
+    let lines: [ILReaderLineEntity]
+}
+
+/// A sutra that can be chanted on the Reader screen.
 struct ILReaderSutraEntity: Equatable, Identifiable {
     let id: String
     let title: String
-    /// Dòng phụ dưới tựa đề, ví dụ "Phẩm Song Yếu · kệ 1–2".
-    let subtitle: String
-    /// Tên người tụng mẫu (giọng đọc audio), ví dụ "Thầy Minh Đạo".
+    /// Name of the reference chanter (audio voice); empty when the sutra has no audio.
     let narrator: String
-    /// Tổng thời lượng audio tụng theo (giây) — dùng để tính tiến trình thanh phát.
+    let hasAudio: Bool
+    /// Total length of the chant in seconds — used to derive the elapsed/total time labels.
     let totalDurationSeconds: Int
-    let verses: [ILReaderVerseEntity]
+    let sections: [ILReaderSectionEntity]
+
+    /// Number of chantable lines across all sections (headings excluded).
+    var lineCount: Int { sections.reduce(0) { $0 + $1.lines.count } }
 }
 
-/// Pure business entity cho màn Tụng kinh — Domain layer only.
+/// Pure business entity of the Reader ("Tụng kinh") screen — Domain layer only.
 ///
-/// Chỉ chứa dữ liệu nghiệp vụ: catalog các bộ kinh, bộ kinh đang mở (`currentSutraID`), kệ đang
-/// đọc (`currentVerseIndex`) và trạng thái phát audio (`isPlaying`, `elapsedSeconds`,
-/// `playbackSpeed`, `readingProgress`). Mọi chuỗi đã format ("Đang phát · Thầy Minh Đạo",
-/// "12:04", "1.0×") là UI state nên nằm ở `ILReaderStateModel` — xem
-/// `references/data_layer_boundaries.md`.
+/// Holds the catalog and the chanting position/playback state. UI-only state (theme, font size,
+/// settings panel, auto-scroll, formatted labels) lives in `ILReaderStateModel`.
 struct ILReaderEntity: Equatable {
     var sutras: [ILReaderSutraEntity] = []
     var currentSutraID: String = ""
-    /// Chỉ số kệ đang hiển thị trong `verses` của bộ kinh hiện tại.
-    var currentVerseIndex: Int = 0
-    /// Tiến trình đọc trong toàn bộ bộ kinh (0...1) — thanh tiến trình ở đầu màn.
-    var readingProgress: Double = 0
-    /// Vị trí phát audio hiện tại (giây).
-    var elapsedSeconds: Int = 0
-    /// Tốc độ phát (1.0× mặc định).
+    /// Index of the highlighted line, counted across sections (headings excluded).
+    var currentLineIndex: Int = 0
+    /// Chanting pace multiplier (1.0 / 1.2 / 1.5).
     var playbackSpeed: Double = 1.0
-    /// Đang phát / tạm dừng — trạng thái in-memory cho tới khi có audio thật.
+    /// In-memory flag until real audio exists: while `true` the highlight advances on a timer.
     var isPlaying: Bool = false
+    /// Milliseconds accumulated towards the next line advance (scaled by `playbackSpeed`).
+    var accumulatedMilliseconds: Double = 0
 
     static let empty = ILReaderEntity()
 }

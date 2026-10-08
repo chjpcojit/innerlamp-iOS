@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>@keyframes ilcaret{0%,49%{opacity:1}50%,100%{opacity:0}}</style></helmet>
+<div>
+  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+    <div style="font:400 11px 'Be Vietnam Pro',sans-serif;letter-spacing:.06em;text-transform:uppercase;color: {{ labelColor }}">{{ label }}</div>
+    <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color: {{ counterColor }};display: {{ counterShow }}">{{ counter }}</div>
+  </div>
+  <div style="margin-top:7px;min-height:48px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:14px;transition:border-color .16s ease,box-shadow .16s ease;background: {{ bg }};border:1px solid {{ bd }};box-shadow: {{ ring }}" style-hover="{{ hoverStyle }}">
+    <div style="font:400 14px 'Be Vietnam Pro',sans-serif;flex:1;min-width:0;color: {{ valueColor }}">{{ text }}</div>
+    <div style="width:1.5px;height:17px;border-radius:1px;background:#B8862F;animation:ilcaret 1.05s step-end infinite;display: {{ caretShow }}"></div>
+    <div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;white-space:nowrap;color: {{ trailColor }}">{{ trailing }}</div>
+  </div>
+  <div style="font:400 11px/1.5 'Be Vietnam Pro',sans-serif;margin-top:6px;color: {{ hintColor }};display: {{ hintShow }}">{{ hintText }}</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:340,&quot;height&quot;:120},&quot;label&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Pháp danh hoặc tên gọi&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;value&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Diệu Tâm&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;placeholder&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Nhập nội dung&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;default&quot;,&quot;focused&quot;,&quot;error&quot;,&quot;success&quot;,&quot;disabled&quot;],&quot;default&quot;:&quot;default&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;error&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;hint&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;trailing&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;counter&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props, dark = !!p.dark;
+    const state = p.state || (p.focused ? 'focused' : 'default');
+    const filled = p.value != null && p.value !== '';
+    const disabled = state === 'disabled';
+    const error = state === 'error';
+    const success = state === 'success';
+    const focused = state === 'focused';
+    const bd = disabled ? (dark ? 'rgba(242,235,221,.08)' : 'var(--il-ink-07)')
+      : error ? '#C2857F'
+      : success ? '#6E8F7A'
+      : focused ? '#B8862F'
+      : dark ? 'rgba(242,235,221,.14)' : 'var(--il-ink-12)';
+    const hintText = error ? (p.error || p.hint || 'Thông tin chưa hợp lệ') : (p.hint || '');
+    return {
+      label: p.label || 'Nhãn',
+      text: filled ? p.value : (p.placeholder || ''),
+      trailing: p.trailing || '',
+      counter: p.counter || '',
+      counterShow: p.counter ? 'block' : 'none',
+      counterColor: dark ? 'rgba(242,235,221,.4)' : 'var(--il-ink-4)',
+      hintText,
+      hintShow: hintText ? 'block' : 'none',
+      caretShow: focused ? 'block' : 'none',
+      bg: disabled ? (dark ? 'rgba(245,238,224,.03)' : 'var(--il-ink-035)') : dark ? 'rgba(245,238,224,.06)' : 'var(--il-card)',
+      bd,
+      ring: focused ? '0 0 0 3px rgba(184,134,47,.16)' : error ? '0 0 0 3px rgba(194,133,127,.14)' : 'none',
+      labelColor: dark ? 'rgba(242,235,221,.5)' : 'var(--il-ink-48)',
+      valueColor: disabled ? (dark ? 'rgba(242,235,221,.28)' : 'var(--il-ink-3)')
+        : dark ? (filled ? '#F2EBDD' : 'rgba(242,235,221,.38)') : (filled ? 'var(--il-ink)' : 'var(--il-ink-36)'),
+      trailColor: error ? '#A7443F' : success ? '#4E6C59' : dark ? 'rgba(242,235,221,.4)' : 'var(--il-ink-42)',
+      hintColor: error ? '#A7443F' : success ? '#4E6C59' : dark ? 'rgba(242,235,221,.4)' : 'var(--il-ink-45)',
+      hoverStyle: disabled || focused ? {} : { borderColor: error ? '#B5726C' : dark ? 'rgba(242,235,221,.26)' : 'var(--il-ink-24)' },
+    };
+  }
+}
+
+</script>
+</body>
+</html>

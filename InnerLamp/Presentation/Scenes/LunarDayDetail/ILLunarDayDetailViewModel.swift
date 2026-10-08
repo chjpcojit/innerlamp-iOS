@@ -41,11 +41,16 @@ final class ILLunarDayDetailViewModel: ILLunarDayDetailViewModelProtocol {
     private let useCase: ILLunarDayDetailUseCase
     private let almanacUseCase: ILAlmanacUseCase
     private let sutraQuoteUseCase: ILSutraQuoteUseCase
+    private let calendarImageUseCase: ILCalendarImageUseCase
     private let date: Date
     /// Quote shown in the verse card. Set up front when the opening screen (Home hero card) hands
     /// one over; otherwise loaded from Core Data as the fixed quote of `date`. While nil, the static
     /// verse from `ILLunarDayDetailUseCase` is shown.
     private var verse: ILHomeQuoteEntity?
+    /// Picture of `date` from `GET /v1/calendar/image`; nil until loaded and after any failure
+    /// (the hero then keeps its gradient).
+    private var heroImage: ILCalendarImageEntity?
+    private var hasRequestedHeroImage = false
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initializer
@@ -53,18 +58,21 @@ final class ILLunarDayDetailViewModel: ILLunarDayDetailViewModelProtocol {
         useCase: ILLunarDayDetailUseCase,
         almanacUseCase: ILAlmanacUseCase,
         sutraQuoteUseCase: ILSutraQuoteUseCase,
+        calendarImageUseCase: ILCalendarImageUseCase,
         date: Date,
         verse: ILHomeQuoteEntity? = nil
     ) {
         self.useCase = useCase
         self.almanacUseCase = almanacUseCase
         self.sutraQuoteUseCase = sutraQuoteUseCase
+        self.calendarImageUseCase = calendarImageUseCase
         self.date = date
         self.verse = verse
         self.stateSubject = CurrentValueSubject(.success(Self.makeStateModel(
             from: useCase.getDetail(for: date),
             almanac: almanacUseCase.calculateDailyAlmanac(for: date, profile: nil),
-            verse: verse
+            verse: verse,
+            heroImage: nil
         )))
     }
 
@@ -87,6 +95,26 @@ final class ILLunarDayDetailViewModel: ILLunarDayDetailViewModelProtocol {
         if verse?.lines.isEmpty != false {
             loadDailyVerse()
         }
+        loadHeroImage()
+    }
+
+    /// Fetches the picture of `date` once per screen. Failure (offline, server error) or an
+    /// unsupported year is non-fatal: the gradient hero stays and no error is shown.
+    private func loadHeroImage() {
+        guard !hasRequestedHeroImage else { return }
+        hasRequestedHeroImage = true
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                guard let image = try await self.calendarImageUseCase.loadImage(for: self.date) else { return }
+                self.heroImage = image
+                self.publishState()
+            } catch {
+                #if DEBUG
+                print("[LunarDayDetail] hero image load failed: \(error)")
+                #endif
+            }
+        }
     }
 
     /// Opened without a quote (e.g. from the Lunar Calendar) — load the fixed quote of `date` from
@@ -104,7 +132,8 @@ final class ILLunarDayDetailViewModel: ILLunarDayDetailViewModelProtocol {
         stateSubject.send(.success(Self.makeStateModel(
             from: useCase.getDetail(for: date),
             almanac: almanacUseCase.calculateDailyAlmanac(for: date, profile: nil),
-            verse: verse
+            verse: verse,
+            heroImage: heroImage
         )))
     }
 
@@ -115,7 +144,8 @@ final class ILLunarDayDetailViewModel: ILLunarDayDetailViewModelProtocol {
     private static func makeStateModel(
         from entity: ILLunarDayDetailEntity,
         almanac: ILLunarCalendar.AlmanacResult,
-        verse: ILHomeQuoteEntity?
+        verse: ILHomeQuoteEntity?,
+        heroImage: ILCalendarImageEntity?
     ) -> ILLunarDayDetailStateModel {
         var state = ILLunarDayDetailStateModel()
 
@@ -126,12 +156,17 @@ final class ILLunarDayDetailViewModel: ILLunarDayDetailViewModelProtocol {
             format: "lunarDayDetail.hero.yearFormat".localized,
             ILLunarCalendar.canChiYear(entity.lunarYear)
         )
+        state.headerTitle = "\(state.heroDay) \(state.heroMonth)"
         state.heroSolar = solarLabel(for: entity.date)
 
         let type = typeInfo(lunarDay: entity.lunarDay, isHoangDao: entity.isHoangDao)
         state.typeTone = type.tone
         state.typeLabel = type.label
         state.adviceText = advice(forLunarDay: entity.lunarDay)
+        if let heroImage {
+            state.heroImageURL = heroImage.imageURL
+            state.heroImageCredit = heroImage.creditText
+        }
 
         state.infoRows = [
             ILLunarDayDetailInfoRowModel(
@@ -204,6 +239,16 @@ final class ILLunarDayDetailViewModel: ILLunarDayDetailViewModelProtocol {
                 subtitle: "lunarDayDetail.directions.wealth.sub".localized,
                 glyph: "財",
                 kind: .wealth
+            ),
+            ILLunarDayDetailDirectionModel(
+                id: "crane",
+                key: "lunarDayDetail.directions.crane".localized,
+                value: entity.craneStarDirection ?? "lunarDayDetail.directions.crane.none".localized,
+                subtitle: (entity.craneStarDirection == nil
+                    ? "lunarDayDetail.directions.crane.none.sub"
+                    : "lunarDayDetail.directions.crane.sub").localized,
+                glyph: "鶴",
+                kind: .crane
             )
         ]
 

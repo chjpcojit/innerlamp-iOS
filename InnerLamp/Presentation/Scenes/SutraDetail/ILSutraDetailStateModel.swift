@@ -7,10 +7,11 @@
 
 import Foundation
 
-/// 1 chip thông tin ở hero (Tụng hằng ngày / Có phiên âm) — nhãn đã resolve + cờ kiểu nền.
+/// 1 chip thông tin ở hero (mục đích tụng / "Có audio" / "✓ Đã tải về") — nhãn đã resolve + cờ
+/// kiểu nền.
 struct ILSutraDetailTagModel: Equatable {
     let title: String
-    /// `true` = nền vàng đậm (chip "Tụng hằng ngày"); `false` = chip viền (chip "Có phiên âm").
+    /// `true` = nền vàng nhạt (`feat-glow`, chip "Có audio"); `false` = chỉ có viền.
     let isFilled: Bool
 }
 
@@ -32,10 +33,15 @@ struct ILSutraDetailChapterModel: Equatable, Identifiable {
 struct ILSutraDetailStateModel: Equatable {
     var kicker: String = ""
     var title: String = ""
-    /// Dòng meta dưới tiêu đề: "26 phẩm · 423 kệ · Thầy Minh Đạo tụng · 2 giờ 10 phút".
+    /// Tên nguyên ngữ in nghiêng dưới tiêu đề: "Dhammapada · Pāli".
+    var originalName: String = ""
+    /// Dòng meta dưới tên nguyên ngữ: "26 phẩm · 423 kệ · Thầy Minh Đạo tụng · 2 giờ 10 phút"
+    /// (hoặc "… · Chỉ có văn bản · …" khi bộ kinh không có audio).
     var metaText: String = ""
     var tags: [ILSutraDetailTagModel] = []
 
+    /// `false` ẩn cả thẻ tiến trình — chỉ Kinh Pháp Cú có tiến trình mẫu.
+    var hasProgress: Bool = false
     /// Dòng "Bạn đang ở Phẩm Song Yếu · kệ 1" trong thẻ tiến trình.
     var progressTitle: String = ""
     /// "34%" (đã format từ `progressValue`).
@@ -44,13 +50,18 @@ struct ILSutraDetailStateModel: Equatable {
     var progressValue: Double = 0
 
     var descriptionText: String = ""
+    /// "Dịch / hiệu đính: HT Thích Minh Châu".
+    var translatorText: String = ""
     var tocTitle: String = ""
-    /// "26 phẩm" (đếm phẩm, đã format).
+    /// "26 phẩm" / "2 phần" (đã format theo `ILSutraDetailStructure`).
     var tocCountText: String = ""
     var chapters: [ILSutraDetailChapterModel] = []
 
     var downloadButtonTitle: String = ""
+    /// "Tụng theo" khi có audio, "Đọc kinh" khi chỉ có văn bản.
     var chantButtonTitle: String = ""
+    /// `false` ẩn nút phát tròn ở thanh CTA đáy.
+    var hasAudio: Bool = false
 
     static let initial = ILSutraDetailStateModel()
 }

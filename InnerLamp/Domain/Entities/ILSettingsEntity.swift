@@ -8,7 +8,7 @@ import Foundation
 /// 3 lựa chọn giao diện cho hàng "Chế độ tối" — ánh xạ 1-1 với state `theme` (0/1/2) trong design
 /// handoff. Đặt ở Domain (không import UIKit) để ViewModel test được mà không chạy UIKit.
 /// Lưu ý: giá trị thật do `ILThemeMode` (Core/Theme) + `ThemeService` quản lý; enum Domain này chỉ
-/// mô tả giá trị cài đặt cho màn Cài đặt, sẽ đồng bộ với `ThemeService` khi màn `lang` được build.
+/// mô tả giá trị cài đặt, được đồng bộ với `ThemeService` qua `ILLanguageUseCase`.
 enum ILSettingsThemeMode: Int, Equatable {
     case system = 0
     case light = 1
@@ -49,6 +49,8 @@ struct ILSettingsEntity: Equatable {
     var scriptureFontScale: Double = 0.62
     var bilingualEnabled: Bool = false
     var theme: ILSettingsThemeMode = .system
+    var language: ILAppLanguage = .vietnamese
+    var scriptureFontSize: ILScriptureFontSize = .medium
 
     // Nội dung & trợ giúp
     var downloadsCount: Int = 8

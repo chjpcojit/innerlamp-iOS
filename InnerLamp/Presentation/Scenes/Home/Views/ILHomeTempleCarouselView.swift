@@ -19,7 +19,20 @@ final class ILHomeTempleCarouselView: UIView {
 
     // MARK: - Properties
     var temples: [ILHomeTempleModel] = [] {
-        didSet { rebuildCards() }
+        // Every Home state update re-assigns this; only rebuild (and reset the scroll position) when
+        // the content actually changed.
+        didSet { if temples != oldValue { rebuildCards() } }
+    }
+
+    /// Placeholder shown instead of the cards when there is no data ("Đang cập nhật"). Empty string
+    /// hides it (still loading, or cards are present).
+    var emptyText: String = "" {
+        didSet { if emptyText != oldValue { updateEmptyState() } }
+    }
+
+    /// `true` while the first load is in flight and there are no cards yet: shows skeleton cards.
+    var isLoading: Bool = false {
+        didSet { if isLoading != oldValue { rebuildCards() } }
     }
 
     var onTempleTap: ((ILHomeTempleModel) -> Void)?
@@ -30,6 +43,10 @@ final class ILHomeTempleCarouselView: UIView {
     // MARK: - UI Elements
     private let scrollView = UIScrollView()
     private let cardsStack = UIStackView()
+    private let emptyLabel = UILabel()
+    /// Only active while the placeholder is visible, so the carousel takes the label's height
+    /// instead of collapsing to zero with no cards.
+    private lazy var emptyLabelBottomConstraint = emptyLabel.bottomAnchor.constraint(equalTo: bottomAnchor)
     private var cardWidthConstraints: [NSLayoutConstraint] = []
     /// Page the carousel is resting on / snapping to; the base for the next swipe's target.
     private var currentPage = 0
@@ -59,7 +76,18 @@ final class ILHomeTempleCarouselView: UIView {
 
         addSubview(scrollView)
 
+        emptyLabel.font = ILTypography.caption
+        emptyLabel.textColor = ILColors.inkSubtle
+        emptyLabel.numberOfLines = 0
+        emptyLabel.isHidden = true
+        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(emptyLabel)
+
         NSLayoutConstraint.activate([
+            emptyLabel.topAnchor.constraint(equalTo: topAnchor),
+            emptyLabel.leadingAnchor.constraint(equalTo: leadingAnchor),
+            emptyLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
+
             scrollView.topAnchor.constraint(equalTo: topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
@@ -93,6 +121,18 @@ final class ILHomeTempleCarouselView: UIView {
         scrollView.setContentOffset(.zero, animated: false)
 
         let width = max(cardWidth, 1)
+        let showsSkeleton = isLoading && temples.isEmpty
+        scrollView.isScrollEnabled = !showsSkeleton
+        if showsSkeleton {
+            for index in 0..<ILHomeSkeletonCards.carouselCount {
+                let card = ILHomeSkeletonCards.templeCard(index: index)
+                let widthConstraint = card.widthAnchor.constraint(equalToConstant: width)
+                widthConstraint.isActive = true
+                cardWidthConstraints.append(widthConstraint)
+                cardsStack.addArrangedSubview(card)
+            }
+        }
+
         for temple in temples {
             let card = ILHomeTempleCardView(temple: temple)
             card.onTap = { [weak self] in self?.onTempleTap?(temple) }
@@ -101,6 +141,14 @@ final class ILHomeTempleCarouselView: UIView {
             cardWidthConstraints.append(widthConstraint)
             cardsStack.addArrangedSubview(card)
         }
+        updateEmptyState()
+    }
+
+    private func updateEmptyState() {
+        let showsPlaceholder = temples.isEmpty && !emptyText.isEmpty
+        emptyLabel.text = emptyText
+        emptyLabel.isHidden = !showsPlaceholder
+        emptyLabelBottomConstraint.isActive = showsPlaceholder
     }
 }
 
@@ -130,7 +178,7 @@ extension ILHomeTempleCarouselView: UIScrollViewDelegate {
     }
 }
 
-/// 1 thẻ chùa trong `ILHomeTempleCarouselView` — ảnh placeholder + badge vùng miền + tên + địa
+/// 1 thẻ chùa trong `ILHomeTempleCarouselView` — ảnh thumbnail + badge vùng miền + tên + địa
 /// chỉ + ghi chú.
 private final class ILHomeTempleCardView: UIControl {
 
@@ -156,10 +204,12 @@ private final class ILHomeTempleCardView: UIControl {
         layer.borderColor = ILColors.border.cgColor
         clipsToBounds = true
 
-        // Ảnh placeholder (chưa có ảnh thật) + badge vùng miền.
-        let imageArea = UIView()
+        // Ảnh thumbnail từ server (nền `tint` làm placeholder khi chưa có / lỗi) + badge vùng miền.
+        let imageArea = ILRemoteImageView(frame: .zero)
         imageArea.backgroundColor = ILColors.tint
         imageArea.translatesAutoresizingMaskIntoConstraints = false
+        // @ai: assumption — see Docs/Assumptions/Temple/AS-Temple-001-image-url-from-api.md
+        imageArea.setImage(urlString: temple.thumbnailURL)
 
         let regionBadge = UILabel()
         regionBadge.font = ILTypography.captionMedium

@@ -14,7 +14,7 @@ public final class ILArticleCardView: UIControl {
     public var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let thumbnailView = UIView()
+    private let thumbnailView = ILRemoteImageView(frame: .zero)
     private let categoryLabel = UILabel()
     private let titleLabel = UILabel()
     private let metaLabel = UILabel()
@@ -30,10 +30,11 @@ public final class ILArticleCardView: UIControl {
     }
 
     // MARK: - Public API
-    public func configure(category: String, title: String, author: String, readText: String) {
+    public func configure(category: String, title: String, author: String, readText: String, imageURL: String? = nil) {
         categoryLabel.attributedText = ILTypography.makeEyebrow(text: category, color: ILColors.link)
         titleLabel.text = title
         metaLabel.text = "\(author) · \(readText)"
+        thumbnailView.setImage(urlString: imageURL)
     }
 
     // MARK: - Setup
@@ -44,7 +45,7 @@ public final class ILArticleCardView: UIControl {
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
 
-        // Thumbnail placeholder — real imagery comes from the product side later.
+        // Server thumbnail; the `sunk2` background stays as the placeholder while loading or on failure.
         thumbnailView.backgroundColor = ILColors.sunk2
         thumbnailView.layer.cornerRadius = ILMetrics.radiusInput
         thumbnailView.clipsToBounds = true

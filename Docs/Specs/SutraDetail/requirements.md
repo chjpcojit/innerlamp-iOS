@@ -1,16 +1,16 @@
 # Requirements — SutraDetail
 
-Version: 1.0
-Last updated: 2026-09-27
-Status: in-progress — full detail screen with static catalog; no sutra API, and
-the Download destination is not built (Reader/Player destinations are wired)
+Version: 1.2
+Last updated: 2026-10-07
+Status: in-progress — loads the real sutra from `GET /v1/sutras/{id}`; Reader/Player still mock, no audio /
+progress data, Download destination not built
 Feature folder: `InnerLamp/Presentation/Scenes/SutraDetail/`
 
 > See `changelog.md` in this folder for the version history of this spec.
 
-> This spec is written retroactively from the already-implemented SutraDetail
-> feature. It documents the shipped behavior, including the static mock catalog
-> and the sample reading progress.
+> v1.2 (2026-10-07): the screen now loads one sutra from the backend. Sections of
+> the design that the API cannot feed (audio, narrator, reading progress,
+> per-section duration) are recorded in `Docs/Tech-Debt/SutraDetail/`.
 
 ## User Story
 
@@ -20,16 +20,22 @@ understand the text and jump into the reader or player.
 
 ## Acceptance Criteria (EARS notation)
 
-- WHEN the SutraDetail screen loads for a given sutra id, THE SYSTEM SHALL show
-  a dark hero (eyebrow, title, meta line, two info chips, back + download
-  buttons), a reading-progress card, the sutra description, and a table of
-  contents listing its chapters.
-- WHEN the user taps "Tụng theo" (chant) or a chapter in the table of contents,
-  THE SYSTEM SHALL open the Reader screen for the same sutra.
-- WHEN the user taps the play button in the bottom CTA bar, THE SYSTEM SHALL
-  open the full-screen Player for the same sutra.
-- WHEN the user taps "Tải về máy" (download), THE SYSTEM SHALL emit a download
-  event.
+- WHEN the SutraDetail screen loads for a given sutra id, THE SYSTEM SHALL call
+  `GET /v1/sutras/{id}` and show a pinned theme-aware header (back + "Tải về máy"), a
+  hero (kicker = kind + tradition, title, italic original name, meta line
+  "N dòng · duration", purpose chips), a description line ("collection · reference"),
+  the translator / source / license lines, and — only when the sutra has `sections` — a
+  table of contents with each section's line count.
+- WHEN the request fails (including `404 SUTRA_NOT_FOUND`), THE SYSTEM SHALL show the error.
+- WHEN the page is scrolled more than 110pt, THE SYSTEM SHALL show a hairline
+  under the pinned header (no line at the top of the page).
+- THE SYSTEM SHALL label the primary CTA "Đọc kinh", hide the round play button and hide the
+  reading-progress card (the API has no audio or progress).
+- WHEN the user taps the CTA or a section in the table of contents, THE SYSTEM SHALL open the
+  Reader screen for the same sutra id.
+- WHEN the user taps the play button in the bottom CTA bar, THE SYSTEM SHALL open the full-screen
+  Player for the same sutra.
+- WHEN the user taps "Tải về máy" (download), THE SYSTEM SHALL emit a download event.
 - WHEN the user taps the back control, THE SYSTEM SHALL close the SutraDetail
   screen and return to the previous screen.
 
@@ -40,19 +46,13 @@ understand the text and jump into the reader or player.
 - The Download screen — not built (`.download` reaches a TODO in the
   coordinator).
 
-## Pending (not yet implemented — see `tasks.md`)
+## Pending (see `tasks.md`)
 
-- A real sutra catalog API. `ILSutraDetailUseCaseImpl` builds a static 1-sutra
-  catalog (Kinh Pháp Cú, 5 chapters) with a TODO to replace with `NetworkService`.
-  (`tasks.md` Phase 3.)
-
-  > ⚠️ Not confirmed: the sutra catalog / chapter API contract(s) — no sutra
-  > endpoint in `Docs/Specs/API/openapi.yaml` v3.9. Blocks `tasks.md` Phase 3.
-
+- Reader / Player still run on mock catalogs and ignore server ids; Library's "Kinh Pháp Cú" tile has
+  no server match — TD-SutraDetail-003.
+- No audio, narrator, reading progress or per-section duration from the API — TD-SutraDetail-002.
 - The Download destination (`.download` is a TODO).
-
-- Reading progress is a sample value (`0.34` / "34%") — not connected to any
-  real per-user progress.
+- Description / meta / license presentation is an assumption — AS-SutraDetail-001.
 
 ## Open questions (resolved during implementation)
 

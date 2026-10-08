@@ -47,6 +47,7 @@ final class ILLunarDayDetailUseCaseImpl: ILLunarDayDetailUseCase {
             clashChiIndex: ILLunarCalendar.clashChiIndex(dayChiIndex: indices.chi),
             joyStarDirection: ILLunarCalendar.joyStarDirection(dayCanIndex: indices.can),
             wealthStarDirection: ILLunarCalendar.wealthStarDirection(dayCanIndex: indices.can),
+            craneStarDirection: ILLunarCalendar.craneStarDirection(can: indices.can, chi: indices.chi),
             verseLines: verse.lines,
             verseSource: verse.source
         )

@@ -11,6 +11,10 @@ import Combine
 /// trạng thái mở cửa, lưới 4 ô niên đại/di tích/hệ phái/vùng miền, giới thiệu thu gọn, tổ chức &
 /// truyền thừa, kiến trúc & di sản, tiện ích, lưu ý khi viếng thăm, sự kiện & khóa học, vị trí &
 /// liên hệ, chân trang.
+///
+/// Data comes only from the server (`GET /v1/temples/{id}`). Every section is always shown; one
+/// whose data the API does not send renders the "Đang cập nhật" placeholder. While loading / on
+/// failure the whole screen shows a skeleton placeholder / an error + "Thử lại".
 final class ILTempleViewController: BaseViewController {
 
     private enum Layout {
@@ -18,13 +22,23 @@ final class ILTempleViewController: BaseViewController {
         static let collapsedBiographyHeight: CGFloat = 152
         static let sectionSpacing: CGFloat = 26
         static let headerBottomInset: CGFloat = 10
+        /// Opacity of the `canvas` tint over the blur once the header is "solid", low enough that
+        /// the blurred content underneath stays visible.
+        static let solidHeaderTintAlpha: CGFloat = 0.35
         static let gridSpacing: CGFloat = 8
+    }
+
+    private enum ScreenState {
+        case loading
+        case content
+        case error
     }
 
     // MARK: - Properties
     private let viewModel: ILTempleViewModel
     private var cancellables = Set<AnyCancellable>()
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
+    private let retryTappedSubject = PassthroughSubject<Void, Never>()
     private let backTappedSubject = PassthroughSubject<Void, Never>()
     private let followTappedSubject = PassthroughSubject<Void, Never>()
     private let bioToggledSubject = PassthroughSubject<Void, Never>()
@@ -37,6 +51,7 @@ final class ILTempleViewController: BaseViewController {
 
     private var headerTitle = ""
     private var isHeaderSolid = false
+    private var hasHeroImage = false
     private var isBiographyExpanded = false
 
     // MARK: - UI Elements
@@ -44,7 +59,8 @@ final class ILTempleViewController: BaseViewController {
     private let contentView = UIView()
 
     /// Dải header dán cố định — trong suốt trên hero, chuyển nền `canvas` khi cuộn qua hero.
-    private let headerBand = UIView()
+    /// Blur only: the canvas tint is state-driven (`updateHeaderAppearance`), so the band's own tint stays off.
+    private let headerBand = ILStickyHeaderBand(tintRestAlpha: 0, tintGlassAlpha: 0)
     private let navBar = ILNavBar(showBack: true)
 
     private let heroView = ILTempleHeroView()
@@ -101,7 +117,15 @@ final class ILTempleViewController: BaseViewController {
 
     private let footerStack = UIStackView()
     private let updatedLabel = UILabel()
+    private let footerDotLabel = UILabel()
     private let reportIssueLabel = UILabel()
+
+    /// Whole-screen loading / error states, shown instead of `scrollView` while the profile is
+    /// not on screen yet.
+    private let loadingView = ILTempleSkeletonView()
+    private let errorStateView = ILStateView(kind: .error)
+    private lazy var retryButton = ILButton(title: "common.retry".localized, variant: .primary)
+    private let errorStack = UIStackView()
 
     // MARK: - Initializer
     init(viewModel: ILTempleViewModel) {
@@ -137,6 +161,7 @@ final class ILTempleViewController: BaseViewController {
         view.backgroundColor = ILColors.canvas
 
         navBar.onBack = { [weak self] in self?.backTappedSubject.send(()) }
+        navBar.usesTransparentButtons = true
         headerBand.backgroundColor = ILColors.canvas.withAlphaComponent(0)
 
         scrollView.showsVerticalScrollIndicator = false
@@ -149,11 +174,11 @@ final class ILTempleViewController: BaseViewController {
         setupIntroSection()
         setupOrgSection()
         setupArchitectureSection()
-        setupAmenitiesSection()
         setupRulesSection()
         setupEventsSection()
         setupLocationSection()
         setupFooterSection()
+        setupStateViews()
 
         bodyStack.axis = .vertical
         bodyStack.alignment = .fill
@@ -194,8 +219,15 @@ final class ILTempleViewController: BaseViewController {
         contentView.addSubview(pillsStack)
         contentView.addSubview(bodyStack)
 
+        heroView.onBlurProgress = { [weak self] progress in
+            guard let self else { return }
+            // Once solid the strip stays fully blurred, even when there is no photo to drive it.
+            headerBand.setProgress(isHeaderSolid ? 1 : progress)
+        }
         headerBand.addSubview(navBar)
         view.addSubview(scrollView)
+        view.addSubview(loadingView)
+        view.addSubview(errorStack)
         view.addSubview(headerBand)
 
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (controller: ILTempleViewController, _) in
@@ -213,6 +245,18 @@ final class ILTempleViewController: BaseViewController {
         mapCard.layer.borderColor = ILColors.border.cgColor
         contactsCard.layer.borderColor = ILColors.border.cgColor
         (eventsEmptyView.layer.sublayers?.first as? CAShapeLayer)?.strokeColor = ILColors.borderStrong.cgColor
+    }
+
+    private func setupStateViews() {
+        loadingView.isHidden = true
+
+        retryButton.onTap = { [weak self] in self?.retryTappedSubject.send(()) }
+        errorStack.axis = .vertical
+        errorStack.alignment = .fill
+        errorStack.spacing = ILMetrics.groupSpacing
+        errorStack.addArrangedSubview(errorStateView)
+        errorStack.addArrangedSubview(retryButton)
+        errorStack.isHidden = true
     }
 
     private func setupButtonsRow() {
@@ -259,8 +303,6 @@ final class ILTempleViewController: BaseViewController {
         highlightsStack.axis = .vertical
         highlightsStack.spacing = ILMetrics.rowSpacing
     }
-
-    private func setupAmenitiesSection() {}
 
     private func setupRulesSection() {
         rulesCard.backgroundColor = ILColors.featBackgroundStart
@@ -402,22 +444,21 @@ final class ILTempleViewController: BaseViewController {
         reportIssueLabel.textColor = ILColors.inkFaint
         reportIssueLabel.text = "temple.footer.reportIssue".localized
 
-        let dotLabel = UILabel()
-        dotLabel.font = ILTypography.label
-        dotLabel.textColor = ILColors.inkFaint
-        dotLabel.text = "·"
+        footerDotLabel.font = ILTypography.label
+        footerDotLabel.textColor = ILColors.inkFaint
+        footerDotLabel.text = "·"
 
         footerStack.axis = .horizontal
         footerStack.spacing = 6
         footerStack.alignment = .center
         footerStack.distribution = .equalCentering
-        [UIView(), updatedLabel, dotLabel, reportIssueLabel, UIView()].forEach { footerStack.addArrangedSubview($0) }
+        [UIView(), updatedLabel, footerDotLabel, reportIssueLabel, UIView()].forEach { footerStack.addArrangedSubview($0) }
     }
 
     // MARK: - Constraints
     override func setupConstraints() {
         super.setupConstraints()
-        [scrollView, contentView, headerBand, navBar, heroView, pillsStack, bodyStack].forEach {
+        [scrollView, contentView, navBar, heroView, pillsStack, bodyStack, loadingView, errorStack].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
 
@@ -458,7 +499,16 @@ final class ILTempleViewController: BaseViewController {
             bodyStack.topAnchor.constraint(equalTo: pillsStack.bottomAnchor, constant: 16),
             bodyStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
             bodyStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
-            bodyStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -30)
+            bodyStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -30),
+
+            loadingView.topAnchor.constraint(equalTo: view.topAnchor),
+            loadingView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            loadingView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            loadingView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            errorStack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            errorStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: horizontal),
+            errorStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -horizontal)
         ])
     }
 
@@ -468,6 +518,7 @@ final class ILTempleViewController: BaseViewController {
 
         let input = ILTempleViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
+            retryTapped: retryTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             followTapped: followTappedSubject.eraseToAnyPublisher(),
             bioToggled: bioToggledSubject.eraseToAnyPublisher(),
@@ -486,28 +537,64 @@ final class ILTempleViewController: BaseViewController {
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 
+        output.errorMessage
+            .sink { [weak self] message in self?.showError(message) }
+            .store(in: &cancellables)
+
         viewDidLoadSubject.send(())
     }
 
     // MARK: - Render
     private func render(state: ViewState<ILTempleStateModel>) {
         switch state {
-        case .idle, .loading:
+        case .idle:
             break
+        case .loading:
+            showScreenState(.loading)
         case .success(let model):
+            showScreenState(.content)
             updateUI(with: model)
         case .failure(let error):
-            showError(error.localizedDescription)
+            configureErrorState(for: error)
+            showScreenState(.error)
         }
+    }
+
+    private func showScreenState(_ screenState: ScreenState) {
+        scrollView.isHidden = screenState != .content
+        errorStack.isHidden = screenState != .error
+        // Each skeleton bar starts pulsing itself once it is in a window.
+        loadingView.isHidden = screenState != .loading
+        if screenState != .content {
+            // The header stays transparent over the plain canvas, with no title.
+            scrollView.contentOffset = .zero
+            updateHeaderAppearance()
+        }
+    }
+
+    /// Offline gets its own glyph/title; every other failure (not found, server error) reads as a
+    /// generic load error with the error's own message.
+    private func configureErrorState(for error: Error) {
+        if case ILCatalogError.offline = error {
+            errorStateView.kind = .offline
+            errorStateView.title = "temple.error.offlineTitle".localized
+        } else {
+            errorStateView.kind = .error
+            errorStateView.title = "temple.error.title".localized
+        }
+        errorStateView.message = error.localizedDescription
     }
 
     private func updateUI(with model: ILTempleStateModel) {
         headerTitle = model.headerTitle
         navBar.title = isHeaderSolid ? headerTitle : ""
+        hasHeroImage = model.heroImageURL?.isEmpty == false
+        updateNavBarStyle()
 
         heroView.configure(
             rankChip: model.rankChip, sectChip: model.sectChip, name: model.name,
-            hasAlias: model.hasAlias, aliasLine: model.aliasLine, placeLine: model.placeLine
+            hasAlias: model.hasAlias, aliasLine: model.aliasLine, placeLine: model.placeLine,
+            imageURL: model.heroImageURL
         )
 
         followButton.title = model.followButtonTitle
@@ -522,10 +609,12 @@ final class ILTempleViewController: BaseViewController {
         renderFactsGrid(model.facts)
 
         introEyebrow.title = "temple.section.intro".localized
-        biographyLabel.attributedText = ILTypography.makeParagraph(
-            text: model.descriptionText, font: ILTypography.scriptureDescription,
-            color: ILColors.inkSecondary, cssLineHeight: 1.7
-        )
+        biographyLabel.attributedText = model.descriptionText.isEmpty
+            ? Self.makePlaceholderText()
+            : ILTypography.makeParagraph(
+                text: model.descriptionText, font: ILTypography.scriptureDescription,
+                color: ILColors.inkSecondary, cssLineHeight: 1.7
+            )
         isBiographyExpanded = model.isBiographyExpanded
         biographyCollapsedConstraint.isActive = !model.isBiographyExpanded
         biographyToggle.setTitle(model.biographyToggleTitle, for: .normal)
@@ -534,7 +623,12 @@ final class ILTempleViewController: BaseViewController {
         renderOrgInfo(model.orgInfo)
 
         architectureEyebrow.title = "temple.section.architecture".localized
-        architectureLabel.attributedText = Self.makeArchitectureText(archStyle: model.archStyle, materials: model.materials)
+        architectureLabel.attributedText = model.architectureText.isEmpty
+            ? Self.makePlaceholderText()
+            : ILTypography.makeParagraph(
+                text: model.architectureText, font: ILTypography.bodySmall,
+                color: ILColors.inkSecondary, cssLineHeight: 1.65
+            )
         renderHighlights(model.highlights)
 
         amenitiesEyebrow.title = "temple.section.amenities".localized
@@ -542,7 +636,6 @@ final class ILTempleViewController: BaseViewController {
 
         rulesEyebrow.title = "temple.section.rules".localized
         renderRules(model.visitRules)
-        rulesCard.isHidden = model.visitRules.isEmpty
 
         eventsEyebrow.title = "temple.section.events".localized
         eventsEmptyLabel.text = "temple.events.empty".localized
@@ -556,7 +649,10 @@ final class ILTempleViewController: BaseViewController {
         coordinateLabel.text = model.coordinateText
         renderContacts(model.contacts)
 
+        // No date → only "Báo thông tin sai" is shown (no dangling "·").
         updatedLabel.text = model.updatedText
+        updatedLabel.isHidden = model.updatedText.isEmpty
+        footerDotLabel.isHidden = model.updatedText.isEmpty
 
         view.setNeedsLayout()
     }
@@ -586,8 +682,15 @@ final class ILTempleViewController: BaseViewController {
         embedGrid(tiles, in: amenitiesGrid)
     }
 
+    /// No rules from the API → the card shows the "Đang cập nhật" placeholder.
     private func renderRules(_ rules: [ILTempleRuleModel]) {
         clear(rulesStack)
+        guard !rules.isEmpty else {
+            let placeholder = UILabel()
+            placeholder.attributedText = Self.makePlaceholderText()
+            rulesStack.addArrangedSubview(placeholder)
+            return
+        }
         rules.forEach { rulesStack.addArrangedSubview(ILTempleRuleRow(model: $0)) }
     }
 
@@ -680,20 +783,16 @@ final class ILTempleViewController: BaseViewController {
         }
     }
 
-    private static func makeArchitectureText(archStyle: String, materials: String) -> NSAttributedString {
-        let text = "\(archStyle) · \(materials)"
-        let attributed = NSMutableAttributedString(
-            attributedString: ILTypography.makeParagraph(
-                text: text, font: ILTypography.bodySmall, color: ILColors.inkSecondary, cssLineHeight: 1.65
-            )
-        )
-        if let styleRange = text.range(of: archStyle) {
-            attributed.addAttributes(
-                [.font: ILTypography.beVietnamPro(size: 13, weight: .medium), .foregroundColor: ILColors.ink],
-                range: NSRange(styleRange, in: text)
-            )
+    /// "Đang cập nhật" in the muted italic style the org/contact rows use for a missing value.
+    private static func makePlaceholderText() -> NSAttributedString {
+        var font = ILTypography.bodySmall
+        if let descriptor = font.fontDescriptor.withSymbolicTraits(.traitItalic) {
+            font = UIFont(descriptor: descriptor, size: font.pointSize)
         }
-        return attributed
+        return NSAttributedString(
+            string: "temple.info.updating".localized,
+            attributes: [.font: font, .foregroundColor: ILColors.inkFaint]
+        )
     }
 
     // MARK: - Layout-driven UI
@@ -725,12 +824,21 @@ final class ILTempleViewController: BaseViewController {
         let shouldBeSolid = threshold > 0 && scrollView.contentOffset.y >= threshold
         guard shouldBeSolid != isHeaderSolid else { return }
         isHeaderSolid = shouldBeSolid
+        updateNavBarStyle()
+        heroView.update(contentOffsetY: scrollView.contentOffset.y)
+        if shouldBeSolid { headerBand.setProgress(1) }
         UIView.animate(withDuration: 0.2) {
-            self.headerBand.backgroundColor = shouldBeSolid
-                ? ILColors.canvas
-                : ILColors.canvas.withAlphaComponent(0)
+            self.headerBand.backgroundColor = ILColors.canvas.withAlphaComponent(
+                shouldBeSolid ? Layout.solidHeaderTintAlpha : 0
+            )
         }
         navBar.title = shouldBeSolid ? headerTitle : ""
+    }
+
+    /// Buttons are transparent, so over the photo they use the light (on-dark) palette; once the
+    /// header turns solid, or when the temple has no photo, they use the normal theme palette.
+    private func updateNavBarStyle() {
+        navBar.isDark = hasHeroImage && !isHeaderSolid
     }
 
     // MARK: - Actions
@@ -746,6 +854,7 @@ final class ILTempleViewController: BaseViewController {
 // MARK: - UIScrollViewDelegate
 extension ILTempleViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        heroView.update(contentOffsetY: scrollView.contentOffset.y)
         updateHeaderAppearance()
     }
 }

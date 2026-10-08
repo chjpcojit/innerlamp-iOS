@@ -11,42 +11,36 @@ skeleton, without re-reading every file.
 ## Overview
 
 "Lịch lễ Phật giáo" (Festivals) — màn danh sách các ngày lễ chung của Phật giáo (lễ lớn, vía,
-Rằm/Mùng Một — ngày trai giới) trong 12 tháng tới, tính theo âm lịch và gom theo tháng dương.
+Rằm/Mùng Một — ngày trai giới) từ 1/1 năm hiện tại đến hết 2 năm sau (mở màn cuộn tới tháng hiện tại), tính theo âm lịch và gom theo tháng dương.
 Được đẩy lên từ Trang chủ ("Tất cả" / chạm 1 lễ / "+N sự kiện khác" ở mục "Sự kiện Phật giáo").
-Mỗi thẻ lễ hiện các chùa tổ chức (chip bấm mở Trang chùa). `ILFestivalsCoordinator` là child của
+`ILFestivalsCoordinator` là child của
 `ILHomeCoordinator`.
 
 ## Status
 
 | Layer | File | Status | Notes |
 |---|---|---|---|
-| Domain — Entity | `ILFestivalsEntity.swift` | Done | `ILFestivalKind` (major/festival/observance), `ILFestivalDayEntity` (date/title/kind/daysUntil/hostTempleIDs), `ILFestivalMonthEntity` (label/days), `ILFestivalsEntity`. |
+| Domain — Entity | `ILFestivalsEntity.swift` | Done | `ILFestivalKind` (festival/observance), `ILFestivalDayEntity` (date/title/kind/daysUntil), `ILFestivalMonthEntity` (label/days), `ILFestivalsEntity`. |
 | Presentation — StateModel | `ILFestivalsStateModel.swift` | Done | `ILFestivalsTab`, `ILFestivalHostModel`, `ILFestivalDayModel` (dayNumber/weekday/countdown/lunarSubtitle/hosts/moreHostsText + cờ màu), `ILFestivalMonthModel`, `ILFestivalsStateModel`. |
-| Data — DTO + Mapper | — | N/A (no confirmed API contract yet) | Danh mục lễ là catalog tĩnh trong UseCase (khớp `LEVENTS` của prototype); sẽ có DTO/Mapper khi có API lịch lễ thật. |
-| Domain — UseCase | `ILFestivalsUseCase.swift` | Done | `loadMonths(from:)` dùng catalog 19 lễ `festivalTitleKeys` (= `LEVENTS` trong prototype, tên lễ ở `festivals.event.*`) + `ILLunarCalendar.solarToLunar`; thêm ngày trai giới (Rằm/Mùng Một), phân loại lễ lớn (BIG) theo khóa ngày âm, gán chùa tổ chức (lễ lớn → 9 chùa, vía → Từ Quang + 2, trai giới → Từ Quang). Không gọi network, không đọc Core Data. |
+| Data — DTO + Mapper | — | N/A | Reuses the Core Data catalog through `ILBuddhistEventUseCase` (`ILBuddhistEventTemplateEntity`); no festival-specific data layer. |
+| Domain — UseCase | `ILFestivalsUseCase.swift` | Done | `loadMonths(from:)` loads templates from Core Data via `ILBuddhistEventUseCase` (`loadTemplates` + `occurrences`) from Jan 1 of the current year through the following 2 years (past days have negative `daysUntil`), one entry per template occurrence (`.festival`); Rằm/Mùng Một without a template become `.observance` (computed from `ILLunarCalendar`). No static catalog. |
 | Presentation — ViewModel | `ILFestivalsViewModel.swift` | Done | `handleViewDidLoad` (async load), `handleTabSelected` (lọc Tất cả / Lễ lớn / Rằm & Mùng Một); map Entity→StateModel (format countdown/thứ ngày/phụ đề, resolve tên chùa qua `home.temple.*`). |
 | Presentation — ViewController | `ILFestivalsViewController.swift` | Done | UI dùng token + component (`ILNavBar`, `ILChip`), không hardcode text/màu/size; header sticky (nav + chip lọc) + scroll intro + các tháng. |
-| Presentation — Coordinator | `ILFestivalsCoordinator.swift` | Done | `.goBack` pop + `finish()`; `.openTemple(id)` mở `ILTempleCoordinator`. |
-| Tests | `ILFestivalsViewModelTests.swift` | Done | 8 test: load success (map + subtitle), map field ngày lễ (host "+N chùa"), lọc Lễ lớn / Rằm & Mùng Một / tháng rỗng, host → `openTemple`, back → `goBack`, failure. |
+| Presentation — Coordinator | `ILFestivalsCoordinator.swift` | Done | `.goBack` pop + `finish()`. |
+| Tests | `ILFestivalsViewModelTests.swift`, `ILFestivalsUseCaseTests.swift` | Done | ViewModel (mock UseCase): load/map/lọc tab/back/failure. UseCase (stub Repository): lễ từ catalog, ngày trai giới, nhiều lễ cùng ngày, 3 năm, lỗi repo. Chưa chạy được trong môi trường này (test target không build với `generic/platform=iOS`). |
 | Wiring | `DIContainer` + `ILHomeCoordinator` | Done | `makeFestivalsUseCase/ViewModel/Coordinator` (UseCase không còn phụ thuộc `ILBuddhistEventUseCase`); Home đổi `.openEvents` → `.openFestivals` → `showFestivals()`. |
 
 ## Navigation events
 
 - `.goBack` — nút Back (`ILNavBar`): pop màn và `finish()`.
-- `.openTemple(id)` — chạm chip chùa tổ chức: `ILFestivalsCoordinator.showTemple(id)` tạo
-  `ILTempleCoordinator` và push màn Trang chùa.
 
 ## Known gaps / not implemented yet
 
-- Danh mục lễ của màn này (catalog tĩnh, khớp prototype) khác catalog Core Data mà carousel
-  "Sự kiện Phật giáo" ở Trang chủ đang dùng (catalog đó có thêm Tết dân gian / lễ Nam tông) — nên
-  gộp về 1 nguồn khi có API lịch lễ thật.
+- Màn hiện toàn bộ catalog Core Data (gồm Tết dân gian / lễ Nam tông) giống carousel Trang chủ;
+  catalog chưa có cờ "lễ lớn" nên tab "Lễ lớn" = mọi lễ có tên (bỏ ngày trai giới).
 - Lệch có chủ đích so với prototype: lễ không lặp lại trong tháng âm nhuận (prototype không phân
   biệt); ngày 1/15 của tháng nhuận vẫn hiện là ngày trai giới "(nhuận)".
-- Danh sách "chùa tổ chức" là mẫu (lễ lớn → 9 chùa, vía → Từ Quang + 2, trai giới → Từ Quang) —
-  bản thật lấy từ sự kiện chùa đăng ký (xem design handoff "Sự kiện: tách 2 nguồn").
-- Chip "Chùa Từ Quang" (`tp-tuquang`) mở Trang chùa nhưng `ILTempleUseCase` hiện chỉ có 8 chùa
-  (chưa có Từ Quang) nên sẽ rơi về catalog đầu tiên — gap thuộc màn Trang chùa, không phải màn này.
+- Chưa có chùa tổ chức / chip chùa: không có nguồn dữ liệu thật (đã bỏ dữ liệu mẫu). Cần sự kiện chùa đăng ký để làm lại.
 - Không có UI test — chưa được yêu cầu.
 
 ## Changelog
@@ -62,3 +56,4 @@ Mỗi thẻ lễ hiện các chùa tổ chức (chip bấm mở Trang chùa). `I
   trai giới); hàng chip chùa tự xuống dòng (`ILChipFlowView`, `flex-wrap`) thay vì tràn ngang;
   tiêu đề + đếm ngược căn giữa theo trục dọc; nhãn thứ có letter-spacing .08em; hairline dưới
   header dùng token mới `ILColors.borderSoft` (`--il-ink-06`).
+- 2026-09-30 — bỏ dữ liệu mẫu: lễ lấy từ Core Data qua `ILBuddhistEventUseCase`; bỏ `festivals.event.*`, `.major`, chip chùa + `openTemple`; seeding Core Data bổ sung template thiếu theo id.

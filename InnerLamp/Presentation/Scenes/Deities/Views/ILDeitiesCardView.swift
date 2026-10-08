@@ -14,13 +14,13 @@ final class ILDeitiesCardView: UIControl {
     /// Chiều cao ô ảnh (design handoff `height:170px`).
     static let imageHeight: CGFloat = 170
     /// Padding nội dung chữ (design handoff `padding:12px 14px 14px`).
-    private static let contentInset = UIEdgeInsets(top: 12, left: 14, bottom: 14, right: 14)
+    static let contentInset = UIEdgeInsets(top: 12, left: 14, bottom: 14, right: 14)
 
     // MARK: - Properties
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let imageArea = UIView()
+    private let imageArea = ILRemoteImageView(frame: .zero)
     private let kindBadge = UIView()
     private let kindLabel = UILabel()
     private let nameLabel = UILabel()
@@ -44,6 +44,7 @@ final class ILDeitiesCardView: UIControl {
         roleLabel.text = model.role
         memorialLabel.text = model.memorialText
         memorialLabel.isHidden = model.memorialText.isEmpty
+        imageArea.setImage(urlString: model.thumbnailURL)
     }
 
     // MARK: - Setup
@@ -55,7 +56,7 @@ final class ILDeitiesCardView: UIControl {
         layer.borderColor = ILColors.border.cgColor
         clipsToBounds = true
 
-        // Ô ảnh placeholder (chưa có ảnh tôn tượng thật) + badge loại.
+        // Ô ảnh tôn tượng từ server (nền `sunk2` làm placeholder khi chưa có / lỗi) + badge loại.
         imageArea.backgroundColor = ILColors.sunk2
         imageArea.isUserInteractionEnabled = false
         imageArea.translatesAutoresizingMaskIntoConstraints = false

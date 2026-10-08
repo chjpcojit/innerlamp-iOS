@@ -6,6 +6,9 @@
 import UIKit
 import Combine
 
+/// Tab Chùa. "Chọn" ở danh sách gợi ý do `ILSanghaViewModel` tự xử lý (lưu qua use case rồi tải lại
+/// màn); "Đổi chùa" mở màn "Chọn chùa tu tập". Coordinator chỉ điều hướng sang các màn con. Cúng dường và buổi tu trực tuyến chưa có màn
+/// đích nên để TODO.
 final class ILSanghaCoordinator: Coordinator {
 
     let navigationController: UINavigationController
@@ -29,21 +32,22 @@ final class ILSanghaCoordinator: Coordinator {
         viewModel.navigationEventPublisher
             .sink { [weak self] event in
                 switch event {
-                case .openFindSangha:
-                    // TODO: mở màn danh sách/tìm đạo tràng (chưa build — không phải Trang chùa).
-                    break
-                case .startSitting:
-                    // TODO: điều hướng sang Chuẩn bị thiền (`setup`) khi có luồng Đèn.
-                    break
-                case .openCompose:
-                    // TODO: present màn Viết bài (`compose`, modal) khi có coordinator.
-                    break
+                case .openTemple(let id):
+                    self?.showTemple(id)
                 case .openEvents:
                     self?.showEvents()
-                case .openCommunity(let id):
-                    self?.showTemple(id)
-                case .openPost(let id):
-                    self?.showPost(id: id)
+                case .openTalk(let id):
+                    self?.showTalk(id)
+                case .openOffer:
+                    // TODO: mở màn Cúng dường (`offer`) — chưa build.
+                    break
+                case .openTempleFinder:
+                    self?.showTempleFinder()
+                case .openOnlineSession:
+                    // TODO: mở buổi tu học trực tuyến (Chuẩn bị thiền / Reader) — chưa nối.
+                    break
+                case .openFestivals:
+                    self?.showFestivals()
                 }
             }
             .store(in: &cancellables)
@@ -52,8 +56,14 @@ final class ILSanghaCoordinator: Coordinator {
         navigationController.setViewControllers([viewController], animated: false)
     }
 
-    private func showPost(id: String) {
-        let coordinator = container.makePostCoordinator(navigationController: navigationController, postID: id)
+    private func showTemple(_ templeID: String) {
+        let coordinator = container.makeTempleCoordinator(navigationController: navigationController, templeID: templeID)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    private func showTempleFinder() {
+        let coordinator = container.makeTempleFinderCoordinator(navigationController: navigationController)
         addChild(coordinator)
         coordinator.start()
     }
@@ -64,8 +74,14 @@ final class ILSanghaCoordinator: Coordinator {
         coordinator.start()
     }
 
-    private func showTemple(_ templeID: String) {
-        let coordinator = container.makeTempleCoordinator(navigationController: navigationController, templeID: templeID)
+    private func showTalk(_ talkID: String) {
+        let coordinator = container.makeTalkCoordinator(navigationController: navigationController, talkID: talkID)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    private func showFestivals() {
+        let coordinator = container.makeFestivalsCoordinator(navigationController: navigationController)
         addChild(coordinator)
         coordinator.start()
     }

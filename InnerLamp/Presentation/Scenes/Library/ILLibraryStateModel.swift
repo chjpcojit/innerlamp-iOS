@@ -41,6 +41,10 @@ struct ILLibraryStateModel: Equatable {
     /// Dùng chung `ILHomeDeityModel` với carousel "Thư viện Phật & Bồ Tát" ở Trang chủ — cùng
     /// hình dạng dữ liệu hiển thị (badge loại, danh xưng, ngày vía).
     var deities: [ILHomeDeityModel] = []
+    /// "Đang cập nhật" when the server answered with nothing; empty while loading or when cards exist.
+    var deitiesEmptyText: String = ""
+    /// `true` while the first load is in flight and there are no cards yet (skeleton cards).
+    var deitiesLoading: Bool = false
     var sutrasSectionTitle: String = ""
     var sutrasViewAllText: String = ""
     var rows: [ILLibraryRowModel] = []

@@ -237,6 +237,11 @@ public final class ILInputCardView: UIView {
         textField.resignFirstResponder()
     }
 
+    /// Puts the caret in the field (same as tapping the card) — used to jump to an invalid field.
+    public func focus() {
+        handleCardTap()
+    }
+
     @objc private func handleCardTap() {
         guard isEditable else { return }
         switch style {

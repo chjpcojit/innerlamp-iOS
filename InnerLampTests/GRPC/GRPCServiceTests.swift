@@ -11,6 +11,7 @@
 import XCTest
 import GRPCCore
 import GRPCProtobuf
+import SwiftProtobuf
 @testable import InnerLamp
 
 final class GRPCServiceTests: XCTestCase {
@@ -27,7 +28,7 @@ final class GRPCServiceTests: XCTestCase {
             Innerlamp_Grpctest_EchoRequest.with { $0.message = "hello" },
             descriptor: .echoTestServiceEcho,
             serializer: ProtobufSerializer(),
-            deserializer: ProtobufDeserializer()
+            deserializer: ProtobufDeserializer<Innerlamp_Grpctest_EchoResponse>()
         )
 
         XCTAssertEqual(response.message, "hello")
@@ -47,7 +48,7 @@ final class GRPCServiceTests: XCTestCase {
                 },
                 descriptor: .echoTestServiceEcho,
                 serializer: ProtobufSerializer(),
-                deserializer: ProtobufDeserializer()
+                deserializer: ProtobufDeserializer<Innerlamp_Grpctest_EchoResponse>()
             )
             XCTFail("Expected GRPCError.notFound")
         } catch let error as GRPCError {
@@ -75,7 +76,7 @@ final class GRPCServiceTests: XCTestCase {
             },
             descriptor: .echoTestServiceEchoStream,
             serializer: ProtobufSerializer(),
-            deserializer: ProtobufDeserializer()
+            deserializer: ProtobufDeserializer<Innerlamp_Grpctest_EchoResponse>()
         )
 
         var received: [String] = []
@@ -101,7 +102,7 @@ final class GRPCServiceTests: XCTestCase {
                 },
                 descriptor: .echoTestServiceEchoStream,
                 serializer: ProtobufSerializer(),
-                deserializer: ProtobufDeserializer()
+                deserializer: ProtobufDeserializer<Innerlamp_Grpctest_EchoResponse>()
             )
             XCTFail("Expected GRPCError.unavailable")
         } catch let error as GRPCError {
@@ -124,7 +125,7 @@ final class GRPCServiceTests: XCTestCase {
             },
             descriptor: .echoTestServiceEchoStream,
             serializer: ProtobufSerializer(),
-            deserializer: ProtobufDeserializer()
+            deserializer: ProtobufDeserializer<Innerlamp_Grpctest_EchoResponse>()
         )
 
         var iterator = sequence.makeAsyncIterator()

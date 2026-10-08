@@ -27,7 +27,8 @@ final class ILDeitiesGridView: UIView {
     var onItemTap: ((ILDeitiesItemModel) -> Void)?
 
     // MARK: - UI Elements
-    private let scrollView = UIScrollView()
+    /// Exposed so the screen can inset it under the sticky header and bind `ILStickyHeaderBand` to it.
+    let scrollView = UIScrollView()
     private let rowsStack = UIStackView()
 
     // MARK: - Initializer
@@ -44,6 +45,7 @@ final class ILDeitiesGridView: UIView {
     private func setupViews() {
         scrollView.showsVerticalScrollIndicator = false
         scrollView.alwaysBounceVertical = true
+        scrollView.contentInsetAdjustmentBehavior = .never
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(scrollView)
 
@@ -74,7 +76,7 @@ final class ILDeitiesGridView: UIView {
             rowsStack.removeArrangedSubview($0)
             $0.removeFromSuperview()
         }
-        scrollView.setContentOffset(.zero, animated: false)
+        scrollView.setContentOffset(CGPoint(x: 0, y: -scrollView.contentInset.top), animated: false)
 
         var index = 0
         while index < items.count {

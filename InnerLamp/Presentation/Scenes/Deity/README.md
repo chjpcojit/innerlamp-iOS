@@ -9,24 +9,26 @@ a stub gets a real implementation, a new action/nav event is added, tests are fi
 ## Overview
 
 Detail screen for one Buddha / Bodhisattva, matching `isBuddha` ("Chi tiết Phật / Bồ Tát") in
-`Docs/design_handoff_innerlamp`. Layout: a full-bleed 420pt hero under a transparent `ILNavBar`.
+`Docs/design_handoff_innerlamp`. Layout: a full-bleed 382pt hero under a transparent `ILNavBar`.
 When the hero scrolls away, the header turns solid `canvas` and shows the name. Below it: a
 next-memorial-day card with a "Lịch lễ" link, a short role line, a collapsible biography
 ("Đọc thêm"), numbered great vows (collapsed to 5), "Thần chú & danh hiệu" cards with
 "Trì niệm với tràng hạt" / "Chia sẻ" buttons, related sutras, and an editorial footnote.
-Pushed from the Home "Thư viện Phật & Bồ Tát" carousel (`openDeity(id:)`).
+Pushed from the Home "Thư viện Phật & Bồ Tát" carousel (`openDeity(id:)`). The profile is
+fetched from the server (`GET /v1/deities/{id}`) on `viewDidLoad`: loading → content, or an error
+state with "Thử lại".
 
 ## Status
 
 | Layer | File | Status | Notes |
 |---|---|---|---|
 | Domain — Entity | `ILDeityEntity.swift` | Done | Plus `ILDeityUpcomingMemorialDayEntity`, `ILDeityRelatedSutraEntity`, and `canonicalSources` (splits `canonicalSource` on commas outside parentheses). |
-| Domain — UseCase | `ILDeityUseCase.swift` | Done (mock catalog) | `upcomingMemorialDay(for:)` scans about 13 months of the Vietnamese lunar calendar (UTC+7). Leap months are skipped, and day 30 in a 29-day month maps to day 29. `relatedSutras(for:)` looks up Library sutra IDs from a small table (only "Kinh A Di Đà" → `sutra.amida` today). `now` is injectable for tests. |
+| Domain — UseCase | `ILDeityUseCase.swift` | Done | `loadDeity(id:)` → `ILDeityCatalogRepository.loadDeityDetail(id:)` (network-first, Core Data cache when offline; throws `ILCatalogError`). `getAllDeities()` still returns the static catalog for Home fallback / Deities list / Library. `upcomingMemorialDay(for:)` scans about 13 months of the Vietnamese lunar calendar (UTC+7). Leap months are skipped, and day 30 in a 29-day month maps to day 29. `relatedSutras(for:)` looks up Library sutra IDs from a small table (only "Kinh A Di Đà" → `sutra.amida` today). `now` is injectable for tests. |
 | Presentation — StateModel | `ILDeityStateModel.swift` | Done | Hero, memorial-day, biography/vow toggle, mantra, and sutra models. |
-| Presentation — ViewModel | `ILDeityViewModel.swift` | Done | Inputs: viewDidLoad, back, biography/vow toggles, festivals, chant(index), share(index), sutra(index). |
-| Presentation — ViewController | `ILDeityViewController.swift` | Done | Views: `ILDeityHeroView`, `ILDeityMemorialDayCardView`, `ILDeityVowRowView`, `ILDeityMantraCardView`; sutras use `ILRow`. |
+| Presentation — ViewModel | `ILDeityViewModel.swift` | Done | State `.idle` → `.loading` → `.success` / `.failure`. Inputs: viewDidLoad, retry, back, biography/vow toggles, festivals, chant(index), share(index), sutra(index). |
+| Presentation — ViewController | `ILDeityViewController.swift` | Done | Views: `ILDeityHeroView`, `ILDeityMemorialDayCardView`, `ILDeityVowRowView`, `ILDeityMantraCardView`; sutras use `ILRow`. Whole-screen `ILLoadingDotsView` / `ILStateView` + retry `ILButton` (offline gets its own title). |
 | Presentation — Coordinator | `ILDeityCoordinator.swift` | Done | `.openFestivals` → Festivals, `.openMala(text)` → Mala (with a custom mantra), `.openSutra(id)` → SutraDetail, `.share(text)` → system share sheet. |
-| Tests | `InnerLampTests/ILDeityViewModelTests.swift` | Done | `ILDeityViewModelTests` + `ILDeityUseCaseTests`. |
+| Tests | `InnerLampTests/ILDeityViewModelTests.swift` | Done | `ILDeityViewModelTests` (incl. loading / failure / retry) + `ILDeityUseCaseTests` (incl. `loadDeity` delegation / error). `StubILDeityCatalogRepository` is shared with Home/Deities tests. |
 
 ## Navigation events
 
@@ -38,7 +40,7 @@ Pushed from the Home "Thư viện Phật & Bồ Tát" carousel (`openDeity(id:)`
 
 ## Known gaps / not implemented yet
 
-- No real deity artwork yet: the hero shows the Chinese name as a faint watermark with a gold glow
+- `thumbnail_url` / `image_url` from the API are not mapped to the entity yet, so no artwork: the hero shows the Chinese name as a faint watermark with a gold glow
   where the design's image slot sits.
 - The design's `vowIntro`, mantra `note` for the title/short mantra, and related-sutra subtitles are
   not in the catalog data. Those elements are hidden, and sutra rows say "Có trong Thư viện" /
@@ -50,6 +52,8 @@ Pushed from the Home "Thư viện Phật & Bồ Tát" carousel (`openDeity(id:)`
 
 ## Changelog
 
+- 2026-09-30 — removed the mock detail (`getInitialState(deityID:)`); the screen now loads the
+  profile from `GET /v1/deities/{id}` with loading / error / retry states.
 - 2026-09-28 — rebuilt the screen to match the design handoff (`isBuddha`): image hero + sticky
   header, memorial-day card, collapsible biography and vows, mantra cards, related sutras; added
   memorial-day/related-sutra logic to the UseCase, optional mantra text for Mala, and tests.

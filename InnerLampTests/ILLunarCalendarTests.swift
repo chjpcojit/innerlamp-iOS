@@ -214,4 +214,53 @@ final class ILLunarCalendarTests: XCTestCase {
             XCTAssertEqual(next, (current + 1) % 28, "day \(day)")
         }
     }
+
+    // MARK: - Short-month rule (day 30 falls on day 29 of a 29-day month)
+
+    func test_isLastDayOfShortMonth_trueOnlyOnDay29FollowedByDay1() {
+        let calendar = Calendar(identifier: .gregorian)
+        var day = calendar.date(from: DateComponents(year: 2023, month: 1, day: 1)) ?? Date()
+        var sawShort = false
+        var sawLong = false
+
+        for _ in 0..<(365 * 3) {
+            let lunar = ILLunarCalendar.solarToLunar(date: day, calendar: calendar)
+            let next = calendar.date(byAdding: .day, value: 1, to: day) ?? day
+            let nextLunar = ILLunarCalendar.solarToLunar(date: next, calendar: calendar)
+            let expected = lunar.day == 29 && nextLunar.day == 1
+
+            XCTAssertEqual(ILLunarCalendar.isLastDayOfShortMonth(lunar, on: day, calendar: calendar), expected)
+            sawShort = sawShort || expected
+            sawLong = sawLong || (lunar.day == 30)
+            day = next
+        }
+        XCTAssertTrue(sawShort && sawLong, "Scan range must contain both short and long lunar months")
+    }
+
+    func test_matchesLunarDay_day30MatchesLastDayOfEveryMonth() {
+        let calendar = Calendar(identifier: .gregorian)
+        var day = calendar.date(from: DateComponents(year: 2023, month: 1, day: 1)) ?? Date()
+        var lastDays = 0
+
+        for _ in 0..<(365 * 3) {
+            let lunar = ILLunarCalendar.solarToLunar(date: day, calendar: calendar)
+            let next = calendar.date(byAdding: .day, value: 1, to: day) ?? day
+            let isLastDay = ILLunarCalendar.solarToLunar(date: next, calendar: calendar).day == 1
+
+            XCTAssertEqual(
+                ILLunarCalendar.matchesLunarDay(30, lunar: lunar, on: day, calendar: calendar),
+                isLastDay && lunar.day >= 29,
+                "30 must match exactly the last day of a 29/30-day month"
+            )
+            if isLastDay { lastDays += 1 }
+            day = next
+        }
+        XCTAssertGreaterThan(lastDays, 30)
+    }
+
+    func test_matchesLunarDay_nonThirtyTargetsRequireExactDay() {
+        let lunar = ILLunarCalendar.LunarDate(day: 29, month: 7, year: 2024, isLeapMonth: false)
+        XCTAssertFalse(ILLunarCalendar.matchesLunarDay(15, lunar: lunar, on: Date()))
+        XCTAssertTrue(ILLunarCalendar.matchesLunarDay(29, lunar: lunar, on: Date()))
+    }
 }

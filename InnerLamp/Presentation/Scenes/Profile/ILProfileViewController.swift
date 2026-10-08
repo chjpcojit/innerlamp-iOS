@@ -20,14 +20,20 @@ final class ILProfileViewController: BaseViewController {
     private let reminderTappedSubject = PassthroughSubject<Void, Never>()
     private let settingsTappedSubject = PassthroughSubject<Void, Never>()
     private let notificationsTappedSubject = PassthroughSubject<Void, Never>()
+    private let familyTreeTappedSubject = PassthroughSubject<Void, Never>()
     private let communityTappedSubject = PassthroughSubject<Void, Never>()
 
+    private var lastHeaderHeight: CGFloat = 0
+
     // MARK: - UI Elements
+    // Pinned header: sits above the scroll view and blurs in as content scrolls under it.
+    private let headerContainer = ILStickyHeaderBand()
     private lazy var headerView = ILProfileHeaderView()
 
     private lazy var scrollView: UIScrollView = {
         let scroll = UIScrollView()
         scroll.showsVerticalScrollIndicator = false
+        scroll.contentInsetAdjustmentBehavior = .never
         return scroll
     }()
 
@@ -80,15 +86,23 @@ final class ILProfileViewController: BaseViewController {
         navigationController?.setNavigationBarHidden(true, animated: animated)
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateScrollInsetForHeader()
+    }
+
     // MARK: - Setup
     override func setupViews() {
         super.setupViews()
         view.backgroundColor = ILColors.canvas
 
-        [scrollView, headerView].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            view.addSubview($0)
-        }
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(scrollView)
+        view.addSubview(headerContainer)
+
+        headerContainer.bind(to: scrollView)
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        headerContainer.addSubview(headerView)
 
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
@@ -113,6 +127,7 @@ final class ILProfileViewController: BaseViewController {
         menuCard.onReminderTapped = { [weak self] in self?.reminderTappedSubject.send(()) }
         menuCard.onSettingsTapped = { [weak self] in self?.settingsTappedSubject.send(()) }
         menuCard.onNotificationsTapped = { [weak self] in self?.notificationsTappedSubject.send(()) }
+        menuCard.onFamilyTreeTapped = { [weak self] in self?.familyTreeTappedSubject.send(()) }
         menuCard.onCommunityTapped = { [weak self] in self?.communityTappedSubject.send(()) }
     }
 
@@ -120,16 +135,21 @@ final class ILProfileViewController: BaseViewController {
         super.setupConstraints()
 
         NSLayoutConstraint.activate([
-            headerView.topAnchor.constraint(equalTo: view.topAnchor),
-            headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            headerContainer.topAnchor.constraint(equalTo: view.topAnchor),
+            headerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
-            scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            headerView.topAnchor.constraint(equalTo: headerContainer.topAnchor),
+            headerView.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor),
+            headerView.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor),
+            headerView.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor),
+
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: ILMetrics.groupSpacing + 2),
+            contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentStack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: ILMetrics.screenHorizontal),
             contentStack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -ILMetrics.screenHorizontal),
             contentStack.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: -(ILMetrics.bottomNavHeight + ILMetrics.groupSpacing)),
@@ -150,6 +170,7 @@ final class ILProfileViewController: BaseViewController {
             reminderTapped: reminderTappedSubject.eraseToAnyPublisher(),
             settingsTapped: settingsTappedSubject.eraseToAnyPublisher(),
             notificationsTapped: notificationsTappedSubject.eraseToAnyPublisher(),
+            familyTreeTapped: familyTreeTappedSubject.eraseToAnyPublisher(),
             communityTapped: communityTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
@@ -163,6 +184,20 @@ final class ILProfileViewController: BaseViewController {
         // Gửi sau khi đã subscribe ở trên, trong cùng 1 call đồng bộ — PassthroughSubject không
         // phát lại giá trị đã gửi trước khi có subscriber.
         viewDidLoadSubject.send(())
+    }
+
+    // MARK: - Pinned header
+    /// Content starts below the pinned header: reserve its height as top inset.
+    private func updateScrollInsetForHeader() {
+        let height = headerContainer.frame.height
+        guard height > 0, height != lastHeaderHeight else { return }
+        // The header height can still change after the first layout; keep content under the header
+        // whenever the user has not scrolled away from the top.
+        let wasAtTop = lastHeaderHeight == 0 || scrollView.contentOffset.y <= -lastHeaderHeight + 0.5
+        lastHeaderHeight = height
+        scrollView.contentInset.top = height
+        scrollView.verticalScrollIndicatorInsets.top = height
+        if wasAtTop { scrollView.contentOffset.y = -height }
     }
 
     // MARK: - Render

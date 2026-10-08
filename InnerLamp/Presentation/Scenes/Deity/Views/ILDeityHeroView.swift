@@ -5,18 +5,19 @@
 
 import UIKit
 
-/// Hero 420pt full-bleed của màn chi tiết Phật & Bồ Tát — khớp `isBuddha` trong design handoff:
+/// Hero 382pt full-bleed của màn chi tiết Phật & Bồ Tát — khớp `isBuddha` trong design handoff:
 /// nền `--il-sunk2` (chỗ đặt ảnh tôn tượng), lớp phủ `--il-hero-ov` tan dần xuống đáy, hai chip
 /// (loại · cõi tịnh độ), danh xưng Lora 28 và Phạn ngữ nghiêng.
 ///
-/// Chưa có ảnh tôn tượng thật nên danh xưng chữ Hán được in chìm kèm quầng sáng vàng thay chỗ
-/// ảnh. Header (nút ‹) không nằm ở đây mà là `ILNavBar` đè lên trên — xem `ILDeityViewController`.
-final class ILDeityHeroView: UIView {
+/// Ảnh tôn tượng tải từ server (`ILRemoteImageView`) phủ kín nền; khi chưa có ảnh / tải lỗi thì
+/// danh xưng chữ Hán in chìm kèm quầng sáng vàng vẫn hiện làm placeholder. Ảnh ghim trên cùng, co giãn khi kéo xuống và mờ dần khi cuộn lên do `ILStretchyHeaderView` đảm nhiệm: nền/quầng sáng/chữ chìm nằm ở `backgroundView` (dưới ảnh), lớp phủ + chữ ở `contentView` (trên ảnh). Header (nút ‹) không nằm ở đây mà là `ILNavBar` đè lên trên — xem `ILDeityViewController`.
+final class ILDeityHeroView: ILStretchyHeaderView {
 
     private enum Layout {
-        static let height: CGFloat = 420
+        static let height: CGFloat = 382
         static let horizontalInset: CGFloat = 20
         static let bottomInset: CGFloat = 30
+        static let overlayClearStop: NSNumber = 0.2
         static let glowDiameter: CGFloat = 360
         static let watermarkFontSize: CGFloat = 96
         static let chipVerticalInset: CGFloat = 4
@@ -49,7 +50,7 @@ final class ILDeityHeroView: UIView {
     }
 
     // MARK: - Configuration
-    func configure(kindLabel: String, realm: String, name: String, sanskrit: String, watermark: String) {
+    func configure(kindLabel: String, realm: String, name: String, sanskrit: String, watermark: String, imageURL: String?) {
         self.kindLabel.text = kindLabel
         realmLabel.text = realm
         realmChip.isHidden = realm.isEmpty
@@ -63,20 +64,20 @@ final class ILDeityHeroView: UIView {
         sanskritLabel.text = sanskrit
         sanskritLabel.isHidden = sanskrit.isEmpty
         watermarkLabel.text = watermark
+        imageView.setImage(urlString: imageURL?.isEmpty == false ? imageURL : nil)
     }
 
     // MARK: - Setup
     private func setupViews() {
-        translatesAutoresizingMaskIntoConstraints = false
-        backgroundColor = ILColors.sunk2
-        clipsToBounds = true
+        backgroundView.backgroundColor = ILColors.sunk2
+        imageHeight = Layout.height
 
         // Quầng sáng vàng thay chỗ ảnh tôn tượng.
         glowLayer.type = .radial
         glowLayer.colors = [ILColors.featGlow.cgColor, ILColors.featGlowClear.cgColor]
         glowLayer.startPoint = CGPoint(x: 0.5, y: 0.5)
         glowLayer.endPoint = CGPoint(x: 1, y: 1)
-        layer.addSublayer(glowLayer)
+        backgroundView.layer.addSublayer(glowLayer)
 
         watermarkLabel.font = ILTypography.lora(size: Layout.watermarkFontSize)
         watermarkLabel.textColor = ILColors.heroInk.withAlphaComponent(0.07)
@@ -85,18 +86,23 @@ final class ILDeityHeroView: UIView {
         watermarkLabel.minimumScaleFactor = 0.4
         watermarkLabel.isAccessibilityElement = false
         watermarkLabel.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(watermarkLabel)
+        backgroundView.addSubview(watermarkLabel)
 
+        // Ảnh phủ lên quầng sáng + chữ chìm (placeholder), nhưng nằm dưới lớp phủ gradient.
         // Lớp phủ `--il-hero-ov`: 3 chặng, đậm dần xuống đáy để chữ đọc được trên ảnh.
+        // Top stays fully clear so the photo is not washed out under the header; the tint only
+        // ramps in from `overlayClearStop` downwards.
         overlayLayer.colors = [
-            ILColors.heroOverlayStart.cgColor,
+            UIColor.clear.cgColor,
+            UIColor.clear.cgColor,
             ILColors.heroOverlayMid.cgColor,
             ILColors.heroOverlayEnd.cgColor
         ]
-        overlayLayer.locations = [0.0, 0.58, 1.0]
+        overlayLayer.locations = [0.0, Layout.overlayClearStop, 0.58, 1.0]
         overlayLayer.startPoint = CGPoint(x: 0.5, y: 0)
         overlayLayer.endPoint = CGPoint(x: 0.5, y: 1)
-        layer.addSublayer(overlayLayer)
+        // @ai: experiment — overlay disabled to preview the photo without the bottom scrim.
+        // contentView.layer.addSublayer(overlayLayer)
 
         configureChip(kindChip, label: kindLabel, textColor: ILColors.heroAccent)
         configureChip(realmChip, label: realmLabel, textColor: ILColors.heroInk)
@@ -125,7 +131,7 @@ final class ILDeityHeroView: UIView {
         contentStack.addArrangedSubview(nameLabel)
         contentStack.setCustomSpacing(6, after: nameLabel)
         contentStack.addArrangedSubview(sanskritLabel)
-        addSubview(contentStack)
+        contentView.addSubview(contentStack)
 
         NSLayoutConstraint.activate([
             heightAnchor.constraint(equalToConstant: Layout.height),
@@ -181,7 +187,8 @@ final class ILDeityHeroView: UIView {
     // lại khi hệ thống đổi light/dark (bộ `--il-hero-*` có hai biến thể).
     private func applyColorAppearanceChange() {
         overlayLayer.colors = [
-            ILColors.heroOverlayStart.resolvedColor(with: traitCollection).cgColor,
+            UIColor.clear.cgColor,
+            UIColor.clear.cgColor,
             ILColors.heroOverlayMid.resolvedColor(with: traitCollection).cgColor,
             ILColors.heroOverlayEnd.resolvedColor(with: traitCollection).cgColor
         ]

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Be+Vietnam+Pro:wght@300;400;500;600&display=swap&subset=vietnamese,latin" rel="stylesheet">
+<style>body{margin:0;background:#EDE7DA;font-family:'Be Vietnam Pro',system-ui,sans-serif}a{color:#8A5A18}a:hover{color:#B8862F}</style>
+</helmet>
+
+<div style="max-width:1040px;margin:0 auto;padding:56px 40px 90px">
+
+  <div style="display:flex;align-items:center;gap:14px">
+    <div style="width:44px;height:44px;border-radius:50%;border:1.5px solid #B8862F;display:flex;align-items:flex-end;justify-content:center;padding-bottom:11px;background:radial-gradient(circle at 50% 74%,rgba(217,150,60,.22),transparent 66%)"><div style="width:10px;height:14px;border-radius:50% 50% 45% 45%/62% 62% 38% 38%;background:linear-gradient(180deg,#F3C673,#D9963C);box-shadow:0 0 16px rgba(217,150,60,.8)"></div></div>
+    <div>
+      <div style="font:600 15px 'Be Vietnam Pro',sans-serif;letter-spacing:.2em;color:#221E19">INNERLAMP</div>
+      <div style="font:400 italic 13px Lora,serif;color:rgba(34,30,25,.55);margin-top:3px">Hệ thiết kế “Giấy dó &amp; ánh đèn” · v1.0</div>
+    </div>
+  </div>
+
+  <div style="font:400 30px/1.35 Lora,serif;color:#221E19;margin-top:36px;max-width:640px;text-wrap:pretty">Tĩnh lặng trước, giao diện sau. Mọi thành phần đều nhường chỗ cho hơi thở của người dùng.</div>
+  <div style="font:300 15px/1.7 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.62);margin-top:16px;max-width:620px">Ba nguyên tắc: <b style="font-weight:500">giấy và đèn</b> — nền ấm như giấy dó, điểm nhấn là ánh sáng chứ không phải màu rực; <b style="font-weight:500">chữ là nội dung</b> — kinh văn và trích dẫn dùng serif, giao diện dùng sans; <b style="font-weight:500">hình tượng ẩn dụ</b> — ngọn đèn, tràng hạt, vòng tròn thiền, lá bồ đề; không dùng tượng Phật cụ thể để tránh thất kính.</div>
+
+  <div style="height:1px;background:linear-gradient(90deg,rgba(184,134,47,.7),transparent);margin:44px 0 34px"></div>
+
+  <div style="font:600 10.5px 'Be Vietnam Pro',sans-serif;letter-spacing:.16em;color:rgba(34,30,25,.45)">01 · MÀU</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:18px">
+    <sc-for list="{{ colors }}" as="c" hint-placeholder-count="10">
+      <div style="background:#FFFDF8;border:1px solid rgba(34,30,25,.09);border-radius:14px;overflow:hidden">
+        <div style="height:82px;background: {{ c.hex }}"></div>
+        <div style="padding:12px 13px 14px">
+          <div style="font:500 12.5px 'Be Vietnam Pro',sans-serif;color:#221E19">{{ c.name }}</div>
+          <div style="font:400 10.5px ui-monospace,monospace;color:rgba(34,30,25,.45);margin-top:3px">{{ c.hex }}</div>
+          <div style="font:400 10.5px/1.45 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.5);margin-top:6px">{{ c.use }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="font:600 10.5px 'Be Vietnam Pro',sans-serif;letter-spacing:.16em;color:rgba(34,30,25,.45);margin-top:46px">02 · CHỮ</div>
+  <div style="background:#FFFDF8;border:1px solid rgba(34,30,25,.09);border-radius:16px;padding:28px 30px;margin-top:18px">
+    <sc-for list="{{ type }}" as="t" hint-placeholder-count="6">
+      <div style="display:flex;align-items:baseline;gap:26px;padding:14px 0;border-bottom:1px solid rgba(34,30,25,.06)">
+        <div style="width:150px;flex:none;font:500 11px 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.45)">{{ t.role }}</div>
+        <div style="flex:1;min-width:0;color:#221E19;font: {{ t.css }}">{{ t.sample }}</div>
+        <div style="font:400 10.5px ui-monospace,monospace;color:rgba(34,30,25,.4);white-space:nowrap">{{ t.spec }}</div>
+      </div>
+    </sc-for>
+    <div style="font:400 11.5px/1.6 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.5);margin-top:14px">Lora và Be Vietnam Pro đều hỗ trợ đầy đủ dấu tiếng Việt. Kinh văn luôn dùng Lora, cỡ ≥ 19px, line-height ≥ 1.6.</div>
+  </div>
+
+  <div style="font:600 10.5px 'Be Vietnam Pro',sans-serif;letter-spacing:.16em;color:rgba(34,30,25,.45);margin-top:46px">03 · THÀNH PHẦN</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px">
+
+    <div style="background:#FFFDF8;border:1px solid rgba(34,30,25,.09);border-radius:16px;padding:22px">
+      <div style="font:500 12.5px 'Be Vietnam Pro',sans-serif;color:#221E19;margin-bottom:16px">Nút &amp; chip</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <div style="padding:14px 24px;border-radius:999px;background:#221E19;color:#F7F2E8;font:500 14px 'Be Vietnam Pro',sans-serif;box-shadow:0 8px 24px rgba(34,30,25,.18)">Chính</div>
+        <div style="padding:13px 22px;border-radius:999px;border:1px solid rgba(34,30,25,.2);color:#221E19;font:500 14px 'Be Vietnam Pro',sans-serif">Phụ</div>
+        <div style="padding:13px 22px;border-radius:999px;background:#D9963C;color:#1A1611;font:500 14px 'Be Vietnam Pro',sans-serif">Trên nền tối</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+        <div style="padding:8px 14px;border-radius:999px;background:rgba(184,134,47,.14);color:#8A5A18;font:500 11.5px 'Be Vietnam Pro',sans-serif">Ngày rằm</div>
+        <div style="padding:8px 14px;border-radius:999px;background:rgba(110,143,122,.16);color:#4E6C59;font:500 11.5px 'Be Vietnam Pro',sans-serif">Đã quy y</div>
+        <div style="padding:8px 14px;border-radius:999px;border:1px solid rgba(34,30,25,.16);color:rgba(34,30,25,.6);font:400 11.5px 'Be Vietnam Pro',sans-serif">Bộ lọc</div>
+      </div>
+    </div>
+
+    <div style="background:#FFFDF8;border:1px solid rgba(34,30,25,.09);border-radius:16px;padding:22px">
+      <div style="font:500 12.5px 'Be Vietnam Pro',sans-serif;color:#221E19;margin-bottom:16px">Thẻ nội dung</div>
+      <div style="border-radius:18px;background:linear-gradient(140deg,#2A2620,#181510);padding:18px;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(217,150,60,.3),transparent 66%)"></div>
+        <div style="font:600 9px 'Be Vietnam Pro',sans-serif;letter-spacing:.16em;color:rgba(217,150,60,.9);position:relative">LỜI PHẬT DẠY</div>
+        <div style="font:400 17px/1.5 Lora,serif;color:#F5EEE0;margin-top:9px;position:relative">“Tâm dẫn đầu các pháp.”</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:12px;border:1px solid rgba(34,30,25,.08);border-radius:16px;padding:12px 14px">
+        <div style="width:38px;height:38px;border-radius:12px;background:rgba(110,143,122,.16);display:flex;align-items:center;justify-content:center"><div style="width:14px;height:14px;border-radius:50% 0 50% 50%;background:#6E8F7A"></div></div>
+        <div style="flex:1"><div style="font:500 13px 'Be Vietnam Pro',sans-serif;color:#221E19">Thiền hơi thở</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.5)">12 phút</div></div>
+      </div>
+    </div>
+
+    <div style="background:#FFFDF8;border:1px solid rgba(34,30,25,.09);border-radius:16px;padding:22px">
+      <div style="font:500 12.5px 'Be Vietnam Pro',sans-serif;color:#221E19;margin-bottom:16px">Hình tượng (36px)</div>
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+        <div style="text-align:center"><div style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(184,134,47,.5);display:flex;align-items:flex-end;justify-content:center;padding-bottom:9px;margin:0 auto"><div style="width:9px;height:13px;border-radius:50% 50% 45% 45%/62% 62% 38% 38%;background:#D9963C;box-shadow:0 0 12px rgba(217,150,60,.8)"></div></div><div style="font:400 10px 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.45);margin-top:7px">Ngọn đèn</div></div>
+        <div style="text-align:center"><div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;gap:4px;margin:0 auto"><div style="width:8px;height:8px;border-radius:50%;background:#8A5A18"></div><div style="width:8px;height:8px;border-radius:50%;background:rgba(138,90,24,.5)"></div><div style="width:8px;height:8px;border-radius:50%;background:rgba(138,90,24,.22)"></div></div><div style="font:400 10px 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.45);margin-top:7px">Tràng hạt</div></div>
+        <div style="text-align:center"><div style="width:40px;height:40px;border-radius:50%;border:2px solid rgba(34,30,25,.7);border-right-color:transparent;margin:0 auto"></div><div style="font:400 10px 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.45);margin-top:7px">Ensō</div></div>
+        <div style="text-align:center"><div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;margin:0 auto"><div style="width:20px;height:20px;border-radius:50% 0 50% 50%;background:#6E8F7A"></div></div><div style="font:400 10px 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.45);margin-top:7px">Lá bồ đề</div></div>
+        <div style="text-align:center"><div style="width:40px;height:40px;display:flex;align-items:flex-end;justify-content:center;margin:0 auto"><div style="width:24px;height:16px;border-radius:0 0 50% 50%;background:#C2857F"></div></div><div style="font:400 10px 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.45);margin-top:7px">Hoa sen</div></div>
+      </div>
+    </div>
+
+    <div style="background:#FFFDF8;border:1px solid rgba(34,30,25,.09);border-radius:16px;padding:22px">
+      <div style="font:500 12.5px 'Be Vietnam Pro',sans-serif;color:#221E19;margin-bottom:16px">Nhịp &amp; bo góc</div>
+      <div style="display:flex;gap:10px;align-items:flex-end">
+        <sc-for list="{{ radii }}" as="r" hint-placeholder-count="5">
+          <div style="text-align:center"><div style="width:52px;height:52px;background:rgba(184,134,47,.16);border:1px solid rgba(184,134,47,.4);border-radius: {{ r.v }}"></div><div style="font:400 10px 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.45);margin-top:7px">{{ r.v }}</div></div>
+        </sc-for>
+      </div>
+      <div style="font:400 11.5px/1.6 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.55);margin-top:16px">Khoảng cách theo bậc 4 · 8 · 12 · 20 · 26 · 44. Lề màn hình 20px, khoảng cách giữa các khối 20–24px. Đổ bóng chỉ dùng cho nút chính và thanh nổi.</div>
+    </div>
+
+  </div>
+
+  <div style="font:600 10.5px 'Be Vietnam Pro',sans-serif;letter-spacing:.16em;color:rgba(34,30,25,.45);margin-top:46px">04 · NỀN TỐI</div>
+  <div style="margin-top:18px;border-radius:16px;background:#14120F;padding:26px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px">
+    <div><div style="height:60px;border-radius:12px;background:#14120F;border:1px solid rgba(242,235,221,.14)"></div><div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;color:#F2EBDD;margin-top:8px">Nền · #14120F</div></div>
+    <div><div style="height:60px;border-radius:12px;background:#1E1B17"></div><div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;color:#F2EBDD;margin-top:8px">Bề mặt · #1E1B17</div></div>
+    <div><div style="height:60px;border-radius:12px;background:#D9963C"></div><div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;color:#F2EBDD;margin-top:8px">Nhấn · #D9963C</div></div>
+    <div><div style="height:60px;border-radius:12px;background:#F2EBDD"></div><div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;color:#F2EBDD;margin-top:8px">Chữ · #F2EBDD</div></div>
+  </div>
+
+  <div style="font:600 10.5px 'Be Vietnam Pro',sans-serif;letter-spacing:.16em;color:rgba(34,30,25,.45);margin-top:46px">05 · GIỌNG ĐIỆU &amp; ĐIỀU NÊN TRÁNH</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px">
+    <div style="background:#FFFDF8;border:1px solid rgba(110,143,122,.4);border-radius:16px;padding:20px 22px">
+      <div style="font:500 12.5px 'Be Vietnam Pro',sans-serif;color:#4E6C59">Nên</div>
+      <div style="font:400 13px/1.85 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.72);margin-top:10px">Xưng hô nhẹ nhàng, không ra lệnh · “Mời bạn trở về hơi thở”<br>Song ngữ: Việt trước, Anh in nghiêng nhỏ hơn<br>Số liệu để khích lệ, không để so đo<br>Ngôn ngữ nhà Phật quen thuộc: thời khóa, tinh tấn, hồi hướng</div>
+    </div>
+    <div style="background:#FFFDF8;border:1px solid rgba(194,133,127,.5);border-radius:16px;padding:20px 22px">
+      <div style="font:500 12.5px 'Be Vietnam Pro',sans-serif;color:#9A5F58">Tránh</div>
+      <div style="font:400 13px/1.85 'Be Vietnam Pro',sans-serif;color:rgba(34,30,25,.72);margin-top:10px">Tượng Phật, pháp khí dùng làm hình trang trí<br>Bảng xếp hạng, huy hiệu kiểu game hóa<br>Đỏ – vàng chói, gradient rực, emoji<br>Thông báo gây áp lực “bạn đã bỏ lỡ 3 ngày”</div>
+    </div>
+  </div>
+
+  <div style="font:400 italic 13px Lora,serif;color:rgba(34,30,25,.45);margin-top:40px">Muốn dùng hệ này cho các dự án khác: nhân bản file này thành một dự án riêng rồi đính kèm làm design system.</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1120,&quot;height&quot;:1400}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      colors: [
+        { name: 'Giấy dó', hex: '#F7F2E8', use: 'Nền chính, màn sáng' },
+        { name: 'Giấy ngà', hex: '#FFFDF8', use: 'Bề mặt thẻ, ô nhập' },
+        { name: 'Mực nâu', hex: '#221E19', use: 'Chữ chính, nút chính' },
+        { name: 'Y vàng', hex: '#B8862F', use: 'Nhấn, tiến độ, nét chỉ' },
+        { name: 'Ánh đèn', hex: '#D9963C', use: 'Nhấn trên nền tối, ngọn lửa' },
+        { name: 'Trầm hương', hex: '#8A5A18', use: 'Chữ nhấn, liên kết' },
+        { name: 'Lá bồ đề', hex: '#6E8F7A', use: 'Trạng thái an, thiền' },
+        { name: 'Sen hồng', hex: '#C2857F', use: 'Hiếu hạnh, Vu Lan' },
+        { name: 'Đêm tĩnh', hex: '#14120F', use: 'Nền tối, phiên thiền' },
+        { name: 'Trăng', hex: '#F2EBDD', use: 'Chữ trên nền tối' },
+      ],
+      type: [
+        { role: 'Tiêu đề màn', css: '400 30px/1.2 Lora, serif', sample: 'Thắp ngọn đèn trong tâm', spec: 'Lora 30/36' },
+        { role: 'Tiêu đề mục', css: '400 22px/1.3 Lora, serif', sample: 'Thời khóa hôm nay', spec: 'Lora 22/29' },
+        { role: 'Kinh văn', css: '400 20px/1.6 Lora, serif', sample: 'Ý dẫn đầu các pháp, ý làm chủ, ý tạo', spec: 'Lora 20/32' },
+        { role: 'Song ngữ (Anh)', css: 'italic 400 13px/1.7 Lora, serif', sample: 'Mind precedes all mental states', spec: 'Lora italic 13' },
+        { role: 'Giao diện', css: "500 14px 'Be Vietnam Pro', sans-serif", sample: 'Bắt đầu thời khóa', spec: 'BVP Medium 14' },
+        { role: 'Phụ chú', css: "400 11.5px 'Be Vietnam Pro', sans-serif", sample: '12 phút · Thầy Minh Đạo', spec: 'BVP Regular 11.5' },
+        { role: 'Nhãn hệ thống', css: "600 10px/1 'Be Vietnam Pro', sans-serif", sample: 'LỜI PHẬT DẠY HÔM NAY', spec: 'BVP 10 · +.16em' },
+      ],
+      radii: [{ v: '8px' }, { v: '14px' }, { v: '20px' }, { v: '26px' }, { v: '999px' }],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -6,7 +6,17 @@
 import UIKit
 import Combine
 
-final class ILOtpViewController: BaseViewController {
+final class ILOtpViewController: BaseViewController, TransitionProviding {
+
+    // Same slide as the default used for view controllers that don't conform to `TransitionProviding`.
+    var pushTransition: NavigationTransitionAnimating? {
+        SlideTransition(direction: .rightToLeft)
+    }
+
+    /// Blocks the edge swipe-back while the code is being verified.
+    var isSwipeBackEnabled: Bool { !isVerifying }
+
+    private var isVerifying = false
 
     // MARK: - Properties
     private let viewModel: ILOtpViewModel
@@ -283,6 +293,7 @@ final class ILOtpViewController: BaseViewController {
         codeInputView.hasError = model.codeError != nil
 
         verifyButton.buttonState = model.isVerifying ? .loading : (model.isSubmitEnabled ? .normal : .disabled)
+        setInteractionLocked(model.isVerifying)
 
         resendRowView.secondsRemaining = model.secondsRemaining
         resendRowView.canResend = model.canResend
@@ -302,6 +313,14 @@ final class ILOtpViewController: BaseViewController {
         } else if model.resendError == nil {
             lastShownResendError = nil
         }
+    }
+
+    /// Locks back, code input, resend, voice call and change-number while verifying, so the user
+    /// cannot leave the screen or alter the request mid-flight.
+    private func setInteractionLocked(_ locked: Bool) {
+        isVerifying = locked
+        headerView.isUserInteractionEnabled = !locked
+        scrollView.isUserInteractionEnabled = !locked
     }
 
     // MARK: - Actions

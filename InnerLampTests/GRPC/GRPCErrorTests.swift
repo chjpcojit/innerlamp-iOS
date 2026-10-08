@@ -8,19 +8,25 @@
 
 import XCTest
 import GRPCCore
+import GRPCInProcessTransport
 import GRPCProtobuf
+import SwiftProtobuf
 @testable import InnerLamp
+
+/// gRPC Swift 2.x's `GRPCClient` is generic over its transport, so `GRPCService` is too. Tests
+/// that name the service type explicitly use the in-process transport the test server runs on.
+private typealias TestGRPCService = GRPCService<InProcessTransport.Client>
 
 final class GRPCErrorTests: XCTestCase {
 
-    private func makeService() -> (GRPCTestServer, GRPCService) {
+    private func makeService() -> (GRPCTestServer, TestGRPCService) {
         let server = GRPCTestServer()
         let service = GRPCService(client: server.client)
         return (server, service)
     }
 
     private func echo(
-        _ service: GRPCService,
+        _ service: TestGRPCService,
         statusCode: Int32 = 0,
         delayMs: Int32 = 0,
         timeout: Duration? = nil

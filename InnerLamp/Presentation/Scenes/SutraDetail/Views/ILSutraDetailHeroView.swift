@@ -7,63 +7,23 @@
 
 import UIKit
 
-/// Hero tối (luôn tối ở cả light/dark) của màn Chi tiết bài kinh — khớp `isDetail` trong design
-/// handoff: nền gradient tối + quầng sáng, nút ‹, pill "Tải về máy", eyebrow, tiêu đề Lora, dòng
-/// meta và các chip thông tin. Chỉ nhận chuỗi nên không phụ thuộc nội dung cụ thể của 1 bộ kinh.
+/// Hero theme-aware (bộ `--il-th-*`, đổi theo light/dark) của màn Chi tiết bài kinh — khớp
+/// `isDetail` trong design handoff: nền gradient `th-bg` tan vào `canvas` + quầng sáng elip,
+/// eyebrow, tiêu đề Lora, tên nguyên ngữ nghiêng, dòng meta và hàng chip (tự xuống dòng).
+///
+/// Header (‹ và "Tải về máy") không nằm ở đây mà là `ILNavBar` ghim trên cùng trong
+/// `ILSutraDetailViewController`; hero chỉ nhận chuỗi nên không phụ thuộc nội dung 1 bộ kinh.
 final class ILSutraDetailHeroView: UIView {
 
     private enum Layout {
-        static let topBarPadding: CGFloat = 20
-        static let horizontalInset: CGFloat = 22
-        static let bottomInset: CGFloat = 26
-        static let glowDiameter: CGFloat = 320
+        static let horizontalInset: CGFloat = 20
+        static let topInset: CGFloat = 24
+        static let bottomInset: CGFloat = 30
     }
-
-    // MARK: - Properties
-    /// Khoảng cách từ mép trên màn hình tới hàng nút ‹/Tải về máy (bằng safe area top + padding).
-    var topInset: CGFloat = 0 {
-        didSet { topBarTopConstraint?.constant = topInset + Layout.topBarPadding }
-    }
-
-    var onBack: (() -> Void)?
-    var onDownload: (() -> Void)?
 
     // MARK: - UI Elements
     private let gradientLayer = CAGradientLayer()
     private let glowLayer = CAGradientLayer()
-
-    private lazy var backButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setAttributedTitle(
-            ILTypography.makeAttributedString(
-                text: "‹",
-                font: ILTypography.chevron,
-                color: ILColors.inkOnDarkSecondary,
-                alignment: .center
-            ),
-            for: .normal
-        )
-        button.accessibilityLabel = "common.back".localized
-        button.addTarget(self, action: #selector(handleBackTap), for: .touchUpInside)
-        return button
-    }()
-
-    private lazy var downloadButton: UIButton = {
-        var config = UIButton.Configuration.plain()
-        config.baseForegroundColor = ILColors.inkOnDark.withAlphaComponent(0.70)
-        config.contentInsets = NSDirectionalEdgeInsets(top: 7, leading: 13, bottom: 7, trailing: 13)
-        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
-            var outgoing = incoming
-            outgoing.font = ILTypography.label
-            return outgoing
-        }
-        config.cornerStyle = .capsule
-        config.background.strokeWidth = 1
-        config.background.strokeColor = ILColors.inkOnDark.withAlphaComponent(0.22)
-        let button = UIButton(configuration: config)
-        button.addTarget(self, action: #selector(handleDownloadTap), for: .touchUpInside)
-        return button
-    }()
 
     private lazy var kickerLabel: UILabel = {
         let label = UILabel()
@@ -74,7 +34,15 @@ final class ILSutraDetailHeroView: UIView {
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.font = ILTypography.contentHeroTitle
-        label.textColor = ILColors.inkOnDark
+        label.textColor = ILColors.templeHeaderInk
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var originalNameLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.heroSubtitleItalic
+        label.textColor = ILColors.templeHeaderSub
         label.numberOfLines = 0
         return label
     }()
@@ -82,20 +50,25 @@ final class ILSutraDetailHeroView: UIView {
     private lazy var metaLabel: UILabel = {
         let label = UILabel()
         label.font = ILTypography.bodySmall
-        label.textColor = ILColors.inkOnDark.withAlphaComponent(0.55)
+        label.textColor = ILColors.templeHeaderSub
         label.numberOfLines = 0
         return label
     }()
 
-    private lazy var tagsStack: UIStackView = {
-        let stack = UIStackView()
-        stack.axis = .horizontal
-        stack.spacing = ILMetrics.spaceSmall
-        stack.alignment = .center
+    private let tagsFlow = ILChipFlowView(rowSpacing: ILMetrics.spaceSmall, itemSpacing: ILMetrics.spaceSmall)
+
+    private lazy var contentStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [kickerLabel, titleLabel, originalNameLabel, metaLabel, tagsFlow])
+        stack.axis = .vertical
+        stack.alignment = .fill
+        stack.spacing = 0
+        stack.setCustomSpacing(10, after: kickerLabel)
+        stack.setCustomSpacing(6, after: titleLabel)
+        stack.setCustomSpacing(10, after: originalNameLabel)
+        stack.setCustomSpacing(18, after: metaLabel)
+        stack.isUserInteractionEnabled = false
         return stack
     }()
-
-    private var topBarTopConstraint: NSLayoutConstraint?
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -111,51 +84,33 @@ final class ILSutraDetailHeroView: UIView {
     func configure(
         kicker: String,
         title: String,
+        originalName: String,
         metaText: String,
-        tags: [ILSutraDetailTagModel],
-        downloadTitle: String
+        tags: [ILSutraDetailTagModel]
     ) {
         kickerLabel.attributedText = ILTypography.makeAttributedString(
             text: kicker,
             font: ILTypography.eyebrowSmall,
-            color: ILColors.goldOnDarkStrong,
+            color: ILColors.heroAccent,
             letterSpacingEm: 0.16
         )
         titleLabel.text = title
+        originalNameLabel.text = originalName
+        originalNameLabel.isHidden = originalName.isEmpty
         metaLabel.text = metaText
-        downloadButton.configuration?.title = downloadTitle
-        rebuildTags(tags)
-    }
-
-    private func rebuildTags(_ tags: [ILSutraDetailTagModel]) {
-        tagsStack.arrangedSubviews.forEach {
-            tagsStack.removeArrangedSubview($0)
-            $0.removeFromSuperview()
-        }
-        for tag in tags {
-            tagsStack.addArrangedSubview(makeTagPill(tag))
-        }
+        tagsFlow.setItems(tags.map { makeTagPill($0) })
+        tagsFlow.isHidden = tags.isEmpty
     }
 
     private func makeTagPill(_ tag: ILSutraDetailTagModel) -> UIView {
         let label = UILabel()
         label.font = ILTypography.captionMedium
         label.text = tag.title
+        label.textColor = ILColors.heroAccent
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
 
-        let pill = UIView()
-        pill.layer.cornerRadius = ILMetrics.radiusPill
-        pill.layer.borderWidth = 1
-        if tag.isFilled {
-            pill.backgroundColor = ILColors.goldBright.withAlphaComponent(0.16)
-            pill.layer.borderColor = UIColor.clear.cgColor
-            label.textColor = ILColors.goldOnDark
-        } else {
-            pill.backgroundColor = .clear
-            pill.layer.borderColor = ILColors.inkOnDark.withAlphaComponent(0.18).cgColor
-            label.textColor = ILColors.inkOnDarkSecondary
-        }
+        let pill = ILSutraDetailTagPillView(isFilled: tag.isFilled)
         pill.addSubview(label)
         NSLayoutConstraint.activate([
             label.topAnchor.constraint(equalTo: pill.topAnchor, constant: 6),
@@ -171,70 +126,84 @@ final class ILSutraDetailHeroView: UIView {
         translatesAutoresizingMaskIntoConstraints = false
         clipsToBounds = true
 
-        gradientLayer.colors = [ILColors.darkBackgroundTop.cgColor, ILColors.darkBackground.cgColor]
-        gradientLayer.startPoint = CGPoint(x: 0.3, y: 0)
-        gradientLayer.endPoint = CGPoint(x: 0.7, y: 1)
+        // Nền `--il-th-bg`: 3 chặng gradient tan dần vào `canvas` — không có đường cắt với nội
+        // dung bên dưới và liền màu với dải header ghim phía trên (`--il-th-top`).
+        gradientLayer.colors = [
+            ILColors.templeHeaderTop.cgColor,
+            ILColors.templeHeaderMid.cgColor,
+            ILColors.canvas.cgColor
+        ]
+        gradientLayer.locations = [0.0, 0.58, 1.0]
+        gradientLayer.startPoint = CGPoint(x: 0.5, y: 0)
+        gradientLayer.endPoint = CGPoint(x: 0.5, y: 1)
         layer.insertSublayer(gradientLayer, at: 0)
 
+        // `radial-gradient(ellipse 60% 55% at 50% 45%, th-glow, transparent 100%)`: bán kính elip
+        // = (endPoint − startPoint) × kích thước layer.
         glowLayer.type = .radial
-        glowLayer.colors = [ILColors.goldGlowStrong.cgColor, ILColors.goldGlowClear.cgColor]
-        glowLayer.startPoint = CGPoint(x: 0.5, y: 0.5)
-        glowLayer.endPoint = CGPoint(x: 1, y: 1)
+        glowLayer.colors = [ILColors.templeHeaderGlow.cgColor, ILColors.goldGlowClear.cgColor]
+        glowLayer.startPoint = CGPoint(x: 0.5, y: 0.45)
+        glowLayer.endPoint = CGPoint(x: 1.1, y: 1.0)
         layer.insertSublayer(glowLayer, above: gradientLayer)
 
-        [backButton, downloadButton, kickerLabel, titleLabel, metaLabel, tagsStack].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            addSubview($0)
-        }
-
-        topBarTopConstraint = backButton.topAnchor.constraint(equalTo: topAnchor, constant: Layout.topBarPadding)
+        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(contentStack)
 
         NSLayoutConstraint.activate([
-            topBarTopConstraint!,
-            backButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.horizontalInset),
-            backButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 44),
-            backButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
-
-            downloadButton.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
-            downloadButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Layout.horizontalInset),
-
-            kickerLabel.topAnchor.constraint(equalTo: backButton.bottomAnchor, constant: 24),
-            kickerLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.horizontalInset),
-            kickerLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Layout.horizontalInset),
-
-            titleLabel.topAnchor.constraint(equalTo: kickerLabel.bottomAnchor, constant: ILMetrics.rowSpacing),
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.horizontalInset),
-            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Layout.horizontalInset),
-
-            metaLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: ILMetrics.rowSpacing),
-            metaLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.horizontalInset),
-            metaLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Layout.horizontalInset),
-
-            tagsStack.topAnchor.constraint(equalTo: metaLabel.bottomAnchor, constant: 18),
-            tagsStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.horizontalInset),
-            tagsStack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -Layout.horizontalInset),
-            tagsStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Layout.bottomInset)
+            contentStack.topAnchor.constraint(equalTo: topAnchor, constant: Layout.topInset),
+            contentStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.horizontalInset),
+            contentStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Layout.horizontalInset),
+            contentStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Layout.bottomInset)
         ])
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILSutraDetailHeroView, _) in
+            view.applyColorAppearanceChange()
+        }
     }
 
     public override func layoutSubviews() {
         super.layoutSubviews()
         gradientLayer.frame = bounds
-        let glowSize = Layout.glowDiameter
-        glowLayer.frame = CGRect(
-            x: bounds.midX - glowSize / 2,
-            y: -glowSize / 2 + 40,
-            width: glowSize,
-            height: glowSize
-        )
-        glowLayer.cornerRadius = glowSize / 2
+        glowLayer.frame = bounds
     }
 
-    @objc private func handleBackTap() {
-        onBack?()
+    // `CAGradientLayer` màu là CGColor tĩnh, không tự đảo theo trait — resolve lại khi hệ thống
+    // đổi light/dark (bộ `--il-th-*` có hai biến thể).
+    private func applyColorAppearanceChange() {
+        gradientLayer.colors = [
+            ILColors.templeHeaderTop.resolvedColor(with: traitCollection).cgColor,
+            ILColors.templeHeaderMid.resolvedColor(with: traitCollection).cgColor,
+            ILColors.canvas.resolvedColor(with: traitCollection).cgColor
+        ]
+        glowLayer.colors = [
+            ILColors.templeHeaderGlow.resolvedColor(with: traitCollection).cgColor,
+            ILColors.goldGlowClear.cgColor
+        ]
+    }
+}
+
+/// Viền `hero-acc2` mỏng, nền `feat-glow` khi `isFilled` (chip "Có audio") — tự cập nhật màu viền
+/// khi đổi light/dark.
+private final class ILSutraDetailTagPillView: UIView {
+
+    private let isFilled: Bool
+
+    init(isFilled: Bool) {
+        self.isFilled = isFilled
+        super.init(frame: .zero)
+        layer.cornerRadius = ILMetrics.radiusPill
+        layer.borderWidth = 1
+        applyColors()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILSutraDetailTagPillView, _) in
+            view.applyColors()
+        }
     }
 
-    @objc private func handleDownloadTap() {
-        onDownload?()
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func applyColors() {
+        backgroundColor = isFilled ? ILColors.featGlow : .clear
+        layer.borderColor = ILColors.heroAccentBorder.cgColor
     }
 }

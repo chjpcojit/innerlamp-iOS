@@ -14,6 +14,7 @@ final class ILLunarDayDetailViewModelTests: XCTestCase {
     private var mockUseCase: MockILLunarDayDetailUseCase!
     private var mockAlmanac: MockILAlmanacUseCase!
     private var mockSutraQuote: MockILLunarDayDetailSutraQuoteUseCase!
+    private var mockCalendarImage: MockILCalendarImageUseCase!
     private var sut: ILLunarDayDetailViewModel!
     private var cancellables: Set<AnyCancellable>!
 
@@ -27,6 +28,7 @@ final class ILLunarDayDetailViewModelTests: XCTestCase {
         mockUseCase = MockILLunarDayDetailUseCase(entity: Self.makeEntity())
         mockAlmanac = MockILAlmanacUseCase(result: Self.makeAlmanacResult())
         mockSutraQuote = MockILLunarDayDetailSutraQuoteUseCase()
+        mockCalendarImage = MockILCalendarImageUseCase()
         sut = makeSUT()
         cancellables = []
 
@@ -41,6 +43,7 @@ final class ILLunarDayDetailViewModelTests: XCTestCase {
         sut = nil
         mockAlmanac = nil
         mockSutraQuote = nil
+        mockCalendarImage = nil
         mockUseCase = nil
         super.tearDown()
     }
@@ -50,6 +53,7 @@ final class ILLunarDayDetailViewModelTests: XCTestCase {
             useCase: mockUseCase,
             almanacUseCase: mockAlmanac,
             sutraQuoteUseCase: mockSutraQuote,
+            calendarImageUseCase: mockCalendarImage,
             date: date,
             verse: verse
         )
@@ -98,8 +102,17 @@ final class ILLunarDayDetailViewModelTests: XCTestCase {
         XCTAssertEqual(state?.infoRows.first(where: { $0.id == "solar" })?.value, "10/09/2024")
         XCTAssertEqual(state?.goodHours.count, 6)
         XCTAssertEqual(state?.clashItems.count, 2)
-        XCTAssertEqual(state?.directions.map(\.id), ["joy", "wealth"])
+        XCTAssertEqual(state?.directions.map(\.id), ["joy", "wealth", "crane"])
         XCTAssertEqual(state?.verseLines.count, 2)
+    }
+
+    func test_viewDidLoad_craneDirection_showsDirectionOrNoneWhenInHeaven() {
+        let latest = observeLatestState()
+        viewDidLoadSubject.send(())
+        let crane = latest()?.directions.first(where: { $0.id == "crane" })
+        XCTAssertEqual(crane?.value, "lunarCalendar.direction.south".localized)
+        XCTAssertEqual(crane?.subtitle, "lunarDayDetail.directions.crane.sub".localized)
+        XCTAssertEqual(crane?.kind, .crane)
     }
 
     func test_viewDidLoad_usesPassedVerse_insteadOfStaticCatalog() {
@@ -162,6 +175,82 @@ final class ILLunarDayDetailViewModelTests: XCTestCase {
         XCTAssertEqual(mockSutraQuote.quoteForDateCallCount, 1)
         XCTAssertEqual(latest()?.verseLines, ["line-1", "line-2"])
         XCTAssertEqual(latest()?.verseSource, "source")
+    }
+
+    // MARK: - Hero image
+
+    private static let heroImage = ILCalendarImageEntity(
+        id: "buddha_034",
+        imageURL: "http://h:8080/static/images/home-calendar/buddha_034.jpg",
+        author: "Judgefloro",
+        license: "Public domain",
+        licenseURL: nil,
+        sourceURL: nil
+    )
+
+    func test_viewDidLoad_beforeImageLoads_hasNoHeroImage() {
+        let latest = observeLatestState()
+
+        viewDidLoadSubject.send(())
+
+        XCTAssertNil(latest()?.heroImageURL)
+        XCTAssertEqual(latest()?.heroImageCredit, "")
+    }
+
+    func test_viewDidLoad_loadsHeroImageForTheScreenDate_andFormatsCredit() {
+        mockCalendarImage.result = .success(Self.heroImage)
+        let loaded = expectation(description: "hero image applied")
+        _ = sut.transform(input: makeInput()).state
+            .sink { state in
+                if case .success(let model) = state, model.heroImageURL != nil {
+                    XCTAssertEqual(model.heroImageURL, Self.heroImage.imageURL)
+                    XCTAssertEqual(
+                        model.heroImageCredit,
+                        String(format: "lunarDayDetail.hero.imageCreditFormat".localized, "Judgefloro", "Public domain")
+                    )
+                    loaded.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+
+        wait(for: [loaded], timeout: 1)
+        XCTAssertEqual(mockCalendarImage.requestedDates, [date])
+    }
+
+    func test_viewDidLoad_heroImageFailure_keepsGradientAndStateSuccess() async {
+        mockCalendarImage.result = .failure(ILCatalogError.offline)
+        let latest = observeLatestState()
+
+        viewDidLoadSubject.send(())
+        for _ in 0..<5 { await Task.yield() }
+
+        XCTAssertEqual(mockCalendarImage.requestedDates.count, 1)
+        XCTAssertNil(latest()?.heroImageURL)
+        XCTAssertEqual(latest()?.heroImageCredit, "")
+        XCTAssertNotNil(latest(), "A failed image must never turn the screen into a failure state")
+    }
+
+    func test_viewDidLoad_unsupportedYear_returnsNilImage() async {
+        mockCalendarImage.result = .success(nil)
+        let latest = observeLatestState()
+
+        viewDidLoadSubject.send(())
+        for _ in 0..<5 { await Task.yield() }
+
+        XCTAssertNil(latest()?.heroImageURL)
+    }
+
+    func test_viewDidLoad_twice_requestsHeroImageOnce() async {
+        mockCalendarImage.result = .success(Self.heroImage)
+        _ = observeLatestState()
+
+        viewDidLoadSubject.send(())
+        viewDidLoadSubject.send(())
+        for _ in 0..<5 { await Task.yield() }
+
+        XCTAssertEqual(mockCalendarImage.requestedDates.count, 1)
     }
 
     func test_viewDidLoad_buildsAlmanacCard() {
@@ -260,6 +349,7 @@ final class ILLunarDayDetailViewModelTests: XCTestCase {
             clashChiIndex: 0,
             joyStarDirection: "lunarCalendar.direction.northeast".localized,
             wealthStarDirection: "lunarCalendar.direction.southeast".localized,
+            craneStarDirection: "lunarCalendar.direction.south".localized,
             verseLines: ["line-1", "line-2"],
             verseSource: "source"
         )
@@ -312,6 +402,17 @@ final class MockILLunarDayDetailUseCase: ILLunarDayDetailUseCase {
 }
 
 // MARK: - Mock ILAlmanacUseCase
+final class MockILCalendarImageUseCase: ILCalendarImageUseCase {
+
+    var result: Result<ILCalendarImageEntity?, Error> = .success(nil)
+    private(set) var requestedDates: [Date] = []
+
+    func loadImage(for date: Date) async throws -> ILCalendarImageEntity? {
+        requestedDates.append(date)
+        return try result.get()
+    }
+}
+
 final class MockILAlmanacUseCase: ILAlmanacUseCase {
     var stubResult: ILLunarCalendar.AlmanacResult
 

@@ -1,7 +1,7 @@
 # Requirements — LunarCalendar
 
-Version: 1.0
-Last updated: 2026-09-27
+Version: 1.1
+Last updated: 2026-09-30
 Status: implemented — 6-month lunar calendar carousel with pure local
 computation; no API
 Feature folder: `InnerLamp/Presentation/Scenes/LunarCalendar/`
@@ -58,13 +58,20 @@ track observance days for my practice.
   and are not interactive.
 
 - The fast-day list (1, 8, 14, 15, 18, 23, 30 lunar) is taken from the
-  prototype. In a 29-day month "30 âm" never appears — the convention needs
-  confirmation.
-
-  > ⚠️ Not confirmed: whether a 29-day month should substitute 29 for the "30
-  > âm" fast day — blocks final fast-day behavior.
+  prototype. Short-month rule (resolved in v1.1): a 29-day lunar month has no
+  day 30, so its last day (29) counts as the day-30 fast day. See
+  `assumptions.md` (A1).
 
 - Visual QA (carousel height, snap, margins, dark mode) not verified on device.
+
+## Short-month and leap-month rules (v1.1)
+
+- WHEN a lunar month has only 29 days, THE SYSTEM SHALL treat its last day (29)
+  as day 30 for fast days, Buddhist event templates and deity memorial days,
+  via the shared `ILLunarCalendar.matchesLunarDay`.
+- WHEN a day falls in a leap lunar month, THE SYSTEM SHALL NOT fire recurring
+  events unless the template has `isLeapMonthEligible`; new-moon and full-moon
+  fast days still apply.
 
 ## Open questions (resolved during implementation)
 

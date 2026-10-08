@@ -9,11 +9,11 @@ import Foundation
 import Combine
 
 enum ILSutraDetailNavEvent: Equatable {
-    /// Nút ‹ ở hero — đóng màn Chi tiết bài kinh.
+    /// Nút ‹ ở header ghim — đóng màn Chi tiết bài kinh.
     case back
     /// Nút "Tụng theo" hoặc chạm 1 phẩm trong Mục lục — mở màn Tụng kinh (`reader`).
     case openReader
-    /// Nút "Tải về máy" ở hero — mở màn nghe không cần mạng (màn `downloads` chưa build).
+    /// Nút "Tải về máy" ở header ghim — mở màn nghe không cần mạng (màn `downloads` chưa build).
     case download
     /// Nút phát tròn ở thanh CTA đáy — mở trình phát toàn màn (màn `player` chưa build).
     case openPlayer
@@ -49,20 +49,15 @@ final class ILSutraDetailViewModel: ILSutraDetailViewModelProtocol {
 
     private let navigationEventSubject = PassthroughSubject<ILSutraDetailNavEvent, Never>()
     private let stateSubject: CurrentValueSubject<ViewState<ILSutraDetailStateModel>, Never>
-    private var currentEntity: ILSutraDetailEntity
-    private var currentState: ILSutraDetailStateModel
     private let useCase: ILSutraDetailUseCase
-    private let initialSutraID: String
+    private let sutraID: String
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initializer
     init(useCase: ILSutraDetailUseCase, sutraID: String) {
         self.useCase = useCase
-        self.initialSutraID = sutraID
-        let initialEntity = useCase.getInitialState(sutraID: sutraID)
-        self.currentEntity = initialEntity
-        self.currentState = Self.makeStateModel(from: initialEntity, useCase: useCase)
-        self.stateSubject = CurrentValueSubject(.success(currentState))
+        self.sutraID = sutraID
+        self.stateSubject = CurrentValueSubject(.idle)
     }
 
     // MARK: - Transform
@@ -95,91 +90,110 @@ final class ILSutraDetailViewModel: ILSutraDetailViewModelProtocol {
     }
 
     // MARK: - Actions
+    /// Loads `GET /v1/sutras/{id}`. On failure the error is surfaced (`.notFound` for an unknown id).
     private func handleViewDidLoad() {
-        applyEntity(useCase.getInitialState(sutraID: initialSutraID))
+        stateSubject.send(.loading)
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let entity = try await self.useCase.loadSutra(id: self.sutraID)
+                self.stateSubject.send(.success(Self.makeStateModel(from: entity)))
+            } catch {
+                self.stateSubject.send(.failure(error))
+            }
+        }
     }
 
     // MARK: - Entity -> StateModel
-    /// `Entity -> StateModel` là việc riêng của presentation (format "26 phẩm · 423 kệ · ...",
-    /// "Kệ 1 – 20 · đang tụng", "9 phút", "34%", nhãn chip) nên nằm ở đây, không phải trong Mapper
-    /// dùng chung (xem `references/data_layer_boundaries.md`).
-    private func applyEntity(_ entity: ILSutraDetailEntity) {
-        currentEntity = entity
-        currentState = Self.makeStateModel(from: entity, useCase: useCase)
-        stateSubject.send(.success(currentState))
-    }
-
-    private static func makeStateModel(
-        from entity: ILSutraDetailEntity,
-        useCase: ILSutraDetailUseCase
-    ) -> ILSutraDetailStateModel {
+    /// `Entity -> StateModel` là việc riêng của presentation (format "73 dòng · 5 phút", dòng kicker,
+    /// nhãn chip, dòng nguồn / giấy phép) nên nằm ở đây, không phải trong Mapper dùng chung.
+    private static func makeStateModel(from entity: ILSutraDetailEntity) -> ILSutraDetailStateModel {
         var state = ILSutraDetailStateModel()
 
-        if let sutra = useCase.currentSutra(in: entity) {
-            state.kicker = sutra.kicker
+        if let sutra = entity.sutra {
+            state.kicker = kicker(for: sutra)
             state.title = sutra.title
-            state.metaText = String(
-                format: "sutraDetail.metaFormat".localized,
-                sutra.numberOfChapters,
-                sutra.numberOfVerses,
-                sutra.narrator,
-                formatDuration(minutes: sutra.durationMinutes)
-            )
-            state.descriptionText = sutra.description
-            state.tags = sutra.tags.map { tagModel(for: $0) }
-            state.tocCountText = String(format: "sutraDetail.tocCount".localized, sutra.numberOfChapters)
-            state.chapters = sutra.chapters.map { chapter in
-                chapterModel(from: chapter, isCurrent: chapter.id == entity.currentChapterID)
-            }
-
-            if let current = sutra.chapters.first(where: { $0.id == entity.currentChapterID }) {
-                state.progressTitle = String(
-                    format: "sutraDetail.progress.title".localized,
-                    current.title,
-                    current.verseStart
-                )
-            }
+            state.originalName = sutra.originalTitle
+            state.metaText = metaText(for: sutra)
+            // @ai: assumption — see Docs/Assumptions/SutraDetail/AS-SutraDetail-001-metadata-lines-and-license.md
+            state.descriptionText = [sutra.collection, sutra.reference]
+                .filter { !$0.isEmpty }
+                .joined(separator: "sutraDetail.descriptionSeparator".localized)
+            state.translatorText = translatorText(for: sutra)
+            state.tags = tagModels(for: sutra)
+            state.tocCountText = sutra.chapters.isEmpty
+                ? ""
+                : String(format: "sutraDetail.tocCount.chapters".localized, sutra.chapters.count)
+            state.chapters = sutra.chapters.map { chapterModel(from: $0) }
+            // @ai: the API has no audio / reading-progress data — see
+            // Docs/Tech-Debt/SutraDetail/TD-SutraDetail-001-*.md
+            state.hasAudio = false
+            state.chantButtonTitle = "sutraDetail.read".localized
         }
-
-        let percent = Int((entity.readingProgress * 100).rounded())
-        state.progressPercentText = String(format: "sutraDetail.progress.percent".localized, percent)
-        state.progressValue = entity.readingProgress
 
         state.tocTitle = "sutraDetail.tocTitle".localized
         state.downloadButtonTitle = "sutraDetail.download".localized
-        state.chantButtonTitle = "sutraDetail.chant".localized
 
         return state
     }
 
-    private static func tagModel(for tag: ILSutraDetailTag) -> ILSutraDetailTagModel {
-        switch tag {
-        case .daily:
-            return ILSutraDetailTagModel(title: "sutraDetail.tag.daily".localized, isFilled: true)
-        case .phonetic:
-            return ILSutraDetailTagModel(title: "sutraDetail.tag.phonetic".localized, isFilled: false)
+    /// "THẦN CHÚ · BẮC TÔNG" / "KINH VĂN · NAM TÔNG" (design `su.kicker`); either part is dropped
+    /// when the server value is unknown.
+    private static func kicker(for sutra: ILSutraDetailSutraEntity) -> String {
+        let kind: String? = switch sutra.kind {
+        case .sutra: "sutraDetail.kicker.sutra".localized
+        case .verse: "sutraDetail.kicker.verse".localized
+        case .dharani: "sutraDetail.kicker.mantra".localized
+        case nil: nil
         }
+        let tradition = sutra.tradition.map { ILSutrasViewModel.categoryLabel(.tradition($0)) }
+        return [kind, tradition].compactMap { $0 }
+            .joined(separator: "sutraDetail.kickerSeparator".localized)
+            .uppercased()
     }
 
-    private static func chapterModel(
-        from chapter: ILSutraDetailChapterEntity,
-        isCurrent: Bool
-    ) -> ILSutraDetailChapterModel {
-        var subtitle = String(
-            format: "sutraDetail.chapter.verseRange".localized,
-            chapter.verseStart,
-            chapter.verseEnd
-        )
-        if isCurrent {
-            subtitle += "sutraDetail.chapter.currentSuffix".localized
+    /// "73 dòng · ~5 phút" (design `su.metaLine`); the duration is dropped when the server has no
+    /// estimate.
+    private static func metaText(for sutra: ILSutraDetailSutraEntity) -> String {
+        var parts = [String(format: "sutraDetail.lineCountFormat".localized, sutra.lineCount)]
+        if let minutes = sutra.durationMinutes {
+            parts.append(formatDuration(minutes: minutes))
         }
-        return ILSutraDetailChapterModel(
+        return parts.joined(separator: "sutraDetail.metaSeparator".localized)
+    }
+
+    /// "Dịch / hiệu đính: Thích Minh Châu" and, on the next line, the source + license — the
+    /// backend asks the client to always show the translator and license.
+    private static func translatorText(for sutra: ILSutraDetailSutraEntity) -> String {
+        var lines: [String] = []
+        if !sutra.translator.isEmpty {
+            lines.append(String(format: "sutraDetail.translator".localized, sutra.translator))
+        }
+        if !sutra.sourceName.isEmpty {
+            lines.append(String(format: "sutraDetail.source".localized, sutra.sourceName))
+        }
+        if !sutra.license.isEmpty {
+            lines.append(String(format: "sutraDetail.license".localized, sutra.license))
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    /// "Tụng hằng ngày" chip, then one chip per purpose (design `su.chips`).
+    private static func tagModels(for sutra: ILSutraDetailSutraEntity) -> [ILSutraDetailTagModel] {
+        var titles = sutra.isDailyChant ? [ILSutrasViewModel.categoryLabel(.dailyChant)] : []
+        titles += sutra.purposes.map { ILSutrasViewModel.categoryLabel(.purpose($0)) }
+        return titles.map { ILSutraDetailTagModel(title: $0, isFilled: false) }
+    }
+
+    private static func chapterModel(from chapter: ILSutraDetailChapterEntity) -> ILSutraDetailChapterModel {
+        ILSutraDetailChapterModel(
             id: chapter.id,
             number: chapter.number,
             title: chapter.title,
-            subtitle: subtitle,
-            durationText: String(format: "sutraDetail.chapter.duration".localized, chapter.durationMinutes),
-            isCurrent: isCurrent
+            subtitle: String(format: "sutraDetail.chapter.lineCount".localized, chapter.lineCount),
+            // @ai: the API has no per-section duration — see TD-SutraDetail-001
+            durationText: "",
+            isCurrent: false
         )
     }
 

@@ -14,6 +14,7 @@ final class ILDeityViewModelTests: XCTestCase {
     private var cancellables: Set<AnyCancellable>!
 
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
+    private var retryTappedSubject: PassthroughSubject<Void, Never>!
     private var backTappedSubject: PassthroughSubject<Void, Never>!
     private var biographyToggledSubject: PassthroughSubject<Void, Never>!
     private var vowsToggledSubject: PassthroughSubject<Void, Never>!
@@ -27,6 +28,7 @@ final class ILDeityViewModelTests: XCTestCase {
         mockUseCase = MockILDeityUseCase()
         cancellables = []
         viewDidLoadSubject = PassthroughSubject()
+        retryTappedSubject = PassthroughSubject()
         backTappedSubject = PassthroughSubject()
         biographyToggledSubject = PassthroughSubject()
         vowsToggledSubject = PassthroughSubject()
@@ -39,6 +41,7 @@ final class ILDeityViewModelTests: XCTestCase {
     override func tearDown() {
         cancellables = nil
         viewDidLoadSubject = nil
+        retryTappedSubject = nil
         backTappedSubject = nil
         biographyToggledSubject = nil
         vowsToggledSubject = nil
@@ -59,6 +62,7 @@ final class ILDeityViewModelTests: XCTestCase {
     private func makeInput() -> ILDeityViewModel.Input {
         ILDeityViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
+            retryTapped: retryTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             biographyToggled: biographyToggledSubject.eraseToAnyPublisher(),
             vowsToggled: vowsToggledSubject.eraseToAnyPublisher(),
@@ -69,14 +73,35 @@ final class ILDeityViewModelTests: XCTestCase {
         )
     }
 
-    private func observeLatestState() -> () -> ILDeityStateModel? {
-        let output = sut.transform(input: makeInput())
-        var latest: ILDeityStateModel?
-        output.state
-            .sink { state in
-                if case .success(let model) = state { latest = model }
-            }
+    /// Transforms and records every state.
+    private func observeStates(_ states: @escaping (ViewState<ILDeityStateModel>) -> Void) {
+        sut.transform(input: makeInput()).state
+            .sink(receiveValue: states)
             .store(in: &cancellables)
+    }
+
+    /// Transforms without loading; returns a getter for the latest `.success`.
+    private func observeLatestState() -> () -> ILDeityStateModel? {
+        var latest: ILDeityStateModel?
+        observeStates { state in
+            if case .success(let model) = state { latest = model }
+        }
+        return { latest }
+    }
+
+    /// Sends `viewDidLoad` and waits for the first `.success`; returns a getter for the latest one.
+    private func loadSuccessfully() -> () -> ILDeityStateModel? {
+        var latest: ILDeityStateModel?
+        let loaded = expectation(description: "deity loaded")
+        loaded.assertForOverFulfill = false
+        observeStates { state in
+            if case .success(let model) = state {
+                latest = model
+                loaded.fulfill()
+            }
+        }
+        viewDidLoadSubject.send(())
+        wait(for: [loaded], timeout: 1)
         return { latest }
     }
 
@@ -88,12 +113,85 @@ final class ILDeityViewModelTests: XCTestCase {
         return { events }
     }
 
+    // MARK: - Loading
+    func test_viewDidLoad_emitsLoadingThenSuccess_andRequestsDeityID() {
+        makeSUT()
+        var states: [ViewState<ILDeityStateModel>] = []
+        let loaded = expectation(description: "deity loaded")
+        observeStates { state in
+            states.append(state)
+            if case .success = state { loaded.fulfill() }
+        }
+
+        viewDidLoadSubject.send(())
+        wait(for: [loaded], timeout: 1)
+
+        XCTAssertEqual(mockUseCase.requestedIDs, ["bodhisattva_avalokitesvara"])
+        guard states.count == 3 else { return XCTFail("expected idle → loading → success, got \(states)") }
+        if case .idle = states[0] {} else { XCTFail("expected .idle first") }
+        if case .loading = states[1] {} else { XCTFail("expected .loading second") }
+    }
+
+    func test_viewDidLoad_failure_emitsFailureWithUseCaseError() {
+        mockUseCase.loadError = ILCatalogError.offline
+        makeSUT()
+        var failure: Error?
+        let failed = expectation(description: "deity failed")
+        observeStates { state in
+            if case .failure(let error) = state {
+                failure = error
+                failed.fulfill()
+            }
+        }
+
+        viewDidLoadSubject.send(())
+        wait(for: [failed], timeout: 1)
+
+        guard case ILCatalogError.offline? = failure else { return XCTFail("expected .offline, got \(String(describing: failure))") }
+    }
+
+    func test_retryTapped_afterFailure_loadsAgain() {
+        mockUseCase.loadError = ILCatalogError.offline
+        makeSUT()
+        var latest: ILDeityStateModel?
+        let failed = expectation(description: "deity failed")
+        let loaded = expectation(description: "deity loaded")
+        observeStates { state in
+            switch state {
+            case .failure: failed.fulfill()
+            case .success(let model):
+                latest = model
+                loaded.fulfill()
+            default: break
+            }
+        }
+        viewDidLoadSubject.send(())
+        wait(for: [failed], timeout: 1)
+
+        mockUseCase.loadError = nil
+        retryTappedSubject.send(())
+        wait(for: [loaded], timeout: 1)
+
+        XCTAssertEqual(mockUseCase.requestedIDs.count, 2)
+        XCTAssertEqual(latest?.name, "Quán Thế Âm Bồ Tát")
+    }
+
+    func test_actionsBeforeLoad_areIgnored() {
+        makeSUT()
+        let events = observeNavigation()
+        let latest = observeLatestState()
+
+        biographyToggledSubject.send(())
+        chantTappedSubject.send(0)
+
+        XCTAssertNil(latest())
+        XCTAssertEqual(events(), [])
+    }
+
     // MARK: - Mapping
     func test_viewDidLoad_mapsHeroAndBody() {
         makeSUT()
-        let latest = observeLatestState()
-
-        viewDidLoadSubject.send(())
+        let latest = loadSuccessfully()
 
         let state = latest()
         XCTAssertEqual(state?.name, "Quán Thế Âm Bồ Tát")
@@ -109,9 +207,7 @@ final class ILDeityViewModelTests: XCTestCase {
 
     func test_memorialDay_formatsTileAndCountdown() {
         makeSUT()
-        let latest = observeLatestState()
-
-        viewDidLoadSubject.send(())
+        let latest = loadSuccessfully()
 
         let memorialDay = latest()?.memorialDay
         XCTAssertEqual(memorialDay?.dayText, "19")
@@ -130,18 +226,14 @@ final class ILDeityViewModelTests: XCTestCase {
     func test_memorialDay_isNilWhenUseCaseHasNone() {
         mockUseCase.upcoming = nil
         makeSUT()
-        let latest = observeLatestState()
-
-        viewDidLoadSubject.send(())
+        let latest = loadSuccessfully()
 
         XCTAssertNil(latest()?.memorialDay)
     }
 
     func test_mantras_skipEmptyCardsAndKeepOrder() {
         makeSUT()
-        let latest = observeLatestState()
-
-        viewDidLoadSubject.send(())
+        let latest = loadSuccessfully()
 
         let mantras = latest()?.mantras ?? []
         XCTAssertEqual(mantras.map(\.label), [
@@ -154,14 +246,12 @@ final class ILDeityViewModelTests: XCTestCase {
 
     func test_sutras_onlyLibrarySutraHasOpenAction() {
         makeSUT()
-        let latest = observeLatestState()
-
-        viewDidLoadSubject.send(())
+        let latest = loadSuccessfully()
 
         let sutras = latest()?.sutras ?? []
         XCTAssertEqual(sutras.count, 2)
         XCTAssertEqual(sutras[0].trailingText, "deity.sutra.open".localized)
-        XCTAssertEqual(sutras[0].sutraID, "sutra.amida")
+        XCTAssertEqual(sutras[0].sutraID, "a-di-da")
         XCTAssertEqual(sutras[1].trailingText, "")
         XCTAssertNil(sutras[1].sutraID)
     }
@@ -169,8 +259,7 @@ final class ILDeityViewModelTests: XCTestCase {
     // MARK: - Toggles
     func test_biographyToggle_flipsExpandedState() {
         makeSUT()
-        let latest = observeLatestState()
-        viewDidLoadSubject.send(())
+        let latest = loadSuccessfully()
         XCTAssertEqual(latest()?.isBiographyExpanded, false)
         XCTAssertEqual(latest()?.biographyToggleTitle, "deity.biography.expand".localized)
 
@@ -183,8 +272,7 @@ final class ILDeityViewModelTests: XCTestCase {
     func test_vows_collapseToFiveAndExpandOnToggle() {
         mockUseCase.vows = (1...7).map { "Nguyện \($0)" }
         makeSUT()
-        let latest = observeLatestState()
-        viewDidLoadSubject.send(())
+        let latest = loadSuccessfully()
 
         XCTAssertEqual(latest()?.vows.count, ILDeityViewModel.collapsedVowLimit)
         XCTAssertEqual(latest()?.vowsCountText, String(format: "deity.vows.countFormat".localized, 7))
@@ -199,9 +287,7 @@ final class ILDeityViewModelTests: XCTestCase {
 
     func test_vows_noToggleWhenFiveOrFewer() {
         makeSUT()
-        let latest = observeLatestState()
-
-        viewDidLoadSubject.send(())
+        let latest = loadSuccessfully()
 
         XCTAssertEqual(latest()?.vows.count, 2)
         XCTAssertNil(latest()?.vowsToggleTitle)
@@ -231,8 +317,7 @@ final class ILDeityViewModelTests: XCTestCase {
     func test_chantTapped_opensMalaWithMantraText() {
         makeSUT()
         let events = observeNavigation()
-        _ = observeLatestState()
-        viewDidLoadSubject.send(())
+        _ = loadSuccessfully()
 
         chantTappedSubject.send(1)
         chantTappedSubject.send(99)
@@ -243,8 +328,7 @@ final class ILDeityViewModelTests: XCTestCase {
     func test_shareTapped_sharesMantraSanskritAndName() {
         makeSUT()
         let events = observeNavigation()
-        _ = observeLatestState()
-        viewDidLoadSubject.send(())
+        _ = loadSuccessfully()
 
         shareTappedSubject.send(1)
 
@@ -254,13 +338,12 @@ final class ILDeityViewModelTests: XCTestCase {
     func test_sutraTapped_opensOnlyLibrarySutra() {
         makeSUT()
         let events = observeNavigation()
-        _ = observeLatestState()
-        viewDidLoadSubject.send(())
+        _ = loadSuccessfully()
 
         sutraTappedSubject.send(1)
         sutraTappedSubject.send(0)
 
-        XCTAssertEqual(events(), [.openSutra(id: "sutra.amida")])
+        XCTAssertEqual(events(), [.openSutra(id: "a-di-da")])
     }
 }
 
@@ -278,9 +361,45 @@ final class ILDeityUseCaseTests: XCTestCase {
         calendar.date(from: DateComponents(year: year, month: month, day: day, hour: 9)) ?? Date()
     }
 
+    private func makeSUT(now: @escaping () -> Date = Date.init) -> ILDeityUseCaseImpl {
+        ILDeityUseCaseImpl(deityCatalogRepository: repository, now: now)
+    }
+
+    private let repository = StubILDeityCatalogRepository()
+
+    /// A deity from the static catalog behind `getAllDeities()`.
+    private func catalogDeity(_ id: String) throws -> ILDeityEntity {
+        try XCTUnwrap(makeSUT().getAllDeities().first { $0.id == id })
+    }
+
+    // MARK: - loadDeity
+
+    func test_loadDeity_returnsRepositoryDetailForID() async throws {
+        let expected = try catalogDeity("buddha_amitabha")
+        repository.detailResult = .success(expected)
+
+        let deity = try await makeSUT().loadDeity(id: "buddha_amitabha")
+
+        XCTAssertEqual(deity, expected)
+        XCTAssertEqual(repository.requestedDetailIDs, ["buddha_amitabha"])
+    }
+
+    func test_loadDeity_propagatesRepositoryError() async {
+        repository.detailResult = .failure(ILCatalogError.notFound)
+
+        do {
+            _ = try await makeSUT().loadDeity(id: "nope")
+            XCTFail("expected an error")
+        } catch {
+            guard case ILCatalogError.notFound = error else { return XCTFail("expected .notFound, got \(error)") }
+        }
+    }
+
+    // MARK: - Memorial day / sutras
+
     func test_upcomingMemorialDay_returnsNearestLunarMatch() throws {
-        let sut = ILDeityUseCaseImpl(now: { self.makeDate(2026, 3, 25) })
-        let deity = sut.getInitialState(deityID: "buddha_shakyamuni")
+        let sut = makeSUT(now: { self.makeDate(2026, 3, 25) })
+        let deity = try catalogDeity("buddha_shakyamuni")
 
         let upcoming = try XCTUnwrap(sut.upcomingMemorialDay(for: deity))
 
@@ -298,11 +417,11 @@ final class ILDeityUseCaseTests: XCTestCase {
     }
 
     func test_upcomingMemorialDay_isTodayWhenDatesMatch() throws {
-        let sut = ILDeityUseCaseImpl(now: { self.makeDate(2026, 3, 25) })
-        let deity = sut.getInitialState(deityID: "buddha_shakyamuni")
+        let sut = makeSUT(now: { self.makeDate(2026, 3, 25) })
+        let deity = try catalogDeity("buddha_shakyamuni")
         let first = try XCTUnwrap(sut.upcomingMemorialDay(for: deity))
 
-        let sameDaySUT = ILDeityUseCaseImpl(now: { first.date })
+        let sameDaySUT = makeSUT(now: { first.date })
         let sameDay = try XCTUnwrap(sameDaySUT.upcomingMemorialDay(for: deity))
 
         XCTAssertEqual(sameDay.daysUntil, 0)
@@ -310,8 +429,8 @@ final class ILDeityUseCaseTests: XCTestCase {
     }
 
     func test_upcomingMemorialDay_day30FallsBackToLastDayOfShortMonth() throws {
-        let sut = ILDeityUseCaseImpl(now: { self.makeDate(2026, 9, 28) })
-        let deity = sut.getInitialState(deityID: "buddha_bhaisajyaguru")
+        let sut = makeSUT(now: { self.makeDate(2026, 9, 28) })
+        let deity = try catalogDeity("buddha_bhaisajyaguru")
 
         let upcoming = try XCTUnwrap(sut.upcomingMemorialDay(for: deity))
 
@@ -322,18 +441,18 @@ final class ILDeityUseCaseTests: XCTestCase {
         XCTAssertEqual(ILLunarCalendar.solarToLunar(date: nextDate, calendar: calendar).day, 1)
     }
 
-    func test_relatedSutras_splitsCanonicalSourceOutsideParentheses() {
-        let sut = ILDeityUseCaseImpl()
-        let deity = sut.getInitialState(deityID: "buddha_amitabha")
+    func test_relatedSutras_splitsCanonicalSourceOutsideParentheses() throws {
+        let sut = makeSUT()
+        let deity = try catalogDeity("buddha_amitabha")
 
         let sutras = sut.relatedSutras(for: deity)
 
         XCTAssertEqual(sutras.map(\.title), ["Kinh Vô Lượng Thọ", "Kinh A Di Đà", "Kinh Quán Vô Lượng Thọ"])
-        XCTAssertEqual(sutras.map(\.sutraID), [nil, "sutra.amida", nil])
+        XCTAssertEqual(sutras.map(\.sutraID), [nil, "a-di-da", nil])
     }
 
-    func test_canonicalSources_keepsCommasInsideParentheses() {
-        let deity = ILDeityUseCaseImpl().getInitialState(deityID: "buddha_shakyamuni")
+    func test_canonicalSources_keepsCommasInsideParentheses() throws {
+        let deity = try catalogDeity("buddha_shakyamuni")
 
         XCTAssertEqual(deity.canonicalSources, [
             "Trường Bộ Kinh (Dīgha Nikāya)",
@@ -362,7 +481,17 @@ final class MockILDeityUseCase: ILDeityUseCase {
         )
     }()
 
-    func getInitialState(deityID: String) -> ILDeityEntity {
+    /// Set to make `loadDeity(id:)` throw.
+    var loadError: Error?
+    private(set) var requestedIDs: [String] = []
+
+    func loadDeity(id: String) async throws -> ILDeityEntity {
+        requestedIDs.append(id)
+        if let loadError { throw loadError }
+        return makeDeity(id: id)
+    }
+
+    func makeDeity(id deityID: String) -> ILDeityEntity {
         ILDeityEntity(
             id: deityID,
             kind: .bodhisattva,
@@ -387,7 +516,7 @@ final class MockILDeityUseCase: ILDeityUseCase {
     }
 
     func getAllDeities() -> [ILDeityEntity] {
-        [getInitialState(deityID: "bodhisattva_avalokitesvara")]
+        [makeDeity(id: "bodhisattva_avalokitesvara")]
     }
 
     func upcomingMemorialDay(for deity: ILDeityEntity) -> ILDeityUpcomingMemorialDayEntity? {
@@ -396,8 +525,30 @@ final class MockILDeityUseCase: ILDeityUseCase {
 
     func relatedSutras(for deity: ILDeityEntity) -> [ILDeityRelatedSutraEntity] {
         [
-            ILDeityRelatedSutraEntity(title: "Kinh A Di Đà", sutraID: "sutra.amida"),
+            ILDeityRelatedSutraEntity(title: "Kinh A Di Đà", sutraID: "a-di-da"),
             ILDeityRelatedSutraEntity(title: "Kinh Lăng Nghiêm", sutraID: nil)
         ]
+    }
+}
+
+/// `ILDeityCatalogRepository` stub for tests that build a real `ILDeityUseCaseImpl` — only the
+/// detail and top calls are configurable; the paged list returns an empty result.
+final class StubILDeityCatalogRepository: ILDeityCatalogRepository {
+
+    var detailResult: Result<ILDeityEntity, Error> = .failure(ILCatalogError.notFound)
+    var topResult: Result<[ILDeitySummaryEntity], Error> = .success([])
+    private(set) var requestedDetailIDs: [String] = []
+
+    func loadTopDeities() async throws -> [ILDeitySummaryEntity] {
+        try topResult.get()
+    }
+
+    func loadDeities(page: Int) async throws -> ILCatalogPageEntity<ILDeitySummaryEntity> {
+        ILCatalogPageEntity(items: [], page: page, hasMore: false)
+    }
+
+    func loadDeityDetail(id: String) async throws -> ILDeityEntity {
+        requestedDetailIDs.append(id)
+        return try detailResult.get()
     }
 }

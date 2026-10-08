@@ -1,8 +1,8 @@
 # Tasks — Temple
 
-Version: 2.0
-Last updated: 2026-09-28
-Status: in-progress (Phase 1–2 done; Phase 3 pending; list/discovery is a separate feature)
+Version: 2.4
+Last updated: 2026-09-30
+Status: in-progress (Phase 1–2 done; Phase 3 detail API wired, follow + manual test pending; list/discovery is a separate feature)
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -55,15 +55,20 @@ Status: in-progress (Phase 1–2 done; Phase 3 pending; list/discovery is a sepa
 > `GET /v1/temples`, `/top`, `/{id}`, none in `Docs/Specs/API/openapi.yaml` v3.9.
 > Everything below is blocked until a contract exists.
 
-- [ ] Define the temple API contract(s) with the backend team (list, top, detail)
-- [ ] Create `ILTempleDTO` + `ILTempleMapper` (once confirmed)
-- [ ] Create `TempleEndpoint`(s) under `Data/DataSources/Remote/`
-- [ ] Create `ILTempleRepository` protocol + implementation wrapping
-      `NetworkService`
-- [ ] Replace the static catalog in `ILTempleUseCaseImpl` with real data
+- [x] Define the temple API contract(s) with the backend team (list, top, detail)
+      — confirmed by BE-Developer 2026-09-29 (backend `docs/specs/features/temple/api-contract.md`)
+- [x] Create `ILTempleDTO` + `ILTempleMapper` (once confirmed)
+- [x] Create `TempleEndpoint`(s) under `Data/DataSources/Remote/`
+- [x] Create `ILTempleRepository` protocol + implementation wrapping
+      `NetworkService` (+ Core Data cache, see changelog v2.1)
+- [x] Replace the static catalog in `ILTempleUseCaseImpl` with real data
+      (`loadTemple(id:)` → `ILTempleRepository.loadTempleDetail(id:)`, see changelog v2.2)
 - [ ] Implement `toggleFollow` with a followed-temples repository
-- [ ] Add loading / error / offline states
-- [ ] Update `ILTempleViewModelTests` + add a mock repository
+- [x] Add loading / error / offline states (full-screen loading dots; `ILStateView`
+      error/offline + "Thử lại" retry)
+- [x] Update `ILTempleViewModelTests` + add a mock repository (`ILTempleUseCaseTests`)
+      — ⚠️ not run yet: the test target currently fails to compile on unrelated
+      `InnerLampTests/GRPC/*` module-resolution errors
 - [ ] Manual test against a real/staging backend once available
 
 ## Phase 4 — Sub-destinations (pending, separate scope)
@@ -73,6 +78,9 @@ Status: in-progress (Phase 1–2 done; Phase 3 pending; list/discovery is a sepa
 - [ ] Build the Offer screen and wire `.offer`
 - [ ] Build the "Sự kiện & khóa học của chùa này" screen and wire `.events`
 - [ ] Build the session-detail / reader screen and wire `.session(id:)`
+- [ ] Fill biography / architecture / visit rules / contacts / holiday hours / "Giáo hội" /
+      "Kinh sách" / events once the temple API supplies them (UI already in place, currently
+      "Đang cập nhật")
 - [ ] Update `InnerLamp/Presentation/Scenes/Temple/README.md` changelog
 
 ## Phase 5 — Documentation

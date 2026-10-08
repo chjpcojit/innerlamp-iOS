@@ -55,9 +55,19 @@ New tokens: `ILTypography.statDisplay/serifCardTitle/serifNumber/microLabel`; `I
   dữ liệu mẫu trong `ILMeditationHubUseCaseImpl`, thay bằng Repository/API khi có.
 - **Heatmap dùng `ILHeatmapGridView` dùng chung** — ô chưa ngồi để alpha 0 (trong suốt) thay vì màu
   `--il-feat-track` như design; component dùng chung chỉ nhận alpha.
+- **Sai lệch nhỏ còn lại so với design ở thẻ "Thiền dẫn"** — eyebrow của khối dùng
+  `ILSectionEyebrowView` dùng chung (10px / letter-spacing .14em / `inkMuted` .42) trong khi màn
+  `medhub` viết inline 9.5px / .16em / `--il-ink-45`; viền pill "Tải về" dùng `borderStrong` (.18)
+  thay vì `--il-ink-16`; tam giác nút phát của `ILPlayPauseButton` là 11×15 thay vì 10×12 của design.
+  Đều thuộc component dùng chung nên chưa đổi để tránh ảnh hưởng các màn khác.
 - No UI test — not requested. The screen was verified by build + unit tests only, not visually on a
   simulator.
 
 ## Changelog
 
+- 2026-09-29 — fix thẻ "Thiền dẫn" cho khớp design handoff: pill "Tải về" tự khai báo
+  `intrinsicContentSize` + priority `.required` (trước đây `UIControl` không có intrinsic size đứng
+  cạnh label nhiều dòng trong stack ngang `.fill` → layout ambiguous, pill bị ép hẹp/mô tả bị cắt),
+  mô tả dùng đúng `11px` line-height `1.5` + `ILColors.inkSubtle` (`--il-ink-45`), nút phát canh
+  **đỉnh** khối chữ đúng như flex mặc định của design thay vì canh giữa.
 - 2026-09-28 — initial scaffold + implementation by il-screen-builder (from `Docs/design_handoff_innerlamp`, screen `medhub`).

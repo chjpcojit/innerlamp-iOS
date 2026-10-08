@@ -44,6 +44,8 @@ struct ILTalkStateModel: Equatable {
     var forwardTitle: String = ""
 
     var sectionsTitle: String = ""
+    var sectionsEmptyTitle: String = ""
+    var sectionsEmptySubtitle: String = ""
     var chapters: [ILTalkChapterModel] = []
 
     var meditateTitle: String = ""

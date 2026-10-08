@@ -74,12 +74,21 @@ final class ILLibraryViewModelTests: XCTestCase {
         return { latest }
     }
 
+    /// Spins the run loop until the async deity load has been published (skeleton gone).
+    private func waitForDeitiesLoaded(_ latest: () -> ILLibraryStateModel?) {
+        let deadline = Date().addingTimeInterval(2)
+        while latest()?.deitiesLoading != false, Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
+    }
+
     // MARK: - viewDidLoad
     func test_viewDidLoad_showsQuickAccessDeitiesAndRows() {
         let output = sut.transform(input: makeInput())
         let latest = captureLatestState(output)
 
         viewDidLoadSubject.send(())
+        waitForDeitiesLoaded(latest)
 
         XCTAssertGreaterThanOrEqual(mockUseCase.getCatalogCallCount, 2) // init + viewDidLoad
         let state = latest()
@@ -87,8 +96,26 @@ final class ILLibraryViewModelTests: XCTestCase {
         XCTAssertEqual(state?.rows.map(\.id), ["s1"])
         XCTAssertEqual(state?.featured?.id, "featured")
         XCTAssertEqual(state?.deities.map(\.id), ["d1"])
+        XCTAssertEqual(state?.deities.first?.thumbnailURL, "http://host/d1.webp")
+        XCTAssertEqual(state?.deitiesLoading, false)
+        XCTAssertEqual(state?.deitiesEmptyText, "")
         XCTAssertEqual(state?.sutrasSectionTitle, "library.section.sutra".localized)
         XCTAssertEqual(state?.sutrasViewAllText, "library.section.sutra.viewAll".localized)
+    }
+
+    func test_viewDidLoad_deitiesLoadFailure_showsUpdatingText() {
+        mockUseCase.loadTopDeitiesResult = .failure(ILCatalogError.notFound)
+        let output = sut.transform(input: makeInput())
+        let latest = captureLatestState(output)
+
+        XCTAssertEqual(latest()?.deitiesLoading, true, "Skeleton shows until the first load finishes")
+
+        viewDidLoadSubject.send(())
+        waitForDeitiesLoaded(latest)
+
+        XCTAssertEqual(latest()?.deities, [])
+        XCTAssertEqual(latest()?.deitiesLoading, false)
+        XCTAssertEqual(latest()?.deitiesEmptyText, "home.deity.updating".localized)
     }
 
     func test_emptyRows_marksListEmpty() {
@@ -197,16 +224,33 @@ final class ILLibraryViewModelTests: XCTestCase {
     }
 }
 
-// MARK: - ILLibraryUseCaseImpl (real deity mapping)
+// MARK: - ILLibraryUseCaseImpl (server deity mapping)
 final class ILLibraryUseCaseTests: XCTestCase {
 
-    private let sut = ILLibraryUseCaseImpl(deityUseCase: MockILDeityUseCase())
-
-    func test_getCatalog_mapsDeitiesFromDeityUseCase() {
+    func test_getCatalog_hasSutraRowsAndNoDeitiesUntilServerLoads() {
+        let sut = ILLibraryUseCaseImpl(deityCatalogRepository: StubILDeityCatalogRepository())
         let catalog = sut.getCatalog()
-        XCTAssertFalse(catalog.deities.isEmpty)
+        XCTAssertTrue(catalog.deities.isEmpty)
         XCTAssertFalse(catalog.items.isEmpty)
         XCTAssertTrue(catalog.items.allSatisfy { $0.kind == .sutra })
+    }
+
+    func test_loadTopDeities_mapsServerSummariesIncludingThumbnail() async throws {
+        let repository = StubILDeityCatalogRepository()
+        repository.topResult = .success([
+            ILDeitySummaryEntity(
+                id: "deva_sri_mahadevi", kind: .deva, nameVi: "Đại Cát Tường Thiên Nữ", nameSanskrit: "", nameChinese: "",
+                titleHonorific: "Cát Tường Thiên", thumbnailURL: "http://host/t.webp", imageURL: "http://host/f.webp",
+                coreVirtue: "virtue", pureLand: ""
+            )
+        ])
+        let sut = ILLibraryUseCaseImpl(deityCatalogRepository: repository)
+
+        let deities = try await sut.loadTopDeities()
+
+        XCTAssertEqual(deities.map(\.id), ["deva_sri_mahadevi"])
+        XCTAssertEqual(deities.first?.kind, .deva)
+        XCTAssertEqual(deities.first?.thumbnailURL, "http://host/t.webp")
     }
 }
 
@@ -217,11 +261,19 @@ final class MockILLibraryUseCase: ILLibraryUseCase {
         items: [
             ILLibraryItemEntity(id: "s1", kind: .sutra, title: "Sutra", subtitle: "sub", durationMinutes: 130, tone: .gold)
         ],
-        deities: [
-            ILHomeDeityEntity(id: "d1", kind: .buddha, name: "Thích Ca", honorific: "honorific", virtue: "virtue", memorialDay: nil)
-        ]
+        deities: []
     )
+    var loadTopDeitiesResult: Result<[ILHomeDeityEntity], Error> = .success([
+        ILHomeDeityEntity(
+            id: "d1", kind: .buddha, name: "Thích Ca", honorific: "honorific", virtue: "virtue",
+            memorialDay: nil, thumbnailURL: "http://host/d1.webp"
+        )
+    ])
     var getCatalogCallCount = 0
+
+    func loadTopDeities() async throws -> [ILHomeDeityEntity] {
+        try loadTopDeitiesResult.get()
+    }
 
     func getCatalog() -> ILLibraryEntity {
         getCatalogCallCount += 1

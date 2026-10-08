@@ -1,67 +1,62 @@
 # Design — Reader
 
-Version: 1.0
-Last updated: 2026-09-27
-Status: in-progress — bilingual verse reading + playback UI with a static
-catalog; destinations not built
+Version: 1.1
+Last updated: 2026-10-03
+Status: in-progress — scrolling chant view with a static catalog; simulated
+playback
 
 > See `changelog.md` in this folder for the version history of this spec.
 
 ## Overview
 
 Reader ("Tụng kinh") follows MVVM-C + Clean Architecture per `AGENTS.md`. It is
-a **leaf screen** for back/share/download/font-size, but it pushes the **Player**
-feature on `.openPlayer`. It is created by `ILLibraryCoordinator` (tapping a
-sutra row → `ILLibraryNavEvent.openItem(id:kind:)` with `kind == .sutra`); when
-`ILSutraDetailCoordinator` is built, the flow will become lib → detail → reader.
-It is parameterized by a `sutraID`. There is **no network** — the UseCase
-returns a static catalog.
+a **leaf screen**: its only navigation event is `.back`. It is created by
+`ILSutraDetailCoordinator` (`openReader`) and `ILLibraryCoordinator`
+(`kind == .sutra`), parameterized by `sutraID`. There is **no network** — the
+UseCase returns a static catalog.
 
 ## Layers & components
 
 | Layer | File | Responsibility |
 |---|---|---|
-| Domain / Entity | `Domain/Entities/ILReaderEntity.swift` | `ILReaderVerseEntity` (vietnamese + english), `ILReaderSutraEntity` (title, subtitle, narrator, totalDurationSeconds, verses), `ILReaderEntity` (sutras, `currentSutraID`, `currentVerseIndex`, `readingProgress`, `elapsedSeconds`, `playbackSpeed`, `isPlaying`). No UI-only state. |
-| Domain / UseCase | `Domain/UseCases/Reader/ILReaderUseCase.swift` | `getInitialState(sutraID:)` (static 1-sutra catalog, fallback to first), `currentSutra` / `currentVerse` / `nextVerse`, `togglePlayPause` (in-memory). Pure logic. |
-| Presentation / State | `Presentation/Scenes/Reader/ILReaderStateModel.swift` | UI-only state: title/subtitle, reading progress, verse + translation, next-verse preview, now-playing text, elapsed/speed text, playback progress, isPlaying. No UIKit import. |
-| Presentation / ViewModel | `Presentation/Scenes/Reader/ILReaderViewModel.swift` | `Input -> Output` per `ViewModelType`; owns `ILReaderNavEvent` (`.back`, `.openFontSize`, `.share`, `.download`, `.openPlayer`); Entity→StateModel mapping + time formatting. |
-| Presentation / Coordinator | `Presentation/Scenes/Reader/ILReaderCoordinator.swift` | Leaf for back; `.openPlayer` → `showPlayer()` (pushes Player); `.openFontSize`/`.share`/`.download` → TODO. No delegate. |
-| Presentation / ViewController | `Presentation/Scenes/Reader/ILReaderViewController.swift` | `setupViews`/`setupConstraints`/`bindViewModel` per `BaseViewController`. |
-| Feature-scoped views | `Presentation/Scenes/Reader/Views/ILReaderVerseView.swift`, `ILReaderPlaybackBarView.swift` | Verse block and playback bar. |
-| Shared component | `DesignSystem/Components/ILPlayPauseButton.swift` | Round play/pause button (reused by Player/Talk later). |
-| Shared token | `DesignSystem/Tokens/ILTypography.swift` | `readerVerse` (Lora 21px), `readerTranslation` (Lora 13.5px italic). |
+| Domain / Entity | `Domain/Entities/ILReaderEntity.swift` | `ILReaderCue`, `ILReaderLineEntity`, `ILReaderSectionEntity`, `ILReaderSutraEntity` (title, narrator, hasAudio, duration, sections), `ILReaderEntity` (catalog, `currentSutraID`, `currentLineIndex`, `playbackSpeed`, `isPlaying`, `accumulatedMilliseconds`). No UI-only state. |
+| Domain / UseCase | `Domain/UseCases/Reader/ILReaderUseCase.swift` | `getInitialState`, `currentSutra`, `togglePlayPause`, `seek(byLines:)`, `setSpeed`, `advance(byMilliseconds:)` (2.6 s per line at 1.0×), `progress`, `elapsedSeconds`. Pure logic. |
+| Presentation / State | `ILReaderStateModel.swift` | Rows (heading / line with `isCurrent`), status/hint texts, settings + theme + font-size indexes, auto-scroll flag, position/duration/progress, speed chips. No UIKit. |
+| Presentation / ViewModel | `ILReaderViewModel.swift` | `Input -> Output`; owns UI preferences (font size, theme, panel, auto-scroll); consumes an injectable tick publisher (default 0.25 s timer); `ILReaderNavEvent.back`. |
+| Presentation / Coordinator | `ILReaderCoordinator.swift` | Pop + `finish()` on `.back`. |
+| Presentation / ViewController | `ILReaderViewController.swift` | Header (`ILNavBar` + auto-scroll row + settings panel), `UITableView` of rows, legend footer, controls; forces light/dark per theme; keeps screen awake; auto-scroll to the current row. |
+| Feature-scoped views | `Views/ILReaderLineCell`, `ILReaderHeadingCell`, `ILReaderAutoScrollRowView`, `ILReaderSettingsPanelView`, `ILReaderControlsView`, `ILReaderPalette` | Line/heading rows, toggle row, size/background panel, bottom controls, theme → colors. |
+| Shared components/tokens | `ILPlayPauseButton`; `ILColors.Reader.*` (+ 6 assets `ILReader*`); `ILTypography.readerLineFonts/readerGloss/readerCue/readerOptionSize`; `ILMetrics.radiusOptionTile/radiusLineHighlight` | Reused / added for this screen. |
 
 ## Navigation flow
 
 ```
-ILLibraryCoordinator (Library tab)
-  └─ showReader(sutraID) → ILReaderCoordinator          (no delegate)
+ILSutraDetailCoordinator / ILLibraryCoordinator
+  └─ ILReaderCoordinator   (no delegate)
        push ILReaderViewController
        (.back) → pop + finish()
-       (.openPlayer) → showPlayer() → ILPlayerCoordinator (push full-screen player)
-       (.openFontSize / .share / .download) → TODO
 ```
 
 ## Data flow
 
-1. `ILReaderViewModel` loads `useCase.getInitialState(sutraID:)` and maps the
-   current sutra/verse to `ILReaderStateModel` (formatted time/speed/now-playing
-   labels, playback progress from `elapsedSeconds` / `totalDurationSeconds`).
-2. `handlePlayPauseTapped()` → `togglePlayPause` flips `isPlaying` in memory.
-3. Nav taps emit `.back` / `.openFontSize` / `.share` / `.download` /
-   `.openPlayer`.
+1. `ILReaderViewModel` loads `getInitialState(sutraID:)` and maps the current
+   sutra to rows (headings count as rows, not lines) plus labels.
+2. A tick every 0.25 s calls `advance(byMilliseconds: 250)`; the highlight moves
+   when the scaled accumulator reaches 2600 ms.
+3. Taps update the entity (play, seek, pace) or UI preferences (panel, size,
+   theme, auto-scroll) and re-publish the state.
+4. The view reloads the table when text/theme/size changes, otherwise only
+   cross-fades the affected visible cells; it scrolls to the current row when
+   auto-scroll is on.
 
 There is no network call and no Step-by-step Flow.
 
 ## Deliberately mock / stub
 
-The catalog is a static 1-sutra (Kinh Pháp Cú, 2 verses) built in
-`ILReaderUseCaseImpl.makeSutraCatalog()`; other Library sutras have no verse
-data yet. `isPlaying` is in-memory (no real audio). The font-size / share /
-download destinations are TODO. Completing these is `tasks.md` Phases 3–4.
+Static catalog (text for 2 sutras), timer-driven highlight, no audio, in-memory
+preferences. See `Docs/Tech-Debt/Reader/` and `Docs/Assumptions/Reader/`.
 
 ## Design reference
 
-Matches `Docs/design_handoff_innerlamp/design/InnerLamp Prototype.dc.html`,
-block `isReader`. See `InnerLamp/Presentation/Scenes/Reader/README.md` for the
-full design-vs-implementation comparison and changelog.
+Matches `Docs/InnerLamp project/InnerLamp Prototype.dc.html`, block `isReader`.
+See `InnerLamp/Presentation/Scenes/Reader/README.md` for status.

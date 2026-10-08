@@ -22,13 +22,10 @@ final class ILDeitiesViewController: BaseViewController {
     private let backTappedSubject = PassthroughSubject<Void, Never>()
     private let filterSelectedSubject = PassthroughSubject<ILDeityKind?, Never>()
     private let deityTappedSubject = PassthroughSubject<String, Never>()
+    private let retryTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
-    private lazy var headerContainer: UIView = {
-        let container = UIView()
-        container.backgroundColor = ILColors.canvas
-        return container
-    }()
+    private let headerBand = ILStickyHeaderBand()
 
     private lazy var headerView = ILNavBar(showBack: true)
 
@@ -47,13 +44,15 @@ final class ILDeitiesViewController: BaseViewController {
         return stack
     }()
 
-    private lazy var headerDivider: UIView = {
-        let divider = UIView()
-        divider.backgroundColor = ILColors.border
-        return divider
-    }()
-
     private let gridView = ILDeitiesGridView()
+
+    /// Full-area states under the header: loading skeleton, "Đang cập nhật" (no data) and load
+    /// error (+ "Thử lại").
+    private let loadingView = ILDeitiesSkeletonView()
+    private let emptyStateView = ILStateView(kind: .empty)
+    private let errorStateView = ILStateView(kind: .error)
+    private lazy var retryButton = ILButton(title: "common.retry".localized, variant: .primary)
+    private let errorStack = UIStackView()
 
     // MARK: - Initializer
     init(viewModel: ILDeitiesViewModel) {
@@ -77,6 +76,11 @@ final class ILDeitiesViewController: BaseViewController {
         (tabBarController as? ILMainTabBarController)?.setBottomNavHidden(false, animated: animated)
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        applyHeaderInset()
+    }
+
     // MARK: - Setup
     override func setupViews() {
         super.setupViews()
@@ -85,38 +89,55 @@ final class ILDeitiesViewController: BaseViewController {
         headerView.title = "deities.header.title".localized
         headerView.onBack = { [weak self] in self?.backTappedSubject.send(()) }
 
-        headerContainer.addSubview(headerView)
-        headerContainer.addSubview(chipsScrollView)
-        headerContainer.addSubview(headerDivider)
+        headerBand.bind(to: gridView.scrollView)
+        headerBand.addSubview(headerView)
+        headerBand.addSubview(chipsScrollView)
 
         chipsScrollView.addSubview(chipsStack)
 
         gridView.onItemTap = { [weak self] item in self?.deityTappedSubject.send(item.id) }
 
-        view.addSubview(headerContainer)
+        loadingView.isHidden = true
+        emptyStateView.isHidden = true
+
+        retryButton.onTap = { [weak self] in self?.retryTappedSubject.send(()) }
+        errorStack.axis = .vertical
+        errorStack.alignment = .fill
+        errorStack.spacing = ILMetrics.groupSpacing
+        errorStack.addArrangedSubview(errorStateView)
+        errorStack.addArrangedSubview(retryButton)
+        errorStack.isHidden = true
+
         view.addSubview(gridView)
+        view.addSubview(loadingView)
+        view.addSubview(emptyStateView)
+        view.addSubview(errorStack)
+        view.addSubview(headerBand)
     }
 
     override func setupConstraints() {
         super.setupConstraints()
-        [headerContainer, headerView, chipsScrollView, chipsStack, headerDivider, gridView].forEach {
+        [
+            headerBand, headerView, chipsScrollView, chipsStack, gridView,
+            loadingView, emptyStateView, errorStack
+        ].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
 
         let horizontal = ILMetrics.screenHorizontal
 
         NSLayoutConstraint.activate([
-            headerContainer.topAnchor.constraint(equalTo: view.topAnchor),
-            headerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            headerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            headerBand.topAnchor.constraint(equalTo: view.topAnchor),
+            headerBand.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerBand.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
             headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: ILMetrics.spaceSmall / 2),
-            headerView.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: horizontal),
-            headerView.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -horizontal),
+            headerView.leadingAnchor.constraint(equalTo: headerBand.leadingAnchor, constant: horizontal),
+            headerView.trailingAnchor.constraint(equalTo: headerBand.trailingAnchor, constant: -horizontal),
 
             chipsScrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: ILMetrics.spaceMedium),
-            chipsScrollView.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor),
-            chipsScrollView.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor),
+            chipsScrollView.leadingAnchor.constraint(equalTo: headerBand.leadingAnchor),
+            chipsScrollView.trailingAnchor.constraint(equalTo: headerBand.trailingAnchor),
             chipsScrollView.heightAnchor.constraint(equalToConstant: Self.chipRowHeight),
 
             chipsStack.topAnchor.constraint(equalTo: chipsScrollView.contentLayoutGuide.topAnchor),
@@ -124,16 +145,28 @@ final class ILDeitiesViewController: BaseViewController {
             chipsStack.trailingAnchor.constraint(equalTo: chipsScrollView.contentLayoutGuide.trailingAnchor, constant: -horizontal),
             chipsStack.bottomAnchor.constraint(equalTo: chipsScrollView.contentLayoutGuide.bottomAnchor),
 
-            headerDivider.topAnchor.constraint(equalTo: chipsScrollView.bottomAnchor, constant: ILMetrics.rowSpacing),
-            headerDivider.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor),
-            headerDivider.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor),
-            headerDivider.heightAnchor.constraint(equalToConstant: 1),
-            headerDivider.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor),
+            chipsScrollView.bottomAnchor.constraint(equalTo: headerBand.bottomAnchor, constant: -ILMetrics.rowSpacing),
 
-            gridView.topAnchor.constraint(equalTo: headerContainer.bottomAnchor),
+            // Lưới chạy dưới header để nội dung mờ xuyên qua kính; chiều cao header được áp thành
+            // top content inset trong `viewDidLayoutSubviews`.
+            gridView.topAnchor.constraint(equalTo: view.topAnchor),
             gridView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             gridView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            gridView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            gridView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            loadingView.topAnchor.constraint(equalTo: headerBand.bottomAnchor),
+            loadingView.leadingAnchor.constraint(equalTo: gridView.leadingAnchor),
+            loadingView.trailingAnchor.constraint(equalTo: gridView.trailingAnchor),
+            loadingView.bottomAnchor.constraint(equalTo: gridView.bottomAnchor),
+
+            emptyStateView.topAnchor.constraint(equalTo: headerBand.bottomAnchor),
+            emptyStateView.leadingAnchor.constraint(equalTo: gridView.leadingAnchor),
+            emptyStateView.trailingAnchor.constraint(equalTo: gridView.trailingAnchor),
+            emptyStateView.bottomAnchor.constraint(equalTo: gridView.bottomAnchor),
+
+            errorStack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            errorStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: horizontal),
+            errorStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -horizontal)
         ])
     }
 
@@ -144,7 +177,8 @@ final class ILDeitiesViewController: BaseViewController {
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             filterSelected: filterSelectedSubject.eraseToAnyPublisher(),
-            deityTapped: deityTappedSubject.eraseToAnyPublisher()
+            deityTapped: deityTappedSubject.eraseToAnyPublisher(),
+            retryTapped: retryTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
 
@@ -154,25 +188,61 @@ final class ILDeitiesViewController: BaseViewController {
             .sink { [weak self] state in self?.render(state: state) }
             .store(in: &cancellables)
 
+        output.filters
+            .sink { [weak self] filters in self?.rebuildChips(filters) }
+            .store(in: &cancellables)
+
         viewDidLoadSubject.send(())
     }
 
     // MARK: - Render
+    private enum ScreenState {
+        case loading
+        case content
+        case empty
+        case error
+    }
+
     private func render(state: ViewState<ILDeitiesStateModel>) {
         switch state {
-        case .idle, .loading:
+        case .idle:
             break
+        case .loading:
+            showScreenState(.loading)
         case .success(let model):
             updateUI(with: model)
+            showScreenState(model.items.isEmpty ? .empty : .content)
         case .failure(let error):
-            showError(error.localizedDescription)
+            configureErrorState(for: error)
+            showScreenState(.error)
         }
+    }
+
+    private func showScreenState(_ screenState: ScreenState) {
+        gridView.isHidden = screenState != .content
+        emptyStateView.isHidden = screenState != .empty
+        errorStack.isHidden = screenState != .error
+        // The skeleton bars start pulsing on their own once the view is in a window.
+        loadingView.isHidden = screenState != .loading
+    }
+
+    /// Offline gets its own glyph/title; every other failure reads as a generic load error.
+    private func configureErrorState(for error: Error) {
+        if case ILCatalogError.offline = error {
+            errorStateView.kind = .offline
+            errorStateView.title = "deities.error.offlineTitle".localized
+        } else {
+            errorStateView.kind = .error
+            errorStateView.title = "deities.error.title".localized
+        }
+        errorStateView.message = error.localizedDescription
     }
 
     private func updateUI(with model: ILDeitiesStateModel) {
         headerView.subtitle = model.subtitle
-        rebuildChips(model.filters)
         gridView.items = model.items
+        emptyStateView.title = model.emptyTitle
+        emptyStateView.message = model.emptyMessage
     }
 
     private func rebuildChips(_ filters: [ILDeitiesFilterModel]) {
@@ -189,5 +259,16 @@ final class ILDeitiesViewController: BaseViewController {
             chip.onTap = { [weak self] in self?.filterSelectedSubject.send(filter.kind) }
             chipsStack.addArrangedSubview(chip)
         }
+    }
+
+    /// Đẩy lưới xuống dưới header; lần layout đầu thì đặt offset ở đỉnh nội dung thay vì dưới header.
+    private func applyHeaderInset() {
+        let scrollView = gridView.scrollView
+        let top = headerBand.bounds.height
+        guard top > 0, scrollView.contentInset.top != top else { return }
+        let wasAtTop = scrollView.contentOffset.y <= -scrollView.contentInset.top
+        scrollView.contentInset.top = top
+        scrollView.verticalScrollIndicatorInsets.top = top
+        if wasAtTop { scrollView.contentOffset.y = -top }
     }
 }

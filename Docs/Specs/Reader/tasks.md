@@ -1,8 +1,8 @@
 # Tasks — Reader
 
-Version: 1.0
-Last updated: 2026-09-27
-Status: in-progress (Phase 1–2 done; Phase 3–4 pending)
+Version: 1.1
+Last updated: 2026-10-03
+Status: in-progress (Phase 1–2 done incl. v1.1 redesign; Phase 3–4 pending)
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -37,6 +37,21 @@ Status: in-progress (Phase 1–2 done; Phase 3–4 pending)
 - [x] Unit tests: `InnerLampTests/ILReaderViewModelTests.swift` (7 tests) —
       load sutra, toggle play, 5 nav events
 
+## Phase 1b — v1.1 design refresh
+
+- [x] Rebuild the screen as a scrolling chant list (`UITableView`) with headings,
+      cue glyphs, English gloss and a highlighted current line
+- [x] Auto-scroll row, settings panel (size + background), bottom controls
+      (progress, −10s/play/+10s, pace chips), keep-screen-awake
+- [x] Domain: lines/sections, `seek`, `setSpeed`, `advance`, `progress`
+- [x] Remove share/download/font-size/player nav events and the old verse view +
+      playback bar; drop the unused `readerVerse`/`readerTranslation` tokens
+- [x] Tests: `ILReaderViewModelTests` (11) + `ILReaderUseCaseTests` (10)
+- [x] `xcodebuild build` (generic iOS) passes
+- [ ] Run the unit tests (test target did not build in the authoring environment:
+      Clang dependency scanning failure) — user to run on device
+- [ ] Device check (light/dark, 3 backgrounds, 4 sizes, auto-scroll) — user runs
+
 ## Phase 3 — API integration (pending; blocked on contract)
 
 > ⚠️ Not confirmed: the sutra catalog / verse-content API contract(s) (see
@@ -58,11 +73,10 @@ Status: in-progress (Phase 1–2 done; Phase 3–4 pending)
 
 ## Phase 4 — Sub-destinations (pending, separate scope)
 
-- [ ] Build the font-size setting screen and wire `.openFontSize`
-- [ ] Build the Share screen and wire `.share`
-- [ ] Build the offline-download screen and wire `.download`
-- [ ] Wire the lib → `ILSutraDetailCoordinator` → Reader flow once
-      `ILSutraDetailCoordinator` is built
+- [x] ~~Font-size / Share / Download destinations~~ — removed from the Reader by
+      the v1.1 design (font size is now an inline panel)
+- [ ] Start the Reader at a chosen chapter/part (SutraDetail passes a start line)
+- [ ] Persist font size / background / auto-scroll
 - [ ] Update `InnerLamp/Presentation/Scenes/Reader/README.md` changelog
 
 ## Phase 5 — Documentation

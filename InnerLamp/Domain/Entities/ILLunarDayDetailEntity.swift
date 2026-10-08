@@ -11,7 +11,7 @@ import Foundation
 ///
 /// Chứa toàn bộ dữ liệu lịch âm của 1 ngày dương (tính bằng `ILLunarCalendar`): ngày/tháng/năm
 /// âm, Can Chi ngày, cờ Hoàng đạo/Hắc đạo, 6 giờ hoàng đạo, tuổi xung khắc, hướng xuất hành
-/// (Hỷ thần/Tài thần) và câu kinh trong ngày. KHÔNG chứa field chỉ phục vụ hiển thị (`*Error`,
+/// (Hỷ thần/Tài thần/Hạc thần) và câu kinh trong ngày. KHÔNG chứa field chỉ phục vụ hiển thị (`*Error`,
 /// nhãn `.localized`, format ngày) — những field đó nằm ở `ILLunarDayDetailStateModel`
 /// (Presentation) và do `ILLunarDayDetailViewModel` chuyển đổi. Xem
 /// `references/data_layer_boundaries.md`.
@@ -45,6 +45,10 @@ struct ILLunarDayDetailEntity: Equatable {
     /// `.localized`, cùng cách `canChiYear`/`lunarMonthLabel`).
     let joyStarDirection: String
     let wealthStarDirection: String
+
+    /// Hướng Hạc thần — hướng xấu cần TRÁNH khi xuất hành. `nil` khi Hạc thần "bận việc trên
+    /// trời" (16/60 ngày Can Chi) — hôm đó không có hướng phải tránh.
+    let craneStarDirection: String?
 
     /// Câu kinh/lời dạy trong ngày (nội dung, index theo `(lunarDay + lunarMonth) % 4`).
     let verseLines: [String]

@@ -6,43 +6,38 @@
 //  the same `AuthTokenProviding` protocol Core/Networking uses — no second token store. See
 //  Docs/Specs/GRPC/design.md § "Step-by-step Flow — Unary RPC" Step 2.
 //
-//  Migrated to gRPC Swift 1.x: interceptors are generic per RPC and passed at call time (see
-//  `GRPCService`), rather than attached once to a client.
+//  gRPC Swift 2.x: `ClientInterceptor` is a non-generic protocol whose `intercept` method wraps
+//  one RPC (unary or streaming). One instance is registered on the shared `GRPCClient` and runs
+//  on every call, so it carries no per-call state.
 //
 
-import GRPC
-import NIOCore
-import NIOHPACK
+import GRPCCore
 
-/// `nonisolated` — interceptors run on the channel's event loop, not the main actor, so they
-/// must match the nonisolated `ClientInterceptor` API. `AuthTokenProviding` isn't itself
-/// `Sendable`, but every conformer (e.g. `KeychainAuthTokenProviding`) is an immutable,
-/// thread-safe reader, the same trust boundary `NetworkServiceImpl` already relies on.
-nonisolated final class GRPCAuthInterceptor<Request, Response>: ClientInterceptor<Request, Response> {
-    private let authTokenProvider: AuthTokenProviding
+nonisolated struct GRPCAuthInterceptor: ClientInterceptor {
+    private let authTokenProvider: GRPCUncheckedSendable<any AuthTokenProviding>
 
-    init(authTokenProvider: AuthTokenProviding) {
-        self.authTokenProvider = authTokenProvider
-        super.init()
+    init(authTokenProvider: any AuthTokenProviding) {
+        self.authTokenProvider = GRPCUncheckedSendable(value: authTokenProvider)
     }
 
-    override func send(
-        _ part: GRPCClientRequestPart<Request>,
-        promise: EventLoopPromise<Void>?,
-        context: ClientInterceptorContext<Request, Response>
-    ) {
-        switch part {
-        case .metadata(var headers):
-            // No token stored → send with no auth metadata. Do not throw, do not block, do not
-            // fabricate an empty token — mirrors Core/Networking's no-token path
-            // (NetworkServiceImpl.injectAuthHeader).
-            if let token = authTokenProvider.currentToken(), !token.isEmpty {
-                headers.add(name: "authorization", value: "Bearer \(token)")
-            }
-            context.send(.metadata(headers), promise: promise)
+    // gRPC Swift 2's `ClientInterceptor` requirement is compiled without
+    // `NonisolatedNonsendingByDefault`, so it is `@concurrent`; this app enables that feature, so
+    // the conformance must opt back into the concurrent executor explicitly.
+    @concurrent
+    func intercept<Input: Sendable, Output: Sendable>(
+        request: StreamingClientRequest<Input>,
+        context: ClientContext,
+        next: @concurrent (StreamingClientRequest<Input>, ClientContext) async throws -> StreamingClientResponse<Output>
+    ) async throws -> StreamingClientResponse<Output> {
+        var request = request
 
-        case .message, .end:
-            context.send(part, promise: promise)
+        // No token stored → send with no auth metadata. Do not throw, do not block, do not
+        // fabricate an empty token — mirrors Core/Networking's no-token path
+        // (NetworkServiceImpl.injectAuthHeader).
+        if let token = authTokenProvider.value.currentToken(), !token.isEmpty {
+            request.metadata.addString("Bearer \(token)", forKey: "authorization")
         }
+
+        return try await next(request, context)
     }
 }

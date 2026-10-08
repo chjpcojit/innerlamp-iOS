@@ -13,13 +13,15 @@ final class ILDeityMantraCardView: UIView {
     private enum Layout {
         static let inset: CGFloat = 18
         static let buttonHeight: CGFloat = 38
-        static let buttonInset: CGFloat = 16
     }
 
     var onChantTap: (() -> Void)?
     var onShareTap: (() -> Void)?
 
     // MARK: - UI Elements
+    // Decorative layers live in their own clipped container so the card itself (which holds the
+    // text and buttons) never needs `clipsToBounds`, avoiding stale masked-layer rendering.
+    private let backdropLayer = CALayer()
     private let gradientLayer = CAGradientLayer()
     private let glowLayer = CAGradientLayer()
 
@@ -27,8 +29,8 @@ final class ILDeityMantraCardView: UIView {
     private let textLabel = UILabel()
     private let sanskritLabel = UILabel()
     private let noteLabel = UILabel()
-    private let chantButton = UIButton(type: .system)
-    private let shareButton = UIButton(type: .system)
+    private let chantButton = ILDeityPillButton(textColor: ILColors.inkOnGold)
+    private let shareButton = ILDeityPillButton(textColor: ILColors.templeHeaderInk)
 
     // MARK: - Initializer
     init(model: ILDeityMantraModel, chantTitle: String, shareTitle: String) {
@@ -59,8 +61,8 @@ final class ILDeityMantraCardView: UIView {
             cssLineHeight: 1.6
         )
         noteLabel.isHidden = model.note.isEmpty
-        chantButton.setTitle(chantTitle, for: .normal)
-        shareButton.setTitle(shareTitle, for: .normal)
+        chantButton.title = chantTitle
+        shareButton.title = shareTitle
     }
 
     // MARK: - Setup
@@ -68,18 +70,20 @@ final class ILDeityMantraCardView: UIView {
         translatesAutoresizingMaskIntoConstraints = false
         layer.cornerRadius = ILMetrics.radiusCardRegular
         layer.borderWidth = 1
-        clipsToBounds = true
+        backdropLayer.cornerRadius = ILMetrics.radiusCardRegular
+        backdropLayer.masksToBounds = true
+        layer.insertSublayer(backdropLayer, at: 0)
 
         // `linear-gradient(140deg, start, end)`.
         gradientLayer.startPoint = CGPoint(x: 0.18, y: 0)
         gradientLayer.endPoint = CGPoint(x: 0.82, y: 1)
-        layer.insertSublayer(gradientLayer, at: 0)
+        backdropLayer.addSublayer(gradientLayer)
 
         // `radial-gradient(ellipse 70% 60% at 85% 20%, glow, transparent)`.
         glowLayer.type = .radial
         glowLayer.startPoint = CGPoint(x: 0.5, y: 0.5)
         glowLayer.endPoint = CGPoint(x: 1, y: 1)
-        layer.insertSublayer(glowLayer, above: gradientLayer)
+        backdropLayer.addSublayer(glowLayer)
 
         eyebrowLabel.font = ILTypography.eyebrowSmall
 
@@ -91,11 +95,9 @@ final class ILDeityMantraCardView: UIView {
 
         noteLabel.numberOfLines = 0
 
-        styleButton(chantButton, textColor: ILColors.inkOnGold)
         chantButton.backgroundColor = ILColors.goldBright
         chantButton.addTarget(self, action: #selector(handleChantTapped), for: .touchUpInside)
 
-        styleButton(shareButton, textColor: ILColors.templeHeaderInk)
         shareButton.layer.borderWidth = 1
         shareButton.addTarget(self, action: #selector(handleShareTapped), for: .touchUpInside)
 
@@ -130,25 +132,10 @@ final class ILDeityMantraCardView: UIView {
         }
     }
 
-    private func styleButton(_ button: UIButton, textColor: UIColor) {
-        var configuration = UIButton.Configuration.plain()
-        configuration.contentInsets = NSDirectionalEdgeInsets(
-            top: 0, leading: Layout.buttonInset, bottom: 0, trailing: Layout.buttonInset
-        )
-        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
-            var attributes = attributes
-            attributes.font = ILTypography.chip
-            return attributes
-        }
-        configuration.baseForegroundColor = textColor
-        button.configuration = configuration
-        button.layer.cornerRadius = Layout.buttonHeight / 2
-        button.clipsToBounds = true
-    }
-
     override func layoutSubviews() {
         super.layoutSubviews()
-        gradientLayer.frame = bounds
+        backdropLayer.frame = bounds
+        gradientLayer.frame = backdropLayer.bounds
         glowLayer.frame = CGRect(
             x: bounds.width * 0.85 - bounds.width * 0.7,
             y: bounds.height * 0.2 - bounds.height * 0.6,
@@ -178,5 +165,44 @@ final class ILDeityMantraCardView: UIView {
 
     @objc private func handleShareTapped() {
         onShareTap?()
+    }
+}
+
+/// Nút viên thuốc dựng từ `UIControl` + `UILabel` (như `ILButton`) — không dùng
+/// `UIButton.Configuration`, vì chữ của nó có thể biến mất sau khi màn được push/pop.
+private final class ILDeityPillButton: UIControl {
+
+    private let titleLabel = UILabel()
+
+    var title: String = "" {
+        didSet { titleLabel.text = title }
+    }
+
+    override var isHighlighted: Bool {
+        didSet { alpha = isHighlighted ? 0.7 : 1 }
+    }
+
+    init(textColor: UIColor) {
+        super.init(frame: .zero)
+        translatesAutoresizingMaskIntoConstraints = false
+        layer.cornerRadius = 19
+
+        titleLabel.font = ILTypography.chip
+        titleLabel.textColor = textColor
+        titleLabel.textAlignment = .center
+        titleLabel.isUserInteractionEnabled = false
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(titleLabel)
+
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: topAnchor),
+            titleLabel.bottomAnchor.constraint(equalTo: bottomAnchor),
+            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16)
+        ])
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }

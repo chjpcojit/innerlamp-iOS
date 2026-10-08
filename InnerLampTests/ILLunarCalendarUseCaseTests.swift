@@ -82,6 +82,21 @@ final class ILLunarCalendarUseCaseTests: XCTestCase {
         }
     }
 
+    func test_category_lastDayOfShortMonth_isFastDay() {
+        XCTAssertEqual(ILLunarCalendarUseCaseImpl.category(forLunarDay: 29, isLastDayOfShortMonth: true), .fastDay)
+        XCTAssertEqual(ILLunarCalendarUseCaseImpl.category(forLunarDay: 29, isLastDayOfShortMonth: false), .ordinary)
+    }
+
+    func test_getInitialState_everyLunarMonthEndsOnAFastDay() {
+        let sut = makeSUT(today: date(2024, 2, 10))
+        let days = sut.getInitialState().months.flatMap(\.days)
+
+        for (index, day) in days.enumerated().dropLast() where days[index + 1].lunarDay == 1 {
+            XCTAssertTrue(day.lunarDay == 29 || day.lunarDay == 30, "day \(day.id)")
+            XCTAssertTrue(day.isFastDay, "last day of a lunar month must be a fast day: \(day.id)")
+        }
+    }
+
     func test_selectDay_updatesSelectionForKnownDay() {
         let sut = makeSUT(today: date(2024, 2, 10))
         let entity = sut.getInitialState()

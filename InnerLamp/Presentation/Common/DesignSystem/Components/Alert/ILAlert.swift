@@ -16,13 +16,14 @@ public struct ILAlertAction {
     }
 }
 
-/// The 6 shared error popups from the design handoff ("Popup lỗi" screen). Pick the kind by
+/// The shared popups from the design handoff ("Popup lỗi" screen). Pick the kind by
 /// severity — light errors come from the top, errors needing an action come from the bottom,
 /// flow-blocking errors sit in the middle:
 ///
 /// | Kind | When | Dismiss |
 /// |---|---|---|
 /// | `.toast` | Light error, no action needed | Auto after 3.2s, "×", swipe up |
+/// | `.success` | Confirmation of a finished action (saved, deleted) — green toast | Auto after 3.2s, "×", swipe up |
 /// | `.banner` | Error that needs a decision (2 buttons) | A button, swipe up |
 /// | `.snackbar` | One-line error, at most one action | Auto after 3.2s, action, swipe down |
 /// | `.sheet` | Error with long context + error code, 2 buttons | A button, tap scrim, swipe down |
@@ -33,6 +34,8 @@ public struct ILAlertAction {
 /// localized — the popups never hardcode text.
 public enum ILAlert {
     case toast(title: String, message: String?)
+    /// Same top toast as `.toast`, in the green success tone.
+    case success(title: String, message: String?)
     case banner(title: String, message: String?, primary: ILAlertAction, secondary: ILAlertAction?)
     case snackbar(message: String, action: ILAlertAction?)
     case sheet(title: String, message: String, errorCode: String?, primary: ILAlertAction, secondary: ILAlertAction?)
@@ -47,7 +50,7 @@ public enum ILAlert {
     /// `nil` when the popup stays until the user acts.
     public var autoDismissDelay: TimeInterval? {
         switch self {
-        case .toast, .snackbar: return Self.autoDismissInterval
+        case .toast, .success, .snackbar: return Self.autoDismissInterval
         case .banner, .sheet, .dialog, .fullScreen: return nil
         }
     }
@@ -56,7 +59,7 @@ public enum ILAlert {
     /// the others are presented modally and block the screen underneath.
     public var isOverlay: Bool {
         switch self {
-        case .toast, .banner, .snackbar: return true
+        case .toast, .success, .banner, .snackbar: return true
         case .sheet, .dialog, .fullScreen: return false
         }
     }

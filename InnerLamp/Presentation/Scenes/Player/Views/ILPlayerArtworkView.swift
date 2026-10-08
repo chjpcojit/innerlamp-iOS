@@ -67,8 +67,12 @@ final class ILPlayerArtworkView: UIView {
         addSubview(outerRing)
 
         NSLayoutConstraint.activate([
-            outerRing.centerXAnchor.constraint(equalTo: centerXAnchor),
-            outerRing.centerYAnchor.constraint(equalTo: centerYAnchor),
+            // Pin all four edges so the view's own size is the ring's — otherwise the stack view
+            // collapses it to zero height and the title overlaps the artwork.
+            outerRing.topAnchor.constraint(equalTo: topAnchor),
+            outerRing.bottomAnchor.constraint(equalTo: bottomAnchor),
+            outerRing.leadingAnchor.constraint(equalTo: leadingAnchor),
+            outerRing.trailingAnchor.constraint(equalTo: trailingAnchor),
             outerRing.widthAnchor.constraint(equalToConstant: Artwork.outerDiameter),
             outerRing.heightAnchor.constraint(equalToConstant: Artwork.outerDiameter),
 

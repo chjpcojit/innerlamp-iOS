@@ -12,6 +12,11 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
         CrossFadeTransition()
     }
 
+    /// Blocks the edge swipe-back while the login request is in flight.
+    var isSwipeBackEnabled: Bool { !isSubmitting }
+
+    private var isSubmitting = false
+
     // MARK: - Properties
     private let viewModel: ILLoginViewModel
     private var cancellables = Set<AnyCancellable>()
@@ -320,10 +325,20 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
         passwordField.fieldState = model.passwordError.map { .error($0) } ?? .normal
 
         loginButton.buttonState = model.isSubmitting ? .loading : (model.isSubmitEnabled ? .normal : .disabled)
+        setInteractionLocked(model.isSubmitting)
 
         if let submitError = model.submitError {
             showError(submitError)
         }
+    }
+
+    /// Locks back, fields, forgot-password, SMS/sign-up/guest buttons while logging in, so the user
+    /// cannot leave the screen or alter the request mid-flight.
+    private func setInteractionLocked(_ locked: Bool) {
+        isSubmitting = locked
+        headerView.isUserInteractionEnabled = !locked
+        scrollView.isUserInteractionEnabled = !locked
+        footerContainer.isUserInteractionEnabled = !locked
     }
 
     // MARK: - Actions

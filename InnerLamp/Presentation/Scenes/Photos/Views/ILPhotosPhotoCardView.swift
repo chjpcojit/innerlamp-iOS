@@ -5,23 +5,23 @@
 
 import UIKit
 
-/// 1 thẻ ảnh trong lưới gallery "Ảnh chùa đẹp": ô ảnh bo góc (chiều cao theo ảnh) + tiêu đề Lora
-/// + địa điểm. Chưa có ảnh thật (`image-slot` trong design handoff) nên ô ảnh dùng nền tint ấm
-/// với nhãn danh mục làm placeholder, khớp ghi chú "cần ảnh thật từ phía sản phẩm" ở README.
+/// 1 thẻ ảnh trong lưới gallery "Ảnh chùa đẹp": ô ảnh bo góc tỉ lệ cố định 4:3 (API không trả kích
+/// thước ảnh — `AS-Photos-001`) + tiêu đề Lora + địa điểm. Ảnh tải qua `ILRemoteImageView`; nền
+/// tint ấm của nó là placeholder.
 final class ILPhotosPhotoCardView: UIView {
 
     // MARK: - Layout constants
     /// Khoảng cách từ ô ảnh tới tiêu đề và giữa tiêu đề/địa điểm.
     static let imageToTitleSpacing: CGFloat = 8
     static let titleToPlaceSpacing: CGFloat = 2
+    /// Chiều cao / chiều rộng của ô ảnh.
+    static let imageAspectRatio: CGFloat = 0.75
 
     // MARK: - UI Elements
-    private let imageTile = UIView()
-    private let categoryLabel = UILabel()
+    private let imageTile = ILRemoteImageView(frame: .zero)
     private let titleLabel = UILabel()
     private let placeLabel = UILabel()
     private let stack = UIStackView()
-    private var imageHeightConstraint: NSLayoutConstraint?
 
     // MARK: - Initializer
     init() {
@@ -34,11 +34,12 @@ final class ILPhotosPhotoCardView: UIView {
     }
 
     // MARK: - Configuration
-    func configure(title: String, place: String, imageHeight: CGFloat, categoryLabel: String) {
-        self.categoryLabel.text = categoryLabel
-        self.titleLabel.text = title
-        self.placeLabel.text = place
-        imageHeightConstraint?.constant = imageHeight
+    /// `heroID` marks the image tile as the shared element of the photo viewer transition.
+    func configure(title: String, place: String, thumbnailURL: String?, heroID: String) {
+        imageTile.heroID = heroID
+        titleLabel.text = title
+        placeLabel.text = place
+        imageTile.setImage(urlString: thumbnailURL)
     }
 
     // MARK: - Setup
@@ -47,12 +48,6 @@ final class ILPhotosPhotoCardView: UIView {
         imageTile.backgroundColor = ILColors.tint2
         imageTile.layer.cornerRadius = ILMetrics.radiusCardSmall
         imageTile.clipsToBounds = true
-
-        categoryLabel.font = ILTypography.caption
-        categoryLabel.textColor = ILColors.inkMuted
-        categoryLabel.textAlignment = .center
-        categoryLabel.numberOfLines = 1
-        categoryLabel.translatesAutoresizingMaskIntoConstraints = false
 
         titleLabel.font = ILTypography.photoCaptionTitle
         titleLabel.textColor = ILColors.ink
@@ -65,8 +60,6 @@ final class ILPhotosPhotoCardView: UIView {
         placeLabel.numberOfLines = 1
         placeLabel.lineBreakMode = .byTruncatingTail
 
-        imageTile.addSubview(categoryLabel)
-
         stack.axis = .vertical
         stack.alignment = .fill
         stack.spacing = Self.titleToPlaceSpacing
@@ -78,20 +71,14 @@ final class ILPhotosPhotoCardView: UIView {
 
         addSubview(stack)
 
-        let heightConstraint = imageTile.heightAnchor.constraint(equalToConstant: 0)
-        imageHeightConstraint = heightConstraint
-
         NSLayoutConstraint.activate([
-            heightConstraint,
+            imageTile.heightAnchor.constraint(equalTo: imageTile.widthAnchor, multiplier: Self.imageAspectRatio),
 
             // Stack top-aligned (không pin bottom) để chú thích ngắn (1 dòng) không bị kéo giãn —
             // chiều cao thẻ do ô trong layout masonry quyết định, phần thừa chỉ là khoảng trống.
             stack.topAnchor.constraint(equalTo: topAnchor),
             stack.leadingAnchor.constraint(equalTo: leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
-
-            categoryLabel.centerXAnchor.constraint(equalTo: imageTile.centerXAnchor),
-            categoryLabel.centerYAnchor.constraint(equalTo: imageTile.centerYAnchor)
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
     }
 }

@@ -13,7 +13,9 @@ public final class ILPlayPauseButton: UIControl {
     // MARK: - Properties
     /// `true` hiển thị glyph "tạm dừng" (2 vạch), `false` hiển thị glyph "phát" (tam giác).
     public var isPlaying: Bool = false {
-        didSet { setNeedsDisplay() }
+        // The glyph is a `CAShapeLayer` rebuilt in `layoutSubviews`, so a redraw alone
+        // (`setNeedsDisplay`) would leave the old play/pause shape on screen.
+        didSet { setNeedsLayout() }
     }
 
     public var onTap: (() -> Void)?
@@ -24,22 +26,31 @@ public final class ILPlayPauseButton: UIControl {
     private let glyphColor: UIColor
     private let fillColor: UIColor
     private let glyphScale: CGFloat
+    private let playGlyphSize: CGSize
+    private let playGlyphOffsetX: CGFloat
 
     // MARK: - Initializer
     /// - Parameters:
     ///   - fillColor: Button background — `ink` by default; immersive screens pass `medGold`.
     ///   - glyphScale: Multiplier on the base glyph (4×16 pause bars) — e.g. `1.5` for the 78px
     ///     gold button of the meditation session (5×24 bars in the design).
+    ///   - playGlyphSize: Size of the "play" triangle before `glyphScale` (11×15 by default).
+    ///   - playGlyphOffsetX: Horizontal shift of the triangle from the circle's center, for
+    ///     designs that nudge it optically (e.g. `margin-left:3px`).
     public init(
         diameter: CGFloat = 46,
         glyphColor: UIColor = ILColors.goldLight,
         fillColor: UIColor = ILColors.ink,
-        glyphScale: CGFloat = 1
+        glyphScale: CGFloat = 1,
+        playGlyphSize: CGSize = CGSize(width: 11, height: 15),
+        playGlyphOffsetX: CGFloat = 0
     ) {
         self.diameter = diameter
         self.glyphColor = glyphColor
         self.fillColor = fillColor
         self.glyphScale = glyphScale
+        self.playGlyphSize = playGlyphSize
+        self.playGlyphOffsetX = playGlyphOffsetX
         super.init(frame: .zero)
         setupViews()
     }
@@ -104,11 +115,12 @@ public final class ILPlayPauseButton: UIControl {
             ))
         } else {
             // Tam giác "phát" hướng phải.
-            let halfWidth: CGFloat = 5.5 * glyphScale
-            let halfHeight: CGFloat = 7.5 * glyphScale
-            path.move(to: CGPoint(x: center.x - halfWidth, y: center.y - halfHeight))
-            path.addLine(to: CGPoint(x: center.x + halfWidth, y: center.y))
-            path.addLine(to: CGPoint(x: center.x - halfWidth, y: center.y + halfHeight))
+            let halfWidth = playGlyphSize.width / 2 * glyphScale
+            let halfHeight = playGlyphSize.height / 2 * glyphScale
+            let centerX = center.x + playGlyphOffsetX
+            path.move(to: CGPoint(x: centerX - halfWidth, y: center.y - halfHeight))
+            path.addLine(to: CGPoint(x: centerX + halfWidth, y: center.y))
+            path.addLine(to: CGPoint(x: centerX - halfWidth, y: center.y + halfHeight))
             path.close()
         }
 

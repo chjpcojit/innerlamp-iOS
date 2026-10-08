@@ -14,22 +14,26 @@ struct ILArticlesItemEntity: Equatable, Identifiable {
     let title: String
     let author: String
     let readMinutes: Int
+    /// Raw server thumbnail URL (`thumbnail_url`, falling back to `image_url`); `nil` when the
+    /// article has no image.
+    var thumbnailURL: String? = nil
 }
 
 /// Pure business entity for the "All articles" screen — Domain layer only.
 ///
-/// Holds the loaded article rows plus the pagination position (`loadedCount` / `totalCount`) used
-/// to drive infinite scroll. UI-only state (the `isLoadingMore` flag, the "N / M bài" subtitle,
-/// the "… phút đọc" string) lives on `ILArticlesStateModel` instead — see
-/// `references/data_layer_boundaries.md`.
+/// Holds the loaded article rows plus the pagination position used to drive infinite scroll.
+/// UI-only state (the `isLoadingMore` flag, the "N / M bài" subtitle, the "… phút đọc" string)
+/// lives on `ILArticlesStateModel` instead.
 struct ILArticlesEntity: Equatable {
     var articles: [ILArticlesItemEntity] = []
-    /// Number of articles revealed so far.
+    /// Number of articles loaded so far.
     var loadedCount: Int = 0
-    /// Total articles in the (future) server catalog.
+    /// Total articles on the server (`total` of the paged response).
     var totalCount: Int = 0
-
-    var hasMore: Bool { loadedCount < totalCount }
+    /// Last page fetched (1-based); `0` before the first page.
+    var lastLoadedPage: Int = 0
+    /// `false` once the server's last page was loaded, or a page came back empty.
+    var hasMore: Bool = false
 
     static let empty = ILArticlesEntity()
 }

@@ -8,7 +8,6 @@ import Combine
 
 enum ILFestivalsNavEvent: Equatable {
     case goBack
-    case openTemple(id: String)
 }
 
 protocol ILFestivalsViewModelProtocol: ViewModelType {
@@ -23,7 +22,6 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
     struct Input {
         let viewDidLoad: AnyPublisher<Void, Never>
         let tabSelected: AnyPublisher<ILFestivalsTab, Never>
-        let hostTapped: AnyPublisher<String, Never>
         let backTapped: AnyPublisher<Void, Never>
     }
 
@@ -59,10 +57,6 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
             .sink { [weak self] tab in self?.handleTabSelected(tab) }
             .store(in: &cancellables)
 
-        input.hostTapped
-            .sink { [weak self] id in self?.navigationEventSubject.send(.openTemple(id: id)) }
-            .store(in: &cancellables)
-
         input.backTapped
             .sink { [weak self] _ in self?.navigationEventSubject.send(.goBack) }
             .store(in: &cancellables)
@@ -91,17 +85,18 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
     }
 
     // MARK: - Entity -> StateModel mapping
-    /// Việc riêng của presentation (format countdown/thứ ngày/phụ đề, resolve tên chùa) nên nằm ở
+    /// Việc riêng của presentation (format countdown/thứ ngày/phụ đề) nên nằm ở
     /// đây, không phải trong Mapper dùng chung (xem `references/data_layer_boundaries.md`).
     private static func makeStateModel(from entity: ILFestivalsEntity, tab: ILFestivalsTab) -> ILFestivalsStateModel {
         var model = ILFestivalsStateModel()
         model.selectedTab = tab
+        model.currentMonthId = currentMonthId()
 
         model.months = entity.months.compactMap { month in
             let days = month.days.filter { day in
                 switch tab {
                 case .all: return true
-                case .festivals: return day.kind != .observance
+                case .festivals: return day.kind == .festival
                 case .observances: return day.kind == .observance
                 }
             }
@@ -115,17 +110,18 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
         return model
     }
 
-    private static func makeDayModel(_ day: ILFestivalDayEntity) -> ILFestivalDayModel {
+    /// `id` ("yyyy-MM") của tháng chứa hôm nay, khớp `ILFestivalMonthEntity.id`.
+    private static func currentMonthId() -> String {
+        let components = Calendar(identifier: .gregorian).dateComponents([.year, .month], from: Date())
+        return String(format: "%04d-%02d", components.year ?? 0, components.month ?? 0)
+    }
+
+    static func makeDayModel(_ day: ILFestivalDayEntity) -> ILFestivalDayModel {
         let calendar = Calendar(identifier: .gregorian)
         let solarDay = calendar.component(.day, from: day.date)
         let solarMonth = calendar.component(.month, from: day.date)
         let weekday = calendar.component(.weekday, from: day.date) // 1 = Chủ nhật ... 7 = Thứ Bảy
         let lunar = ILLunarCalendar.solarToLunar(date: day.date, calendar: calendar)
-
-        let hosts = day.hostTempleIDs.map { ILFestivalHostModel(id: $0, name: templeName(for: $0)) }
-        let moreHostsText = hosts.count > 3
-            ? String(format: "festivals.item.moreHostsFormat".localized, hosts.count - 3)
-            : nil
 
         return ILFestivalDayModel(
             id: day.id,
@@ -133,53 +129,33 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
             weekdayLabel: weekdayShortLabel(weekday),
             title: day.title,
             countdownText: countdownText(day.daysUntil),
-            isFestival: day.kind != .observance,
-            isImminent: day.daysUntil <= 1,
+            isFestival: day.kind == .festival,
+            isImminent: (0...1).contains(day.daysUntil),
             isToday: day.daysUntil == 0,
             lunarSubtitle: lunarSubtitle(
                 weekday: weekday,
                 solarDay: solarDay,
                 solarMonth: solarMonth,
-                lunar: lunar,
-                hostCount: hosts.count
-            ),
-            hosts: hosts,
-            moreHostsText: moreHostsText
+                lunar: lunar
+            )
         )
-    }
-
-    /// Tên chùa tổ chức theo id — tái dùng bộ `home.temple.*` (cùng nguồn dữ liệu với carousel
-    /// "Chùa Việt Nam"), thêm `tp-tuquang` (Từ Quang) vốn chưa có trong catalog 8 chùa.
-    private static func templeName(for id: String) -> String {
-        switch id {
-        case "tp-tuquang": return "home.temple.tuquang.name".localized
-        case "tp-motcot": return "home.temple.motcot.name".localized
-        case "tp-tranquoc": return "home.temple.tranquoc.name".localized
-        case "tp-huong": return "home.temple.huong.name".localized
-        case "tp-baidinh": return "home.temple.baidinh.name".localized
-        case "tp-thienmu": return "home.temple.thienmu.name".localized
-        case "tp-linhung": return "home.temple.linhung.name".localized
-        case "tp-truclam": return "home.temple.truclam.name".localized
-        case "tp-vinhnghiem": return "home.temple.vinhnghiem.name".localized
-        default: return id
-        }
     }
 
     private static func countdownText(_ days: Int) -> String {
         switch days {
+        case ..<0: return "festivals.item.countdown.past".localized
         case 0: return "festivals.item.countdown.today".localized
         case 1: return "festivals.item.countdown.tomorrow".localized
         default: return String(format: "festivals.item.countdown.days".localized, days)
         }
     }
 
-    /// "Thứ X, dd-MM · Âm lịch dd-mm (nhuận) · N chùa tổ chức".
+    /// "Thứ X, dd-MM · Âm lịch dd-mm (nhuận)".
     private static func lunarSubtitle(
         weekday: Int,
         solarDay: Int,
         solarMonth: Int,
-        lunar: ILLunarCalendar.LunarDate,
-        hostCount: Int
+        lunar: ILLunarCalendar.LunarDate
     ) -> String {
         let weekdayText = weekday == 1
             ? "festivals.weekday.sunday".localized
@@ -188,8 +164,7 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
         let lunarText = lunar.isLeapMonth
             ? String(format: "festivals.item.lunarDateLeapFormat".localized, lunar.day, lunar.month)
             : String(format: "festivals.item.lunarDateFormat".localized, lunar.day, lunar.month)
-        let hostsText = String(format: "festivals.item.hostsCountFormat".localized, hostCount)
-        return "\(weekdayText), \(solarText) · \(lunarText) · \(hostsText)"
+        return "\(weekdayText), \(solarText) · \(lunarText)"
     }
 
     /// Nhãn thứ ngắn ("CN", "T2"…"T7") theo `weekday` (1 = Chủ nhật ... 7 = Thứ Bảy).

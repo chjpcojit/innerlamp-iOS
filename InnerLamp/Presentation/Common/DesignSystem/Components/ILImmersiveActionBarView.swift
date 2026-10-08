@@ -6,7 +6,8 @@
 import UIKit
 
 /// Hàng 2 nút pill đáy màn immersive: nút phụ viền mảnh (vd. "Bắt đầu lại") và nút chính nền
-/// vàng nhạt (vd. "Xong"). Hai nút chia đều chiều ngang. Khác `ILButton` ở chỗ palette lấy từ bộ
+/// vàng nhạt (vd. "Xong"). Hai nút chia đều chiều ngang; để `primaryTitle` rỗng thì nút chính ẩn và
+/// nút phụ chiếm cả hàng. Khác `ILButton` ở chỗ palette lấy từ bộ
 /// token `--il-med-*` (đổi theo light/dark của nền immersive) và nền trong suốt.
 public final class ILImmersiveActionBarView: UIView {
 
@@ -16,7 +17,10 @@ public final class ILImmersiveActionBarView: UIView {
     }
 
     public var primaryTitle: String = "" {
-        didSet { primaryButton.configuration?.title = primaryTitle }
+        didSet {
+            primaryButton.configuration?.title = primaryTitle
+            primaryButton.isHidden = primaryTitle.isEmpty
+        }
     }
 
     public var onSecondaryTap: (() -> Void)?
@@ -47,6 +51,7 @@ public final class ILImmersiveActionBarView: UIView {
         primaryButton.addTarget(self, action: #selector(handlePrimaryTap), for: .touchUpInside)
 
         updateBorders()
+        primaryButton.isHidden = primaryTitle.isEmpty
 
         let stack = UIStackView(arrangedSubviews: [secondaryButton, primaryButton])
         stack.axis = .horizontal

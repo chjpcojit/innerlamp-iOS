@@ -27,6 +27,9 @@ final class ILMainTabCoordinator: Coordinator {
         let homeNavigation = BaseNavigationController()
         let homeCoordinator = container.makeHomeCoordinator(navigationController: homeNavigation)
         addChild(homeCoordinator)
+        homeCoordinator.onOpenProfile = { [weak tabBarController] in
+            tabBarController?.selectTab(.me)
+        }
         homeCoordinator.start()
 
         let libraryNavigation = BaseNavigationController()

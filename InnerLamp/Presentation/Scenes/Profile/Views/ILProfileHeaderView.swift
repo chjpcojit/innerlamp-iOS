@@ -5,9 +5,9 @@
 
 import UIKit
 
-/// Dải đầu dán của màn Tôi: avatar tròn, tên, dòng "Pháp danh … · Phật tử tại gia" và nút pill
-/// "Sửa hồ sơ", hairline ở đáy. Nền phủ kín tới mép trên màn hình — cần ghim `topAnchor` vào
-/// `view.topAnchor` của màn để phần status bar nằm trong dải; nội dung tự chừa safe area.
+/// Nội dung header dán của màn Tôi: avatar tròn, tên, dòng "Pháp danh … · Phật tử tại gia" và nút pill
+/// "Sửa hồ sơ". Nền trong suốt — màn chủ đặt nó trong container có blur + tint (giống Trang chủ) và
+/// ghim phủ kín tới mép trên màn hình để phần status bar nằm trong dải; nội dung tự chừa safe area.
 /// Biết `ILProfileHeaderModel` nên thuộc riêng màn Tôi.
 final class ILProfileHeaderView: UIView {
 
@@ -75,12 +75,6 @@ final class ILProfileHeaderView: UIView {
         return button
     }()
 
-    private lazy var divider: UIView = {
-        let view = UIView()
-        view.backgroundColor = ILColors.border
-        return view
-    }()
-
     // MARK: - Initializer
     init() {
         super.init(frame: .zero)
@@ -100,7 +94,7 @@ final class ILProfileHeaderView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        backgroundColor = ILColors.canvas
+        backgroundColor = .clear
 
         initialLabel.translatesAutoresizingMaskIntoConstraints = false
         avatarView.addSubview(initialLabel)
@@ -121,20 +115,13 @@ final class ILProfileHeaderView: UIView {
         rowStack.spacing = ILMetrics.spaceMedium + 2
         rowStack.translatesAutoresizingMaskIntoConstraints = false
 
-        divider.translatesAutoresizingMaskIntoConstraints = false
         addSubview(rowStack)
-        addSubview(divider)
 
         NSLayoutConstraint.activate([
             rowStack.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: ILMetrics.spaceMedium),
             rowStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: ILMetrics.screenHorizontal),
             rowStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -ILMetrics.screenHorizontal),
-            rowStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -(ILMetrics.spaceMedium - 2)),
-
-            divider.leadingAnchor.constraint(equalTo: leadingAnchor),
-            divider.trailingAnchor.constraint(equalTo: trailingAnchor),
-            divider.bottomAnchor.constraint(equalTo: bottomAnchor),
-            divider.heightAnchor.constraint(equalToConstant: 1)
+            rowStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -ILMetrics.rowSpacing)
         ])
     }
 

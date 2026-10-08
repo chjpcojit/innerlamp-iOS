@@ -11,6 +11,8 @@ enum ILArticleNavEvent: Equatable {
     case back
     /// Nút "Chia sẻ" — mở modal chia sẻ câu kinh (màn `share` chưa build).
     case share
+    /// Chạm dòng "Nguồn: …" — mở link bài gốc trong trình duyệt.
+    case openURL(String)
 }
 
 protocol ILArticleViewModelProtocol: ViewModelType {
@@ -29,6 +31,8 @@ final class ILArticleViewModel: ILArticleViewModelProtocol {
         let shareTapped: AnyPublisher<Void, Never>
         /// Chạm 1 bài trong danh sách "Đọc tiếp" — mang theo `id` bài được chọn.
         let nextArticleTapped: AnyPublisher<String, Never>
+        /// Chạm dòng "Nguồn: …".
+        let sourceTapped: AnyPublisher<Void, Never>
     }
 
     struct Output {
@@ -41,21 +45,16 @@ final class ILArticleViewModel: ILArticleViewModelProtocol {
     }
 
     private let navigationEventSubject = PassthroughSubject<ILArticleNavEvent, Never>()
-    private let stateSubject: CurrentValueSubject<ViewState<ILArticleStateModel>, Never>
+    private let stateSubject = CurrentValueSubject<ViewState<ILArticleStateModel>, Never>(.loading)
     private var currentEntity: ILArticleEntity
-    private var currentState: ILArticleStateModel
+    private var currentState = ILArticleStateModel.initial
     private let useCase: ILArticleUseCase
-    private let initialArticleID: String
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initializer
     init(useCase: ILArticleUseCase, articleID: String) {
         self.useCase = useCase
-        self.initialArticleID = articleID
-        let initialEntity = useCase.getInitialState(articleID: articleID)
-        self.currentEntity = initialEntity
-        self.currentState = Self.makeStateModel(from: initialEntity, useCase: useCase)
-        self.stateSubject = CurrentValueSubject(.success(currentState))
+        self.currentEntity = useCase.getInitialState(articleID: articleID)
     }
 
     // MARK: - Transform
@@ -80,48 +79,90 @@ final class ILArticleViewModel: ILArticleViewModelProtocol {
             .sink { [weak self] id in self?.handleNextArticleTapped(id) }
             .store(in: &cancellables)
 
+        input.sourceTapped
+            .sink { [weak self] _ in self?.handleSourceTapped() }
+            .store(in: &cancellables)
+
         return Output(state: stateSubject.eraseToAnyPublisher())
     }
 
     // MARK: - Actions
     private func handleViewDidLoad() {
-        applyEntity(useCase.getInitialState(articleID: initialArticleID))
+        loadArticle(id: currentEntity.currentArticleID)
     }
 
     private func handleSaveTapped() {
+        guard currentEntity.article != nil else { return }
         applyEntity(useCase.toggleSave(currentEntity.currentArticleID, in: currentEntity))
     }
 
     private func handleNextArticleTapped(_ id: String) {
-        applyEntity(useCase.selectArticle(id, in: currentEntity))
+        guard id != currentEntity.currentArticleID else { return }
+        currentEntity.currentArticleID = id
+        loadArticle(id: id)
+    }
+
+    private func handleSourceTapped() {
+        guard let url = currentState.sourceURL else { return }
+        navigationEventSubject.send(.openURL(url))
+    }
+
+    /// Loads `GET /v1/articles/{id}`, then the "Đọc tiếp" candidates. A newer request (the user
+    /// tapped another "Đọc tiếp" row) wins: a result for an id that is no longer current is dropped.
+    private func loadArticle(id: String) {
+        currentEntity.article = nil
+        currentEntity.nextArticles = []
+        stateSubject.send(.loading)
+
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let article = try await self.useCase.loadArticle(id: id)
+                guard self.currentEntity.currentArticleID == id else { return }
+                self.currentEntity.article = article
+                self.applyEntity(self.currentEntity)
+
+                let next = await self.useCase.loadNextArticles(excluding: id)
+                guard self.currentEntity.currentArticleID == id else { return }
+                self.currentEntity.nextArticles = next
+                self.applyEntity(self.currentEntity)
+            } catch {
+                guard self.currentEntity.currentArticleID == id else { return }
+                self.stateSubject.send(.failure(error))
+            }
+        }
     }
 
     // MARK: - Entity -> StateModel
     /// `Entity -> StateModel` là việc riêng của presentation (nhãn nút Lưu/Đã lưu, chuỗi
-    /// "N phút đọc", viết hoa danh mục "Đọc tiếp") nên nằm ở đây, không phải trong Mapper dùng
-    /// chung (xem `references/data_layer_boundaries.md`).
+    /// "N phút đọc", ngày đăng, dòng nguồn, viết hoa danh mục "Đọc tiếp") nên nằm ở đây, không
+    /// phải trong Mapper dùng chung.
     private func applyEntity(_ entity: ILArticleEntity) {
         currentEntity = entity
-        currentState = Self.makeStateModel(from: entity, useCase: useCase)
+        currentState = Self.makeStateModel(from: entity)
         stateSubject.send(.success(currentState))
     }
 
-    private static func makeStateModel(
-        from entity: ILArticleEntity,
-        useCase: ILArticleUseCase
-    ) -> ILArticleStateModel {
+    private static func makeStateModel(from entity: ILArticleEntity) -> ILArticleStateModel {
         var state = ILArticleStateModel()
 
-        if let article = useCase.currentArticle(in: entity) {
+        if let article = entity.article {
             state.headerCategory = article.category
+            state.heroImageURL = article.imageURL
             state.headerReadText = String(format: "article.readFormat".localized, article.readMinutes)
             state.title = article.title
             state.author = article.author
             state.authorInitials = article.authorInitials
-            state.dateReadText = "\(article.date) · \(state.headerReadText)"
+            state.dateReadText = [article.publishedDate.map { dateText(from: $0) }, state.headerReadText]
+                .compactMap { $0 }
+                .joined(separator: " · ")
             state.bodyParagraphs = article.bodyParagraphs
             state.quote = article.quote
             state.quoteSource = article.quoteSource
+            if !article.sourceName.isEmpty {
+                state.sourceText = String(format: "article.sourceFormat".localized, article.sourceName)
+                state.sourceURL = article.sourceURL
+            }
         }
 
         state.isSaved = entity.savedArticleIDs.contains(entity.currentArticleID)
@@ -129,10 +170,24 @@ final class ILArticleViewModel: ILArticleViewModelProtocol {
         state.shareButtonTitle = "article.share".localized
         state.readMoreTitle = "article.readMore".localized
 
-        state.nextArticles = useCase.nextArticles(after: entity.currentArticleID, in: entity).map {
+        state.nextArticles = entity.nextArticles.map {
             ILArticleNextArticleModel(id: $0.id, categoryLabel: $0.category.uppercased(), title: $0.title)
         }
 
         return state
+    }
+
+    /// Gregorian / GMT — the calendar `ILArticleMapper` parsed the date-only `published_date` with,
+    /// so the day never shifts with the device time zone.
+    private static let gmtCalendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? calendar.timeZone
+        return calendar
+    }()
+
+    /// "18 tháng 9".
+    private static func dateText(from date: Date) -> String {
+        let components = gmtCalendar.dateComponents([.day, .month], from: date)
+        return String(format: "article.dateFormat".localized, components.day ?? 0, components.month ?? 0)
     }
 }

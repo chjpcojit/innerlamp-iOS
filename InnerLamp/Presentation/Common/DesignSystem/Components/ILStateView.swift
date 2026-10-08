@@ -100,6 +100,13 @@ public final class ILStateView: UIView {
             stackView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -24),
             messageLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 280)
         ])
+
+        // Content-based minimum height so the view sizes itself when pinned top/bottom in a
+        // collapsing container (e.g. an empty list). Slightly below required so a fixed, smaller
+        // host frame never breaks.
+        let topInset = stackView.topAnchor.constraint(greaterThanOrEqualTo: topAnchor, constant: 24)
+        let bottomInset = stackView.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -24)
+        [topInset, bottomInset].forEach { $0.priority = .defaultHigh; $0.isActive = true }
         
         updateAppearance()
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILStateView, _) in

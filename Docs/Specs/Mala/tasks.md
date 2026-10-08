@@ -1,7 +1,7 @@
 # Tasks — Mala
 
-Version: 1.0
-Last updated: 2026-09-27
+Version: 1.1
+Last updated: 2026-10-03
 Status: complete (Phase 1–2); persistence pending
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -33,6 +33,19 @@ Status: complete (Phase 1–2); persistence pending
 - [x] Wire `ILHomeCoordinator.showMala()` via `ILHomeNavEvent.openMala`
 - [x] Unit tests: `ILMalaViewModelTests` (7) + `ILMalaUseCaseTests` (7, in the
       same file)
+
+## Phase 2b — Redesign (v1.1, `Docs/InnerLamp icon consistency/`)
+
+- [x] Header with "Xong" action + "Vòng N · biến x / goal" subtitle; remove big
+      count display, hint and footnote; single "Bắt đầu lại" button
+- [x] Goal chips 21 / 54 / 108 (`selectGoal`), progress bar (`ILMalaProgressBarView`
+      replaces `ILMalaCountDisplayView`)
+- [x] Red cord + rotated/shaded wooden beads in `ILMalaStrandView`
+- [x] "Tròn N biến" popup (`ILMalaCompletionView`) + `startNextRound`
+- [x] Update unit tests (view model + use case) for the new rules
+- [ ] Run the updated tests — the `InnerLampTests` target currently fails to build
+      (unresolved `GRPCProtobuf` in `GRPCAuthInterceptorTests`, unrelated to Mala)
+- [ ] Wood-grain stripes on beads — see `Docs/Tech-Debt/Mala/TD-Mala-001-bead-grain-texture.md`
 
 ## Phase 3 — API integration
 

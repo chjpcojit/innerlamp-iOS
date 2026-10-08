@@ -5,9 +5,9 @@
 
 import UIKit
 
-/// Vòng tràng hạt đếm niệm — chạm vòng tròn để +1, có viền tiến trình theo `count`/`goal`,
-/// kèm câu niệm + mô tả + nút "Bắt đầu lại". Dữ liệu-hóa hoàn toàn nên dùng lại được cho
-/// màn "Toàn màn hình" tràng hạt sau này, không riêng cho Trang chủ.
+/// Thẻ tràng hạt — vòng tròn có viền tiến trình theo `count`/`goal`, câu niệm + mô tả và mũi tên
+/// "›". Cả thẻ là một vùng chạm (`onTap`) dẫn tới màn Niệm Phật. Dữ liệu-hóa hoàn toàn nên dùng
+/// lại được, không riêng cho Trang chủ.
 public final class ILMalaCounterView: UIView {
 
     // MARK: - Properties
@@ -33,15 +33,10 @@ public final class ILMalaCounterView: UIView {
         didSet { helperLabel.text = helperText }
     }
 
-    public var resetTitle: String = "" {
-        didSet { resetButton.configuration?.title = resetTitle }
-    }
-
-    public var onTapBead: (() -> Void)?
-    public var onReset: (() -> Void)?
+    public var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let beadControl = UIControl()
+    private let beadControl = UIView()
     private let trackLayer = CAShapeLayer()
     private let progressLayer = CAShapeLayer()
     private let innerCircle = UIView()
@@ -49,19 +44,18 @@ public final class ILMalaCounterView: UIView {
     private let goalLabel = UILabel()
     private let mantraLabel = UILabel()
     private let helperLabel = UILabel()
-    private let resetButton = UIButton(type: .system)
+    private let chevronLabel = UILabel()
 
     private let ringDiameter: CGFloat = 92
     private let ringLineWidth: CGFloat = 6
 
     // MARK: - Initializer
-    public init(count: Int = 0, goal: Int = 108, goalText: String = "", mantraText: String = "", helperText: String = "", resetTitle: String = "") {
+    public init(count: Int = 0, goal: Int = 108, goalText: String = "", mantraText: String = "", helperText: String = "") {
         self.count = count
         self.goal = goal
         self.goalText = goalText
         self.mantraText = mantraText
         self.helperText = helperText
-        self.resetTitle = resetTitle
         super.init(frame: .zero)
         setupViews()
     }
@@ -78,9 +72,7 @@ public final class ILMalaCounterView: UIView {
         layer.borderColor = ILColors.border.cgColor
 
         beadControl.translatesAutoresizingMaskIntoConstraints = false
-        beadControl.addTarget(self, action: #selector(handleBeadTap), for: .touchUpInside)
-        beadControl.addTarget(self, action: #selector(handleBeadTouchDown), for: [.touchDown, .touchDragEnter])
-        beadControl.addTarget(self, action: #selector(handleBeadTouchUp), for: [.touchUpInside, .touchCancel, .touchDragExit])
+        beadControl.isUserInteractionEnabled = false
 
         trackLayer.fillColor = UIColor.clear.cgColor
         trackLayer.strokeColor = ILColors.gold.withAlphaComponent(0.16).cgColor
@@ -124,30 +116,19 @@ public final class ILMalaCounterView: UIView {
         helperLabel.textColor = ILColors.inkTertiary
         helperLabel.numberOfLines = 0
 
-        var resetConfig = UIButton.Configuration.plain()
-        resetConfig.contentInsets = NSDirectionalEdgeInsets(top: 7, leading: 14, bottom: 7, trailing: 14)
-        resetConfig.title = resetTitle
-        resetConfig.baseForegroundColor = ILColors.ink
-        resetConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
-            var outgoing = incoming
-            outgoing.font = ILTypography.subheadMedium
-            return outgoing
-        }
-        resetButton.configuration = resetConfig
-        resetButton.layer.cornerRadius = ILMetrics.radiusPill
-        resetButton.layer.borderWidth = 1
-        resetButton.layer.borderColor = ILColors.borderStrong.cgColor
-        resetButton.addTarget(self, action: #selector(handleResetTap), for: .touchUpInside)
-        resetButton.setContentHuggingPriority(.required, for: .horizontal)
-
-        let textStack = UIStackView(arrangedSubviews: [mantraLabel, helperLabel, resetButton])
+        let textStack = UIStackView(arrangedSubviews: [mantraLabel, helperLabel])
         textStack.axis = .vertical
         textStack.spacing = 6
-        textStack.setCustomSpacing(12, after: helperLabel)
         textStack.alignment = .leading
         textStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let contentStack = UIStackView(arrangedSubviews: [beadControl, textStack])
+        chevronLabel.text = "›"
+        chevronLabel.font = ILTypography.title2
+        chevronLabel.textColor = ILColors.inkTertiary
+        chevronLabel.setContentHuggingPriority(.required, for: .horizontal)
+        chevronLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+
+        let contentStack = UIStackView(arrangedSubviews: [beadControl, textStack, chevronLabel])
         contentStack.axis = .horizontal
         contentStack.spacing = 20
         contentStack.alignment = .center
@@ -171,6 +152,10 @@ public final class ILMalaCounterView: UIView {
             contentStack.topAnchor.constraint(equalTo: topAnchor, constant: 20),
             contentStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -20)
         ])
+
+        addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap)))
+        isAccessibilityElement = true
+        accessibilityTraits = .button
 
         updateCount()
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILMalaCounterView, _) in
@@ -207,26 +192,9 @@ public final class ILMalaCounterView: UIView {
         layer.borderColor = ILColors.border.cgColor
         trackLayer.strokeColor = ILColors.gold.withAlphaComponent(0.16).cgColor
         progressLayer.strokeColor = ILColors.gold.cgColor
-        resetButton.layer.borderColor = ILColors.borderStrong.cgColor
     }
 
-    @objc private func handleBeadTap() {
-        onTapBead?()
-    }
-
-    @objc private func handleBeadTouchDown() {
-        UIView.animate(withDuration: 0.1, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) {
-            self.beadControl.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
-        }
-    }
-
-    @objc private func handleBeadTouchUp() {
-        UIView.animate(withDuration: 0.12, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) {
-            self.beadControl.transform = .identity
-        }
-    }
-
-    @objc private func handleResetTap() {
-        onReset?()
+    @objc private func handleTap() {
+        onTap?()
     }
 }

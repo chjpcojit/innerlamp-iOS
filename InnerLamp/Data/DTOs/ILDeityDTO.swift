@@ -12,8 +12,13 @@ import Foundation
 /// `.convertFromSnakeCase`, so no `CodingKeys` are declared. A DTO never escapes upward past the
 /// Data layer — `ILDeityMapper` converts it to `ILDeityEntity` first.
 ///
-/// `thumbnailUrl` / `imageUrl` are decoded but not mapped: `ILDeityEntity` does not model images yet.
-nonisolated struct ILDeityDTO: Decodable {
+/// `imageUrl` is mapped into `ILDeityEntity.imageURL` (detail hero); `thumbnailUrl` is decoded only.
+///
+/// The same shape is the server's `DeityDetail` (`GET /v1/deities/{id}`), so the remote catalog
+/// reuses this DTO. `Codable` (not just `Decodable`) so `ILDeityCatalogLocalDataSourceImpl` can
+/// cache a fetched detail as an encoded payload; encoding and decoding that payload both use the
+/// default key strategy, so the round-trip is lossless.
+nonisolated struct ILDeityDTO: Codable {
     let id: String
     let type: ILDeityTypeDTO
     let nameVi: String
@@ -32,26 +37,28 @@ nonisolated struct ILDeityDTO: Decodable {
     let mantras: ILDeityMantraDTO
 }
 
-/// `type` column. An unknown value fails decoding rather than being silently defaulted.
-nonisolated enum ILDeityTypeDTO: String, Decodable {
+/// `type` column. An unknown value fails decoding rather than being silently defaulted
+/// (the backend treats the enum as open: BUDDHA, BODHISATTVA, DEVA so far).
+nonisolated enum ILDeityTypeDTO: String, Codable {
     case buddha = "BUDDHA"
     case bodhisattva = "BODHISATTVA"
+    case deva = "DEVA"
 }
 
-nonisolated struct ILDeityMemorialDayDTO: Decodable {
+nonisolated struct ILDeityMemorialDayDTO: Codable {
     let lunarDay: Int
     let lunarMonth: Int
     let eventName: String
 }
 
-nonisolated struct ILDeityIconographyDTO: Decodable {
+nonisolated struct ILDeityIconographyDTO: Codable {
     let posture: String
     let mountOrThrone: String
     let sacredArtifacts: [String]
     let symbolicMeaning: String
 }
 
-nonisolated struct ILDeityMantraDTO: Decodable {
+nonisolated struct ILDeityMantraDTO: Codable {
     let shortMantraSanskrit: String
     let shortMantraSinoVietnamese: String
     let longDharaniName: String

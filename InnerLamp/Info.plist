@@ -2,14 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Local dev backend (APIConfig.serverBaseURL, .dev case) has no TLS yet — see the TODO on
-	     APIConfig.swift. Scoped to that one LAN host only; remove once .dev points at a real
-	     HTTPS host. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>InnerLamp kết nối tới máy chủ phát triển trong mạng nội bộ để tải dữ liệu chùa, Phật và Bồ Tát.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
 		<key>NSExceptionDomains</key>
 		<dict>
-			<key>192.168.1.113</key>
+			<key>WeeDigitals-MacBook-Pro.local</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
 				<true/>

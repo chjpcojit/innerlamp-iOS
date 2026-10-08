@@ -12,7 +12,8 @@ import CoreData
 /// name at runtime, so a mismatch fails when the store is opened — not at compile time.
 ///
 /// `tradition` is stored as the raw string of `ILBuddhistTradition` (`MAHAYANA` / `THERAVADA` /
-/// `UNIVERSAL`); Core Data has no enum type. Mapping between this type and
+/// `UNIVERSAL`) and `category` as the raw string of `ILBuddhistEventCategory` (`MAJOR` /
+/// `COMMEMORATION` / `FOLK`); Core Data has no enum type. Mapping between this type and
 /// `ILBuddhistEventTemplateEntity` lives in `ILBuddhistEventLocalDataSourceImpl`, and this type
 /// never leaves `Data/DataSources/Local/`.
 ///
@@ -32,5 +33,6 @@ nonisolated final class ILBuddhistEventTemplateMO: NSManagedObject {
     @NSManaged var lunarDay: Int16
     @NSManaged var lunarMonth: Int16
     @NSManaged var tradition: String
+    @NSManaged var category: String
     @NSManaged var isLeapMonthEligible: Bool
 }

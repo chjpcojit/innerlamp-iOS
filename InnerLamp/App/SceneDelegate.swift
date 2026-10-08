@@ -37,6 +37,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.makeKeyAndVisible()
         
         coordinator.start()
+        container.startGRPCClient()
         seedSutraQuotes(container: container)
     }
 

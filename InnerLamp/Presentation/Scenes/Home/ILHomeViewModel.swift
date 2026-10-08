@@ -10,8 +10,10 @@ import Combine
 /// không đi qua ViewModel. Các màn con còn lại của Trang chủ (thông báo, hồ sơ, chi tiết
 /// thời khóa...) chưa nằm trong scope — thêm case khi có màn tương ứng.
 enum ILHomeNavEvent: Equatable {
-    /// Link "Toàn màn hình" ở thẻ tràng hạt — mở màn Niệm Phật toàn màn hình.
+    /// Link "Toàn màn hình" hoặc cả thẻ tràng hạt — mở màn Niệm Phật toàn màn hình.
     case openMala
+    /// Link "Sổ giỗ" ở dải lịch tuần — mở màn Sổ giỗ.
+    case openMemorial
     /// Link "Lịch âm" ở dải lịch tuần — mở màn Lịch âm.
     case openLunarCalendar
     /// Chạm thẻ âm lịch lớn — mở màn Chi tiết ngày âm với ngày dương đang chọn.
@@ -36,6 +38,10 @@ enum ILHomeNavEvent: Equatable {
     case openDeities
     /// Chạm 1 hàng thiền trong "Thời khóa gợi ý" — mở màn Chuẩn bị thiền (`setup`).
     case openMeditationSetup
+    /// Chạm chuông thông báo ở header — mở màn Thông báo.
+    case openNotifications
+    /// Chạm avatar ở header — chuyển sang tab Tôi (màn Hồ sơ).
+    case openProfile
 }
 
 protocol ILHomeViewModelProtocol: ViewModelType {
@@ -49,10 +55,10 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
     // MARK: - Input / Output
     struct Input {
         let viewDidLoad: AnyPublisher<Void, Never>
-        let beadTapped: AnyPublisher<Void, Never>
-        let resetBeadsTapped: AnyPublisher<Void, Never>
         let malaFullscreenTapped: AnyPublisher<Void, Never>
         let lunarCalendarTapped: AnyPublisher<Void, Never>
+        /// Link "Sổ giỗ" ở dải lịch tuần.
+        let memorialTapped: AnyPublisher<Void, Never>
         /// Chạm thẻ âm lịch lớn — mở màn Chi tiết ngày âm với ngày đang chọn.
         let lunarHeroTapped: AnyPublisher<Void, Never>
         /// Chạm 1 ngày trong dải lịch tuần — mang theo `id` ngày để chọn + cập nhật thẻ âm lịch lớn.
@@ -71,6 +77,10 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
         let deitiesViewAllTapped: AnyPublisher<Void, Never>
         /// Chạm 1 hàng trong "Thời khóa gợi ý" — mang theo `id` mục.
         let suggestedSessionTapped: AnyPublisher<String, Never>
+        /// Chuông thông báo ở header.
+        let notificationTapped: AnyPublisher<Void, Never>
+        /// Avatar ở header.
+        let avatarTapped: AnyPublisher<Void, Never>
     }
 
     struct Output {
@@ -87,14 +97,30 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
     private var currentEntity: ILHomeEntity
     private var currentState: ILHomeStateModel
     private let useCase: ILHomeUseCase
+    private let calendarImageUseCase: ILCalendarImageUseCase
+    /// Pictures already fetched, keyed by week-day id; the hero shows the one of the selected day.
+    private var heroImages: [String: ILCalendarImageEntity] = [:]
+    /// Day ids whose picture was requested (success or failure) — one request per day per screen.
+    private var requestedHeroImageDayIDs: Set<String> = []
     private var cancellables = Set<AnyCancellable>()
+    /// Sections whose server call has answered (or failed) — an empty section before that is
+    /// "still loading", after it is "no data" and shows the "updating" placeholder.
+    private var loadedSections: LoadedSections = []
+
+    private struct LoadedSections: OptionSet {
+        let rawValue: Int
+        static let temples = LoadedSections(rawValue: 1 << 0)
+        static let deities = LoadedSections(rawValue: 1 << 1)
+        static let articles = LoadedSections(rawValue: 1 << 2)
+    }
 
     // MARK: - Initializer
-    init(useCase: ILHomeUseCase) {
+    init(useCase: ILHomeUseCase, calendarImageUseCase: ILCalendarImageUseCase) {
         self.useCase = useCase
+        self.calendarImageUseCase = calendarImageUseCase
         let initialEntity = useCase.getInitialState()
         self.currentEntity = initialEntity
-        let initialState = ILHomeViewModel.makeStateModel(from: initialEntity)
+        let initialState = ILHomeViewModel.makeStateModel(from: initialEntity, loaded: [])
         self.currentState = initialState
         self.stateSubject = CurrentValueSubject(.success(initialState))
     }
@@ -105,16 +131,12 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
             .sink { [weak self] _ in self?.handleViewDidLoad() }
             .store(in: &cancellables)
 
-        input.beadTapped
-            .sink { [weak self] _ in self?.handleBeadTapped() }
-            .store(in: &cancellables)
-
-        input.resetBeadsTapped
-            .sink { [weak self] _ in self?.handleResetBeadsTapped() }
-            .store(in: &cancellables)
-
         input.malaFullscreenTapped
             .sink { [weak self] _ in self?.navigationEventSubject.send(.openMala) }
+            .store(in: &cancellables)
+
+        input.memorialTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openMemorial) }
             .store(in: &cancellables)
 
         input.lunarCalendarTapped
@@ -165,6 +187,14 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
             .sink { [weak self] id in self?.handleSuggestedSessionTapped(id) }
             .store(in: &cancellables)
 
+        input.notificationTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openNotifications) }
+            .store(in: &cancellables)
+
+        input.avatarTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openProfile) }
+            .store(in: &cancellables)
+
         return Output(state: stateSubject.eraseToAnyPublisher())
     }
 
@@ -173,6 +203,89 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
         applyEntity(useCase.getInitialState())
         loadBuddhistEvents()
         loadRandomVerse()
+        loadHeroImage()
+        loadTopTemples()
+        loadTopDeities()
+        loadTopArticles()
+        loadTopPhotos()
+    }
+
+    /// Fills the "Ảnh chùa đẹp" block from the server (`/v1/gallery/top`). Server data only: a
+    /// failure leaves the tiles as placeholders instead of failing the whole Home screen.
+    private func loadTopPhotos() {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.currentEntity.photos = try await self.useCase.loadTopPhotos()
+            } catch {
+                #if DEBUG
+                print("[Home] loadTopPhotos failed: \(error)")
+                #endif
+                self.currentEntity.photos = []
+            }
+            self.currentState = self.makeState(from: self.currentEntity)
+            self.stateSubject.send(.success(self.currentState))
+        }
+    }
+
+    /// Fills the "Bài viết Phật pháp hay" section from the server (`/v1/articles/top`). Server data
+    /// only: a failure or an empty list shows the "updating" placeholder instead of failing the
+    /// whole Home screen.
+    private func loadTopArticles() {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.currentEntity.articles = try await self.useCase.loadTopArticles()
+            } catch {
+                #if DEBUG
+                print("[Home] loadTopArticles failed: \(error)")
+                #endif
+                self.currentEntity.articles = []
+            }
+            self.loadedSections.insert(.articles)
+            self.currentState = self.makeState(from: self.currentEntity)
+            self.stateSubject.send(.success(self.currentState))
+        }
+    }
+
+    /// Nạp carousel "Chùa Việt Nam" từ server (`/v1/temples/top`, có cache offline). Chỉ dữ liệu
+    /// server: lỗi hoặc danh sách rỗng → carousel hiện "Đang cập nhật" thay vì làm Trang chủ thất bại.
+    private func loadTopTemples() {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.currentEntity.temples = try await self.useCase.loadTopTemples()
+            } catch {
+                // Non-fatal: server unreachable and nothing cached — the carousel shows "updating".
+                #if DEBUG
+                print("[Home] loadTopTemples failed: \(error)")
+                #endif
+                self.currentEntity.temples = []
+            }
+            self.loadedSections.insert(.temples)
+            self.currentState = self.makeState(from: self.currentEntity)
+            self.stateSubject.send(.success(self.currentState))
+        }
+    }
+
+    /// Nạp carousel "Thư viện Phật & Bồ Tát" từ server (`/v1/deities/top`, có cache offline). Chỉ
+    /// dữ liệu server: lỗi hoặc danh sách rỗng → carousel hiện "Đang cập nhật" thay vì dữ liệu giả.
+    private func loadTopDeities() {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.currentEntity.deities = try await self.useCase.loadTopDeities()
+            } catch {
+                // Non-fatal: server unreachable and nothing cached — the carousel shows "updating".
+                #if DEBUG
+                print("[Home] loadTopDeities failed: \(error)")
+                #endif
+                self.currentEntity.deities = []
+            }
+            self.loadedSections.insert(.deities)
+            self.currentState = self.makeState(from: self.currentEntity)
+            self.stateSubject.send(.success(self.currentState))
+        }
     }
 
     /// Nạp 1 câu kinh ngẫu nhiên (từ Core Data) cho thẻ âm lịch lớn. Mỗi lần vào Trang chủ
@@ -182,8 +295,29 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
             guard let self else { return }
             let verse = await self.useCase.loadRandomVerse()
             self.currentEntity.lunarDate.verse = verse
-            self.currentState = ILHomeViewModel.makeStateModel(from: self.currentEntity)
+            self.currentState = self.makeState(from: self.currentEntity)
             self.stateSubject.send(.success(self.currentState))
+        }
+    }
+
+    /// Fetches the picture of the selected day for the hero card. Failure (offline, server error) or
+    /// an unsupported year is non-fatal: the gradient card stays and no error is shown.
+    private func loadHeroImage() {
+        let dayID = currentEntity.selectedDayID
+        guard let day = currentEntity.weekPages.flatMap(\.days).first(where: { $0.id == dayID }),
+              requestedHeroImageDayIDs.insert(dayID).inserted else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                guard let image = try await self.calendarImageUseCase.loadImage(for: day.date) else { return }
+                self.heroImages[dayID] = image
+                self.currentState = self.makeState(from: self.currentEntity)
+                self.stateSubject.send(.success(self.currentState))
+            } catch {
+                #if DEBUG
+                print("[Home] hero image load failed: \(error)")
+                #endif
+            }
         }
     }
 
@@ -195,7 +329,7 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
             do {
                 let months = try await self.useCase.loadBuddhistEventMonths(around: Date())
                 self.currentEntity.eventMonths = months
-                self.currentState = ILHomeViewModel.makeStateModel(from: self.currentEntity)
+                self.currentState = self.makeState(from: self.currentEntity)
                 self.stateSubject.send(.success(self.currentState))
             } catch {
                 // Non-fatal: the carousel simply shows nothing. A future metrics/log path can
@@ -204,21 +338,12 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
         }
     }
 
-    /// Chạm vòng tràng hạt — tăng số đếm ngay, không gọi API/persist (xem TODO trong
-    /// `ILHomeUseCaseImpl`).
-    private func handleBeadTapped() {
-        applyEntity(useCase.incrementBead(currentEntity))
-    }
-
-    private func handleResetBeadsTapped() {
-        applyEntity(useCase.resetBeads(currentEntity))
-    }
-
     /// Chạm 1 ngày trong dải lịch tuần — chọn ngày (nếu khác ngày đang chọn) và cập nhật thẻ âm
     /// lịch lớn theo ngày mới.
     private func handleDayTapped(_ id: String) {
         guard id != currentEntity.selectedDayID else { return }
         applyEntity(useCase.selectDay(id: id, in: currentEntity))
+        loadHeroImage()
     }
 
     /// Chạm thẻ âm lịch lớn — mở màn Chi tiết ngày âm với ngày dương đang chọn.
@@ -249,11 +374,21 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
     /// (xem `references/data_layer_boundaries.md`).
     private func applyEntity(_ entity: ILHomeEntity) {
         currentEntity = entity
-        currentState = ILHomeViewModel.makeStateModel(from: entity)
+        currentState = makeState(from: entity)
         stateSubject.send(.success(currentState))
     }
 
-    private static func makeStateModel(from entity: ILHomeEntity) -> ILHomeStateModel {
+    /// `makeStateModel` plus the per-session data that is not part of the entity (loaded flags, the
+    /// selected day's picture), so every rebuild keeps them.
+    private func makeState(from entity: ILHomeEntity) -> ILHomeStateModel {
+        ILHomeViewModel.makeStateModel(from: entity, loaded: loadedSections, heroImage: heroImages[entity.selectedDayID])
+    }
+
+    private static func makeStateModel(
+        from entity: ILHomeEntity,
+        loaded: LoadedSections,
+        heroImage: ILCalendarImageEntity? = nil
+    ) -> ILHomeStateModel {
         let name = entity.displayName.isEmpty
             ? "home.greeting.name.guest".localized
             : entity.displayName
@@ -285,6 +420,7 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
             ILHomeWeekLegendModel(text: "home.week.legend.hacDao".localized, dotKind: .hacDao),
             ILHomeWeekLegendModel(text: "home.week.legend.fullMoon".localized, dotKind: .newMoonFullMoon)
         ]
+        state.weekMemorialLinkText = "home.week.memorialLink".localized
         state.weekCalendarLinkText = "home.week.calendarLink".localized
 
         state.lunarHero = ILHomeLunarHeroModel(
@@ -294,7 +430,9 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
             lunarMonthLabel: entity.lunarDate.lunarMonthLabel,
             lunarYearLabel: entity.lunarDate.lunarYearLabel,
             verseLines: entity.lunarDate.verse.lines,
-            verseSource: entity.lunarDate.verse.source
+            verseSource: entity.lunarDate.verse.source,
+            imageURL: heroImage?.imageURL,
+            imageCreditText: heroImage?.creditText ?? ""
         )
 
         state.eventsTitle = "home.events.title".localized
@@ -346,28 +484,47 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
 
         state.photosTitle = "home.photos.title".localized
         state.photosViewAllText = "home.photos.viewAll".localized
-        state.photos = entity.photos.map { ILHomePhotoModel(id: $0.id) }
-        state.photosMoreText = String(format: "home.photos.moreFormat".localized, max(0, entity.photos.count - 3))
+        state.photos = entity.photos.map { ILHomePhotoModel(id: $0.id, thumbnailURL: $0.thumbnailURL) }
+        // The "+N ảnh" overlay only makes sense when there are photos beyond the 3 tiles.
+        let hiddenPhotoCount = entity.photos.count - 3
+        state.photosMoreText = hiddenPhotoCount > 0 ? String(format: "home.photos.moreFormat".localized, hiddenPhotoCount) : ""
         state.photosMoreLabel = "home.photos.moreLabel".localized
 
         state.templesTitle = "home.temple.title".localized
         state.templesFindText = "home.temple.find".localized
+        state.templesLoading = !loaded.contains(.temples) && entity.temples.isEmpty
+        state.templesEmptyText = loaded.contains(.temples) && entity.temples.isEmpty
+            ? "home.temple.updating".localized
+            : ""
         state.temples = entity.temples.map {
-            ILHomeTempleModel(id: $0.id, name: $0.name, place: $0.place, region: $0.region, note: $0.note)
+            ILHomeTempleModel(
+                id: $0.id,
+                name: $0.name,
+                place: Self.shortPlace(from: $0.address),
+                region: Self.regionLabel($0.region),
+                note: Self.templeNote(rank: $0.heritageRank, establishedYear: $0.establishedYear),
+                thumbnailURL: $0.thumbnailURL
+            )
         }
 
         state.deitiesTitle = "home.deity.title".localized
         state.deitiesViewAllText = "home.deity.viewAll".localized
+        state.deitiesLoading = !loaded.contains(.deities) && entity.deities.isEmpty
+        state.deitiesEmptyText = loaded.contains(.deities) && entity.deities.isEmpty
+            ? "home.deity.updating".localized
+            : ""
         state.deities = entity.deities.map { deity in
+            // The server summary has no memorial days yet — show the "updating" line, not a blank.
             let memorialText = deity.memorialDay.map {
                 String(format: "home.deity.memorialFormat".localized, $0.lunarDay, $0.lunarMonth)
-            } ?? ""
+            } ?? "home.deity.memorialUpdating".localized
             return ILHomeDeityModel(
                 id: deity.id,
                 kind: deity.kind,
-                kindLabel: deity.kind == .buddha ? "deity.kind.buddha".localized : "deity.kind.bodhisattva".localized,
+                kindLabel: ILDeitiesViewModel.kindLabel(for: deity.kind),
                 name: deity.name,
-                memorialText: memorialText
+                memorialText: memorialText,
+                thumbnailURL: deity.thumbnailURL
             )
         }
 
@@ -376,13 +533,18 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
 
         state.articlesTitle = "home.article.title".localized
         state.articlesViewAllText = "home.article.viewAll".localized
+        state.articlesLoading = !loaded.contains(.articles) && entity.articles.isEmpty
+        state.articlesEmptyText = loaded.contains(.articles) && entity.articles.isEmpty
+            ? "home.article.updating".localized
+            : ""
         state.articles = entity.articles.map {
             ILHomeArticleModel(
                 id: $0.id,
                 category: $0.category,
                 title: $0.title,
                 author: $0.author,
-                readText: String(format: "home.article.readFormat".localized, $0.readMinutes)
+                readText: String(format: "home.article.readFormat".localized, $0.readMinutes),
+                thumbnailURL: $0.thumbnailURL
             )
         }
 
@@ -410,6 +572,32 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
     private static func dotKind(lunarDay: Int, isHoangDao: Bool) -> ILHomeWeekDotKind {
         if lunarDay == 1 || lunarDay == 15 { return .newMoonFullMoon }
         return isHoangDao ? .hoangDao : .hacDao
+    }
+
+    // MARK: - Temple card formatting
+
+    /// See `ILTempleCatalogLabels.shortPlace(from:)`.
+    static func shortPlace(from address: String) -> String {
+        ILTempleCatalogLabels.shortPlace(from: address)
+    }
+
+    /// See `ILTempleCatalogLabels.regionLabel(_:)`.
+    static func regionLabel(_ region: ILTempleRegion) -> String {
+        ILTempleCatalogLabels.regionLabel(region)
+    }
+
+    /// See `ILTempleCatalogLabels.heritageRankLabel(_:)`.
+    static func heritageRankLabel(_ rank: ILTempleHeritageRank) -> String? {
+        ILTempleCatalogLabels.heritageRankLabel(rank)
+    }
+
+    /// Note line on a temple card — "Di sản Thế giới · Dựng năm 1428"; either part is dropped when
+    /// missing (unranked temple / unknown founding year).
+    static func templeNote(rank: ILTempleHeritageRank, establishedYear: Int) -> String {
+        let founded = establishedYear > 0
+            ? String(format: "home.temple.foundedFormat".localized, establishedYear)
+            : nil
+        return [heritageRankLabel(rank), founded].compactMap { $0 }.joined(separator: " · ")
     }
 
     /// Số sự kiện tối đa hiển thị trên 1 thẻ tháng của carousel "Sự kiện Phật giáo".

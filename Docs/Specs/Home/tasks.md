@@ -1,7 +1,7 @@
 # Tasks — Home
 
-Version: 1.0
-Last updated: 2026-09-27
+Version: 1.10
+Last updated: 2026-10-07
 Status: in-progress (Phase 1–2 done; Phase 3 pending — mock data, no API)
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -57,12 +57,30 @@ Status: in-progress (Phase 1–2 done; Phase 3 pending — mock data, no API)
       `Data/DataSources/Remote/`
 - [ ] Create `ILHomeRepository` protocol + `ILHomeRepositoryImpl` wrapping
       `NetworkService`
-- [ ] Replace the mock content in `ILHomeUseCaseImpl.getInitialState()` with
-      real repository calls (daily quote, statistics, sessions, photos, temples,
-      articles, events)
+- [x] Temples + Buddhas/Bodhisattvas carousels read `GET /v1/temples/top` /
+      `GET /v1/deities/top` via `ILTempleRepository` / `ILDeityCatalogRepository`
+      (see changelog v1.1)
+- [x] Buddhas/Bodhisattvas carousel: drop the bundled-catalog fallback, show
+      "Đang cập nhật" when empty (see changelog v1.2)
+- [x] Articles section reads `GET /v1/articles/top` via `ILArticleRepository`
+      (`ILHomeUseCase.loadTopArticles()`; contract confirmed 2026-09-30, see
+      `Docs/Specs/Article/design.md`) + unit tests
+- [x] Temples + articles sections: show "Đang cập nhật" when the server answers
+      empty or fails (same as deities; see changelog v1.5) + unit tests
+- [x] Temples / deities / articles show skeleton cards while loading (see changelog v1.6)
+- [x] "Sổ giỗ" link beside "Lịch âm" in `ILHomeWeekCalendarView` →
+      `ILHomeNavEvent.openMemorial` → `ILHomeCoordinator.showMemorial()` (added with the
+      Memorial feature, see `Docs/Specs/Memorial/tasks.md`; the Memorial screens must exist first)
+- [ ] Replace the remaining mock content in `ILHomeUseCaseImpl.getInitialState()`
+      with real repository calls (statistics, sessions)
+- [x] Load the "Ảnh chùa đẹp" block from `GET /v1/gallery/top`
+      (`ILHomeUseCase.loadTopPhotos()`, `ILHomePhotoGridView` uses
+      `ILRemoteImageView`); unit tests written, not run
 - [ ] Replace the `KeychainService` name read with a real session/current-user
       service
-- [ ] Update `ILHomeViewModelTests` + add a mock repository
+- [x] Unit tests for the temple/deity carousels (`ILHomeUseCaseTests` with mock
+      repositories, `ILHomeViewModelTests` async load + card formatting)
+- [ ] Loading / error UI for the server-backed carousels
 - [ ] Manual test against a real/staging backend once available
 
 ## Phase 4 — Documentation

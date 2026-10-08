@@ -167,6 +167,8 @@ final class ILTalkViewModel: ILTalkViewModelProtocol {
         state.rewindTitle = "talk.seek.rewind".localized
         state.forwardTitle = "talk.seek.forward".localized
         state.sectionsTitle = "talk.sections.title".localized
+        state.sectionsEmptyTitle = "talk.sections.empty.title".localized
+        state.sectionsEmptySubtitle = "talk.sections.empty.subtitle".localized
         state.meditateTitle = "talk.meditate.title".localized
         state.meditateSubtitle = "talk.meditate.subtitle".localized
 

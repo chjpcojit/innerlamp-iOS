@@ -9,8 +9,8 @@ import UIKit
 /// dưới cùng phủ nhãn "+N ảnh". Riêng cho Trang chủ (màn `photos` gallery khác bố cục) nên ở
 /// `Scenes/Home`, không phải component dùng chung.
 ///
-/// Chưa có ảnh thật (`image-slot` trong design handoff) — dùng nền tint ấm làm placeholder, khớp
-/// ghi chú "Ảnh chùa/sự kiện hiện là gradient tối; cần ảnh thật từ phía sản phẩm" ở README.
+/// Ảnh tải qua `ILRemoteImageView` (3 ảnh đầu của `/v1/gallery/top`); nền tint ấm của nó là
+/// placeholder khi chưa có ảnh hoặc ảnh lỗi.
 final class ILHomePhotoGridView: UIView {
 
     // MARK: - Layout constants
@@ -18,8 +18,21 @@ final class ILHomePhotoGridView: UIView {
     private static let gap: CGFloat = 8
 
     // MARK: - Properties
+    var photos: [ILHomePhotoModel] = [] {
+        didSet {
+            guard photos != oldValue else { return }
+            for (index, tile) in tileImageViews.enumerated() {
+                tile.setImage(urlString: photos.indices.contains(index) ? photos[index].thumbnailURL : nil)
+            }
+        }
+    }
+
+    /// Empty hides the "+N ảnh" overlay.
     var photosMoreText: String = "" {
-        didSet { moreLabel.text = photosMoreText }
+        didSet {
+            moreLabel.text = photosMoreText
+            moreOverlay.isHidden = photosMoreText.isEmpty
+        }
     }
 
     var photosMoreLabel: String = "" {
@@ -33,6 +46,12 @@ final class ILHomePhotoGridView: UIView {
     private let largeTile = UIControl()
     private let smallTileTop = UIControl()
     private let smallTileBottom = UIControl()
+
+    private let largeImage = ILRemoteImageView(frame: .zero)
+    private let smallTopImage = ILRemoteImageView(frame: .zero)
+    private let smallBottomImage = ILRemoteImageView(frame: .zero)
+    /// In tile order (large, small top, small bottom) — matches `photos` indices.
+    private var tileImageViews: [ILRemoteImageView] { [largeImage, smallTopImage, smallBottomImage] }
 
     private let moreOverlay = UIView()
     private let moreLabel = UILabel()
@@ -53,6 +72,19 @@ final class ILHomePhotoGridView: UIView {
         configureTile(largeTile, radius: ILMetrics.radiusCardSmall + 2)
         configureTile(smallTileTop, radius: ILMetrics.radiusInput + 2)
         configureTile(smallTileBottom, radius: ILMetrics.radiusInput + 2)
+
+        moreOverlay.isHidden = true
+        for (tile, image) in [(largeTile, largeImage), (smallTileTop, smallTopImage), (smallTileBottom, smallBottomImage)] {
+            image.isUserInteractionEnabled = false
+            image.translatesAutoresizingMaskIntoConstraints = false
+            tile.addSubview(image)
+            NSLayoutConstraint.activate([
+                image.topAnchor.constraint(equalTo: tile.topAnchor),
+                image.leadingAnchor.constraint(equalTo: tile.leadingAnchor),
+                image.trailingAnchor.constraint(equalTo: tile.trailingAnchor),
+                image.bottomAnchor.constraint(equalTo: tile.bottomAnchor)
+            ])
+        }
 
         moreOverlay.backgroundColor = ILColors.scrim.withAlphaComponent(0.52)
         moreOverlay.isUserInteractionEnabled = false

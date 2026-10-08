@@ -7,16 +7,19 @@ import UIKit
 
 /// Top toast for light errors that need no action ("Toast trên · tự tắt"): light card with a rose
 /// border, small "!" badge, title + optional message, "×", and a 2pt rose countdown bar that
-/// shrinks while the toast waits to auto-dismiss.
+/// shrinks while the toast waits to auto-dismiss. The `.success` tone swaps the rose accents for
+/// green and the "!" for a check mark (confirmation after save / delete).
 public final class ILToastView: ILAlertOverlayView {
 
+    // MARK: - Types
+    enum Tone {
+        case error
+        case success
+    }
+
     // MARK: - UI Elements
-    private let glyphView = ILAlertGlyphView(
-        diameter: ILMetrics.Alert.glyphSmall,
-        font: ILTypography.alertGlyphSmall,
-        fillColor: ILColors.Alert.glyphTintSmall,
-        glyphColor: ILColors.roseText
-    )
+    private let tone: Tone
+    private let glyphView: ILAlertGlyphView
     private let titleLabel = UILabel()
     private let messageLabel = UILabel()
     private let closeButton = UIButton(type: .system)
@@ -24,12 +27,30 @@ public final class ILToastView: ILAlertOverlayView {
     private let countdownLayer = CALayer()
 
     // MARK: - Initializer
-    init(title: String, message: String?) {
+    init(title: String, message: String?, tone: Tone = .error) {
+        self.tone = tone
+        switch tone {
+        case .error:
+            glyphView = ILAlertGlyphView(
+                diameter: ILMetrics.Alert.glyphSmall,
+                font: ILTypography.alertGlyphSmall,
+                fillColor: ILColors.Alert.glyphTintSmall,
+                glyphColor: ILColors.roseText
+            )
+        case .success:
+            glyphView = ILAlertGlyphView(
+                diameter: ILMetrics.Alert.glyphSmall,
+                font: ILTypography.alertGlyphSmall,
+                fillColor: ILColors.greenTint,
+                glyphColor: ILColors.greenText,
+                symbol: "✓"
+            )
+        }
         super.init(
             edge: .top,
             cornerRadius: ILMetrics.radiusCardSmall,
             background: ILColors.surface,
-            borderColor: ILColors.Alert.toastBorder,
+            borderColor: tone == .error ? ILColors.Alert.toastBorder : ILColors.greenBorder,
             shadow: ILMetrics.shadowToast
         )
         titleLabel.text = title
@@ -69,7 +90,7 @@ public final class ILToastView: ILAlertOverlayView {
         rowStack.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(rowStack)
 
-        countdownLayer.backgroundColor = ILColors.rose.cgColor
+        countdownLayer.backgroundColor = (tone == .error ? ILColors.rose : ILColors.green).cgColor
         countdownLayer.anchorPoint = CGPoint(x: 0, y: 0.5)
         countdownLayer.isHidden = true
         contentView.layer.addSublayer(countdownLayer)

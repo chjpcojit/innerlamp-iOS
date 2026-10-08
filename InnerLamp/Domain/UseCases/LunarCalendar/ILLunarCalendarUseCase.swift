@@ -88,7 +88,10 @@ final class ILLunarCalendarUseCaseImpl: ILLunarCalendarUseCase {
                 lunarDay: lunar.day,
                 lunarMonth: lunar.month,
                 isLunarLeapMonth: lunar.isLeapMonth,
-                category: Self.category(forLunarDay: lunar.day),
+                category: Self.category(
+                    forLunarDay: lunar.day,
+                    isLastDayOfShortMonth: ILLunarCalendar.isLastDayOfShortMonth(lunar, on: date, calendar: calendar)
+                ),
                 isHoangDao: ILLunarCalendar.isHoangDao(
                     solarDay: day,
                     solarMonth: month,
@@ -119,14 +122,18 @@ final class ILLunarCalendarUseCaseImpl: ILLunarCalendarUseCase {
     }
 
     /// Ngày trai theo design handoff: 1, 8, 14, 15, 18, 23, 30 âm lịch (mùng 1 và rằm có nhãn
-    /// riêng).
+    /// riêng). Tháng thiếu (29 ngày) không có ngày 30 nên ngày cuối tháng (29) thay thế ngày trai 30.
     private static let otherFastLunarDays: Set<Int> = [8, 14, 18, 23, 30]
 
-    static func category(forLunarDay lunarDay: Int) -> ILLunarCalendarDayCategory {
+    static func category(
+        forLunarDay lunarDay: Int,
+        isLastDayOfShortMonth: Bool = false
+    ) -> ILLunarCalendarDayCategory {
         switch lunarDay {
         case 1: return .newMoon
         case 15: return .fullMoon
         case let day where otherFastLunarDays.contains(day): return .fastDay
+        case 29 where isLastDayOfShortMonth: return .fastDay
         default: return .ordinary
         }
     }

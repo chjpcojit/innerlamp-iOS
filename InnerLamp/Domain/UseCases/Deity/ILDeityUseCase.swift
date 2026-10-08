@@ -6,12 +6,13 @@
 import Foundation
 
 protocol ILDeityUseCase {
-    /// Trả về dữ liệu đầy đủ của 1 vị Phật / Bồ Tát theo `deityID`. Nếu không tìm thấy, rơi về
-    /// vị đầu tiên trong catalog (giữ màn luôn hiển thị được nội dung).
-    func getInitialState(deityID: String) -> ILDeityEntity
+    /// Full profile of the Buddha / Bodhisattva with `id` from `GET /v1/deities/{id}`
+    /// (network-first, cached copy when offline). Throws `ILCatalogError` — `.notFound` for an
+    /// unknown id, `.offline` when the server is unreachable and nothing is cached.
+    func loadDeity(id: String) async throws -> ILDeityEntity
 
-    /// Toàn bộ catalog "Phật & Bồ Tát" — dùng để dựng bản tóm tắt cho carousel ở Trang chủ
-    /// (`ILHomeUseCase` map sang `ILHomeDeityEntity`).
+    /// Toàn bộ catalog "Phật & Bồ Tát" đóng gói — chỉ còn màn Thư viện dùng (Trang chủ và màn
+    /// "Chư Phật & Bồ Tát" đọc từ server).
     func getAllDeities() -> [ILDeityEntity]
 
     /// Ngày vía gần nhất (tính từ hôm nay, theo âm lịch Việt Nam) trong các ngày vía của vị này;
@@ -24,15 +25,19 @@ protocol ILDeityUseCase {
 
 final class ILDeityUseCaseImpl: ILDeityUseCase {
 
-    // TODO: khi có API / nguồn dữ liệu catalog thật, thay catalog mock dưới đây bằng dữ liệu từ
-    // `Docs/Assert/Data/phat_botat.json` (networkService hoặc JSON bundled). Nội dung này là DATA
-    // (danh xưng, tiểu sử, mật chú...), không phải UI copy nên để nguyên chuỗi tiếng Việt thay vì
-    // đưa qua `.localized` — khác với nhãn UI (được `ILDeityViewModel` resolve từ key).
+    // The detail screen reads from the server (`loadDeity(id:)`). The static catalog below still
+    // backs `getAllDeities()` (Library only — Home and the "Chư Phật & Bồ Tát" list read the server).
+    // TODO: move Library to `ILDeityCatalogRepository` / `ILDeityRepository`, then drop it.
+    // Nội dung này là DATA (danh xưng, tiểu sử, mật chú...), không phải UI copy nên để nguyên
+    // chuỗi tiếng Việt thay vì đưa qua `.localized` — khác với nhãn UI (được `ILDeityViewModel`
+    // resolve từ key).
+    private let deityCatalogRepository: ILDeityCatalogRepository
     /// Nguồn "hôm nay" — tiêm vào để test tính ngày vía không phụ thuộc đồng hồ máy.
     private let now: () -> Date
     private let calendar: Calendar
 
-    init(now: @escaping () -> Date = Date.init) {
+    init(deityCatalogRepository: ILDeityCatalogRepository, now: @escaping () -> Date = Date.init) {
+        self.deityCatalogRepository = deityCatalogRepository
         self.now = now
         var calendar = Calendar(identifier: .gregorian)
         // Âm lịch Việt Nam tính theo UTC+7 — đếm ngày cũng theo múi giờ đó cho nhất quán.
@@ -40,9 +45,8 @@ final class ILDeityUseCaseImpl: ILDeityUseCase {
         self.calendar = calendar
     }
 
-    func getInitialState(deityID: String) -> ILDeityEntity {
-        let catalog = Self.makeCatalog()
-        return catalog.first { $0.id == deityID } ?? catalog[0]
+    func loadDeity(id: String) async throws -> ILDeityEntity {
+        try await deityCatalogRepository.loadDeityDetail(id: id)
     }
 
     func getAllDeities() -> [ILDeityEntity] {
@@ -75,21 +79,11 @@ final class ILDeityUseCaseImpl: ILDeityUseCase {
             let lunar = ILLunarCalendar.solarToLunar(date: date, calendar: calendar)
             guard !lunar.isLeapMonth, lunar.month == memorialDay.lunarMonth else { continue }
 
-            if lunar.day == memorialDay.lunarDay || isLastDayStandingInForDay30(lunar, memorialDay, date) {
+            if ILLunarCalendar.matchesLunarDay(memorialDay.lunarDay, lunar: lunar, on: date, calendar: calendar) {
                 return ILDeityUpcomingMemorialDayEntity(memorialDay: memorialDay, date: date, daysUntil: offset)
             }
         }
         return nil
-    }
-
-    private func isLastDayStandingInForDay30(
-        _ lunar: ILLunarCalendar.LunarDate,
-        _ memorialDay: ILDeityMemorialDayEntity,
-        _ date: Date
-    ) -> Bool {
-        guard memorialDay.lunarDay == 30, lunar.day == 29,
-              let nextDate = calendar.date(byAdding: .day, value: 1, to: date) else { return false }
-        return ILLunarCalendar.solarToLunar(date: nextDate, calendar: calendar).day == 1
     }
 
     private static let memorialDaySearchWindow = 400
@@ -97,7 +91,7 @@ final class ILDeityUseCaseImpl: ILDeityUseCase {
     /// Bộ kinh trong `canonicalSource` đã có trong catalog Thư viện (`ILLibraryUseCaseImpl`) —
     /// chỉ những mục này có nút "Mở". TODO: bỏ bảng tra khi catalog kinh thật có API tra theo tên.
     private static let librarySutraIDs: [String: String] = [
-        "Kinh A Di Đà": "sutra.amida"
+        "Kinh A Di Đà": "a-di-da"
     ]
 
     // MARK: - Catalog

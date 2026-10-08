@@ -85,16 +85,21 @@ public enum ILTypography {
     public static let lunarHeroDay = lora(size: 72, weight: .regular)
     public static let scriptureTitle = lora(size: 22, weight: .regular)
     public static let scriptureBodyLarge = lora(size: 20, weight: .regular)
-    /// Kệ kinh chính trên màn Tụng kinh (`isReader`) — 21px Lora theo design handoff, luôn dùng cùng
-    /// line-height 1.6 ở nơi gọi.
-    public static let readerVerse = lora(size: 21, weight: .regular)
-    /// Bản dịch Anh dưới kệ kinh trên màn Tụng kinh — 13.5px Lora nghiêng, luôn dùng cùng line-height
-    /// 1.7 ở nơi gọi (xem `ILReaderVerseView`).
-    public static let readerTranslation: UIFont = {
-        let base = lora(size: 13.5, weight: .regular)
+    /// Four user-selectable sizes (17 / 20 / 23 / 26px Lora) of a chanted line on the Reader screen
+    /// (`isReader`, "Cỡ chữ" panel); always used with line-height 1.55 at the call site.
+    public static let readerLineFonts: [UIFont] = [17, 20, 23, 26].map { lora(size: $0, weight: .regular) }
+    /// Preview sentence on the Language screen for the 4 sutra font-size presets (14 / 16 / 19 / 22px Lora).
+    public static let languagePreviewFonts: [UIFont] = [14, 16, 19, 22].map { lora(size: $0, weight: .regular) }
+    /// English gloss under a chanted line on the Reader screen — 12.5px Lora italic, line-height 1.6.
+    public static let readerGloss: UIFont = {
+        let base = lora(size: 12.5, weight: .regular)
         guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
-        return UIFont(descriptor: descriptor, size: 13.5)
+        return UIFont(descriptor: descriptor, size: 12.5)
     }()
+    /// Bell / wooden-fish cue glyph (◉ •) in front of a chanted line — 11px semibold.
+    public static let readerCue = beVietnamPro(size: 11, weight: .semibold)
+    /// "A" tile of the Reader font-size picker — 13px Lora (`font:400 13px Lora`).
+    public static let readerOptionSize = lora(size: 13, weight: .regular)
     /// Tiêu đề thẻ tối nổi bật (vd. "Thời khóa tối cùng đạo tràng") — 19px Lora theo design handoff.
     public static let heroCardTitle = lora(size: 19, weight: .regular)
     public static let scriptureBody = lora(size: 18, weight: .regular)
@@ -138,6 +143,52 @@ public enum ILTypography {
         return UIFont(descriptor: descriptor, size: 13)
     }()
 
+    // Family tree (Gia phả) — Lora stands in for the design's Cormorant Garamond
+    /// Name under a node on the tree canvas — 13.5px bold serif.
+    public static let treeNodeName = lora(size: 13.5, weight: .bold)
+    /// "ĐỜI 5" caption under a node name — 9px medium, kern .08em applied at the call site.
+    public static let treeNodeMeta = beVietnamPro(size: 9, weight: .medium)
+    /// Selected person's name in the detail sheet header — 22px bold serif.
+    public static let treeSheetName = lora(size: 22, weight: .bold)
+    /// Relation / lineage row name in the detail sheet — 16px semibold serif.
+    public static let treeRelationName = lora(size: 16, weight: .semibold)
+    /// Lineage chain row name — 15px semibold serif.
+    public static let treeChainName = lora(size: 15, weight: .semibold)
+    /// Italic biography note — 16px medium serif italic.
+    public static let treeNote: UIFont = {
+        let base = lora(size: 16, weight: .medium)
+        guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
+        return UIFont(descriptor: descriptor, size: 16)
+    }()
+    /// Clan name in the tree header — 25px semibold serif.
+    public static let treeHeaderTitle = lora(size: 25, weight: .semibold)
+    /// 譜 glyph on the tree header seal — 19px bold serif.
+    public static let treeHeaderSeal = lora(size: 19, weight: .bold)
+    /// Generation chip — 12px medium.
+    public static let treeChip = beVietnamPro(size: 12, weight: .medium)
+    /// "DỨT NHÁNH" marker under a node — 8.5px semibold, kern .14em applied at the call site.
+    public static let treeBranchEnd = beVietnamPro(size: 8.5, weight: .semibold)
+    /// "BẠN" pill on the viewer's node — 9.5px bold, kern .12em applied at the call site.
+    public static let treeMePill = beVietnamPro(size: 9.5, weight: .bold)
+    /// "BẠN" badge in the legend — 7px bold, kern .08em applied at the call site.
+    public static let treeMeLegend = beVietnamPro(size: 7, weight: .bold)
+    /// 忌 glyph and title of the TƯỞNG NIỆM card — 18px bold serif.
+    public static let treeMemorialTitle = lora(size: 18, weight: .bold)
+    /// Tile title in the TƯỞNG NIỆM card ("Thắp đèn") — 12.5px semibold.
+    public static let treeTileTitle = beVietnamPro(size: 12.5, weight: .semibold)
+    /// 譜 seal on the "Cây gia phả" empty-state / legend — 12px bold serif.
+    public static let treeSealSmall = lora(size: 12, weight: .bold)
+    /// 譜 seal on the "Lấy từ gia phả" card of the empty memorial book — 17px semibold serif.
+    public static let treeSealMedium = lora(size: 17, weight: .semibold)
+    /// Book name in the switcher menu — 18px semibold serif.
+    public static let treeSwitcherTitle = lora(size: 18, weight: .semibold)
+    /// Title of a tab/screen empty state with an illustration — 24px serif.
+    public static let emptyStateTitle = lora(size: 24, weight: .regular)
+    /// Title of the empty family tree ("Chưa có gia phả") — 28px bold serif.
+    public static let treeEmptyTitle = lora(size: 28, weight: .bold)
+    /// Header card title of the "Tạo gia phả" form — 26px semi-bold serif.
+    public static let treeCreateTitle = lora(size: 26, weight: .semibold)
+
     // Splash / Onboarding intro (Lora Serif)
     public static let introDisplay = lora(size: 40, weight: .regular)
     public static let stepTitle = lora(size: 32, weight: .regular)
@@ -165,6 +216,8 @@ public enum ILTypography {
     public static let chip = beVietnamPro(size: 12, weight: .medium)
     public static let bodySmall = beVietnamPro(size: 12.5, weight: .regular)
     public static let bodySmallMedium = beVietnamPro(size: 12.5, weight: .medium)
+    /// 12.5px semibold — highlighted value such as "Với bạn" in the family-tree sheet
+    public static let bodySmallSemibold = beVietnamPro(size: 12.5, weight: .semibold)
     public static let sectionTitle = beVietnamPro(size: 13, weight: .medium)
     public static let body = beVietnamPro(size: 13.5, weight: .regular)
     /// Thân chữ đậm (vd. tên tác giả, tiêu đề "N lời chia sẻ" ở màn Bài đăng đạo tràng) — 13.5px
@@ -193,6 +246,10 @@ public enum ILTypography {
     public static let statNumber = beVietnamPro(size: 38, weight: .regular)
     /// Mũi tên "›" ở cuối hàng/thẻ điều hướng
     public static let chevron = beVietnamPro(size: 18, weight: .regular)
+    /// Tên chùa tu tập trên thẻ tab Chùa — 20px Lora (`font:400 20px/1.3 Lora`).
+    public static let templeCardTitle = lora(size: 20, weight: .regular)
+    /// Số ngày ở cột ngày-tháng của hàng khóa tu / ngày lễ — 18px medium (`font:500 18px`).
+    public static let dateNumber = beVietnamPro(size: 18, weight: .medium)
     /// Số thống kê vừa 22px medium (vd. "168 giờ tu tập" ở thẻ 3 ô số liệu)
     public static let statValue = beVietnamPro(size: 22, weight: .medium)
     /// Số liệu cột trong dải 3 ô thống kê (vd. Trang chùa) — 19px medium theo design handoff.
@@ -222,8 +279,8 @@ public enum ILTypography {
     /// Số đếm lớn trên màn immersive (vd. số hạt màn Niệm Phật) — thiết kế dùng weight 300 nhưng
     /// bộ font Be Vietnam Pro trong bundle chưa có bản Light nên dùng Regular.
     public static let immersiveCount = beVietnamPro(size: 58, weight: .regular)
-    /// Số đếm lớn trên pad màn Chuông mõ (54px, weight 300 trong thiết kế → Regular).
-    public static let bellPadNumber = beVietnamPro(size: 54, weight: .regular)
+    /// Số đếm dưới sân khấu chuông/mõ màn Chuông mõ (34px, weight 300 trong thiết kế → Regular).
+    public static let bellPadNumber = beVietnamPro(size: 34, weight: .regular)
     /// Countdown inside the breathing ring on the meditation session screen (54px, weight 300 in
     /// the design → Regular, since the bundled Be Vietnam Pro has no Light cut).
     public static let immersiveTimer = beVietnamPro(size: 54, weight: .regular)

@@ -7,8 +7,9 @@
 
 import UIKit
 
-/// Danh sách 2 ô "Hướng xuất hành" — Hỷ thần / Tài thần nằm cạnh nhau (khớp `lnDirs` grid 2 cột
-/// trong design handoff). Mỗi ô: glyph Hán tự 喜/財 (38pt) + tên, hướng và ý nghĩa.
+/// Danh sách 3 ô "Hướng xuất hành" — Hỷ thần / Tài thần / Hạc thần (hướng cần tránh) nằm cạnh
+/// nhau (khớp `lnDirs` grid 3 cột trong design handoff). Mỗi ô: glyph Hán tự 喜/財/鶴 (38pt) xếp
+/// trên tên, rồi hướng và ý nghĩa. Design ghi "Hắc thần"; giữ "Hạc thần" (鶴神) là tên đúng.
 final class ILLunarDayDetailDirectionsView: UIView {
 
     // MARK: - Properties
@@ -18,6 +19,7 @@ final class ILLunarDayDetailDirectionsView: UIView {
 
     // MARK: - UI Elements
     private let columnsStack = UIStackView()
+    private var cards: [UIView] = []
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -54,18 +56,25 @@ final class ILLunarDayDetailDirectionsView: UIView {
             columnsStack.removeArrangedSubview($0)
             $0.removeFromSuperview()
         }
+        cards.removeAll()
         for direction in directions {
             columnsStack.addArrangedSubview(makeCard(direction))
         }
     }
 
-    /// Tone glyph của từng loại thần — Hỷ thần (đỏ clash), Tài thần (vàng accent).
+    /// Tone glyph của từng loại thần — Hỷ thần (đỏ clash), Tài thần (vàng accent), Hạc thần (đỏ hắc đạo).
     private static func glyphTone(_ kind: ILLunarDayDetailDirectionKind) -> (background: UIColor, border: UIColor, foreground: UIColor) {
         switch kind {
         case .joy:
             return (ILColors.clashTintBackground, ILColors.clashBorder, ILColors.clashForeground)
         case .wealth:
             return (ILColors.featGlow, ILColors.featAccent.withAlphaComponent(0.5), ILColors.featAccent)
+        case .crane:
+            return (
+                ILColors.inauspicious.withAlphaComponent(0.08),
+                ILColors.inauspicious.withAlphaComponent(0.24),
+                ILColors.inauspicious
+            )
         }
     }
 
@@ -104,9 +113,9 @@ final class ILLunarDayDetailDirectionsView: UIView {
         keyLabel.text = direction.key
 
         let headerRow = UIStackView(arrangedSubviews: [glyphTile, keyLabel])
-        headerRow.axis = .horizontal
+        headerRow.axis = .vertical
         headerRow.spacing = 8
-        headerRow.alignment = .center
+        headerRow.alignment = .leading
 
         let valueLabel = UILabel()
         valueLabel.font = ILTypography.scriptureBody
@@ -123,23 +132,24 @@ final class ILLunarDayDetailDirectionsView: UIView {
         stack.axis = .vertical
         stack.alignment = .leading
         stack.spacing = 3
-        stack.setCustomSpacing(12, after: headerRow)
+        stack.setCustomSpacing(10, after: headerRow)
         stack.isUserInteractionEnabled = false
         stack.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(stack)
 
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
-            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16),
-            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16)
+            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 14),
+            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14),
+            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 12),
+            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -12)
         ])
 
+        cards.append(card)
         return card
     }
 
     private func applyColorAppearanceChange() {
-        for card in columnsStack.arrangedSubviews {
+        for card in cards {
             card.layer.borderColor = ILColors.border.cgColor
         }
     }

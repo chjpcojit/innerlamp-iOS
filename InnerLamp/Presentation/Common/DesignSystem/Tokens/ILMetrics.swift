@@ -82,6 +82,12 @@ public enum ILMetrics {
     
     /// Bo góc biểu tượng nhỏ (2px)
     public static let radiusGlyph: CGFloat = 2.0
+
+    /// Selectable option tile in a settings panel (10px — Reader font-size / background tiles)
+    public static let radiusOptionTile: CGFloat = 10.0
+
+    /// Highlight behind the chanted line on the Reader screen (6px)
+    public static let radiusLineHighlight: CGFloat = 6.0
     
     // MARK: - Heights & Dimensions
     /// Chiều cao nút bấm tiêu chuẩn (50px)
@@ -89,6 +95,9 @@ public enum ILMetrics {
     
     /// Chiều cao ô nhập liệu (48px)
     public static let inputHeight: CGFloat = 48.0
+
+    /// Round "×" clear button inside `ILSearchInputView` (20x20 in the prototype)
+    public static let searchClearSize: CGFloat = 20.0
     
     /// Chiều cao hàng danh sách (72px)
     public static let rowHeight: CGFloat = 72.0
@@ -107,7 +116,18 @@ public enum ILMetrics {
 
     /// Ảnh đèn `ILIcons.onboardingLamp` ở header màn Đăng nhập — cao 56px, giữ tỉ lệ ảnh gốc
     public static let loginLampSize = CGSize(width: 40, height: 56)
-    
+
+    /// Blur strength (0...1) of a sticky detail-screen header once the content has scrolled fully under it
+    /// ("just enough", not fully frosted). Used by `ILHeaderBlurView` — chi tiết chùa, Phật/Bồ Tát, bài viết, kinh sách.
+    public static let headerBlurMaxIntensity: CGFloat = 0.7
+
+    /// Opacity of a sticky header's canvas tint once it is fully "glass" (content scrolled under it).
+    /// Used by `ILStickyHeaderBand`; lower = more of the scrolled content shows through.
+    public static let headerGlassTintAlpha: CGFloat = 0.3
+
+    /// Scroll distance (pt) over which a plain sticky header goes from flat to full glass.
+    public static let headerBlurFadeDistance: CGFloat = 40
+
     // MARK: - Shadow Helpers
     public struct Shadow {
         public let color: UIColor
@@ -269,6 +289,9 @@ public enum ILMetrics {
         public static let rowSubLineHeight: CGFloat = 9
         /// Corner radius of the row lines
         public static let rowLineRadius: CGFloat = 6
+        /// Placeholder pill button (e.g. the "Chọn" pill of a temple row)
+        public static let rowPillWidth: CGFloat = 56
+        public static let rowPillHeight: CGFloat = 30
         /// Width ratio of the row secondary line
         public static let rowSubLineWidthRatio: CGFloat = 0.44
         /// Width ratios of the primary line for each of the 4 rows
@@ -292,5 +315,148 @@ public enum ILMetrics {
         public static let spinnerRotationDuration: TimeInterval = 0.9
         /// Load-more footer vertical padding (top, bottom)
         public static let footerPadding = UIEdgeInsets(top: 20, left: 0, bottom: 4, right: 0)
+    }
+
+    /// Geometry of the family-tree canvas and detail sheet (`Scenes/FamilyTree`). Canvas values are
+    /// in points at zoom 1.0.
+    public enum FamilyTree {
+        // Canvas layout
+        /// Horizontal room given to one leaf member
+        public static let slotWidth: CGFloat = 84
+        /// Extra width reserved to the right of a member that has a spouse
+        public static let spouseOffsetX: CGFloat = 76
+        /// Spouse sits a little lower than their partner
+        public static let spouseOffsetY: CGFloat = 26
+        /// Vertical distance between two generations
+        public static let generationGap: CGFloat = 128
+        /// Room above the newest generation / left+right of the widest row
+        public static let canvasTopInset: CGFloat = 70
+        public static let canvasSideInset: CGFloat = 40
+        /// Trunk and roots below the founder's generation
+        public static let canvasBottomInset: CGFloat = 200
+        /// Minimum canvas width, so a tiny tree still fills the screen
+        public static let canvasMinWidth: CGFloat = 390
+
+        // Zoom
+        public static let zoomLevels: [CGFloat] = [0.7, 1, 1.35]
+        public static let defaultZoomIndex = 1
+
+        // Branches: stroke width per generation (2…7+), thicker near the root; generation 7 and deeper = 2.6
+        public static let branchWidths: [CGFloat] = [16, 11, 7.5, 5, 3.4, 2.6]
+        public static let branchHighlightRatio: CGFloat = 0.35
+        public static let lineageMinWidth: CGFloat = 2.2
+        public static let lineageWidthRatio: CGFloat = 0.38
+        public static let spouseLineWidth: CGFloat = 1.8
+        public static let spouseDash: [NSNumber] = [4, 4]
+        public static let trunkWidth: CGFloat = 5
+        public static let leafRadiusX: CGFloat = 8
+        public static let leafRadiusY: CGFloat = 3.4
+
+        // Nodes (hexagon medallion width; height = width × hexRatio)
+        public static let hexRatio: CGFloat = 1.15
+        public static let nodeFounderWidth: CGFloat = 80
+        public static let nodeHeadWidth: CGFloat = 62
+        public static let nodeSpouseWidth: CGFloat = 46
+        public static let nodeYoungestWidth: CGFloat = 48
+        public static let nodeWidth: CGFloat = 52
+        public static let nodeLabelWidth: CGFloat = 130
+        public static let nodeLabelGap: CGFloat = 4
+        public static let haloRatio: CGFloat = 1.9
+        public static let dimmedAlpha: CGFloat = 0.25
+        public static let searchDimmedAlpha: CGFloat = 0.2
+        public static let sealSize: CGFloat = 20
+        public static let livingDotSize: CGFloat = 8
+
+        // Hexagon medallion layers (inset from the outer edge)
+        public static let medallionCreamInset: CGFloat = 2
+        public static let medallionTicksInset: CGFloat = 4
+        public static let medallionInnerCreamInset: CGFloat = 6
+        public static let medallionPlateInset: CGFloat = 7.5
+
+        // Header
+        public static let headerInset: CGFloat = 16
+        public static let headerLeadingInset: CGFloat = 10
+        public static let headerTopPadding: CGFloat = 8
+        public static let headerGap: CGFloat = 10
+        public static let headerBackSize = CGSize(width: 40, height: 44)
+        public static let headerSealSize: CGFloat = 34
+        public static let headerSealRadius: CGFloat = 5
+        public static let headerSealRotation: CGFloat = -4
+        public static let headerButtonSize: CGFloat = 44
+        public static let headerTitleGap: CGFloat = 6
+        public static let headerChevronSize: CGFloat = 14
+        public static let chipPaddingH: CGFloat = 14
+        public static let chipRowTopSpacing: CGFloat = 12
+        public static let legendInset: CGFloat = 20
+        public static let legendTopSpacing: CGFloat = 10
+        public static let legendGap: CGFloat = 12
+
+        // Book switcher menu
+        public static let switcherInset: CGFloat = 12
+        public static let switcherTopGap: CGFloat = 4
+        public static let switcherRadius: CGFloat = 20
+        public static let switcherPadding: CGFloat = 8
+        public static let switcherRowRadius: CGFloat = 14
+        public static let switcherRowHeight: CGFloat = 60
+        public static let switcherLinkRowHeight: CGFloat = 52
+        public static let switcherSealSize: CGFloat = 36
+        public static let switcherSealRadius: CGFloat = 6
+        public static let switcherShadowBlur: CGFloat = 20
+        public static let switcherShadowOffsetY: CGFloat = 18
+
+        // Node extras
+        public static let sealRadius: CGFloat = 3
+        public static let sealRotation: CGFloat = -8
+        public static let sealRingInset: CGFloat = 2
+        public static let nodeEndedLineSize = CGSize(width: 10, height: 1.5)
+        public static let nodeEndedGap: CGFloat = 5
+        public static let nodeEndedTopSpacing: CGFloat = 3
+        /// Padding around a halo label so its stacked glow is not clipped
+        public static let labelHaloPadding: CGFloat = 10
+        public static let labelHaloBlurs: [CGFloat] = [3, 6, 10]
+
+        // Viewer ("BẠN") marker
+        public static let mePillSize = CGSize(width: 42, height: 18)
+        /// Gap between the pill's bottom edge and the medallion's top edge
+        public static let mePillGap: CGFloat = 4
+        public static let mePillRingWidth: CGFloat = 2
+        public static let legendMePillHeight: CGFloat = 11
+        public static let legendMePillPaddingH: CGFloat = 4
+        public static let controlIconSize: CGFloat = 18
+
+        // Medallion bust
+        public static let tickCount = 72
+
+        // Controls
+        public static let controlSize: CGFloat = 44
+        public static let controlRadius: CGFloat = 14
+        public static let controlSpacing: CGFloat = 6
+        /// Zoom button shadow: blur radius, vertical offset and inset (CSS spread -6)
+        public static let controlShadowBlur: CGFloat = 5
+        public static let controlShadowOffsetY: CGFloat = 4
+        public static let controlShadowSpread: CGFloat = 6
+        public static let controlInset: CGFloat = 14
+        public static let chipHeight: CGFloat = 34
+
+        // Detail sheet
+        public static let sheetCollapsedHeight: CGFloat = 132
+        public static let sheetExpandedRatio: CGFloat = 0.78
+        public static let sheetHeaderMedallion = CGSize(width: 56, height: 64)
+        public static let sheetRelationRowHeight: CGFloat = 44
+        public static let sheetKeyColumnWidth: CGFloat = 84
+        public static let sheetRelationKeyWidth: CGFloat = 64
+        public static let sheetGrabberSize = CGSize(width: 36, height: 4)
+        public static let sheetChevronStroke: CGFloat = 2.2
+        public static let sheetCardRadius: CGFloat = 6
+        public static let sheetPillHeight: CGFloat = 44
+        public static let sheetCTAHeight: CGFloat = 48
+        public static let sheetTileMinHeight: CGFloat = 64
+        public static let sheetMemorialGlyphSize: CGFloat = 44
+        public static let sheetAnimationDuration: TimeInterval = 0.32
+        /// Bottom scroll room so the collapsed sheet never covers the lowest node
+        public static let sheetScrollMargin: CGFloat = 150
+        /// Room kept around the outermost people (crown of leaves above, name label below) when centring the tree
+        public static let peopleSpanPaddingTop: CGFloat = 60
+        public static let peopleSpanPaddingBottom: CGFloat = 50
     }
 }

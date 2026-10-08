@@ -14,6 +14,7 @@ final class ILTempleViewModelTests: XCTestCase {
     private var cancellables: Set<AnyCancellable>!
 
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
+    private var retryTappedSubject: PassthroughSubject<Void, Never>!
     private var backTappedSubject: PassthroughSubject<Void, Never>!
     private var followTappedSubject: PassthroughSubject<Void, Never>!
     private var bioToggledSubject: PassthroughSubject<Void, Never>!
@@ -24,21 +25,22 @@ final class ILTempleViewModelTests: XCTestCase {
     private var sessionTappedSubject: PassthroughSubject<String, Never>!
     private var contactTappedSubject: PassthroughSubject<String, Never>!
 
-    /// 10:00 sáng 10/01/2026 (UTC+7) — nằm trong khung `regularHours`/`holidayHours` giống nhau
-    /// của fixture (`5:00 – 20:00`) nên `isOpen` đúng bất kể hôm đó là Rằm/Mùng Một hay không.
-    private static let fixedNow: Date = {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 7 * 3600) ?? .current
-        return calendar.date(from: DateComponents(year: 2026, month: 1, day: 10, hour: 10, minute: 0)) ?? Date()
-    }()
+    /// 10:00 on 10/01/2026 in the device time zone (the ViewModel reads `Calendar.current`) —
+    /// inside the fixture's "05:00 - 20:00".
+    private static let fixedNow = makeLocalDate(hour: 10)
+
+    private static func makeLocalDate(hour: Int) -> Date {
+        Calendar.current.date(from: DateComponents(year: 2026, month: 1, day: 10, hour: hour, minute: 0)) ?? Date()
+    }
 
     override func setUp() {
         super.setUp()
         mockUseCase = MockILTempleUseCase()
-        sut = ILTempleViewModel(useCase: mockUseCase, templeID: "tp-fixture", now: { Self.fixedNow })
+        sut = makeSUT(now: Self.fixedNow)
         cancellables = []
 
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
+        retryTappedSubject = PassthroughSubject<Void, Never>()
         backTappedSubject = PassthroughSubject<Void, Never>()
         followTappedSubject = PassthroughSubject<Void, Never>()
         bioToggledSubject = PassthroughSubject<Void, Never>()
@@ -53,6 +55,7 @@ final class ILTempleViewModelTests: XCTestCase {
     override func tearDown() {
         cancellables = nil
         viewDidLoadSubject = nil
+        retryTappedSubject = nil
         backTappedSubject = nil
         followTappedSubject = nil
         bioToggledSubject = nil
@@ -67,9 +70,14 @@ final class ILTempleViewModelTests: XCTestCase {
         super.tearDown()
     }
 
+    private func makeSUT(now: Date) -> ILTempleViewModel {
+        ILTempleViewModel(useCase: mockUseCase, templeID: "temple_fixture", now: { now })
+    }
+
     private func makeInput() -> ILTempleViewModel.Input {
         ILTempleViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
+            retryTapped: retryTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             followTapped: followTappedSubject.eraseToAnyPublisher(),
             bioToggled: bioToggledSubject.eraseToAnyPublisher(),
@@ -82,31 +90,60 @@ final class ILTempleViewModelTests: XCTestCase {
         )
     }
 
-    private func observeLatestState() -> () -> ILTempleStateModel? {
+    /// Transforms, records every state, and returns the output (for `errorMessage`).
+    @discardableResult
+    private func observeStates(_ states: @escaping (ViewState<ILTempleStateModel>) -> Void) -> ILTempleViewModel.Output {
         let output = sut.transform(input: makeInput())
+        output.state.sink(receiveValue: states).store(in: &cancellables)
+        return output
+    }
+
+    /// Sends `viewDidLoad` and waits for the first `.success`; returns a getter for the latest one.
+    private func loadSuccessfully() -> () -> ILTempleStateModel? {
         var latest: ILTempleStateModel?
-        output.state
-            .sink { state in
-                if case .success(let model) = state { latest = model }
+        let loaded = expectation(description: "temple loaded")
+        loaded.assertForOverFulfill = false
+        observeStates { state in
+            if case .success(let model) = state {
+                latest = model
+                loaded.fulfill()
             }
-            .store(in: &cancellables)
+        }
+        viewDidLoadSubject.send(())
+        wait(for: [loaded], timeout: 1)
         return { latest }
     }
 
-    func test_viewDidLoad_mapsEntityToState() {
-        let latest = observeLatestState()
+    // MARK: - Loading
+
+    func test_viewDidLoad_emitsLoadingThenSuccess_andRequestsTempleID() {
+        var states: [ViewState<ILTempleStateModel>] = []
+        let loaded = expectation(description: "temple loaded")
+        observeStates { state in
+            states.append(state)
+            if case .success = state { loaded.fulfill() }
+        }
 
         viewDidLoadSubject.send(())
+        wait(for: [loaded], timeout: 1)
 
-        XCTAssertTrue(mockUseCase.getInitialStateCalled)
+        XCTAssertEqual(mockUseCase.requestedIDs, ["temple_fixture"])
+        guard states.count == 3 else { return XCTFail("expected idle → loading → success, got \(states)") }
+        if case .idle = states[0] {} else { XCTFail("expected .idle first") }
+        if case .loading = states[1] {} else { XCTFail("expected .loading second") }
+    }
+
+    func test_viewDidLoad_mapsDetailToState() {
+        let latest = loadSuccessfully()
         guard let state = latest() else { return XCTFail("expected state") }
 
         // Hero
-        XCTAssertEqual(state.rankChip, "Di tích Quốc gia")
-        XCTAssertEqual(state.sectChip, "Bắc tông")
+        XCTAssertEqual(state.headerTitle, "Chùa Mẫu")
+        XCTAssertEqual(state.rankChip, "temple.rank.nationalRelic".localized)
+        XCTAssertEqual(state.sectChip, "temple.sect.bacTong".localized)
         XCTAssertEqual(state.name, "Chùa Mẫu")
         XCTAssertTrue(state.hasAlias)
-        XCTAssertEqual(state.aliasLine, String(format: "temple.hero.alias".localized, "Chùa Cổ"))
+        XCTAssertEqual(state.aliasLine, String(format: "temple.hero.alias".localized, "Chùa Cổ · Cổ Tự"))
         XCTAssertEqual(state.placeLine, "Quận 1, TP. Hồ Chí Minh")
 
         // Buttons
@@ -114,129 +151,168 @@ final class ILTempleViewModelTests: XCTestCase {
         XCTAssertEqual(state.directionsButtonTitle, "temple.directions".localized)
         XCTAssertEqual(state.offerButtonTitle, "temple.offer".localized)
 
-        // Status card — user cố định đúng vị trí chùa nên khoảng cách bằng 0.
+        // Status card — API hours on the weekday row; no holiday hours / distance in the API.
         XCTAssertTrue(state.isOpen)
         XCTAssertEqual(state.openStatusText, "temple.status.open".localized)
         XCTAssertEqual(state.openNoteText, String(format: "temple.status.closesAt".localized, "20:00"))
-        XCTAssertEqual(state.distanceText, String(format: "temple.distance.near".localized, "0,0"))
-        XCTAssertEqual(state.hourRows.count, 2)
-        XCTAssertEqual(state.hourRows[0].value, "5:00 – 20:00")
-        XCTAssertEqual(state.hourRows[1].value, "5:00 – 20:00")
+        XCTAssertEqual(state.distanceText, "")
+        XCTAssertEqual(state.hourRows, [
+            ILTempleHourRowModel(id: "weekday", label: "temple.hours.weekday".localized, value: "5:00 – 20:00", isToday: true),
+            ILTempleHourRowModel(id: "holiday", label: "temple.hours.holiday".localized, value: "temple.info.updating".localized, isToday: false)
+        ])
 
         // Facts grid
-        XCTAssertEqual(state.facts.map(\.value), ["Năm 1900", "Di tích Quốc gia", "Bắc tông", "Đông Nam Bộ"])
+        XCTAssertEqual(state.facts.map(\.value), [
+            String(format: "temple.facts.eraFormat".localized, 1900),
+            "temple.rank.nationalRelic".localized,
+            "temple.sect.bacTong".localized,
+            "temple.region.south".localized
+        ])
 
-        // Giới thiệu
-        XCTAssertEqual(state.descriptionText, "Tiểu sử mẫu.")
-        XCTAssertFalse(state.isBiographyExpanded)
-        XCTAssertEqual(state.biographyToggleTitle, "temple.bio.readMore".localized)
-
-        // Tổ chức & truyền thừa — 1 mục có giá trị, 1 mục "Đang cập nhật".
-        XCTAssertEqual(state.orgInfo.count, 2)
+        // Org info — abbot present, founder empty and "Giáo hội" not in the API → "Đang cập nhật".
+        XCTAssertEqual(state.orgInfo.map(\.id), ["abbot", "founder", "sangha"])
         XCTAssertEqual(state.orgInfo[0].value, "Đại đức A")
         XCTAssertTrue(state.orgInfo[0].hasValue)
         XCTAssertEqual(state.orgInfo[1].value, "temple.info.updating".localized)
         XCTAssertFalse(state.orgInfo[1].hasValue)
+        XCTAssertFalse(state.orgInfo[2].hasValue)
 
-        // Kiến trúc & di sản
-        XCTAssertEqual(state.archStyle, "Kiểu chữ Tam")
-        XCTAssertEqual(state.highlights, ["Điểm nổi bật 1"])
-
-        // Tiện ích — 1 có, 1 không.
-        XCTAssertEqual(state.amenities.count, 2)
-        XCTAssertTrue(state.amenities[0].isAvailable)
-        XCTAssertEqual(state.amenities[0].value, "Có · miễn phí")
-        XCTAssertFalse(state.amenities[1].isAvailable)
+        // Amenities — the 4 server booleans; "Kinh sách" is not in the API → "Đang cập nhật".
+        XCTAssertEqual(state.amenities.map(\.id), ["car", "bike", "veg", "books", "retreat"])
+        XCTAssertEqual(state.amenities.map(\.isAvailable), [true, false, true, false, false])
+        XCTAssertEqual(state.amenities[0].value, "temple.amenity.available".localized)
         XCTAssertEqual(state.amenities[1].value, "temple.amenity.none".localized)
+        XCTAssertEqual(state.amenities[3].value, "temple.info.updating".localized)
 
-        // Lưu ý khi viếng thăm
-        XCTAssertEqual(state.visitRules.map(\.number), ["01", "02"])
-        XCTAssertEqual(state.visitRules.map(\.text), ["Quy định 1", "Quy định 2"])
+        // Editorial content (contract v1.1) — intro, architecture, numbered visiting notes.
+        XCTAssertEqual(state.descriptionText, "Giới thiệu mẫu.")
+        XCTAssertEqual(state.architectureText, "Kiến trúc mẫu.")
+        XCTAssertEqual(state.visitRules, [
+            ILTempleRuleModel(id: "rule_0", number: "01", text: "Lưu ý một."),
+            ILTempleRuleModel(id: "rule_1", number: "02", text: "Lưu ý hai.")
+        ])
 
-        // Sự kiện & khóa học
-        XCTAssertTrue(state.hasUpcomingSchedule)
-        XCTAssertEqual(state.sessions.count, 1)
-        XCTAssertEqual(state.sessions.first?.title, "Tụng Kinh Vu Lan")
-        XCTAssertEqual(state.sessions.first?.tone, .gold)
-        XCTAssertEqual(state.sessions.first?.glyph, .book)
+        // Sections the API does not supply are left unfilled (the UI shows "Đang cập nhật").
+        XCTAssertEqual(state.highlights, [])
+        XCTAssertFalse(state.hasUpcomingSchedule)
+        XCTAssertEqual(state.sessions, [])
+        XCTAssertEqual(state.updatedText, "")
+        XCTAssertEqual(state.contacts.map(\.id), ["phone", "fanpage", "website", "email"])
+        XCTAssertTrue(state.contacts.allSatisfy { !$0.hasValue && $0.value == "temple.info.updating".localized })
 
-        // Vị trí & liên hệ — 1 mục có, 1 mục "Đang cập nhật".
+        // Location
         XCTAssertEqual(state.addressLine, "128 Đường A, Phường B, Quận 1, TP. Hồ Chí Minh")
-        XCTAssertEqual(state.regionLine, "Miền Nam · Đông Nam Bộ")
-        XCTAssertEqual(state.contacts.count, 2)
-        XCTAssertTrue(state.contacts[0].hasValue)
-        XCTAssertFalse(state.contacts[1].hasValue)
-        XCTAssertEqual(state.contacts[1].value, "temple.info.updating".localized)
-
-        // Chân trang
-        XCTAssertEqual(state.updatedText, String(format: "temple.footer.updated".localized, "09/2026"))
+        XCTAssertEqual(state.regionLine, "temple.region.south".localized)
+        XCTAssertEqual(state.coordinateText, "10.7769° B, 106.7009° Đ")
     }
 
-    func test_backTapped_firesBackNavigationEvent() {
-        _ = sut.transform(input: makeInput())
-        var receivedEvent: ILTempleNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
+    func test_viewDidLoad_withEmptyEditorialContent_leavesSectionsUnfilled() {
+        mockUseCase.result = .success(Self.makeDetail(introduction: "", architectureHeritage: "", visitingNotes: []))
+        let latest = loadSuccessfully()
+        guard let state = latest() else { return XCTFail("expected state") }
 
-        backTappedSubject.send(())
-
-        XCTAssertEqual(receivedEvent, .back)
+        XCTAssertEqual(state.descriptionText, "")
+        XCTAssertEqual(state.architectureText, "")
+        XCTAssertEqual(state.visitRules, [])
     }
 
-    func test_offerTapped_firesOfferNavigationEvent() {
-        _ = sut.transform(input: makeInput())
-        var receivedEvent: ILTempleNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
+    func test_viewDidLoad_outsideOpeningHours_showsClosedAndReopenTime() {
+        sut = makeSUT(now: Self.makeLocalDate(hour: 21))
+        let latest = loadSuccessfully()
 
-        offerTappedSubject.send(())
-
-        XCTAssertEqual(receivedEvent, .offer)
+        XCTAssertEqual(latest()?.isOpen, false)
+        XCTAssertEqual(latest()?.openStatusText, "temple.status.closed".localized)
+        XCTAssertEqual(latest()?.openNoteText, String(format: "temple.status.opensAt".localized, "5:00"))
     }
 
-    func test_eventsTapped_firesEventsNavigationEvent() {
-        _ = sut.transform(input: makeInput())
-        var receivedEvent: ILTempleNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
+    func test_viewDidLoad_withUnknownHoursAndYear_showsUpdatingFallbacks() {
+        mockUseCase.result = .success(Self.makeDetail(operatingHours: "", establishedYear: 0))
+        let latest = loadSuccessfully()
+        guard let state = latest() else { return XCTFail("expected state") }
 
-        eventsTappedSubject.send(())
-
-        XCTAssertEqual(receivedEvent, .events)
+        XCTAssertFalse(state.isOpen)
+        XCTAssertEqual(state.openStatusText, "temple.status.unknown".localized)
+        XCTAssertEqual(state.openNoteText, "")
+        XCTAssertEqual(state.hourRows.first?.value, "temple.info.updating".localized)
+        XCTAssertEqual(state.hourRows.first?.isToday, false)
+        XCTAssertEqual(state.facts.first?.value, "temple.info.updating".localized)
     }
 
-    func test_sessionTapped_firesSessionNavigationEventWithID() {
-        _ = sut.transform(input: makeInput())
-        var receivedEvent: ILTempleNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
+    func test_viewDidLoad_failure_emitsFailure_thenRetryLoadsAgain() {
+        mockUseCase.result = .failure(ILCatalogError.offline)
+        var failed: Error?
+        var succeeded = false
+        let failureExpectation = expectation(description: "failure")
+        let successExpectation = expectation(description: "success after retry")
+        observeStates { state in
+            switch state {
+            case .failure(let error):
+                failed = error
+                failureExpectation.fulfill()
+            case .success:
+                succeeded = true
+                successExpectation.fulfill()
+            default:
+                break
+            }
+        }
 
-        sessionTappedSubject.send("temple.session.vulan")
+        viewDidLoadSubject.send(())
+        wait(for: [failureExpectation], timeout: 1)
+        if case ILCatalogError.offline = failed ?? ILCatalogError.notFound {} else {
+            XCTFail("expected ILCatalogError.offline, got \(String(describing: failed))")
+        }
+        XCTAssertFalse(succeeded)
 
-        XCTAssertEqual(receivedEvent, .session(id: "temple.session.vulan"))
+        mockUseCase.result = .success(Self.makeDetail())
+        retryTappedSubject.send(())
+        wait(for: [successExpectation], timeout: 1)
+        XCTAssertEqual(mockUseCase.requestedIDs, ["temple_fixture", "temple_fixture"])
     }
+
+    // MARK: - Interactions
 
     func test_followTapped_togglesLabelOptimisticallyAndCallsToggleFollow() {
-        let expectation = expectation(description: "toggleFollow called")
-        mockUseCase.onToggleFollow = { expectation.fulfill() }
-        let latest = observeLatestState()
-        viewDidLoadSubject.send(())
+        let latest = loadSuccessfully()
+        let toggled = expectation(description: "toggleFollow called")
+        mockUseCase.onToggleFollow = { toggled.fulfill() }
         XCTAssertEqual(latest()?.followButtonTitle, "temple.follow".localized)
 
         followTappedSubject.send(())
 
-        wait(for: [expectation], timeout: 1)
-        XCTAssertEqual(mockUseCase.toggledTempleIDs, ["tp-fixture"])
         XCTAssertEqual(latest()?.followButtonTitle, "temple.following".localized)
+        wait(for: [toggled], timeout: 1)
+        XCTAssertEqual(mockUseCase.toggledTempleIDs, ["temple_fixture"])
+    }
+
+    func test_followTapped_failure_revertsLabelAndEmitsErrorMessage() {
+        var latest: ILTempleStateModel?
+        let loaded = expectation(description: "loaded")
+        loaded.assertForOverFulfill = false
+        let output = observeStates { state in
+            if case .success(let model) = state {
+                latest = model
+                loaded.fulfill()
+            }
+        }
+        let errorReceived = expectation(description: "error message")
+        var message: String?
+        output.errorMessage
+            .sink { message = $0; errorReceived.fulfill() }
+            .store(in: &cancellables)
+        viewDidLoadSubject.send(())
+        wait(for: [loaded], timeout: 1)
+
+        mockUseCase.toggleFollowError = ILCatalogError.offline
+        followTappedSubject.send(())
+        wait(for: [errorReceived], timeout: 1)
+
+        XCTAssertEqual(message, ILCatalogError.offline.localizedDescription)
+        XCTAssertEqual(latest?.followButtonTitle, "temple.follow".localized)
     }
 
     func test_bioToggled_expandsAndCollapsesBiography() {
-        let latest = observeLatestState()
-        viewDidLoadSubject.send(())
+        let latest = loadSuccessfully()
         XCTAssertEqual(latest()?.isBiographyExpanded, false)
 
         bioToggledSubject.send(())
@@ -247,111 +323,143 @@ final class ILTempleViewModelTests: XCTestCase {
         XCTAssertEqual(latest()?.isBiographyExpanded, false)
     }
 
-    func test_googleMapsTapped_firesOpenURLWithGoogleMapsLink() {
-        _ = sut.transform(input: makeInput())
-        viewDidLoadSubject.send(())
-        var receivedEvent: ILTempleNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
-
-        googleMapsTappedSubject.send(())
-
-        XCTAssertEqual(receivedEvent, .openURL("https://www.google.com/maps/dir/?api=1&destination=10.7769,106.7009"))
+    func test_eventsTapped_firesEventsNavigationEvent() {
+        XCTAssertEqual(navigationEvent { self.eventsTappedSubject.send(()) }, .events)
     }
 
-    func test_appleMapsTapped_firesOpenURLWithAppleMapsLink() {
-        _ = sut.transform(input: makeInput())
-        viewDidLoadSubject.send(())
-        var receivedEvent: ILTempleNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
-
-        appleMapsTappedSubject.send(())
-
-        XCTAssertEqual(receivedEvent, .openURL("https://maps.apple.com/?daddr=10.7769,106.7009"))
-    }
-
-    func test_contactTapped_withValue_firesOpenURLWithTelLink() {
-        _ = sut.transform(input: makeInput())
-        viewDidLoadSubject.send(())
-        var receivedEvent: ILTempleNavEvent?
-        sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
-            .store(in: &cancellables)
-
-        contactTappedSubject.send("phone")
-
-        XCTAssertEqual(receivedEvent, .openURL("tel:0281234567"))
+    func test_sessionTapped_firesSessionNavigationEventWithID() {
+        XCTAssertEqual(navigationEvent { self.sessionTappedSubject.send("session-1") }, .session(id: "session-1"))
     }
 
     func test_contactTapped_withoutValue_firesNoEvent() {
-        _ = sut.transform(input: makeInput())
-        viewDidLoadSubject.send(())
-        var receivedEvent: ILTempleNavEvent?
+        _ = loadSuccessfully()
+        XCTAssertNil(navigationEvent(transform: false) { self.contactTappedSubject.send("phone") })
+    }
+
+    func test_backTapped_firesBackNavigationEvent() {
+        XCTAssertEqual(navigationEvent { self.backTappedSubject.send(()) }, .back)
+    }
+
+    func test_offerTapped_firesOfferNavigationEvent() {
+        XCTAssertEqual(navigationEvent { self.offerTappedSubject.send(()) }, .offer)
+    }
+
+    func test_googleMapsTapped_afterLoad_firesOpenURLWithGoogleMapsLink() {
+        _ = loadSuccessfully()
+        XCTAssertEqual(
+            navigationEvent(transform: false) { self.googleMapsTappedSubject.send(()) },
+            .openURL("https://www.google.com/maps/dir/?api=1&destination=10.7769,106.7009")
+        )
+    }
+
+    func test_appleMapsTapped_afterLoad_firesOpenURLWithAppleMapsLink() {
+        _ = loadSuccessfully()
+        XCTAssertEqual(
+            navigationEvent(transform: false) { self.appleMapsTappedSubject.send(()) },
+            .openURL("https://maps.apple.com/?daddr=10.7769,106.7009")
+        )
+    }
+
+    func test_googleMapsTapped_beforeLoad_firesNoEvent() {
+        XCTAssertNil(navigationEvent { self.googleMapsTappedSubject.send(()) })
+    }
+
+    // MARK: - Opening hours parsing
+
+    func test_parseOperatingHours() {
+        XCTAssertEqual(ILTempleViewModel.parseOperatingHours("06:00 - 18:00").map { [$0.open, $0.close] }, [360, 1080])
+        XCTAssertEqual(ILTempleViewModel.parseOperatingHours("5:30–20:30").map { [$0.open, $0.close] }, [330, 1230])
+        XCTAssertNil(ILTempleViewModel.parseOperatingHours(""))
+        XCTAssertNil(ILTempleViewModel.parseOperatingHours("Cả ngày"))
+        XCTAssertNil(ILTempleViewModel.parseOperatingHours("06:75 - 18:00"))
+    }
+
+    // MARK: - Helpers
+
+    /// Runs `action` and returns the navigation event it fired, if any.
+    private func navigationEvent(transform: Bool = true, _ action: () -> Void) -> ILTempleNavEvent? {
+        if transform { _ = sut.transform(input: makeInput()) }
+        var received: ILTempleNavEvent?
         sut.navigationEventPublisher
-            .sink { receivedEvent = $0 }
+            .sink { received = $0 }
             .store(in: &cancellables)
+        action()
+        return received
+    }
 
-        contactTappedSubject.send("fanpage")
+    static func makeDetail(
+        operatingHours: String = "05:00 - 20:00",
+        establishedYear: Int = 1900,
+        introduction: String = "Giới thiệu mẫu.",
+        architectureHeritage: String = "Kiến trúc mẫu.",
+        visitingNotes: [String] = ["Lưu ý một.", "Lưu ý hai."]
+    ) -> ILTempleDetailEntity {
+        ILTempleDetailEntity(
+            summary: ILTempleSummaryEntity(
+                id: "temple_fixture",
+                name: "Chùa Mẫu",
+                type: .chua,
+                region: .south,
+                thumbnailURL: nil,
+                imageURL: nil,
+                sect: "BẮC_TÔNG",
+                heritageRank: .nationalRelic,
+                establishedYear: establishedYear,
+                location: ILTempleLocationEntity(
+                    latitude: 10.7769,
+                    longitude: 106.7009,
+                    address: "128 Đường A, Phường B, Quận 1, TP. Hồ Chí Minh"
+                )
+            ),
+            aliases: ["Chùa Cổ", "Cổ Tự"],
+            founder: "",
+            currentAbbot: "Đại đức A",
+            operatingHours: operatingHours,
+            facilities: ILTempleFacilitiesEntity(
+                hasCarParking: true,
+                hasMotorbikeParking: false,
+                servesVegetarianMeals: true,
+                hasSummerRetreat: false
+            ),
+            introduction: introduction,
+            architectureHeritage: architectureHeritage,
+            visitingNotes: visitingNotes
+        )
+    }
+}
 
-        XCTAssertNil(receivedEvent)
+// MARK: - ILTempleCatalogLabels
+
+final class ILTempleCatalogLabelsTests: XCTestCase {
+
+    func test_sectLabel_matchesKnownValuesIgnoringDiacritics() {
+        XCTAssertEqual(ILTempleCatalogLabels.sectLabel("BẮC_TÔNG"), "temple.sect.bacTong".localized)
+        XCTAssertEqual(ILTempleCatalogLabels.sectLabel("BAC_TONG"), "temple.sect.bacTong".localized)
+        XCTAssertEqual(ILTempleCatalogLabels.sectLabel("NAM_TONG_KHMER"), "temple.sect.namTongKhmer".localized)
+        XCTAssertEqual(ILTempleCatalogLabels.sectLabel("TIN_NGUONG_DANG_GIAN"), "temple.sect.folk".localized)
+    }
+
+    func test_sectLabel_unknownValue_isHumanized() {
+        XCTAssertEqual(ILTempleCatalogLabels.sectLabel("TỊNH_ĐỘ_TÔNG"), "Tịnh độ tông")
     }
 }
 
 // MARK: - Mock ILTempleUseCase
 final class MockILTempleUseCase: ILTempleUseCase {
-    var getInitialStateCalled = false
+    var result: Result<ILTempleDetailEntity, Error> = .success(ILTempleViewModelTests.makeDetail())
+    var requestedIDs: [String] = []
+    var toggleFollowError: Error?
     var toggledTempleIDs: [String] = []
     var onToggleFollow: (() -> Void)?
 
-    func getInitialState(templeID: String) -> ILTempleEntity {
-        getInitialStateCalled = true
-        return ILTempleEntity(
-            id: "tp-fixture",
-            name: "Chùa Mẫu",
-            aliases: ["Chùa Cổ"],
-            latitude: 10.7769, longitude: 106.7009,
-            street: "128 Đường A", ward: "Phường B", district: "Quận 1", province: "TP. Hồ Chí Minh",
-            region: "Miền Nam", subRegion: "Đông Nam Bộ",
-            sect: "Bắc tông",
-            orgInfo: [
-                ILTempleOrgInfoEntity(id: "abbot", label: "Trụ trì", value: "Đại đức A"),
-                ILTempleOrgInfoEntity(id: "founder", label: "Tổ khai sơn", value: nil)
-            ],
-            era: "Năm 1900", rank: "Di tích Quốc gia",
-            archStyle: "Kiểu chữ Tam", materials: "Gỗ",
-            highlights: ["Điểm nổi bật 1"],
-            bio: "Tiểu sử mẫu.",
-            regularHours: ILTempleOpeningHoursEntity(openMinute: 300, closeMinute: 1200),
-            holidayHours: ILTempleOpeningHoursEntity(openMinute: 300, closeMinute: 1200),
-            contacts: [
-                ILTempleContactEntity(id: "phone", label: "Hotline", rawValue: "028 1234 567"),
-                ILTempleContactEntity(id: "fanpage", label: "Fanpage", rawValue: nil)
-            ],
-            amenities: [
-                ILTempleAmenityEntity(id: "car", label: "Bãi đỗ ô tô", value: "Có · miễn phí"),
-                ILTempleAmenityEntity(id: "bike", label: "Giữ xe máy", value: nil)
-            ],
-            visitRules: ["Quy định 1", "Quy định 2"],
-            hasUpcomingSchedule: true,
-            sessions: [
-                ILTempleSessionEntity(
-                    id: "temple.session.vulan",
-                    title: "Tụng Kinh Vu Lan",
-                    subtitle: "CN 13/9 · 8:00 · Chánh điện",
-                    trailingText: "Đã ghi danh",
-                    tone: .gold,
-                    glyph: .book
-                )
-            ],
-            updatedLabel: "09/2026"
-        )
+    func loadTemple(id: String) async throws -> ILTempleDetailEntity {
+        requestedIDs.append(id)
+        return try result.get()
     }
 
     func toggleFollow(templeID: String) async throws {
         toggledTempleIDs.append(templeID)
         onToggleFollow?()
+        if let toggleFollowError { throw toggleFollowError }
     }
 }

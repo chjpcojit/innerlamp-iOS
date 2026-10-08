@@ -7,31 +7,54 @@ import Foundation
 import Combine
 
 enum ILSanghaNavEvent: Equatable {
-    case openFindSangha
-    case startSitting
-    case openCompose
+    /// Mở Trang chùa của `id` (thẻ chùa tu tập hoặc hàng "Chùa gần bạn").
+    case openTemple(id: String)
+    /// "Tất cả" ở "Khóa tu & lễ sắp tới" hoặc chạm 1 khóa tu — màn Sự kiện & khóa học.
     case openEvents
-    case openCommunity(id: String)
-    case openPost(id: String)
+    case openTalk(id: String)
+    /// "Công đức · cúng dường" (màn Cúng dường chưa build).
+    case openOffer
+    /// "Đổi chùa" — mở màn "Chọn chùa tu tập".
+    case openTempleFinder
+    /// Chạm 1 buổi tu học trực tuyến (màn đích chưa build).
+    case openOnlineSession(id: String)
+    /// "Lịch lễ" hoặc chạm 1 ngày lễ — màn Lịch lễ Phật giáo.
+    case openFestivals
 }
 
 protocol ILSanghaViewModelProtocol: ViewModelType {
-    /// Độc lập với `transform(input:)` — `ILSanghaCoordinator` subscribe trực tiếp trong
-    /// `start()`, trước khi `ViewController`/`Input` tồn tại.
     var navigationEventPublisher: AnyPublisher<ILSanghaNavEvent, Never> { get }
 }
 
+/// Tab Chùa — chùa người dùng đang tu tập. Hiện chỉ là UI: dữ liệu mẫu đồng bộ, không có
+/// loading / lỗi mạng. Có chùa: thẻ chùa, thông báo, khóa tu & lễ sắp tới,
+/// pháp thoại, cúng dường, số Phật tử. Chưa có: chùa gần bạn (chọn), chùa trực tuyến, khóa tu.
+/// Cả hai trạng thái đều có khối "Ngày lễ & ngày chay sắp tới".
 final class ILSanghaViewModel: ILSanghaViewModelProtocol {
 
     // MARK: - Input / Output
     struct Input {
         let viewDidLoad: AnyPublisher<Void, Never>
-        let findSanghaTapped: AnyPublisher<Void, Never>
-        let sitTogetherTapped: AnyPublisher<Void, Never>
-        let composeTapped: AnyPublisher<Void, Never>
+        /// Mỗi lần tab hiện lại (kể cả lần đầu) — nạp lại để thấy chùa vừa đổi ở màn "Chọn chùa tu tập".
+        let viewWillAppear: AnyPublisher<Void, Never>
+        /// "Đổi chùa" — mở màn "Chọn chùa tu tập".
+        let changeTempleTapped: AnyPublisher<Void, Never>
+        let myTempleTapped: AnyPublisher<Void, Never>
+        /// "Tất cả" / chạm 1 khóa tu / chạm 1 khóa tu ở trạng thái chưa chọn.
         let eventsTapped: AnyPublisher<Void, Never>
-        let communityTapped: AnyPublisher<Void, Never>
-        let postTapped: AnyPublisher<String, Never>
+        /// Nút pill của 1 khóa tu — mang theo `id` khóa tu.
+        let eventActionTapped: AnyPublisher<String, Never>
+        /// Chạm 1 pháp thoại — mang theo `talkID`.
+        let talkTapped: AnyPublisher<String, Never>
+        let offerTapped: AnyPublisher<Void, Never>
+        /// Chạm hàng "Chùa gần bạn" — mở Trang chùa.
+        let nearbyTempleTapped: AnyPublisher<String, Never>
+        /// "Chọn" ở hàng "Chùa gần bạn" — đặt làm chùa tu tập.
+        let pickTapped: AnyPublisher<String, Never>
+        let onlineSessionTapped: AnyPublisher<String, Never>
+        let festivalsTapped: AnyPublisher<Void, Never>
+        /// Nút "Nhắc tôi" của 1 ngày lễ — mang theo `id` ngày.
+        let dayReminderTapped: AnyPublisher<String, Never>
     }
 
     struct Output {
@@ -44,114 +67,240 @@ final class ILSanghaViewModel: ILSanghaViewModelProtocol {
     }
 
     private let navigationEventSubject = PassthroughSubject<ILSanghaNavEvent, Never>()
-    private let stateSubject: CurrentValueSubject<ViewState<ILSanghaStateModel>, Never>
-    private var sangha: ILSanghaEntity
-    private var currentState: ILSanghaStateModel
+    private let stateSubject = CurrentValueSubject<ViewState<ILSanghaStateModel>, Never>(.idle)
     private let useCase: ILSanghaUseCase
     private let now: () -> Date
     private var cancellables = Set<AnyCancellable>()
+
+    private var myTemple: ILSanghaMyTempleEntity?
+    private var chooser: ILSanghaChooserEntity?
+    private var days: [ILFestivalDayEntity] = []
+    /// Nút "Nhắc tôi" / "Giữ chỗ" đang bật — chỉ là trạng thái hiển thị, chưa lưu (xem TD-Sangha-001).
+    private var activeEventIDs = Set<String>()
+    private var remindedDayIDs = Set<String>()
+
+    private static let upcomingDaysLimit = 4
+    /// Hiển thị cố định như prototype (`chHere`) — chưa có định vị thật.
+    private static let mockLocationName = "Quận 1, TP. Hồ Chí Minh"
 
     // MARK: - Initializer
     init(useCase: ILSanghaUseCase, now: @escaping () -> Date = Date.init) {
         self.useCase = useCase
         self.now = now
-        let initialSangha = useCase.getSangha()
-        self.sangha = initialSangha
-        let initialState = ILSanghaViewModel.makeStateModel(sangha: initialSangha, now: now())
-        self.currentState = initialState
-        self.stateSubject = CurrentValueSubject(.success(initialState))
     }
 
     // MARK: - Transform
     func transform(input: Input) -> Output {
         input.viewDidLoad
-            .sink { [weak self] _ in self?.handleViewDidLoad() }
+            .sink { [weak self] _ in self?.load() }
             .store(in: &cancellables)
 
-        input.findSanghaTapped
-            .sink { [weak self] _ in self?.navigationEventSubject.send(.openFindSangha) }
+        input.viewWillAppear
+            .sink { [weak self] _ in self?.load() }
             .store(in: &cancellables)
 
-        input.sitTogetherTapped
-            .sink { [weak self] _ in self?.navigationEventSubject.send(.startSitting) }
+        input.changeTempleTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openTempleFinder) }
             .store(in: &cancellables)
 
-        input.composeTapped
-            .sink { [weak self] _ in self?.navigationEventSubject.send(.openCompose) }
+        input.myTempleTapped
+            .sink { [weak self] _ in
+                guard let id = self?.myTemple?.temple.id else { return }
+                self?.navigationEventSubject.send(.openTemple(id: id))
+            }
             .store(in: &cancellables)
 
         input.eventsTapped
             .sink { [weak self] _ in self?.navigationEventSubject.send(.openEvents) }
             .store(in: &cancellables)
 
-        input.communityTapped
-            .sink { [weak self] _ in self?.handleCommunityTapped() }
+        input.eventActionTapped
+            .sink { [weak self] id in
+                guard let self else { return }
+                if activeEventIDs.contains(id) { activeEventIDs.remove(id) } else { activeEventIDs.insert(id) }
+                publishState()
+            }
             .store(in: &cancellables)
 
-        input.postTapped
-            .sink { [weak self] id in self?.handlePostTapped(id: id) }
+        input.talkTapped
+            .sink { [weak self] id in self?.navigationEventSubject.send(.openTalk(id: id)) }
+            .store(in: &cancellables)
+
+        input.offerTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openOffer) }
+            .store(in: &cancellables)
+
+        input.nearbyTempleTapped
+            .sink { [weak self] id in self?.navigationEventSubject.send(.openTemple(id: id)) }
+            .store(in: &cancellables)
+
+        input.pickTapped
+            .sink { [weak self] id in
+                self?.useCase.selectMyTemple(id: id)
+                self?.load()
+            }
+            .store(in: &cancellables)
+
+        input.onlineSessionTapped
+            .sink { [weak self] id in self?.navigationEventSubject.send(.openOnlineSession(id: id)) }
+            .store(in: &cancellables)
+
+        input.festivalsTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openFestivals) }
+            .store(in: &cancellables)
+
+        input.dayReminderTapped
+            .sink { [weak self] id in
+                guard let self else { return }
+                if remindedDayIDs.contains(id) { remindedDayIDs.remove(id) } else { remindedDayIDs.insert(id) }
+                publishState()
+            }
             .store(in: &cancellables)
 
         return Output(state: stateSubject.eraseToAnyPublisher())
     }
 
-    // MARK: - Actions
-    private func handleViewDidLoad() {
-        sangha = useCase.getSangha()
-        currentState = ILSanghaViewModel.makeStateModel(sangha: sangha, now: now())
-        stateSubject.send(.success(currentState))
+    // MARK: - Loading
+    private func load() {
+        myTemple = useCase.loadMyTemple()
+        chooser = myTemple == nil ? useCase.loadChooser() : nil
+        days = useCase.loadUpcomingDays(limit: Self.upcomingDaysLimit)
+        publishState()
     }
 
-    private func handleCommunityTapped() {
-        guard let community = sangha.community else { return }
-        navigationEventSubject.send(.openCommunity(id: community.id))
-    }
-
-    private func handlePostTapped(id: String) {
-        guard sangha.posts.contains(where: { $0.id == id }) else { return }
-        navigationEventSubject.send(.openPost(id: id))
+    private func publishState() {
+        var model = ILSanghaStateModel()
+        model.myTemple = myTemple.map(makeMyTempleModel)
+        model.chooser = chooser.map(makeChooserModel)
+        model.days = days.map { makeDayRow($0, templeName: myTemple?.temple.name) }
+        stateSubject.send(.success(model))
     }
 
     // MARK: - Entity -> StateModel mapping
-    /// Việc riêng của presentation (format số, ghép câu phụ, thời gian tương đối) nên nằm ở đây,
-    /// không phải trong Mapper dùng chung (xem `references/data_layer_boundaries.md`).
-    private static func makeStateModel(sangha: ILSanghaEntity, now: Date) -> ILSanghaStateModel {
-        var model = ILSanghaStateModel()
+    private func makeMyTempleModel(_ content: ILSanghaMyTempleEntity) -> ILSanghaMyTempleModel {
+        let temple = content.temple
+        let name = temple.name
+        let status = Self.status(operatingHours: temple.operatingHours, now: now())
+        let abbot = temple.abbot.isEmpty ? "sangha.abbot.unknown".localized : temple.abbot
 
-        model.liveSession = sangha.liveSession.map {
-            ILSanghaLiveSessionModel(
-                title: "sangha.live.title".localized,
-                countText: formatCount($0.participantCount),
-                captionText: String(format: "sangha.live.caption".localized, $0.sessionMinutes),
-                ctaTitle: "sangha.live.cta".localized
+        return ILSanghaMyTempleModel(
+            id: temple.id,
+            name: name,
+            place: temple.address,
+            statusText: status?.text ?? "",
+            isOpen: status?.isOpen ?? false,
+            abbotText: String(format: "sangha.abbot.format".localized, abbot),
+            announcements: content.announcements.map {
+                ILSanghaAnnouncementRowModel(id: $0.id, timeText: Self.relativeDay(from: $0.postedAt, now: now()), text: $0.text)
+            },
+            events: content.events.map { makeEventRow($0) },
+            talks: content.talks.enumerated().map { index, talk in
+                ILSanghaTalkRowModel(
+                    id: index,
+                    talkID: talk.id,
+                    title: talk.title,
+                    subtitle: String(format: "sangha.talk.subtitle".localized, talk.speaker, talk.durationMinutes)
+                )
+            },
+            offerSubtitle: String(format: "sangha.offer.subtitle".localized, name),
+            peersText: String(
+                format: "sangha.peers.format".localized,
+                Self.formatCount(content.practitionerCount), name, content.upcomingRetreatAttendeeCount
             )
+        )
+    }
+
+    private func makeChooserModel(_ content: ILSanghaChooserEntity) -> ILSanghaChooserModel {
+        ILSanghaChooserModel(
+            locationText: Self.mockLocationName,
+            nearby: content.nearbyTemples.map {
+                ILSanghaNearbyRowModel(
+                    id: $0.id, name: $0.name,
+                    subtitle: String(format: "sangha.nearby.subtitle".localized, $0.address, Self.formatDistance($0.distanceKm))
+                )
+            },
+            online: content.onlineSessions.map {
+                ILSanghaOnlineRowModel(
+                    id: $0.id, schedule: $0.schedule, isDaily: $0.isDaily, title: $0.title, subtitle: $0.detail
+                )
+            },
+            retreats: content.retreats.map { makeEventRow($0) }
+        )
+    }
+
+    private func makeEventRow(_ event: ILSanghaEventEntity) -> ILSanghaEventRowModel {
+        let calendar = Calendar(identifier: .gregorian)
+        let isOn = activeEventIDs.contains(event.id)
+        let label: String?
+        switch event.action {
+        case .remind: label = (isOn ? "sangha.action.reminded" : "sangha.action.remind").localized
+        case .reserve: label = (isOn ? "sangha.action.reserved" : "sangha.action.reserve").localized
+        case .none: label = nil
+        }
+        return ILSanghaEventRowModel(
+            id: event.id,
+            dayNumber: String(format: "%02d", calendar.component(.day, from: event.date)),
+            monthLabel: Self.monthLabel(event.date, calendar: calendar),
+            title: event.title,
+            subtitle: event.detail,
+            actionLabel: label,
+            isActionOn: isOn,
+            isGoldAction: event.action == .remind
+        )
+    }
+
+    private func makeDayRow(_ day: ILFestivalDayEntity, templeName: String?) -> ILSanghaDayRowModel {
+        let calendar = Calendar(identifier: .gregorian)
+        let base = ILFestivalsViewModel.makeDayModel(day)
+        let lunar = ILLunarCalendar.solarToLunar(date: day.date, calendar: calendar)
+        let isReminded = remindedDayIDs.contains(day.id)
+
+        var subtitle = String(format: "festivals.item.lunarDateFormat".localized, lunar.day, lunar.month)
+            + " · " + base.countdownText
+        if let templeName {
+            subtitle += " · " + String(format: "sangha.day.templeHasRite".localized, templeName)
         }
 
-        model.community = sangha.community.map {
-            ILSanghaCommunityModel(
-                id: $0.id,
-                name: $0.name,
-                metaText: String(format: "sangha.community.meta".localized, $0.memberCount, $0.district),
-                announcement: $0.announcement
-            )
+        let suggestionKey: String
+        if day.kind == .festival {
+            suggestionKey = "sangha.day.suggestion.festival"
+        } else if lunar.day == 15 {
+            suggestionKey = "sangha.day.suggestion.fullMoon"
+        } else {
+            suggestionKey = "sangha.day.suggestion.newMoon"
         }
 
-        model.posts = sangha.posts.map {
-            ILSanghaPostModel(
-                id: $0.id,
-                authorName: $0.authorName,
-                authorInitials: initial(of: $0.authorName),
-                metaText: String(
-                    format: "sangha.post.meta".localized,
-                    formatRelativeTime(from: $0.postedAt, now: now),
-                    $0.authorStreakDays
-                ),
-                body: $0.body,
-                likeText: String(format: "sangha.post.like".localized, $0.likeCount),
-                replyText: String(format: "sangha.post.reply".localized, $0.replyCount)
-            )
-        }
-        return model
+        return ILSanghaDayRowModel(
+            id: day.id,
+            dayNumber: base.dayNumber,
+            monthLabel: Self.monthLabel(day.date, calendar: calendar),
+            title: day.title,
+            subtitle: subtitle,
+            suggestion: suggestionKey.localized,
+            isFestival: base.isFestival,
+            reminderLabel: (isReminded ? "sangha.action.reminded" : "sangha.action.remind").localized,
+            isReminderOn: isReminded
+        )
+    }
+
+    // MARK: - Formatting
+    /// "TH10" — tháng dương.
+    private static func monthLabel(_ date: Date, calendar: Calendar) -> String {
+        String(format: "sangha.month.format".localized, calendar.component(.month, from: date))
+    }
+
+    /// "Hôm nay" khi cùng ngày, còn lại "N ngày trước".
+    static func relativeDay(from date: Date, now: Date) -> String {
+        let calendar = Calendar(identifier: .gregorian)
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: now)).day ?? 0
+        return days <= 0
+            ? "sangha.time.today".localized
+            : String(format: "sangha.time.daysAgo".localized, days)
+    }
+
+    /// "3,2 km" — dấu phẩy thập phân kiểu Việt.
+    static func formatDistance(_ km: Double) -> String {
+        String(format: "%.1f km", km).replacingOccurrences(of: ".", with: ",")
     }
 
     /// Nhóm hàng nghìn theo kiểu Việt: 1248 → "1.248".
@@ -162,23 +311,18 @@ final class ILSanghaViewModel: ILSanghaViewModelProtocol {
         return formatter.string(from: NSNumber(value: count)) ?? String(count)
     }
 
-    /// < 1 giờ → "x phút trước" (tối thiểu 1); < 24 giờ → "x giờ trước"; còn lại → "x ngày trước".
-    static func formatRelativeTime(from date: Date, now: Date) -> String {
-        let seconds = max(0, Int(now.timeIntervalSince(date)))
-        let minutes = seconds / 60
-        if minutes < 60 {
-            return String(format: "sangha.time.minutesAgo".localized, max(1, minutes))
-        }
-        let hours = minutes / 60
-        if hours < 24 {
-            return String(format: "sangha.time.hoursAgo".localized, hours)
-        }
-        return String(format: "sangha.time.daysAgo".localized, hours / 24)
-    }
-
-    /// Chữ cái đầu của tên gọi (từ cuối) — "Diệu Hạnh" → "H".
-    static func initial(of name: String) -> String {
-        guard let lastWord = name.split(separator: " ").last, let first = lastWord.first else { return "" }
-        return String(first).uppercased()
+    /// "Đang mở · đến 18:00" / "Đã đóng · mở 6:00" theo `operating_hours`; `nil` khi giờ không hợp lệ.
+    static func status(operatingHours: String, now: Date) -> (text: String, isOpen: Bool)? {
+        guard let hours = ILTempleViewModel.parseOperatingHours(operatingHours) else { return nil }
+        let calendar = Calendar(identifier: .gregorian)
+        let minute = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
+        let isOpen = hours.close > hours.open
+            ? minute >= hours.open && minute < hours.close
+            : minute >= hours.open || minute < hours.close
+        let time = { (value: Int) in "\(value / 60):" + String(format: "%02d", value % 60) }
+        let text = isOpen
+            ? String(format: "sangha.status.open".localized, time(hours.close))
+            : String(format: "sangha.status.closed".localized, time(hours.open))
+        return (text, isOpen)
     }
 }

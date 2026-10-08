@@ -5,20 +5,22 @@
 
 import UIKit
 
-/// Round tinted badge with a Lora "!" — the error mark shared by every popup in `Components/Alert/`.
+/// Round tinted badge with a Lora mark ("!" by default) shared by every popup in `Components/Alert/`.
 public final class ILAlertGlyphView: UIView {
 
     // MARK: - Properties
     private let diameter: CGFloat
     private let fillColor: UIColor
+    private let symbol: String
 
     // MARK: - UI Elements
     private let glyphLabel = UILabel()
 
     // MARK: - Initializer
-    public init(diameter: CGFloat, font: UIFont, fillColor: UIColor, glyphColor: UIColor) {
+    public init(diameter: CGFloat, font: UIFont, fillColor: UIColor, glyphColor: UIColor, symbol: String = "!") {
         self.diameter = diameter
         self.fillColor = fillColor
+        self.symbol = symbol
         super.init(frame: .zero)
         glyphLabel.font = font
         glyphLabel.textColor = glyphColor
@@ -37,7 +39,7 @@ public final class ILAlertGlyphView: UIView {
         layer.cornerRadius = diameter / 2
 
         // Decorative mark, not user-facing copy — the popup title carries the meaning.
-        glyphLabel.text = "!"
+        glyphLabel.text = symbol
         glyphLabel.textAlignment = .center
         glyphLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(glyphLabel)

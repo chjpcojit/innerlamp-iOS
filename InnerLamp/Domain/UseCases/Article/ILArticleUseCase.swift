@@ -6,51 +6,49 @@
 import Foundation
 
 protocol ILArticleUseCase {
-    /// Catalog 5 bài viết với bài `articleID` được chọn làm bài hiện tại.
+    /// Entity for `articleID` with nothing loaded yet — the article is filled by `loadArticle(id:)`.
     func getInitialState(articleID: String) -> ILArticleEntity
 
-    /// Bài đang xem theo `currentArticleID` (`nil` nếu id không có trong catalog).
-    func currentArticle(in entity: ILArticleEntity) -> ILArticleItemEntity?
+    /// Full article from `GET /v1/articles/{id}`. Throws `ILCatalogError` — `.notFound` for an
+    /// unknown id, `.offline` when the server is unreachable.
+    func loadArticle(id: String) async throws -> ILArticleItemEntity
 
-    /// 2 bài "Đọc tiếp" ngay sau bài `currentID` theo thứ tự vòng quanh catalog.
-    func nextArticles(after currentID: String, in entity: ILArticleEntity) -> [ILArticleItemEntity]
+    /// Up to 2 "Đọc tiếp" articles other than `id`, taken from `GET /v1/articles/top` (the API has
+    /// no related-articles field). Best effort: a failure yields `[]` so it never blocks reading.
+    func loadNextArticles(excluding id: String) async -> [ILArticleSummaryEntity]
 
-    /// Chuyển bài đang xem sang `id` (chạm 1 bài trong danh sách "Đọc tiếp").
-    func selectArticle(_ id: String, in entity: ILArticleEntity) -> ILArticleEntity
-
-    /// Bật/tắt trạng thái đã lưu của bài `id` — thuần in-memory, chưa persist.
+    /// Toggles the saved state of `id` — pure in-memory, not persisted.
     func toggleSave(_ id: String, in entity: ILArticleEntity) -> ILArticleEntity
 }
 
 final class ILArticleUseCaseImpl: ILArticleUseCase {
 
-    // TODO: khi có API bài viết thật, thay catalog mock dưới đây bằng dữ liệu từ
-    // networkService (danh mục "Bài viết Phật pháp hay", xem README design handoff — mục
-    // "Data cần API"). Lưu bài hiện chỉ đổi trạng thái in-memory; khi có màn "Bài đã lưu"
-    // thật cần persist `savedArticleIDs` xuống UserDefaultsService/Core Data.
-    init() {}
+    private static let nextArticleCount = 2
+
+    private let articleRepository: ILArticleRepository
+
+    init(articleRepository: ILArticleRepository) {
+        self.articleRepository = articleRepository
+    }
 
     func getInitialState(articleID: String) -> ILArticleEntity {
-        ILArticleEntity(articles: Self.makeArticleCatalog(), currentArticleID: articleID, savedArticleIDs: [])
+        ILArticleEntity(currentArticleID: articleID)
     }
 
-    func currentArticle(in entity: ILArticleEntity) -> ILArticleItemEntity? {
-        entity.articles.first { $0.id == entity.currentArticleID }
+    func loadArticle(id: String) async throws -> ILArticleItemEntity {
+        try await articleRepository.loadArticle(id: id)
     }
 
-    func nextArticles(after currentID: String, in entity: ILArticleEntity) -> [ILArticleItemEntity] {
-        guard !entity.articles.isEmpty,
-              let index = entity.articles.firstIndex(where: { $0.id == currentID }) else {
+    func loadNextArticles(excluding id: String) async -> [ILArticleSummaryEntity] {
+        do {
+            let top = try await articleRepository.loadTopArticles()
+            return Array(top.filter { $0.id != id }.prefix(Self.nextArticleCount))
+        } catch {
+            #if DEBUG
+            print("[Article] loadNextArticles failed: \(error)")
+            #endif
             return []
         }
-        return [1, 2].map { entity.articles[(index + $0) % entity.articles.count] }
-    }
-
-    func selectArticle(_ id: String, in entity: ILArticleEntity) -> ILArticleEntity {
-        guard entity.currentArticleID != id else { return entity }
-        var updated = entity
-        updated.currentArticleID = id
-        return updated
     }
 
     func toggleSave(_ id: String, in entity: ILArticleEntity) -> ILArticleEntity {
@@ -62,37 +60,4 @@ final class ILArticleUseCaseImpl: ILArticleUseCase {
         }
         return updated
     }
-
-    // MARK: - Catalog
-
-    /// Catalog tĩnh 5 bài viết khớp `Component.ARTICLES` trong design handoff (theo thứ tự
-    /// `art-1` → `art-5`). Nội dung là dữ liệu hiển thị nên lấy qua `.localized`, giống cách
-    /// `ILHomeUseCaseImpl` dựng danh mục bài viết ở Trang chủ.
-    private static func makeArticleCatalog() -> [ILArticleItemEntity] {
-        (0..<5).map { index in
-            let prefix = "article.article.\(index)"
-            return ILArticleItemEntity(
-                id: "art-\(index + 1)",
-                category: "\(prefix).category".localized,
-                title: "\(prefix).title".localized,
-                author: "\(prefix).author".localized,
-                authorInitials: "\(prefix).initials".localized,
-                date: "\(prefix).date".localized,
-                readMinutes: Self.readMinutes[index],
-                bodyParagraphs: Self.makeBodyParagraphs(index: index, prefix: prefix),
-                quote: "\(prefix).quote".localized,
-                quoteSource: "\(prefix).quoteSource".localized
-            )
-        }
-    }
-
-    private static func makeBodyParagraphs(index: Int, prefix: String) -> [String] {
-        (0..<Self.bodyCounts[index]).map { "\(prefix).body.\($0)".localized }
-    }
-
-    /// Số phút đọc mỗi bài (khớp `read` của `Component.ARTICLES`).
-    private static let readMinutes = [6, 4, 5, 5, 7]
-
-    /// Số đoạn thân bài mỗi bài.
-    private static let bodyCounts = [4, 3, 3, 3, 3]
 }

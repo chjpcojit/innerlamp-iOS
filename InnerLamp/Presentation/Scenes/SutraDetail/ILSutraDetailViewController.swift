@@ -20,7 +20,13 @@ final class ILSutraDetailViewController: BaseViewController {
     private let playTappedSubject = PassthroughSubject<Void, Never>()
     private let chapterTappedSubject = PassthroughSubject<Void, Never>()
 
+
     // MARK: - UI Elements
+    /// Dải header ghim — nền `th-top` liền màu với đỉnh hero, không có đường kẻ; nội dung cuộn
+    /// chui xuống dưới và mờ dần qua lớp kính.
+    private let headerBand = ILStickyHeaderBand(tintColor: ILColors.templeHeaderTop)
+    private let navBar = ILNavBar(showBack: true)
+
     private let scrollView = UIScrollView()
     private let contentView = UIView()
 
@@ -59,6 +65,14 @@ final class ILSutraDetailViewController: BaseViewController {
         return label
     }()
 
+    private lazy var translatorLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.label
+        label.textColor = ILColors.inkSubtle
+        label.numberOfLines = 0
+        return label
+    }()
+
     private lazy var tocTitleLabel: UILabel = {
         let label = UILabel()
         label.font = ILTypography.headerTitle
@@ -73,7 +87,24 @@ final class ILSutraDetailViewController: BaseViewController {
         return label
     }()
 
+    private lazy var tocHeaderRow = UIView()
+
     private lazy var chapterListView = ILSutraDetailChapterListView()
+
+    /// Thân trang dưới hero: thẻ tiến trình (chỉ Kinh Pháp Cú) → mô tả → dịch giả → Mục lục.
+    private lazy var bodyStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [
+            progressCard, descriptionLabel, translatorLabel, tocHeaderRow, chapterListView
+        ])
+        stack.axis = .vertical
+        stack.alignment = .fill
+        stack.spacing = 0
+        stack.setCustomSpacing(18, after: progressCard)
+        stack.setCustomSpacing(8, after: descriptionLabel)
+        stack.setCustomSpacing(24, after: translatorLabel)
+        stack.setCustomSpacing(12, after: tocHeaderRow)
+        return stack
+    }()
 
     private lazy var footerBar: UIView = {
         let view = UIView()
@@ -121,9 +152,9 @@ final class ILSutraDetailViewController: BaseViewController {
         (tabBarController as? ILMainTabBarController)?.setBottomNavHidden(false, animated: animated)
     }
 
-    override func viewSafeAreaInsetsDidChange() {
-        super.viewSafeAreaInsetsDidChange()
-        heroView.topInset = view.safeAreaInsets.top
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        applyHeaderInset()
     }
 
     // MARK: - Setup
@@ -131,12 +162,13 @@ final class ILSutraDetailViewController: BaseViewController {
         super.setupViews()
         view.backgroundColor = ILColors.canvas
 
-        heroView.onBack = { [weak self] in self?.backTappedSubject.send(()) }
-        heroView.onDownload = { [weak self] in self?.downloadTappedSubject.send(()) }
+        navBar.onBack = { [weak self] in self?.backTappedSubject.send(()) }
+        navBar.onAction = { [weak self] in self?.downloadTappedSubject.send(()) }
 
         scrollView.showsVerticalScrollIndicator = false
         scrollView.alwaysBounceVertical = true
         scrollView.contentInsetAdjustmentBehavior = .never
+        headerBand.bind(to: scrollView)
 
         chantButton.onTap = { [weak self] in self?.chantTappedSubject.send(()) }
         playButton.onTap = { [weak self] in self?.playTappedSubject.send(()) }
@@ -149,27 +181,40 @@ final class ILSutraDetailViewController: BaseViewController {
         footerBar.addSubview(footerTopDivider)
         footerBar.addSubview(footerStack)
 
-        scrollView.addSubview(contentView)
+        tocHeaderRow.addSubview(tocTitleLabel)
+        tocHeaderRow.addSubview(tocCountLabel)
 
-        [
-            heroView, progressCard, descriptionLabel, tocTitleLabel, tocCountLabel, chapterListView
-        ].forEach { contentView.addSubview($0) }
+        headerBand.addSubview(navBar)
+
+        scrollView.addSubview(contentView)
+        contentView.addSubview(heroView)
+        contentView.addSubview(bodyStack)
 
         view.addSubview(scrollView)
+        view.addSubview(headerBand)
         view.addSubview(footerBar)
     }
 
     override func setupConstraints() {
         super.setupConstraints()
         [
-            scrollView, contentView, heroView, progressCard, progressTitleLabel,
-            progressPercentLabel, progressBar, descriptionLabel, tocTitleLabel, tocCountLabel,
-            chapterListView, footerBar, footerTopDivider, footerStack, chantButton, playButton
+            navBar, scrollView, contentView, heroView, bodyStack, progressCard,
+            progressTitleLabel, progressPercentLabel, progressBar, tocTitleLabel, tocCountLabel,
+            footerBar, footerTopDivider, footerStack, chantButton, playButton
         ].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
 
         let horizontal = ILMetrics.screenHorizontal
 
         NSLayoutConstraint.activate([
+            headerBand.topAnchor.constraint(equalTo: view.topAnchor),
+            headerBand.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerBand.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+
+            navBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: ILMetrics.spaceSmall / 2),
+            navBar.leadingAnchor.constraint(equalTo: headerBand.leadingAnchor, constant: horizontal),
+            navBar.trailingAnchor.constraint(equalTo: headerBand.trailingAnchor, constant: -horizontal),
+            navBar.bottomAnchor.constraint(equalTo: headerBand.bottomAnchor, constant: -10),
+
             footerBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             footerBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             footerBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -184,6 +229,8 @@ final class ILSutraDetailViewController: BaseViewController {
             footerStack.trailingAnchor.constraint(equalTo: footerBar.trailingAnchor, constant: -horizontal),
             footerStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
 
+            // Scroll view chạy dưới header để nội dung mờ xuyên qua kính; chiều cao header được
+            // áp thành top content inset trong `viewDidLayoutSubviews`.
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -199,9 +246,10 @@ final class ILSutraDetailViewController: BaseViewController {
             heroView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             heroView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
 
-            progressCard.topAnchor.constraint(equalTo: heroView.bottomAnchor, constant: horizontal),
-            progressCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
-            progressCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
+            bodyStack.topAnchor.constraint(equalTo: heroView.bottomAnchor, constant: horizontal),
+            bodyStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
+            bodyStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
+            bodyStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -ILMetrics.spaceStandard),
 
             progressTitleLabel.topAnchor.constraint(equalTo: progressCard.topAnchor, constant: ILMetrics.spaceStandard),
             progressTitleLabel.leadingAnchor.constraint(equalTo: progressCard.leadingAnchor, constant: 18),
@@ -215,20 +263,12 @@ final class ILSutraDetailViewController: BaseViewController {
             progressBar.trailingAnchor.constraint(equalTo: progressCard.trailingAnchor, constant: -18),
             progressBar.bottomAnchor.constraint(equalTo: progressCard.bottomAnchor, constant: -ILMetrics.spaceStandard),
 
-            descriptionLabel.topAnchor.constraint(equalTo: progressCard.bottomAnchor, constant: 18),
-            descriptionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
-            descriptionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
-
-            tocTitleLabel.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 24),
-            tocTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
+            tocTitleLabel.topAnchor.constraint(equalTo: tocHeaderRow.topAnchor),
+            tocTitleLabel.leadingAnchor.constraint(equalTo: tocHeaderRow.leadingAnchor),
+            tocTitleLabel.bottomAnchor.constraint(equalTo: tocHeaderRow.bottomAnchor),
 
             tocCountLabel.centerYAnchor.constraint(equalTo: tocTitleLabel.centerYAnchor),
-            tocCountLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
-
-            chapterListView.topAnchor.constraint(equalTo: tocTitleLabel.bottomAnchor, constant: 12),
-            chapterListView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontal),
-            chapterListView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontal),
-            chapterListView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -ILMetrics.spaceStandard)
+            tocCountLabel.trailingAnchor.constraint(equalTo: tocHeaderRow.trailingAnchor)
         ])
     }
 
@@ -267,18 +307,22 @@ final class ILSutraDetailViewController: BaseViewController {
     }
 
     private func updateUI(with model: ILSutraDetailStateModel) {
+        navBar.rightActionTitle = model.downloadButtonTitle
+
         heroView.configure(
             kicker: model.kicker,
             title: model.title,
+            originalName: model.originalName,
             metaText: model.metaText,
-            tags: model.tags,
-            downloadTitle: model.downloadButtonTitle
+            tags: model.tags
         )
 
+        progressCard.isHidden = !model.hasProgress
         progressTitleLabel.text = model.progressTitle
         progressPercentLabel.text = model.progressPercentText
         progressBar.progress = model.progressValue
 
+        descriptionLabel.isHidden = model.descriptionText.isEmpty
         descriptionLabel.attributedText = ILTypography.makeParagraph(
             text: model.descriptionText,
             font: ILTypography.scriptureDescription,
@@ -286,13 +330,31 @@ final class ILSutraDetailViewController: BaseViewController {
             cssLineHeight: 1.75
         )
 
+        translatorLabel.text = model.translatorText
+        translatorLabel.isHidden = model.translatorText.isEmpty
+
         tocTitleLabel.text = model.tocTitle
         tocCountLabel.text = model.tocCountText
         chapterListView.chapters = model.chapters
+        // Most sutras have no table of contents (`sections: []`) — hide the whole block then.
+        tocHeaderRow.isHidden = model.chapters.isEmpty
+        chapterListView.isHidden = model.chapters.isEmpty
 
         chantButton.title = model.chantButtonTitle
+        playButton.isHidden = !model.hasAudio
+    }
+
+    /// Đẩy nội dung xuống dưới header; lần layout đầu thì đặt offset ở đỉnh nội dung thay vì dưới header.
+    private func applyHeaderInset() {
+        let top = headerBand.bounds.height
+        guard top > 0, scrollView.contentInset.top != top else { return }
+        let wasAtTop = scrollView.contentOffset.y <= -scrollView.contentInset.top
+        scrollView.contentInset.top = top
+        scrollView.verticalScrollIndicatorInsets.top = top
+        if wasAtTop { scrollView.contentOffset.y = -top }
     }
 }
+
 
 // MARK: - Round play button (footer)
 

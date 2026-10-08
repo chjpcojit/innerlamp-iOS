@@ -26,6 +26,10 @@ final class ILHomeWeekCalendarView: UIView {
         didSet { calendarLinkButton.setTitle(calendarLinkText, for: .normal) }
     }
 
+    var memorialLinkText: String = "" {
+        didSet { memorialLinkButton.setTitle(memorialLinkText, for: .normal) }
+    }
+
     var legend: [ILHomeWeekLegendModel] = [] {
         didSet { rebuildLegend() }
     }
@@ -35,11 +39,13 @@ final class ILHomeWeekCalendarView: UIView {
     }
 
     var onCalendarLinkTap: (() -> Void)?
+    var onMemorialLinkTap: (() -> Void)?
     var onSelectDay: ((ILHomeWeekDayModel) -> Void)?
 
     // MARK: - UI Elements
     private let weekLabel = UILabel()
     private let calendarLinkButton = UIButton(type: .system)
+    private let memorialLinkButton = UIButton(type: .system)
 
     private let weekdayRow = UIStackView()
     private let scrollView = UIScrollView()
@@ -74,7 +80,17 @@ final class ILHomeWeekCalendarView: UIView {
         calendarLinkButton.addTarget(self, action: #selector(handleCalendarLinkTap), for: .touchUpInside)
         calendarLinkButton.translatesAutoresizingMaskIntoConstraints = false
 
-        let headerRow = UIStackView(arrangedSubviews: [weekLabel, calendarLinkButton])
+        memorialLinkButton.titleLabel?.font = ILTypography.subhead
+        memorialLinkButton.setTitleColor(ILColors.link, for: .normal)
+        memorialLinkButton.addTarget(self, action: #selector(handleMemorialLinkTap), for: .touchUpInside)
+        memorialLinkButton.translatesAutoresizingMaskIntoConstraints = false
+
+        let linksRow = UIStackView(arrangedSubviews: [memorialLinkButton, calendarLinkButton])
+        linksRow.axis = .horizontal
+        linksRow.spacing = ILMetrics.spaceMedium
+        linksRow.alignment = .lastBaseline
+
+        let headerRow = UIStackView(arrangedSubviews: [weekLabel, linksRow])
         headerRow.axis = .horizontal
         headerRow.distribution = .equalSpacing
         headerRow.alignment = .lastBaseline
@@ -237,6 +253,10 @@ final class ILHomeWeekCalendarView: UIView {
     // MARK: - Actions
     @objc private func handleCalendarLinkTap() {
         onCalendarLinkTap?()
+    }
+
+    @objc private func handleMemorialLinkTap() {
+        onMemorialLinkTap?()
     }
 
     /// Màu chấm theo loại ngày — biến thể sáng (onDark) dùng khi ô đang chọn (nền mực tối).

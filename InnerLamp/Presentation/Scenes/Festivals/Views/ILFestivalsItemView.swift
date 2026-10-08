@@ -5,8 +5,8 @@
 
 import UIKit
 
-/// 1 thẻ ngày lễ trong màn "Lịch lễ Phật giáo": ô ngày + thứ, tiêu đề + đếm ngược, dòng âm lịch,
-/// và hàng chip chùa tổ chức. Biết `ILFestivalDayModel` nên thuộc riêng màn Lịch lễ.
+/// 1 thẻ ngày lễ trong màn "Lịch lễ Phật giáo": ô ngày + thứ, tiêu đề + đếm ngược và dòng âm lịch.
+/// Biết `ILFestivalDayModel` nên thuộc riêng màn Lịch lễ.
 final class ILFestivalsItemView: UIView {
 
     // MARK: - Constants
@@ -14,14 +14,9 @@ final class ILFestivalsItemView: UIView {
         static let tileWidth: CGFloat = 44
         static let padding: CGFloat = 14
         static let gap: CGFloat = 14
-        /// `gap: 6px` of the wrapping host-chip row.
-        static let hostSpacing: CGFloat = 6
         /// Weekday caption tracking (`letter-spacing: .08em`).
         static let weekdayTrackingEm: CGFloat = 0.08
     }
-
-    /// Chạm 1 chip chùa — mang theo id chùa.
-    var onHostTap: ((String) -> Void)?
 
     // MARK: - UI Elements
     private let cardView = UIView()
@@ -64,9 +59,6 @@ final class ILFestivalsItemView: UIView {
         return label
     }()
 
-    /// Host chips + "+N chùa" wrap onto new lines when they overflow (`flex-wrap: wrap`).
-    private let hostsFlow = ILChipFlowView(rowSpacing: Layout.hostSpacing, itemSpacing: Layout.hostSpacing)
-
     // MARK: - Initializer
     init() {
         super.init(frame: .zero)
@@ -104,13 +96,11 @@ final class ILFestivalsItemView: UIView {
 
         lunarLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let textStack = UIStackView(arrangedSubviews: [titleRow, lunarLabel, hostsFlow])
+        let textStack = UIStackView(arrangedSubviews: [titleRow, lunarLabel])
         textStack.axis = .vertical
-        // `.fill` so the flow view gets the full text-column width to wrap against.
         textStack.alignment = .fill
         textStack.spacing = 3
         textStack.translatesAutoresizingMaskIntoConstraints = false
-        textStack.setCustomSpacing(10, after: lunarLabel)
 
         let contentRow = UIStackView(arrangedSubviews: [dateColumn, textStack])
         contentRow.axis = .horizontal
@@ -154,36 +144,10 @@ final class ILFestivalsItemView: UIView {
 
         isToday = model.isToday
         applyBorder()
-
-        rebuildHosts(model.hosts, moreText: model.moreHostsText)
     }
 
     private func applyBorder() {
         cardView.layer.borderColor = (isToday ? ILColors.goldBright : ILColors.border).cgColor
-    }
-
-    private func rebuildHosts(_ hosts: [ILFestivalHostModel], moreText: String?) {
-        var items: [UIView] = hosts.map { host in
-            let chip = ILFestivalsHostChipView(title: host.name)
-            chip.onTap = { [weak self] in self?.onHostTap?(host.id) }
-            return chip
-        }
-        if let moreText {
-            items.append(makeMoreLabel(moreText))
-        }
-        hostsFlow.setItems(items)
-    }
-
-    /// "+N chùa" — same height as a host chip so it sits vertically centered on the chip row
-    /// (`align-items: center`); `UILabel` centers its text vertically within that height.
-    private func makeMoreLabel(_ text: String) -> UILabel {
-        let label = UILabel()
-        label.font = ILTypography.label
-        label.textColor = ILColors.inkSubtle
-        label.text = text
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.heightAnchor.constraint(equalToConstant: ILFestivalsHostChipView.height).isActive = true
-        return label
     }
 
     private func registerForAppearanceChanges() {

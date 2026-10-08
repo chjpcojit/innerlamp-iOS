@@ -241,6 +241,7 @@ final class ILBellViewController: BaseViewController {
         rateCardView.rateLabelText = model.rateLabel
         rateCardView.rateValueText = model.rateValue
 
+        padView.isBellShown = model.selectedMode == .bell
         padView.tagText = model.padTag
         padView.numberText = "\(model.padNumber)"
         padView.hintText = model.padHint

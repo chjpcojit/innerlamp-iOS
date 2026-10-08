@@ -120,21 +120,29 @@ struct ILHomeEventMonthEntity: Equatable, Identifiable {
     let events: [ILHomeEventItemEntity]
 }
 
-/// 1 ảnh trong khối "Ảnh chùa đẹp" ở Trang chủ. Hiện chỉ cần danh tính (`id`) để biểu thị số
-/// ảnh có trong catalog — tiêu đề/địa điểm chỉ dùng ở màn `photos` (gallery) chưa build, sẽ nới
-/// rộng field khi có màn đó (xem TODO ở `ILHomeUseCaseImpl`).
+/// 1 ảnh trong khối "Ảnh chùa đẹp" ở Trang chủ — mapped from the server's featured gallery photos
+/// (`GET /v1/gallery/top`, `ILPhotosPhotoEntity`). Home only needs the identity and the thumbnail;
+/// title/place belong to the Photos screen.
 struct ILHomePhotoEntity: Equatable, Identifiable {
     let id: String
+    /// Raw server thumbnail URL; `nil` shows the placeholder.
+    var thumbnailURL: String? = nil
 }
 
-/// 1 chùa trong carousel "Chùa Việt Nam" — nội dung catalog (tên, địa chỉ, vùng miền, ghi chú),
-/// chưa có API chùa thật (xem TODO ở `ILHomeUseCaseImpl`).
+/// 1 chùa trong carousel "Chùa Việt Nam" — mapped from the server's featured temples
+/// (`GET /v1/temples/top`, `ILTempleSummaryEntity`). Raw business data only: the region badge,
+/// short place line and "rank · founded" note are formatted by `ILHomeViewModel`.
 struct ILHomeTempleEntity: Equatable, Identifiable {
     let id: String
     let name: String
-    let place: String
-    let region: String
-    let note: String
+    /// Full street address from the server, e.g. "Xã Ninh Hải, Huyện Hoa Lư, Tỉnh Ninh Bình".
+    let address: String
+    let region: ILTempleRegion
+    let heritageRank: ILTempleHeritageRank
+    /// Founding year; `<= 0` when unknown.
+    let establishedYear: Int
+    /// Raw server thumbnail URL; `nil` when the temple has no photo.
+    var thumbnailURL: String? = nil
 }
 
 /// 1 bài viết trong danh sách "Bài viết Phật pháp hay" — nội dung catalog. `readMinutes` là dữ
@@ -145,11 +153,15 @@ struct ILHomeArticleEntity: Equatable, Identifiable {
     let title: String
     let author: String
     let readMinutes: Int
+    /// Raw server thumbnail URL (`thumbnail_url`, falling back to `image_url`); `nil` when the
+    /// article has no image.
+    var thumbnailURL: String? = nil
 }
 
 /// 1 vị Phật / Bồ Tát trong carousel "Thư viện Phật & Bồ Tát" ở Trang chủ — bản tóm tắt catalog
 /// (danh xưng, loại, hiệu tôn, đức hạnh, ngày vía chính). Dữ liệu đầy đủ nằm trên `ILDeityEntity`
-/// (màn chi tiết `Deity`), `ILHomeUseCase` map từ `ILDeityUseCase.getAllDeities()`.
+/// (màn chi tiết `Deity`). Trang chủ map từ `GET /v1/deities/top` (`ILHomeUseCase.loadTopDeities()`),
+/// Thư viện map từ `ILDeityUseCase.getAllDeities()`.
 struct ILHomeDeityEntity: Equatable, Identifiable {
     let id: String
     let kind: ILDeityKind
@@ -159,6 +171,8 @@ struct ILHomeDeityEntity: Equatable, Identifiable {
     /// Ngày vía chính theo âm lịch (ngày đản sinh / "Vía" nếu có, ngược lại là ngày lễ đầu tiên
     /// trong catalog). `nil` khi catalog không có ngày lễ nào.
     let memorialDay: ILDeityMemorialDayEntity?
+    /// Raw server thumbnail URL; `nil` (bundled catalog) shows the placeholder.
+    var thumbnailURL: String? = nil
 }
 
 /// Pure business entity cho màn Trang chủ — Domain layer only.
@@ -198,7 +212,8 @@ struct ILHomeEntity: Equatable {
     var photos: [ILHomePhotoEntity] = []
     var temples: [ILHomeTempleEntity] = []
     var articles: [ILHomeArticleEntity] = []
-    /// Carousel "Thư viện Phật & Bồ Tát" — bản tóm tắt map từ `ILDeityUseCase.getAllDeities()`.
+    /// Carousel "Thư viện Phật & Bồ Tát" — featured deities from the server
+    /// (`ILHomeUseCase.loadTopDeities()`).
     var deities: [ILHomeDeityEntity] = []
 
     static let empty = ILHomeEntity()

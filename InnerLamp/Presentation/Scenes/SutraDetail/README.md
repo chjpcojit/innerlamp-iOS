@@ -21,15 +21,15 @@ phẩm đẩy sang màn Tụng kinh (`reader`), nút ‹ pop về Thư viện.
 
 | Layer | File | Status | Notes |
 |---|---|---|---|
-| Domain — Entity | `ILSutraDetailEntity.swift` | Done | `ILSutraDetailChapterEntity` + `ILSutraDetailSutraEntity` + `ILSutraDetailEntity` (catalog, `currentSutraID`, `currentChapterID`, `readingProgress`). Không có field UI. |
-| Presentation — StateModel | `ILSutraDetailStateModel.swift` | Done | Các chuỗi đã format ("26 phẩm · 423 kệ · ...", "Kệ 1 – 20 · đang tụng", "9 phút", "34%"), tag model, danh sách phẩm. |
-| Data — DTO + Mapper | — | N/A (no confirmed API contract yet) | Catalog kinh + phẩm là nội dung tĩnh, chưa có API kinh thật. |
-| Domain — UseCase | `ILSutraDetailUseCase.swift` | Done | Logic thuần, không network/disk: dựng catalog mock 1 bộ kinh (Kinh Pháp Cú) + 5 phẩm, chọn bộ kinh. Không có method cần stub. |
-| Presentation — ViewModel | `ILSutraDetailViewModel.swift` | Done | 6 `Input` publisher (viewDidLoad, back, download, chant, play, chapter); `Entity -> StateModel` ở `makeStateModel` (format meta/duration/chương/percent). |
+| Domain — Entity | `ILSutraDetailEntity.swift` | Done | `ILSutraDetailChapterEntity` (id, number, title, lineCount) + `ILSutraDetailSutraEntity` + `ILSutraDetailEntity` (`sutra`). Không có field UI. |
+| Presentation — StateModel | `ILSutraDetailStateModel.swift` | Done | Các chuỗi đã format (kicker, "N dòng · thời lượng", dịch giả / nguồn / giấy phép), tag model, danh sách phẩm. |
+| Data — DTO + Mapper + Repository | `ILSutraDTO`, `ILSutraMapper`, `SutraDetailEndpoint`, `ILSutraRepositoryImpl` | Done | `GET /v1/sutras/{id}` (dùng chung với màn Sutras). |
+| Domain — UseCase | `ILSutraDetailUseCase.swift` | Done | `loadSutra(id:) async throws` qua `ILSutraRepository`. |
+| Presentation — ViewModel | `ILSutraDetailViewModel.swift` | Done | 6 `Input` publisher (viewDidLoad, back, download, chant, play, chapter); `Entity -> StateModel` ở `makeStateModel` (kicker, meta, dịch giả/nguồn/giấy phép, phẩm). Tải khi `viewDidLoad`. |
 | Presentation — ViewController | `ILSutraDetailViewController.swift` | Done | Hero tối + thẻ tiến trình + mô tả + Mục lục + thanh CTA đáy; dùng token `ILColors`/`ILTypography`/`ILMetrics`. UI chia `Views/` (hero, danh sách phẩm). |
 | Presentation — Coordinator | `ILSutraDetailCoordinator.swift` | Done | `.back` → pop + `finish()`; `.openReader` → push `ILReaderCoordinator`; `.download`/`.openPlayer` → TODO (màn đích chưa build). Không có delegate. |
 | Shared token | `DesignSystem/Tokens/ILTypography.swift` + `ILColors.swift` | Done | Thêm preset `contentHeroTitle` (Lora 29px) + `scriptureDescription` (Lora 14px) và `ILColors.goldOnDark` (`#E8B061`, asset `ILGoldOnDark`) cho chip vàng trên hero tối. |
-| Tests | `ILSutraDetailViewModelTests.swift` | Done | 8 test ViewModel (mock UseCase, drive qua `Input`): load kinh, thứ tự tag, chương hiện tại, 5 nav event. |
+| Tests | `ILSutraDetailViewModelTests`, `ILSutraDetailUseCaseTests`, `ILSutraRepositoryTests` | Written, not run | ViewModel (mock UseCase), UseCase + Repository (mock Repository / NetworkService). XCTest cần thiết bị. |
 | Wiring | `DIContainer` + `ILLibraryCoordinator` | Done | `makeSutraDetail{UseCase,ViewModel,Coordinator}`; `ILLibraryCoordinator.openItem` cho `kind == .sutra` → `showSutraDetail(_:)`. |
 
 ## Navigation events
@@ -46,19 +46,17 @@ phẩm đẩy sang màn Tụng kinh (`reader`), nút ‹ pop về Thư viện.
 
 ## Known gaps / not implemented yet
 
-- **Catalog mock chỉ có Kinh Pháp Cú** — các bộ kinh khác trong Thư viện (Vu Lan, A Di Đà, Chú Đại
-  Bi) chưa có dữ liệu phẩm; id không khớp sẽ rơi về Kinh Pháp Cú (cùng cách xử lý mock catalog của
-  Library/Article/Reader). Cần thay bằng API danh mục kinh thật khi có.
-- **Nút "Tải về máy" và nút phát chưa làm gì** — màn `downloads`/`player` chưa build, nên
-  `ILSutraDetailNavEvent.download`/`.openPlayer` chỉ có TODO trong coordinator.
-- **Tiến trình đọc là giá trị mẫu (34%)** — chưa nối với dữ liệu tiến trình thật của người dùng
-  (xem "Local-first: ... tiến trình cá nhân" ở README design handoff).
-- **Hero dùng gradient tối dùng chung** (`darkBackgroundTop` → `darkBackground`, như
-  `ILFeatureCardView`) thay vì đúng cặp `#2A2620 → #151210` của prototype — chênh lệch không đáng
-  kể, tinh chỉnh khi có component hero-tối dùng chung.
-- Chưa kiểm tra bằng mắt trên simulator/thiết bị: build + unit test pass, nhưng bố cục cuộn, hero
-  dưới status bar và dark mode chưa được xem thực tế.
+- **Reader / Player vẫn dùng catalog mock** và bỏ qua slug của server → mở sai nội dung; ô "Kinh Pháp Cú"
+  của Library không có bản khớp trên server (TD-SutraDetail-003).
+- **Không có audio, tiến trình đọc, thời lượng từng phẩm** từ API: CTA luôn là "Đọc kinh", thẻ tiến trình
+  và nút phát luôn ẩn (TD-SutraDetail-002). Đa số kinh có `sections: []` nên Mục lục bị ẩn.
+- **Nút "Tải về máy" chưa làm gì** — màn `downloads` chưa build (TODO trong coordinator).
+- Dòng mô tả / meta / giấy phép là giả định trình bày (AS-SutraDetail-001); chưa có cảnh báo "chưa duyệt".
+- **Hero dùng gradient tối dùng chung** (`darkBackgroundTop` → `darkBackground`) thay vì đúng cặp
+  `#2A2620 → #151210` của prototype — chênh lệch không đáng kể.
+- Chưa kiểm tra bằng mắt trên thiết bị (bố cục cuộn, giấy phép dài, dark mode).
 
 ## Changelog
 
 - 2026-09-26 — initial build by il-screen-builder from `Docs/design_handoff_innerlamp` (`detail`): Entity/UseCase/StateModel/ViewModel/Coordinator/ViewController, 2 feature views, `ILTypography.contentHeroTitle`/`scriptureDescription` + `ILColors.goldOnDark`, Library wiring, Reader wiring (DIContainer factories), tests
+- 2026-10-07 — integrated `GET /v1/sutras/{id}`; removed the static catalog and sample progress

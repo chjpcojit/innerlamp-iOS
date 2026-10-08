@@ -140,6 +140,14 @@ public enum ILColors {
     public static let goldEmber = asset("ILGoldEmber")
 
     /// Vầng sáng lan tỏa quanh ngọn đèn (alpha 0.20 của `goldBright`)
+    /// Faint gold wash behind informational callouts (alpha 0.10 of `gold` — `rgba(184,134,47,.1)` in
+    /// the design handoff, e.g. the giỗ date preview).
+    public static let goldCallout = gold.withAlphaComponent(0.10)
+
+    /// Track of a segmented toggle (alpha 0.06 of `ink` — `--il-ink-06`); the selected segment sits
+    /// on it as a `surface` pill.
+    public static let segmentedTrack = ink.withAlphaComponent(0.06)
+
     public static let goldGlow = goldBright.withAlphaComponent(0.20)
 
     /// Vầng sáng đậm của màn luôn tối (alpha 0.26 của `goldBright`)
@@ -161,6 +169,10 @@ public enum ILColors {
     public static let canvasOnInkSecondary = canvas.withAlphaComponent(0.60)
 
     // MARK: - Bottom Nav Lamp
+    /// Ngọn lửa trên nút Đèn ở chế độ sáng (nền `ink`) — cố định `#E6A94E`, ấm hơn
+    /// `goldBright` để nổi rõ trên nền tối (theo `lampFlame` của `IL-BottomNav`).
+    public static let lampFlameLight = asset("ILLampFlameLight")
+
     /// Chân bấc ngọn đèn trên nút Đèn ở chế độ tối (nền `goldBright`) — cố định `#1A1611`,
     /// không đổi theo theme (theo `lampFlame` của `IL-BottomNav`).
     public static let lampFlameDark = asset("ILLampFlameDark")
@@ -305,8 +317,7 @@ public enum ILColors {
     public static let medTrack = medInk.withAlphaComponent(0.12)
     public static let medBorder = medInk.withAlphaComponent(0.22)
 
-    /// Chỉ vạch giữa dây tràng hạt và vòng đánh dấu hạt hiện tại
-    public static let medStrandLine = goldBright.withAlphaComponent(0.26)
+    /// Vòng đánh dấu hạt hiện tại và hai vạch ngang bên cạnh
     public static let medMarkerRing = goldBright.withAlphaComponent(0.28)
     public static let medMarkerRingActive = goldBright.withAlphaComponent(0.72)
     public static let medMarkerTick = goldBright.withAlphaComponent(0.30)
@@ -330,8 +341,9 @@ public enum ILColors {
     /// Quầng sáng quanh pad khi gõ mõ / thỉnh chuông (goldBright 32%).
     public static let medGoldHalo = goldBright.withAlphaComponent(0.32)
 
-    /// Viền pad khi vừa gõ (goldBright 75%).
-    public static let medGoldStrikeBorder = goldBright.withAlphaComponent(0.75)
+    /// Vòng sóng lan ra khi gõ mõ (goldBright 55%) / thỉnh chuông (goldBright 60%).
+    public static let medGoldRippleMo = goldBright.withAlphaComponent(0.55)
+    public static let medGoldRippleBell = goldBright.withAlphaComponent(0.60)
 
     /// Breathing-ring outlines on the meditation session screen (`--il-med-ring`, `--il-med-ring2`):
     /// `goldDeep` 30% / 42% in light mode, `gold` 25% / 40% in dark mode — the base hue differs per
@@ -425,10 +437,131 @@ public enum ILColors {
     public static let beadDark = asset("ILBeadDark")
     public static let beadBorder = goldBright.withAlphaComponent(0.16)
 
+    /// Dây xỏ tràng hạt — ba sợi đỏ nâu xen kẽ (đậm / trung / sáng)
+    public static let beadCordDark = asset("ILBeadCordDark")
+    public static let beadCordMid = asset("ILBeadCordMid")
+    public static let beadCordLight = asset("ILBeadCordLight")
+
     /// Bóng đổ và lớp tối/sáng giả inset-shadow của hạt
-    public static let beadShadow = UIColor.black.withAlphaComponent(0.60)
-    public static let beadShade = UIColor.black.withAlphaComponent(0.50)
-    public static let beadHighlight = beadMotherLight.withAlphaComponent(0.14)
+    public static let beadShadow = UIColor.black.withAlphaComponent(0.55)
+    public static let beadShade = UIColor.black.withAlphaComponent(0.55)
+    /// Điểm sáng gắt phía trên-trái của hạt (kem 85%) và ánh vàng cam phản chiếu ở rìa dưới-phải.
+    public static let beadHighlight = inkOnDark.withAlphaComponent(0.85)
+    public static let beadRim = goldBright.withAlphaComponent(0.28)
+
+    // MARK: - Family tree (Gia phả — parchment palette, fixed: does not flip with dark mode)
+    /// Colors of the "cây gia phả" illustration (parchment paper, bark, leaves, hexagon medallions).
+    /// Fixed like `bead*`: the tree is an illustration, so it keeps one palette in both themes.
+    public enum FamilyTree {
+        // Paper
+        public static let paper = asset("ILTreePaper")
+        public static let paperMid = asset("ILTreePaperMid")
+        public static let paperEdge = asset("ILTreePaperEdge")
+        public static let cream = asset("ILTreeCream")
+
+        // Text
+        public static let ink = asset("ILTreeInk")
+        public static let inkSecondary = ink.withAlphaComponent(0.70)
+        public static let inkTertiary = ink.withAlphaComponent(0.60)
+        public static let inkMuted = ink.withAlphaComponent(0.50)
+        public static let heading = asset("ILTreeHeading")
+        public static let selected = asset("ILTreeSelected")
+        public static let labelHalo = paper
+
+        // Lines & surfaces
+        public static let bark = asset("ILTreeBark")
+        public static let barkLight = asset("ILTreeBarkLight").withAlphaComponent(0.55)
+        public static let brown = asset("ILTreeBrown")
+        public static let border = brown.withAlphaComponent(0.22)
+        public static let borderSoft = brown.withAlphaComponent(0.16)
+        public static let divider = brown.withAlphaComponent(0.10)
+        public static let grabber = brown.withAlphaComponent(0.28)
+        /// Zoom buttons over the canvas: light cream (design `#FBF6EA` @ 94%) with a 25% brown border
+        public static let controlSurface = creamLight.withAlphaComponent(0.94)
+        public static let controlBorder = brown.withAlphaComponent(0.25)
+        public static let scrim = ink.withAlphaComponent(0.22)
+        public static let shadow = ink
+
+        // Status / roles
+        public static let forest = asset("ILTreeForest")
+        public static let forestLight = asset("ILTreeForestLight")
+        public static let livingTint = forestLight.withAlphaComponent(0.18)
+        public static let deceasedTint = brown.withAlphaComponent(0.14)
+        public static let seal = asset("ILTreeSeal")
+        /// Book-switcher seals: the mother's book and the merged "nội – ngoại" view.
+        public static let sealMaternal = asset("ILTreeSealMaternal")
+        public static let sealMerged = asset("ILTreeSealMerged")
+        public static let gold = asset("ILTreeGold")
+        public static let founderGold = asset("ILTreeFounderGold")
+        public static let eyebrow = asset("ILTreeSelected")
+        public static let halo = gold.withAlphaComponent(0.60)
+        public static let canopyGlow = forestLight.withAlphaComponent(0.26)
+        public static let groundShadow = brown.withAlphaComponent(0.22)
+
+        // Leaves
+        public static let leafDark = asset("ILTreeLeafDark")
+        public static let leafMid = asset("ILTreeLeafMid")
+        public static let leafLight = asset("ILTreeLeafLight")
+
+        // Medallion
+        public static let skin = asset("ILTreeSkin")
+        public static let hair = asset("ILTreeHair")
+        public static let plateLiving = asset("ILTreePlateLiving")
+        public static let plateDeceased = asset("ILTreePlateDeceased")
+        public static let plateFounder = asset("ILTreePlateFounder")
+        public static let garmentFemale = asset("ILTreeGarmentFemale")
+        public static let garmentFounder = asset("ILTreeGarmentFounder")
+        public static let garmentFemaleDeceased = asset("ILTreeGarmentFemaleDeceased")
+        public static let garmentMaleLiving = forest
+        public static let garmentMaleDeceased = asset("ILTreeGarmentMaleDeceased")
+        /// Collar notch under the chin (cream, 55%)
+        public static let collarNotch = cream.withAlphaComponent(0.55)
+        /// Hair stripe tone over `hair` (male bust)
+        public static let hairStripe = bark
+
+        // Medallion gradients (top → bottom of the plate, 135° for the trim) and tick rings
+        public static let founderTrimStops = [asset("ILTreeFounderTrimLight"), founderGold, asset("ILTreeFounderTrimEnd")]
+        public static let headTrimStops = [leafDark, asset("ILTreeHeadTrimDark")]
+        public static let plateFounderGradient = [asset("ILTreePlateFounderTop"), plateFounder]
+        public static let plateLivingGradient = [asset("ILTreePlateLivingTop"), plateLiving]
+        public static let plateDeceasedGradient = [asset("ILTreePlateDeceasedTop"), plateDeceased]
+        /// Tick ring: (dark segment, light segment)
+        public static let ticksFounder = (dark: asset("ILTreeTickFounderDark"), light: asset("ILTreeTickFounderLight"))
+        public static let ticksLiving = (dark: forestLight, light: asset("ILTreeTickLivingLight"))
+        public static let ticksDeceased = (dark: asset("ILTreeTickDeceasedDark"), light: paperMid)
+        /// Founder hexagon in the legend (135° gradient)
+        public static let legendFounderStops = [asset("ILTreeFounderGoldBright"), founderGold]
+
+        // Header, chips, search field, canvas paper
+        public static let creamLight = asset("ILTreeCreamLight")
+        public static let fieldSurface = creamLight.withAlphaComponent(0.92)
+        public static let chipSurface = creamLight.withAlphaComponent(0.75)
+        public static let cardSurface = creamLight.withAlphaComponent(0.90)
+        public static let searchPlaceholder = bark.withAlphaComponent(0.45)
+        public static let searchButtonActive = brown.withAlphaComponent(0.12)
+        public static let addButtonShadow = forest.withAlphaComponent(0.80)
+        public static let grainFine = brown.withAlphaComponent(0.06)
+        public static let grainCoarse = brown.withAlphaComponent(0.04)
+        public static let paperBlob = forestLight.withAlphaComponent(0.22)
+        public static let canvasTopBorder = brown.withAlphaComponent(0.16)
+        /// Selected row of the add-member relative picker
+        public static let pickerSelectedRow = gold.withAlphaComponent(0.18)
+
+        // Detail sheet extras
+        public static let sheetHighlight = UIColor.white.withAlphaComponent(0.6)
+        public static let memorialGlyphTint = seal.withAlphaComponent(0.10)
+        public static let memorialGlyphRing = seal.withAlphaComponent(0.28)
+        public static let cardRing = brown.withAlphaComponent(0.18)
+        public static let outlineButtonBorder = forest.withAlphaComponent(0.45)
+        public static let reminderButtonBorder = forest.withAlphaComponent(0.40)
+        public static let linkUnderline = selected.withAlphaComponent(0.35)
+        public static let flameStops = [asset("ILTreeFlameTop"), asset("ILTreeFlameBottom")]
+
+        // Viewer ("BẠN") marker — gold pill, zoom button and legend badge
+        public static let me = asset("ILTreeMe")
+        public static let inkOnMe = asset("ILTreeInkOnMe")
+        public static let meRelation = asset("ILTreeSelected")
+    }
 
     // MARK: - Borders
     /// Viền thẻ tiêu chuẩn (alpha 0.08 của `ink`)
@@ -439,6 +572,12 @@ public enum ILColors {
 
     /// Viền nút ghost, input active (alpha 0.18 của `ink`)
     public static let borderStrong = ink.withAlphaComponent(0.18)
+
+    /// Outline of small pill buttons on cards (`--il-ink-16`, alpha 0.16 of `ink`)
+    public static let borderPill = ink.withAlphaComponent(0.16)
+
+    /// Fill of the round "×" clear button inside a search field (`--il-ink-12`, alpha 0.12 of `ink`)
+    public static let searchClearFill = ink.withAlphaComponent(0.12)
 
     /// Border of labeled input cards (`--il-ink-1`, alpha 0.10 of `ink`)
     public static let borderMedium = ink.withAlphaComponent(0.10)
@@ -595,6 +734,19 @@ public enum ILColors {
             case .ink: return ILColors.ink.withAlphaComponent(0.12)
             }
         }
+    }
+
+    // MARK: - Reader themes (Tụng kinh — "Vàng cát" and "Đen OLED" reading backgrounds)
+    /// Fixed palettes for the two non-default reading backgrounds of the Reader screen. The default
+    /// theme reuses the adaptive `canvasWarm` / `ink` / `surface` tokens, so it is not listed here.
+    /// Both themes keep one look in light and dark mode: the user picks them explicitly.
+    public enum Reader {
+        public static let sandBackground = asset("ILReaderSandBackground")
+        public static let sandInk = asset("ILReaderSandInk")
+        public static let sandPanel = asset("ILReaderSandPanel")
+        public static let oledBackground = asset("ILReaderOLEDBackground")
+        public static let oledInk = asset("ILReaderOLEDInk")
+        public static let oledPanel = asset("ILReaderOLEDPanel")
     }
 }
 

@@ -19,7 +19,7 @@ Tab 2 of `ILMainTabBarController` (owned by `ILMainTabCoordinator`; switching ta
 | Domain — UseCase | `ILLibraryUseCase.swift` | Partial | `getCatalog()` returns a static mock catalog + real deities via `ILDeityUseCase.getAllDeities()` (TODO: sutra/meditation/talk repository). |
 | Presentation — ViewModel | `ILLibraryViewModel.swift` | Done | 8 Inputs, Entity → StateModel mapping, duration formatting. |
 | Presentation — ViewController | `ILLibraryViewController.swift` | Done | Built from `ILSearchBarView`, `ILFeatureCardView`, `ILSectionHeaderView`, `ILHomeDeityCarouselView` (shared with Home) + `Views/`. Visual QA pending. |
-| Presentation — Coordinator | `ILLibraryCoordinator.swift` | Partial | `openDeity` → `ILDeityCoordinator`; `openQuickAccess(.buddhas)` → Deities, `openQuickAccess(.meditation)` → `ILMeditationHubCoordinator`; `openSearch` / `openQuickAccess(.sutras/.talk)` / `openItem(.meditation)` are TODO (screens not built). |
+| Presentation — Coordinator | `ILLibraryCoordinator.swift` | Partial | `openDeity` → `ILDeityCoordinator`; `openQuickAccess(.buddhas)` → Deities, `openQuickAccess(.meditation)` → `ILMeditationHubCoordinator`, `openQuickAccess(.sutras)` → `ILSutrasCoordinator`; `openSearch` / `openQuickAccess(.talk)` / `openItem(.meditation)` are TODO (screens not built). |
 | Tests | `ILLibraryViewModelTests.swift` | Done | ViewModel per-Input tests + UseCase deity-mapping test. |
 | Wiring | `DIContainer` + `AppCoordinator` | Done | `ILMainTabCoordinator` creates it on the Library tab's own nav; `makeLibraryUseCase()` now also injects `ILDeityUseCase`. |
 
@@ -50,3 +50,4 @@ Tab 2 of `ILMainTabBarController` (owned by `ILMainTabCoordinator`; switching ta
 - 2026-09-28 — reworked to match the design handoff prototype (`isLib`): category chips replaced by
   a 2×2 quick-access tile grid; added the "Chư Phật & Bồ Tát" carousel (shared with Home); the sutra
   list section gained a "Kinh sách" view-all link; `openDeity` wired to `ILDeityCoordinator`.
+- 2026-10-03 — `openQuickAccess(.sutras)` wired to the new Sutras list screen (`ILSutrasCoordinator`)

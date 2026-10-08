@@ -21,7 +21,7 @@ public final class ILBottomNavBar: UIView {
             case .home: return "Trang chủ"
             case .lib: return "Thư viện"
             case .lamp: return ""
-            case .sangha: return "Đạo tràng"
+            case .sangha: return "Chùa"
             case .me: return "Tôi"
             }
         }
@@ -221,7 +221,7 @@ public final class ILBottomNavBar: UIView {
             ILMetrics.shadowLampDark.apply(to: lampButton.layer)
         } else {
             lampButton.backgroundColor = ILColors.ink
-            lampButton.tintColor = ILColors.goldBright
+            lampButton.tintColor = ILColors.lampFlameLight
             ILMetrics.shadowLampLight.apply(to: lampButton.layer)
         }
     }

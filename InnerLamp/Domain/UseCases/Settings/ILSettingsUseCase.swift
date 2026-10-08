@@ -13,12 +13,19 @@ protocol ILSettingsUseCase {
 
 final class ILSettingsUseCaseImpl: ILSettingsUseCase {
 
-    init() {}
+    private let languageUseCase: ILLanguageUseCase
+
+    init(languageUseCase: ILLanguageUseCase) {
+        self.languageUseCase = languageUseCase
+    }
 
     func getSettings() -> ILSettingsEntity {
+        // Display preferences (theme / language / font size) are real; the rest stays mock below.
+        let display = languageUseCase.currentPreferences()
+
         // TODO: chưa có contract lưu trữ/API — thay dữ liệu mẫu bằng ILSettingsRepository khi có
         // contract (dùng il-data-layer-builder). Mọi toggle/giá trị dưới đây là mock khớp prototype.
-        ILSettingsEntity(
+        return ILSettingsEntity(
             account: ILSettingsAccountEntity(
                 fullName: "settings.mock.fullName".localized,
                 dharmaName: "settings.mock.dharmaName".localized,
@@ -34,7 +41,9 @@ final class ILSettingsUseCaseImpl: ILSettingsUseCase {
             bellSound: .bronzeBell,
             scriptureFontScale: 0.62,
             bilingualEnabled: false,
-            theme: .system,
+            theme: display.theme,
+            language: display.language,
+            scriptureFontSize: display.fontSize,
             downloadsCount: 8,
             downloadsSizeMB: 412,
             hideJournalFromSangha: false,

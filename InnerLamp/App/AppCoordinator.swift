@@ -6,12 +6,14 @@
 //
 
 import UIKit
+import Combine
 
 final class AppCoordinator: Coordinator {
     let navigationController: UINavigationController
     var childCoordinators: [any Coordinator] = []
     weak var parentCoordinator: (any Coordinator)?
     private let container: DIContainer
+    private var cancellables = Set<AnyCancellable>()
     
     init(navigationController: UINavigationController, container: DIContainer) {
         self.navigationController = navigationController
@@ -19,7 +21,28 @@ final class AppCoordinator: Coordinator {
     }
     
     func start() {
+        observeSessionExpiry()
         showSplash()
+    }
+
+    /// `AuthSessionRefresher` posts this once a 401 could not be recovered by refreshing — the
+    /// tokens are already gone from the Keychain, so all that is left is to leave the main area.
+    private func observeSessionExpiry() {
+        NotificationCenter.default.publisher(for: .authSessionDidExpire)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.handleSessionExpired() }
+            .store(in: &cancellables)
+    }
+
+    private func handleSessionExpired() {
+        // Only the main area holds a session; ignore a stray post while an auth screen is up.
+        guard childCoordinators.contains(where: { $0 is ILMainTabCoordinator }) else { return }
+        childCoordinators.removeAll { $0 is ILMainTabCoordinator }
+
+        let userRepository = container.makeUserRepository()
+        Task { try? await userRepository.deleteUser() }
+
+        showLogin()
     }
 
     private func showSplash() {

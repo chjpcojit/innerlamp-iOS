@@ -10,18 +10,18 @@ import Foundation
 /// dùng cho thẻ âm lịch lớn và dải lịch tuần ở Trang chủ. Không phụ thuộc thư viện ngoài.
 enum ILLunarCalendar {
 
-    struct LunarDate: Equatable {
+    nonisolated struct LunarDate: Equatable {
         let day: Int
         let month: Int
         let year: Int
         let isLeapMonth: Bool
     }
 
-    private static let timeZone: Double = 7.0
+    private nonisolated static let timeZone: Double = 7.0
 
     // MARK: - Julian day number
 
-    private static func jdFromDate(day: Int, month: Int, year: Int) -> Int {
+    private nonisolated static func jdFromDate(day: Int, month: Int, year: Int) -> Int {
         let a = (14 - month) / 12
         let y = year + 4800 - a
         let m = month + 12 * a - 3
@@ -34,7 +34,7 @@ enum ILLunarCalendar {
 
     // MARK: - Astronomical helpers
 
-    private static func newMoon(_ k: Double) -> Double {
+    private nonisolated static func newMoon(_ k: Double) -> Double {
         let T = k / 1236.85
         let T2 = T * T
         let T3 = T2 * T
@@ -64,7 +64,7 @@ enum ILLunarCalendar {
         return jd1 + c1 - deltaT
     }
 
-    private static func sunLongitude(_ jdn: Double) -> Double {
+    private nonisolated static func sunLongitude(_ jdn: Double) -> Double {
         let T = (jdn - 2451545.0) / 36525
         let T2 = T * T
         let dr = Double.pi / 180
@@ -77,16 +77,16 @@ enum ILLunarCalendar {
         return l
     }
 
-    private static func sunLongitudeIndex(jdn: Int) -> Int {
+    private nonisolated static func sunLongitudeIndex(jdn: Int) -> Int {
         let longitude = sunLongitude(Double(jdn) - 0.5 - timeZone / 24)
         return Int(floor(longitude / Double.pi * 6))
     }
 
-    private static func newMoonDay(k: Double) -> Int {
+    private nonisolated static func newMoonDay(k: Double) -> Int {
         Int(floor(newMoon(k) + 0.5 + timeZone / 24))
     }
 
-    private static func lunarMonth11(year: Int) -> Int {
+    private nonisolated static func lunarMonth11(year: Int) -> Int {
         let off = Double(jdFromDate(day: 31, month: 12, year: year)) - 2415021.076998695
         let k = floor(off / 29.530588853)
         var nm = newMoonDay(k: k)
@@ -96,7 +96,7 @@ enum ILLunarCalendar {
         return nm
     }
 
-    private static func leapMonthOffset(a11: Int) -> Int {
+    private nonisolated static func leapMonthOffset(a11: Int) -> Int {
         let k = floor((Double(a11) - 2415021.076998695) / 29.530588853 + 0.5)
         var i = 1
         var last = sunLongitudeIndex(jdn: newMoonDay(k: k + Double(i)))
@@ -111,7 +111,7 @@ enum ILLunarCalendar {
 
     // MARK: - Public
 
-    static func solarToLunar(day: Int, month: Int, year: Int) -> LunarDate {
+    nonisolated static func solarToLunar(day: Int, month: Int, year: Int) -> LunarDate {
         let dayNumber = jdFromDate(day: day, month: month, year: year)
         let k = floor((Double(dayNumber) - 2415021.076998695) / 29.530588853)
         var monthStart = newMoonDay(k: k + 1)
@@ -152,9 +152,98 @@ enum ILLunarCalendar {
         return LunarDate(day: lunarDay, month: lunarMonth, year: lunarYear, isLeapMonth: isLeap)
     }
 
+    nonisolated struct SolarDate: Equatable {
+        let day: Int
+        let month: Int
+        let year: Int
+    }
+
+    /// Inverse of `solarToLunar`: the solar date of lunar `day`/`month` in lunar `year` (same
+    /// algorithm, UTC+7). A day 30 in a 29-day lunar month resolves to day 29 — the same
+    /// short-month rule as `matchesLunarDay`. Returns `nil` when the request does not exist (a
+    /// leap month the year does not have, or a day outside 1...30).
+    nonisolated static func lunarToSolar(day: Int, month: Int, year: Int, isLeap: Bool = false) -> SolarDate? {
+        guard (1...30).contains(day), (1...12).contains(month) else { return nil }
+
+        let a11: Int
+        let b11: Int
+        if month < 11 {
+            a11 = lunarMonth11(year: year - 1)
+            b11 = lunarMonth11(year: year)
+        } else {
+            a11 = lunarMonth11(year: year)
+            b11 = lunarMonth11(year: year + 1)
+        }
+
+        let k = floor(0.5 + (Double(a11) - 2415021.076998695) / 29.530588853)
+        var offset = month - 11
+        if offset < 0 { offset += 12 }
+
+        if b11 - a11 > 365 {
+            let leapOffset = leapMonthOffset(a11: a11)
+            var leapMonth = leapOffset - 2
+            if leapMonth < 0 { leapMonth += 12 }
+            if isLeap && month != leapMonth { return nil }
+            if isLeap || offset >= leapOffset { offset += 1 }
+        } else if isLeap {
+            return nil
+        }
+
+        let monthStart = newMoonDay(k: k + Double(offset))
+        let nextMonthStart = newMoonDay(k: k + Double(offset) + 1)
+        let monthLength = nextMonthStart - monthStart
+        let resolvedDay = min(day, monthLength)
+        return solarDate(fromJulianDay: monthStart + resolvedDay - 1)
+    }
+
+    private nonisolated static func solarDate(fromJulianDay jd: Int) -> SolarDate {
+        let b: Int
+        let c: Int
+        if jd > 2299160 {
+            let a = jd + 32044
+            b = (4 * a + 3) / 146097
+            c = a - (b * 146097) / 4
+        } else {
+            b = 0
+            c = jd + 32082
+        }
+        let d = (4 * c + 3) / 1461
+        let e = c - (1461 * d) / 4
+        let m = (5 * e + 2) / 153
+        let day = e - (153 * m + 2) / 5 + 1
+        let month = m + 3 - 12 * (m / 10)
+        let year = b * 100 + d - 4800 + m / 10
+        return SolarDate(day: day, month: month, year: year)
+    }
+
     static func solarToLunar(date: Date, calendar: Calendar = Calendar(identifier: .gregorian)) -> LunarDate {
         let comps = calendar.dateComponents([.day, .month, .year], from: date)
         return solarToLunar(day: comps.day ?? 1, month: comps.month ?? 1, year: comps.year ?? 2000)
+    }
+
+    /// `true` when `date` is the last day of a short (29-day) lunar month, i.e. day 29 whose next
+    /// solar day is day 1 of the following lunar month. `lunar` must be `solarToLunar(date:)` of `date`.
+    /// Only day 29 triggers the extra conversion, so the cost is one extra call about once a month.
+    static func isLastDayOfShortMonth(
+        _ lunar: LunarDate,
+        on date: Date,
+        calendar: Calendar = Calendar(identifier: .gregorian)
+    ) -> Bool {
+        guard lunar.day == 29, let next = calendar.date(byAdding: .day, value: 1, to: date) else { return false }
+        return solarToLunar(date: next, calendar: calendar).day == 1
+    }
+
+    /// Short-month rule for a recurring lunar day: a day-30 observance falls on day 29 when the
+    /// lunar month has only 29 days. Any other target matches only its exact lunar day. Leap-month
+    /// handling stays with the caller (see `isLeapMonthEligible`).
+    static func matchesLunarDay(
+        _ target: Int,
+        lunar: LunarDate,
+        on date: Date,
+        calendar: Calendar = Calendar(identifier: .gregorian)
+    ) -> Bool {
+        if lunar.day == target { return true }
+        return target == 30 && isLastDayOfShortMonth(lunar, on: date, calendar: calendar)
     }
 
     /// Chỉ số (0...11) của Thần Sát cai quản ngày trong vòng 12 Thần Sát (Thanh Long Hoàng Đạo):

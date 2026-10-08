@@ -4,6 +4,18 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v1.1 — 2026-10-03
+
+- Reader redesigned per the refreshed handoff (`Docs/InnerLamp project/`,
+  `isReader`): scrolling line-by-line chant text with highlight and cues, inline
+  font-size/background panel, auto-scroll toggle, keep-awake, progress +
+  −10s/play/+10s + pace chips (1x/1.2x/1.5x); 11-sutra catalog.
+- `requirements.md`: criteria rewritten (13 EARS); share/download/font-size/
+  player destinations removed; Pending adds start-at-chapter and persistence.
+- `design.md`: layers table, nav flow (back only) and data flow rewritten.
+- `tasks.md`: added Phase 1b; Phase 4 destinations closed/removed.
+- Reason: design handoff replaced the verse-by-verse view.
+
 ## v1.0 (initial)
 
 - Initial spec written retroactively from the already-implemented Reader feature

@@ -10,6 +10,7 @@
 import XCTest
 import GRPCCore
 import GRPCProtobuf
+import SwiftProtobuf
 @testable import InnerLamp
 
 final class GRPCLoggerTests: XCTestCase {
@@ -36,7 +37,7 @@ final class GRPCLoggerTests: XCTestCase {
             Innerlamp_Grpctest_EchoRequest.with { $0.message = "hi" },
             descriptor: .echoTestServiceEcho,
             serializer: ProtobufSerializer(),
-            deserializer: ProtobufDeserializer()
+            deserializer: ProtobufDeserializer<Innerlamp_Grpctest_EchoResponse>()
         )
 
         XCTAssertEqual(mockLoggingService.records.count, 1)
@@ -56,7 +57,7 @@ final class GRPCLoggerTests: XCTestCase {
             },
             descriptor: .echoTestServiceEcho,
             serializer: ProtobufSerializer(),
-            deserializer: ProtobufDeserializer()
+            deserializer: ProtobufDeserializer<Innerlamp_Grpctest_EchoResponse>()
         ) as Innerlamp_Grpctest_EchoResponse
 
         XCTAssertEqual(mockLoggingService.records.count, 1)
@@ -78,7 +79,7 @@ final class GRPCLoggerTests: XCTestCase {
             Innerlamp_Grpctest_EchoRequest.with { $0.message = "hi" },
             descriptor: .echoTestServiceEcho,
             serializer: ProtobufSerializer(),
-            deserializer: ProtobufDeserializer()
+            deserializer: ProtobufDeserializer<Innerlamp_Grpctest_EchoResponse>()
         ) as Innerlamp_Grpctest_EchoResponse
 
         let allValues = mockLoggingService.records.flatMap { record in

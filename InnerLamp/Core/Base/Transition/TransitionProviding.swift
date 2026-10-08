@@ -38,9 +38,15 @@ protocol TransitionProviding {
     /// Hiệu ứng dùng khi VC này bị **pop** ra khỏi stack.
     /// Mặc định dùng lại `pushTransition` (animate ngược lại) nếu không override.
     var popTransition: NavigationTransitionAnimating? { get }
+
+    /// Cho phép vuốt-cạnh để quay lại hay không. Mặc định `true`; override trả `false` khi màn
+    /// đang xử lý tác vụ không được gián đoạn (VD: đang gửi form).
+    var isSwipeBackEnabled: Bool { get }
 }
 
 extension TransitionProviding {
+    var isSwipeBackEnabled: Bool { true }
+
     // Mặc định đảo ngược hướng của pushTransition (VD: push trượt phải->trái thì
     // pop tự trượt trái->phải), giống hành vi push/pop mặc định của UIKit.
     var popTransition: NavigationTransitionAnimating? { pushTransition?.reversed }

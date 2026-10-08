@@ -14,6 +14,7 @@ final class ILSettingsViewModelTests: XCTestCase {
     private var cancellables: Set<AnyCancellable>!
 
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
+    private var viewWillAppearSubject: PassthroughSubject<Void, Never>!
     private var backTappedSubject: PassthroughSubject<Void, Never>!
     private var profileTappedSubject: PassthroughSubject<Void, Never>!
     private var bellToggleChangedSubject: PassthroughSubject<Bool, Never>!
@@ -36,6 +37,7 @@ final class ILSettingsViewModelTests: XCTestCase {
         cancellables = []
 
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
+        viewWillAppearSubject = PassthroughSubject<Void, Never>()
         backTappedSubject = PassthroughSubject<Void, Never>()
         profileTappedSubject = PassthroughSubject<Void, Never>()
         bellToggleChangedSubject = PassthroughSubject<Bool, Never>()
@@ -55,6 +57,7 @@ final class ILSettingsViewModelTests: XCTestCase {
     override func tearDown() {
         cancellables = nil
         viewDidLoadSubject = nil
+        viewWillAppearSubject = nil
         backTappedSubject = nil
         profileTappedSubject = nil
         bellToggleChangedSubject = nil
@@ -77,6 +80,7 @@ final class ILSettingsViewModelTests: XCTestCase {
     private func makeInput() -> ILSettingsViewModel.Input {
         ILSettingsViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
+            viewWillAppear: viewWillAppearSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             profileTapped: profileTappedSubject.eraseToAnyPublisher(),
             bellToggleChanged: bellToggleChangedSubject.eraseToAnyPublisher(),
@@ -136,7 +140,10 @@ final class ILSettingsViewModelTests: XCTestCase {
             state?.downloadsSummary,
             String(format: "settings.row.downloads.sub".localized, 8, 412)
         )
-        XCTAssertEqual(state?.languageSummary, "settings.row.language.sub".localized)
+        XCTAssertEqual(
+            state?.languageSummary,
+            String(format: "settings.row.language.sub".localized, "Tiếng Việt", "vừa")
+        )
         XCTAssertEqual(state?.hideJournalFromSangha, false)
         XCTAssertEqual(state?.versionText, String(format: "settings.footer.version".localized, "1.4"))
     }
@@ -291,6 +298,26 @@ final class ILSettingsViewModelTests: XCTestCase {
         XCTAssertEqual(ILSettingsViewModel.themeTitle(.system), "settings.theme.system".localized)
         XCTAssertEqual(ILSettingsViewModel.themeTitle(.light), "settings.theme.light".localized)
         XCTAssertEqual(ILSettingsViewModel.themeTitle(.dark), "settings.theme.dark".localized)
+    }
+
+    // MARK: - viewWillAppear
+    func test_viewWillAppear_refreshesThemeAndLanguageSummaryWithoutResettingToggles() {
+        let output = sut.transform(input: makeInput())
+        let latest = captureLatestState(output)
+        bellToggleChangedSubject.send(false)
+
+        mockUseCase.settings.theme = .dark
+        mockUseCase.settings.language = .english
+        mockUseCase.settings.scriptureFontSize = .extraLarge
+        viewWillAppearSubject.send(())
+
+        let state = latest()
+        XCTAssertEqual(state?.themeTitle, "settings.theme.dark".localized)
+        XCTAssertEqual(
+            state?.languageSummary,
+            String(format: "settings.row.language.sub".localized, "English", "rất lớn")
+        )
+        XCTAssertEqual(state?.bellEnabled, false)
     }
 
     func test_bellSoundTitle_mapsBronzeBell() {

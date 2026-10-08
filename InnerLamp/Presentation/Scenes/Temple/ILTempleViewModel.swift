@@ -28,11 +28,19 @@ protocol ILTempleViewModelProtocol: ViewModelType {
     var navigationEventPublisher: AnyPublisher<ILTempleNavEvent, Never> { get }
 }
 
+/// Temple detail screen. On `viewDidLoad` the profile is fetched from the server
+/// (`ILTempleUseCase.loadTemple(id:)` → `GET /v1/temples/{id}`): the state goes `.loading` →
+/// `.success` (or `.failure`, from which `retryTapped` loads again).
+///
+/// Only data from that response is filled into the state. Every section of the screen is kept;
+/// a field the API does not send is left empty and shown as "Đang cập nhật".
 final class ILTempleViewModel: ILTempleViewModelProtocol {
 
     // MARK: - Input / Output
     struct Input {
         let viewDidLoad: AnyPublisher<Void, Never>
+        /// "Thử lại" on the error state — loads the profile again.
+        let retryTapped: AnyPublisher<Void, Never>
         let backTapped: AnyPublisher<Void, Never>
         let followTapped: AnyPublisher<Void, Never>
         let bioToggled: AnyPublisher<Void, Never>
@@ -49,13 +57,13 @@ final class ILTempleViewModel: ILTempleViewModelProtocol {
     }
 
     struct Output {
+        /// Whole-screen state: `.loading` while fetching, `.failure` when the profile could not
+        /// be loaded (the screen shows an error + retry).
         let state: AnyPublisher<ViewState<ILTempleStateModel>, Never>
+        /// Transient error after the profile is on screen (e.g. follow failed) — shown as a toast
+        /// without replacing the content.
+        let errorMessage: AnyPublisher<String, Never>
     }
-
-    /// Vị trí người dùng cố định dùng để tính khoảng cách (prototype cố định ở Quận 1, TP.HCM,
-    /// khớp design handoff — chưa xin quyền vị trí thật).
-    private static let userLatitude = 10.7769
-    private static let userLongitude = 106.7009
 
     // MARK: - Properties
     var navigationEventPublisher: AnyPublisher<ILTempleNavEvent, Never> {
@@ -63,13 +71,16 @@ final class ILTempleViewModel: ILTempleViewModelProtocol {
     }
 
     private let navigationEventSubject = PassthroughSubject<ILTempleNavEvent, Never>()
-    private let stateSubject: CurrentValueSubject<ViewState<ILTempleStateModel>, Never>
-    private var currentEntity: ILTempleEntity
-    private var currentState: ILTempleStateModel
+    private let stateSubject = CurrentValueSubject<ViewState<ILTempleStateModel>, Never>(.idle)
+    private let errorMessageSubject = PassthroughSubject<String, Never>()
     private let useCase: ILTempleUseCase
-    private let initialTempleID: String
-    /// Nguồn "hôm nay" — tiêm vào để test trạng thái mở/đóng cửa không phụ thuộc đồng hồ máy.
+    private let templeID: String
+    /// Nguồn "bây giờ" — tiêm vào để test trạng thái mở/đóng cửa không phụ thuộc đồng hồ máy.
     private let now: () -> Date
+    /// `nil` until the first successful load.
+    private var currentDetail: ILTempleDetailEntity?
+    private var currentState: ILTempleStateModel?
+    private var loadTask: Task<Void, Never>?
     private var isFollowing = false
     private var isBiographyExpanded = false
     private var cancellables = Set<AnyCancellable>()
@@ -77,20 +88,18 @@ final class ILTempleViewModel: ILTempleViewModelProtocol {
     // MARK: - Initializer
     init(useCase: ILTempleUseCase, templeID: String, now: @escaping () -> Date = Date.init) {
         self.useCase = useCase
-        self.initialTempleID = templeID
+        self.templeID = templeID
         self.now = now
-        let initialEntity = useCase.getInitialState(templeID: templeID)
-        self.currentEntity = initialEntity
-        self.currentState = Self.makeStateModel(
-            from: initialEntity, isFollowing: false, isBiographyExpanded: false, now: now()
-        )
-        self.stateSubject = CurrentValueSubject(.success(currentState))
     }
 
     // MARK: - Transform
     func transform(input: Input) -> Output {
         input.viewDidLoad
-            .sink { [weak self] _ in self?.handleViewDidLoad() }
+            .sink { [weak self] _ in self?.loadTemple() }
+            .store(in: &cancellables)
+
+        input.retryTapped
+            .sink { [weak self] _ in self?.loadTemple() }
             .store(in: &cancellables)
 
         input.backTapped
@@ -111,15 +120,15 @@ final class ILTempleViewModel: ILTempleViewModelProtocol {
 
         input.googleMapsTapped
             .sink { [weak self] _ in
-                guard let self else { return }
-                navigationEventSubject.send(.openURL(Self.googleMapsURL(for: currentEntity)))
+                guard let detail = self?.currentDetail else { return }
+                self?.navigationEventSubject.send(.openURL(Self.googleMapsURL(for: detail)))
             }
             .store(in: &cancellables)
 
         input.appleMapsTapped
             .sink { [weak self] _ in
-                guard let self else { return }
-                navigationEventSubject.send(.openURL(Self.appleMapsURL(for: currentEntity)))
+                guard let detail = self?.currentDetail else { return }
+                self?.navigationEventSubject.send(.openURL(Self.appleMapsURL(for: detail)))
             }
             .store(in: &cancellables)
 
@@ -138,196 +147,272 @@ final class ILTempleViewModel: ILTempleViewModelProtocol {
         input.contactTapped
             .sink { [weak self] id in
                 guard let self,
-                      let contact = currentEntity.contacts.first(where: { $0.id == id }),
-                      let url = Self.contactURL(for: contact) else { return }
+                      let contact = currentState?.contacts.first(where: { $0.id == id && $0.hasValue }),
+                      let url = Self.contactURL(id: contact.id, value: contact.value) else { return }
                 navigationEventSubject.send(.openURL(url))
             }
             .store(in: &cancellables)
 
-        return Output(state: stateSubject.eraseToAnyPublisher())
+        return Output(
+            state: stateSubject.eraseToAnyPublisher(),
+            errorMessage: errorMessageSubject.eraseToAnyPublisher()
+        )
     }
 
     // MARK: - Actions
-    private func handleViewDidLoad() {
-        applyEntity(useCase.getInitialState(templeID: initialTempleID))
+    /// Fetches the profile. `self` is not held across the network call, so popping the screen
+    /// mid-load releases the ViewModel; a superseded load is cancelled and its result dropped.
+    private func loadTemple() {
+        loadTask?.cancel()
+        stateSubject.send(.loading)
+
+        let useCase = useCase
+        let templeID = templeID
+        loadTask = Task { [weak self] in
+            do {
+                let detail = try await useCase.loadTemple(id: templeID)
+                guard !Task.isCancelled, let self else { return }
+                currentDetail = detail
+                publishState()
+            } catch {
+                guard !Task.isCancelled, let self else { return }
+                stateSubject.send(.failure(error))
+            }
+        }
     }
 
-    /// Theo dõi / bỏ theo dõi chùa — cập nhật UI ngay (optimistic); `ILTempleUseCase.toggleFollow`
-    /// là stub (cần repository lưu danh sách chùa đang theo dõi, chưa build) nên trạng thái
-    /// `isFollowing` chỉ giữ ở đây, không nằm trong `ILTempleEntity`.
+    /// Theo dõi / bỏ theo dõi chùa — cập nhật UI ngay (optimistic) và hoàn tác nếu use case ném
+    /// lỗi. `ILTempleUseCase.toggleFollow` là stub (cần repository lưu danh sách chùa đang theo
+    /// dõi, chưa build) nên trạng thái `isFollowing` chỉ giữ ở đây.
     private func handleFollowTapped() {
+        guard currentDetail != nil else { return }
         isFollowing.toggle()
         publishState()
 
-        let templeID = currentEntity.id
+        let useCase = useCase
+        let templeID = templeID
         Task { [weak self] in
-            guard let self else { return }
             do {
-                try await self.useCase.toggleFollow(templeID: templeID)
+                try await useCase.toggleFollow(templeID: templeID)
             } catch {
-                self.stateSubject.send(.failure(error))
+                guard let self else { return }
+                isFollowing.toggle()
+                publishState()
+                errorMessageSubject.send(error.localizedDescription)
             }
         }
     }
 
     // MARK: - Entity -> StateModel
-    private func applyEntity(_ entity: ILTempleEntity) {
-        currentEntity = entity
-        publishState()
-    }
-
     private func publishState() {
-        currentState = Self.makeStateModel(
-            from: currentEntity, isFollowing: isFollowing, isBiographyExpanded: isBiographyExpanded, now: now()
+        guard let currentDetail else { return }
+        let state = Self.makeStateModel(
+            from: currentDetail, isFollowing: isFollowing, isBiographyExpanded: isBiographyExpanded, now: now()
         )
-        stateSubject.send(.success(currentState))
+        currentState = state
+        stateSubject.send(.success(state))
     }
 
     /// `Entity -> StateModel` là việc riêng của presentation (nhãn nút, trạng thái mở/đóng cửa
-    /// theo giờ hiện tại + âm lịch, khoảng cách theo `ILLunarCalendar`/haversine, các chuỗi đã
-    /// format sẵn) nên nằm ở đây, không phải trong Mapper dùng chung
-    /// (xem `references/data_layer_boundaries.md`).
+    /// theo giờ hiện tại, các chuỗi đã format sẵn) nên nằm ở đây, không phải trong Mapper dùng
+    /// chung (xem `references/data_layer_boundaries.md`).
+    ///
+    /// Only API fields are filled; everything else stays empty / "Đang cập nhật".
     private static func makeStateModel(
-        from entity: ILTempleEntity, isFollowing: Bool, isBiographyExpanded: Bool, now: Date
+        from detail: ILTempleDetailEntity, isFollowing: Bool, isBiographyExpanded: Bool, now: Date
     ) -> ILTempleStateModel {
+        let summary = detail.summary
+        let updating = "temple.info.updating".localized
+        let rankText = ILTempleCatalogLabels.heritageRankLabel(summary.heritageRank) ?? "temple.rank.none".localized
+        let sectText = ILTempleCatalogLabels.sectLabel(summary.sect)
+        let regionText = ILTempleCatalogLabels.regionLabel(summary.region)
+
         var state = ILTempleStateModel()
 
-        state.headerTitle = entity.name
-        state.rankChip = entity.rank ?? "temple.rank.none".localized
-        state.sectChip = entity.sect
-        state.name = entity.name
-        state.hasAlias = !entity.aliases.isEmpty
-        state.aliasLine = String(format: "temple.hero.alias".localized, entity.aliases.joined(separator: " · "))
-        state.placeLine = "\(entity.district), \(entity.province)"
+        // Hero
+        state.headerTitle = summary.name
+        state.rankChip = rankText
+        state.sectChip = sectText
+        state.name = summary.name
+        state.hasAlias = !detail.aliases.isEmpty
+        state.aliasLine = String(format: "temple.hero.alias".localized, detail.aliases.joined(separator: " · "))
+        state.placeLine = Self.placeLine(from: summary.location.address)
+        state.heroImageURL = summary.imageURL
 
         state.followButtonTitle = (isFollowing ? "temple.following" : "temple.follow").localized
         state.directionsButtonTitle = "temple.directions".localized
         state.offerButtonTitle = "temple.offer".localized
 
-        let today = ILLunarCalendar.solarToLunar(date: now)
-        let isHoliday = today.day == 1 || today.day == 15
-        let hours = isHoliday ? entity.holidayHours : entity.regularHours
-        let minuteOfDay = Calendar.current.component(.hour, from: now) * 60 + Calendar.current.component(.minute, from: now)
-        state.isOpen = minuteOfDay >= hours.openMinute && minuteOfDay < hours.closeMinute
-        state.openStatusText = (state.isOpen ? "temple.status.open" : "temple.status.closed").localized
-        state.openNoteText = state.isOpen
-            ? String(format: "temple.status.closesAt".localized, Self.formatMinuteOfDay(hours.closeMinute))
-            : String(format: "temple.status.opensAt".localized, Self.formatMinuteOfDay(hours.openMinute))
-        state.distanceText = String(format: "temple.distance.near".localized, Self.formatDistance(to: entity))
+        // Status card — the API sends one range ("06:00 - 18:00"), shown as the weekday row; it
+        // has no holiday (Rằm & Mùng Một) range and no user location for the distance.
+        let hours = Self.parseOperatingHours(detail.operatingHours)
+        if let hours {
+            let calendar = Calendar.current
+            let minuteOfDay = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
+            state.isOpen = Self.isOpen(at: minuteOfDay, open: hours.open, close: hours.close)
+            state.openStatusText = (state.isOpen ? "temple.status.open" : "temple.status.closed").localized
+            state.openNoteText = state.isOpen
+                ? String(format: "temple.status.closesAt".localized, Self.formatMinuteOfDay(hours.close))
+                : String(format: "temple.status.opensAt".localized, Self.formatMinuteOfDay(hours.open))
+        } else {
+            state.isOpen = false
+            state.openStatusText = "temple.status.unknown".localized
+            state.openNoteText = ""
+        }
+        state.distanceText = ""
         state.hourRows = [
             ILTempleHourRowModel(
                 id: "weekday", label: "temple.hours.weekday".localized,
-                value: "\(Self.formatMinuteOfDay(entity.regularHours.openMinute)) – \(Self.formatMinuteOfDay(entity.regularHours.closeMinute))",
-                isToday: !isHoliday
+                value: hours.map { "\(Self.formatMinuteOfDay($0.open)) – \(Self.formatMinuteOfDay($0.close))" } ?? updating,
+                isToday: hours != nil
             ),
-            ILTempleHourRowModel(
-                id: "holiday", label: "temple.hours.holiday".localized,
-                value: "\(Self.formatMinuteOfDay(entity.holidayHours.openMinute)) – \(Self.formatMinuteOfDay(entity.holidayHours.closeMinute))",
-                isToday: isHoliday
-            )
+            ILTempleHourRowModel(id: "holiday", label: "temple.hours.holiday".localized, value: updating, isToday: false)
         ]
 
+        // Facts grid
         state.facts = [
-            ILTempleFactModel(id: "era", label: "temple.facts.era".localized, value: entity.era),
-            ILTempleFactModel(id: "rank", label: "temple.facts.rank".localized, value: entity.rank ?? "temple.info.updating".localized),
-            ILTempleFactModel(id: "sect", label: "temple.facts.sect".localized, value: entity.sect),
-            ILTempleFactModel(id: "region", label: "temple.facts.region".localized, value: entity.subRegion)
+            ILTempleFactModel(
+                id: "era", label: "temple.facts.era".localized,
+                value: summary.establishedYear > 0
+                    ? String(format: "temple.facts.eraFormat".localized, summary.establishedYear)
+                    : updating
+            ),
+            ILTempleFactModel(id: "rank", label: "temple.facts.rank".localized, value: rankText),
+            ILTempleFactModel(id: "sect", label: "temple.facts.sect".localized, value: sectText),
+            ILTempleFactModel(id: "region", label: "temple.facts.region".localized, value: regionText)
         ]
 
-        state.descriptionText = entity.bio
+        // Giới thiệu
+        state.descriptionText = detail.introduction
         state.isBiographyExpanded = isBiographyExpanded
         state.biographyToggleTitle = (isBiographyExpanded ? "temple.bio.collapse" : "temple.bio.readMore").localized
 
-        state.orgInfo = entity.orgInfo.map { info in
-            ILTempleOrgInfoModel(
-                id: info.id, label: info.label,
-                value: info.value ?? "temple.info.updating".localized,
-                hasValue: info.value != nil
-            )
+        // Tổ chức & truyền thừa — "Giáo hội" is not in the API.
+        state.orgInfo = [
+            Self.orgInfo(id: "abbot", label: "temple.org.abbot".localized, value: detail.currentAbbot),
+            Self.orgInfo(id: "founder", label: "temple.org.founder".localized, value: detail.founder),
+            Self.orgInfo(id: "sangha", label: "temple.org.sangha".localized, value: "")
+        ]
+
+        // Kiến trúc & di sản — one paragraph; the API has no separate highlight cards.
+        state.architectureText = detail.architectureHeritage
+        state.highlights = []
+
+        // Tiện ích — "Kinh sách" is not in the API.
+        let facilities = detail.facilities
+        state.amenities = [
+            Self.amenity(id: "car", label: "temple.amenity.car".localized, isAvailable: facilities.hasCarParking),
+            Self.amenity(id: "bike", label: "temple.amenity.bike".localized, isAvailable: facilities.hasMotorbikeParking),
+            Self.amenity(id: "veg", label: "temple.amenity.veg".localized, isAvailable: facilities.servesVegetarianMeals),
+            Self.amenity(id: "books", label: "temple.amenity.books".localized, isAvailable: nil),
+            Self.amenity(id: "retreat", label: "temple.amenity.retreat".localized, isAvailable: facilities.hasSummerRetreat)
+        ]
+
+        // Lưu ý khi viếng thăm — numbered "01", "02"…
+        state.visitRules = detail.visitingNotes.enumerated().map { index, note in
+            ILTempleRuleModel(id: "rule_\(index)", number: String(format: "%02d", index + 1), text: note)
         }
 
-        state.archStyle = entity.archStyle
-        state.materials = entity.materials
-        state.highlights = entity.highlights
+        // Sự kiện & khóa học — not in the API.
+        state.hasUpcomingSchedule = false
+        state.sessions = []
 
-        state.amenities = entity.amenities.map { amenity in
-            let isAvailable = amenity.value != nil
-            return ILTempleAmenityModel(
-                id: amenity.id, label: amenity.label,
-                value: amenity.value ?? "temple.amenity.none".localized,
-                isAvailable: isAvailable
-            )
+        // Vị trí & liên hệ — contacts are not in the API.
+        state.addressLine = summary.location.address
+        state.regionLine = regionText
+        state.coordinateText = String(format: "%.4f° B, %.4f° Đ", summary.location.latitude, summary.location.longitude)
+        state.contacts = [
+            ("phone", "temple.contact.phone"), ("fanpage", "temple.contact.fanpage"),
+            ("website", "temple.contact.website"), ("email", "temple.contact.email")
+        ].map { id, labelKey in
+            ILTempleContactModel(id: id, label: labelKey.localized, value: updating, hasValue: false)
         }
 
-        state.visitRules = entity.visitRules.enumerated().map { index, text in
-            ILTempleRuleModel(id: "rule-\(index)", number: String(format: "%02d", index + 1), text: text)
-        }
-
-        state.hasUpcomingSchedule = entity.hasUpcomingSchedule
-        state.sessions = entity.sessions.map { session in
-            ILTempleSessionModel(
-                id: session.id, title: session.title, subtitle: session.subtitle,
-                trailingText: session.trailingText, tone: session.tone, glyph: session.glyph
-            )
-        }
-
-        state.addressLine = [entity.street, entity.ward, entity.district, entity.province].joined(separator: ", ")
-        state.regionLine = entity.subRegion != entity.region ? "\(entity.region) · \(entity.subRegion)" : entity.region
-        state.coordinateText = String(format: "%.4f° B, %.4f° Đ", entity.latitude, entity.longitude)
-        state.contacts = entity.contacts.map { contact in
-            ILTempleContactModel(
-                id: contact.id, label: contact.label,
-                value: contact.rawValue ?? "temple.info.updating".localized,
-                hasValue: contact.rawValue != nil
-            )
-        }
-
-        state.updatedText = String(format: "temple.footer.updated".localized, entity.updatedLabel)
+        // Chân trang — no "updated" date in the API.
+        state.updatedText = ""
 
         return state
     }
 
-    // MARK: - URL builders
-    private static func googleMapsURL(for entity: ILTempleEntity) -> String {
-        "https://www.google.com/maps/dir/?api=1&destination=\(entity.latitude),\(entity.longitude)"
+    private static func orgInfo(id: String, label: String, value: String) -> ILTempleOrgInfoModel {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return ILTempleOrgInfoModel(
+            id: id, label: label,
+            value: trimmed.isEmpty ? "temple.info.updating".localized : trimmed,
+            hasValue: !trimmed.isEmpty
+        )
     }
 
-    private static func appleMapsURL(for entity: ILTempleEntity) -> String {
-        "https://maps.apple.com/?daddr=\(entity.latitude),\(entity.longitude)"
-    }
-
-    private static func contactURL(for contact: ILTempleContactEntity) -> String? {
-        guard let rawValue = contact.rawValue, !rawValue.isEmpty else { return nil }
-        switch contact.id {
-        case "phone": return "tel:" + rawValue.replacingOccurrences(of: " ", with: "")
-        case "fanpage", "website": return "https://" + rawValue
-        case "email": return "mailto:" + rawValue
-        default: return nil
+    /// `isAvailable == nil` — the API does not say; shown as "Đang cập nhật", unticked.
+    private static func amenity(id: String, label: String, isAvailable: Bool?) -> ILTempleAmenityModel {
+        let valueKey: String
+        switch isAvailable {
+        case true?: valueKey = "temple.amenity.available"
+        case false?: valueKey = "temple.amenity.none"
+        case nil: valueKey = "temple.info.updating"
         }
+        return ILTempleAmenityModel(id: id, label: label, value: valueKey.localized, isAvailable: isAvailable == true)
     }
 
-    // MARK: - Formatting helpers
-    /// "5:00" — `minute` là số phút trong ngày (khớp `hours`/`holHours` trong design handoff).
+    /// "Phường Kim Long, TP. Huế" — the last two address parts (district-level + province); the
+    /// full address is shown in the location section.
+    private static func placeLine(from address: String) -> String {
+        ILTempleCatalogLabels.addressComponents(of: address).suffix(2).joined(separator: ", ")
+    }
+
+    // MARK: - Opening hours
+    /// Parses the server's `operating_hours` ("06:00 - 18:00") into minutes of the day. `nil` for
+    /// an empty or unrecognized value.
+    static func parseOperatingHours(_ raw: String) -> (open: Int, close: Int)? {
+        let parts = raw
+            .components(separatedBy: CharacterSet(charactersIn: "-–"))
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        guard parts.count == 2,
+              let open = minuteOfDay(from: parts[0]),
+              let close = minuteOfDay(from: parts[1]) else { return nil }
+        return (open, close)
+    }
+
+    /// "06:30" → 390. `nil` unless it is a valid `H:mm` / `HH:mm` time.
+    private static func minuteOfDay(from text: String) -> Int? {
+        let pieces = text.split(separator: ":")
+        guard pieces.count == 2,
+              let hour = Int(pieces[0]), let minute = Int(pieces[1]),
+              (0...24).contains(hour), (0..<60).contains(minute) else { return nil }
+        let total = hour * 60 + minute
+        return total <= 24 * 60 ? total : nil
+    }
+
+    /// Open when `minute` is in `[open, close)`; a range past midnight (`close <= open`) wraps.
+    private static func isOpen(at minute: Int, open: Int, close: Int) -> Bool {
+        close > open
+            ? minute >= open && minute < close
+            : minute >= open || minute < close
+    }
+
+    /// "5:00" — `minute` là số phút trong ngày.
     private static func formatMinuteOfDay(_ minute: Int) -> String {
         "\(minute / 60):" + String(format: "%02d", minute % 60)
     }
 
-    /// "3,2" (dưới 10km, 1 số lẻ, dấu phẩy thập phân Việt Nam) hoặc "12" (từ 10km, làm tròn) —
-    /// công thức haversine từ `userLatitude`/`userLongitude` (khớp design handoff).
-    private static func formatDistance(to entity: ILTempleEntity) -> String {
-        let earthRadiusKm = 6371.0
-        let userLatRad = userLatitude * .pi / 180
-        let templeLatRad = entity.latitude * .pi / 180
-        let deltaLat = (entity.latitude - userLatitude) * .pi / 180
-        let deltaLng = (entity.longitude - userLongitude) * .pi / 180
+    // MARK: - URL builders
+    private static func googleMapsURL(for detail: ILTempleDetailEntity) -> String {
+        let location = detail.summary.location
+        return "https://www.google.com/maps/dir/?api=1&destination=\(location.latitude),\(location.longitude)"
+    }
 
-        let a = sin(deltaLat / 2) * sin(deltaLat / 2)
-            + cos(userLatRad) * cos(templeLatRad) * sin(deltaLng / 2) * sin(deltaLng / 2)
-        let distanceKm = 2 * earthRadiusKm * asin(min(1, sqrt(a)))
+    private static func appleMapsURL(for detail: ILTempleDetailEntity) -> String {
+        let location = detail.summary.location
+        return "https://maps.apple.com/?daddr=\(location.latitude),\(location.longitude)"
+    }
 
-        if distanceKm < 10 {
-            return String(format: "%.1f", distanceKm).replacingOccurrences(of: ".", with: ",")
+    private static func contactURL(id: String, value: String) -> String? {
+        guard !value.isEmpty else { return nil }
+        switch id {
+        case "phone": return "tel:" + value.replacingOccurrences(of: " ", with: "")
+        case "fanpage", "website": return "https://" + value
+        case "email": return "mailto:" + value
+        default: return nil
         }
-        return String(Int(distanceKm.rounded()))
     }
 }

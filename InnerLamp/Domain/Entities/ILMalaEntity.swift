@@ -15,17 +15,23 @@ enum ILMalaMilestone: Equatable {
 
 /// Pure business entity cho màn Tràng hạt (niệm Phật) — Domain layer only.
 ///
-/// Chỉ chứa số liệu có ý nghĩa nghiệp vụ (số hạt, mục tiêu mỗi tràng, số tràng đã hoàn thành).
+/// Chỉ chứa số liệu có ý nghĩa nghiệp vụ (số hạt, mục tiêu mỗi vòng, vòng đang niệm).
 /// KHÔNG chứa field chỉ phục vụ hiển thị (chuỗi `.localized`, nhãn "N tràng", tỉ lệ tiến độ) —
 /// những field đó nằm ở `ILMalaStateModel`, do `ILMalaViewModel` tự chuyển đổi. Xem
 /// `references/data_layer_boundaries.md`.
 struct ILMalaEntity: Equatable {
-    /// Số hạt đã niệm trong tràng hiện tại, 0...`goal`.
+    /// Các mục tiêu (số biến) người dùng được chọn cho một vòng.
+    static let goalOptions = [21, 54, 108]
+
+    /// Số hạt đã niệm trong vòng hiện tại, 0...`goal`.
     var count: Int = 0
-    /// Số hạt của một tràng.
+    /// Số biến của một vòng.
     var goal: Int = 108
-    /// Số tràng đã niệm đủ.
-    var completedRounds: Int = 0
+    /// Vòng đang niệm, bắt đầu từ 1; tăng khi người dùng chọn "Niệm tiếp vòng mới".
+    var round: Int = 1
+
+    /// Đã niệm đủ `goal` biến — vòng chờ người dùng chọn niệm tiếp hoặc kết thúc.
+    var isRoundComplete: Bool { count >= goal }
 
     /// Khoảng cách giữa hai mốc rung — một phần tư tràng.
     var quarterInterval: Int { max(1, goal / 4) }

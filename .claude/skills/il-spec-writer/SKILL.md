@@ -1,6 +1,7 @@
 ---
 name: il-spec-writer
 description: This skill should be used when the user wants a written spec (requirements, design, or task breakdown) for an InnerLamp iOS feature — before, during, or retroactively after building it — covering the three-file convention under Docs/Specs/<Feature>/ (requirements.md, design.md, tasks.md) plus a changelog.md, matching the existing Docs/Specs/SignUp/ example. It enforces a strict one-way cascade (requirements → design → tasks: a requirement change always updates design, which always updates tasks, never the reverse), EARS-notation acceptance criteria in requirements.md, a mandatory "Step-by-step Flow" section in design.md for any flow with 2+ sequential API/network calls (spelling out trigger/pre-condition/API/success-failure per step so hidden steps like a duplicate check or a secondary verification call are never silently assumed), version headers + changelog entries on every file for every update, and a hard rule that any unanswered question from the user is recorded inline as "⚠️ Not confirmed" — never skipped, never guessed, never silently defaulted. It is a docs-only skill: it never writes Swift code (that is `il-screen-builder`'s job) and never writes to Docs/Knowledge/ (the separate, post-implementation-only OKF convention described in Docs/Specs/OKF.md).
+model: claude-sonnet-5-5
 ---
 
 # InnerLamp Spec Writer

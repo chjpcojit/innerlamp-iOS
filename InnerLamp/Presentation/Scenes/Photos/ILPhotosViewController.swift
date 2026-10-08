@@ -17,7 +17,11 @@ final class ILPhotosViewController: BaseViewController {
     private var cancellables = Set<AnyCancellable>()
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
     private let categorySelectedSubject = PassthroughSubject<ILPhotosCategory?, Never>()
+    private let loadMoreTriggeredSubject = PassthroughSubject<Void, Never>()
     private let backTappedSubject = PassthroughSubject<Void, Never>()
+    private let photoSelectedSubject = PassthroughSubject<String, Never>()
+    /// Chips currently built — they are rebuilt only when the selection changes, not on every paging update.
+    private var renderedCategories: [ILPhotosCategoryModel] = []
 
     // MARK: - UI Elements
     private lazy var headerContainer: UIView = {
@@ -51,6 +55,9 @@ final class ILPhotosViewController: BaseViewController {
 
     private lazy var masonryGrid = ILPhotosMasonryGridView()
 
+    /// Shown over the grid during the first load (nothing to display yet) instead of the footer spinner.
+    private lazy var skeletonView = ILPhotosSkeletonView()
+
     // MARK: - Initializer
     init(viewModel: ILPhotosViewModel) {
         self.viewModel = viewModel
@@ -70,6 +77,8 @@ final class ILPhotosViewController: BaseViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        // Pushing the photo viewer keeps the bottom nav hidden; only popping this screen restores it.
+        guard isMovingFromParent else { return }
         (tabBarController as? ILMainTabBarController)?.setBottomNavHidden(false, animated: animated)
     }
 
@@ -81,6 +90,9 @@ final class ILPhotosViewController: BaseViewController {
         headerView.title = "photos.header.title".localized
         headerView.onBack = { [weak self] in self?.backTappedSubject.send(()) }
 
+        masonryGrid.onLoadMore = { [weak self] in self?.loadMoreTriggeredSubject.send(()) }
+        masonryGrid.onPhotoTap = { [weak self] id in self?.photoSelectedSubject.send(id) }
+
         headerContainer.addSubview(headerView)
         headerContainer.addSubview(chipsScrollView)
         headerContainer.addSubview(headerDivider)
@@ -89,11 +101,13 @@ final class ILPhotosViewController: BaseViewController {
 
         view.addSubview(headerContainer)
         view.addSubview(masonryGrid)
+        view.addSubview(skeletonView)
+        skeletonView.isHidden = true
     }
 
     override func setupConstraints() {
         super.setupConstraints()
-        [headerContainer, headerView, chipsScrollView, chipsStack, headerDivider, masonryGrid].forEach {
+        [headerContainer, headerView, chipsScrollView, chipsStack, headerDivider, masonryGrid, skeletonView].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
 
@@ -127,7 +141,12 @@ final class ILPhotosViewController: BaseViewController {
             masonryGrid.topAnchor.constraint(equalTo: headerContainer.bottomAnchor),
             masonryGrid.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             masonryGrid.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            masonryGrid.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            masonryGrid.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            skeletonView.topAnchor.constraint(equalTo: masonryGrid.topAnchor),
+            skeletonView.leadingAnchor.constraint(equalTo: masonryGrid.leadingAnchor),
+            skeletonView.trailingAnchor.constraint(equalTo: masonryGrid.trailingAnchor),
+            skeletonView.bottomAnchor.constraint(equalTo: masonryGrid.bottomAnchor)
         ])
     }
 
@@ -137,7 +156,9 @@ final class ILPhotosViewController: BaseViewController {
         let input = ILPhotosViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             categorySelected: categorySelectedSubject.eraseToAnyPublisher(),
-            backTapped: backTappedSubject.eraseToAnyPublisher()
+            loadMoreTriggered: loadMoreTriggeredSubject.eraseToAnyPublisher(),
+            backTapped: backTappedSubject.eraseToAnyPublisher(),
+            photoSelected: photoSelectedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
 
@@ -164,8 +185,21 @@ final class ILPhotosViewController: BaseViewController {
 
     private func updateUI(with model: ILPhotosStateModel) {
         headerView.subtitle = model.subtitle
-        rebuildChips(model.categories)
+        if model.categories != renderedCategories {
+            renderedCategories = model.categories
+            rebuildChips(model.categories)
+        }
         masonryGrid.photos = model.photos
+        // First load (empty grid + request in flight): skeleton instead of the footer spinner.
+        skeletonView.isHidden = !(model.photos.isEmpty && model.isLoadingMore)
+        masonryGrid.footerState = skeletonView.isHidden ? footerState(for: model) : .hidden
+    }
+
+    private func footerState(for model: ILPhotosStateModel) -> ILLoadMoreFooterView.State {
+        if model.isLoadingMore { return .loading }
+        // Nothing to show an "end" for until at least one page arrived (or after a failed load).
+        if !model.hasMore && !model.photos.isEmpty { return .end }
+        return .hidden
     }
 
     private func rebuildChips(_ categories: [ILPhotosCategoryModel]) {

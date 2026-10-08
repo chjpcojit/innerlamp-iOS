@@ -7,14 +7,20 @@ import Foundation
 
 protocol ILLibraryUseCase {
     func getCatalog() -> ILLibraryEntity
+    /// Carousel "Chư Phật & Bồ Tát" — same server source as Home (`/v1/deities/top`, cached offline).
+    func loadTopDeities() async throws -> [ILHomeDeityEntity]
 }
 
 final class ILLibraryUseCaseImpl: ILLibraryUseCase {
 
-    private let deityUseCase: ILDeityUseCase
+    private let deityCatalogRepository: ILDeityCatalogRepository
 
-    init(deityUseCase: ILDeityUseCase) {
-        self.deityUseCase = deityUseCase
+    init(deityCatalogRepository: ILDeityCatalogRepository) {
+        self.deityCatalogRepository = deityCatalogRepository
+    }
+
+    func loadTopDeities() async throws -> [ILHomeDeityEntity] {
+        try await deityCatalogRepository.loadTopDeities().map(ILHomeUseCaseImpl.makeDeity(from:))
     }
 
     func getCatalog() -> ILLibraryEntity {
@@ -35,37 +41,26 @@ final class ILLibraryUseCaseImpl: ILLibraryUseCase {
                     durationMinutes: 130, tone: .gold
                 ),
                 ILLibraryItemEntity(
-                    id: "sutra.vulan", kind: .sutra,
+                    id: "vu-lan", kind: .sutra,
                     title: "library.mock.vulan.title".localized,
                     subtitle: "library.mock.vulan.subtitle".localized,
                     durationMinutes: 38, tone: .rose
                 ),
                 ILLibraryItemEntity(
-                    id: "sutra.amida", kind: .sutra,
+                    id: "a-di-da", kind: .sutra,
                     title: "library.mock.amida.title".localized,
                     subtitle: "library.mock.amida.subtitle".localized,
                     durationMinutes: 26, tone: .green
                 ),
                 ILLibraryItemEntity(
-                    id: "sutra.daibi", kind: .sutra,
+                    id: "chu-dai-bi", kind: .sutra,
                     title: "library.mock.daibi.title".localized,
                     subtitle: "library.mock.daibi.subtitle".localized,
                     durationMinutes: 9, tone: .ink
                 )
             ],
-            // Carousel "Chư Phật & Bồ Tát" — cùng catalog và cùng phép map `primaryMemorialDay`
-            // với carousel "Thư viện Phật & Bồ Tát" ở Trang chủ (`ILHomeUseCaseImpl`), để chạm thẻ
-            // mở đúng màn chi tiết `Deity` bằng cùng id.
-            deities: deityUseCase.getAllDeities().map {
-                ILHomeDeityEntity(
-                    id: $0.id,
-                    kind: $0.kind,
-                    name: $0.nameVi,
-                    honorific: $0.titleHonorific,
-                    virtue: $0.coreVirtue,
-                    memorialDay: ILHomeUseCaseImpl.primaryMemorialDay(of: $0.memorialDays)
-                )
-            }
+            // Filled asynchronously by `loadTopDeities()` once the server answers.
+            deities: []
         )
     }
 }

@@ -12,6 +12,11 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
         CrossFadeTransition()
     }
 
+    /// Chặn vuốt-cạnh quay lại trong lúc đang gửi mã xác thực.
+    var isSwipeBackEnabled: Bool { !isSubmitting }
+
+    private var isSubmitting = false
+
     // MARK: - Properties
     private let viewModel: ILSignUpViewModel
     private var cancellables = Set<AnyCancellable>()
@@ -400,10 +405,20 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
         termsRow.isChecked = model.didAcceptTerms
 
         submitButton.buttonState = model.isSubmitting ? .loading : (model.isSubmitEnabled ? .normal : .disabled)
+        setInteractionLocked(model.isSubmitting)
 
         if let submitError = model.submitError {
             showError(submitError)
         }
+    }
+
+    /// Khoá toàn bộ tương tác khác (back, các field, điều khoản, "Đăng nhập", swipe-back) khi đang
+    /// gửi form, tránh người dùng rời màn hoặc sửa dữ liệu giữa chừng.
+    private func setInteractionLocked(_ locked: Bool) {
+        isSubmitting = locked
+        headerView.isUserInteractionEnabled = !locked
+        scrollView.isUserInteractionEnabled = !locked
+        loginPromptButton.isEnabled = !locked
     }
 
     private func color(for strength: ILPasswordStrength) -> UIColor {

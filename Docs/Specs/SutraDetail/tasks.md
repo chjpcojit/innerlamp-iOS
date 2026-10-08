@@ -1,13 +1,12 @@
 # Tasks — SutraDetail
 
-Version: 1.0
-Last updated: 2026-09-27
-Status: in-progress (Phase 1–2 done; Phase 3 pending)
+Version: 1.2
+Last updated: 2026-10-07
+Status: in-progress (Phase 1–3 done; Phase 4 pending)
 
 > See `changelog.md` in this folder for the version history of this spec.
 
-> Note: this feature has no network layer today; Phase 3 tracks replacing the
-> static catalog with a real sutra API.
+> Note: since v1.2 the screen reads `GET /v1/sutras/{id}` (Phase 3).
 
 ## Phase 1 — UI (static layout, mock state)
 
@@ -22,6 +21,10 @@ Status: in-progress (Phase 1–2 done; Phase 3 pending)
 - [x] Add `ILTypography.contentHeroTitle` / `scriptureDescription` +
       `ILColors.goldOnDark`
 - [x] Visual QA against `InnerLamp Prototype.dc.html` (block `isDetail`)
+- [x] v1.1 design refresh: pinned `ILNavBar` header with scroll hairline, theme-aware
+      hero (original name, wrapping chips), translator line, conditional progress
+      card / play button, 11-sutra catalog
+- [ ] Device check of the v1.1 refresh (light + dark) — user runs on device
 
 ## Phase 2 — Logic (Domain + real behavior)
 
@@ -39,23 +42,15 @@ Status: in-progress (Phase 1–2 done; Phase 3 pending)
 - [x] Unit tests: `InnerLampTests/ILSutraDetailViewModelTests.swift` (8 tests) —
       load sutra, tag order, current chapter, 5 nav events
 
-## Phase 3 — API integration (pending; blocked on contract)
+## Phase 3 — API integration
 
-> ⚠️ Not confirmed: the sutra catalog / chapter API contract(s) (see
-> `requirements.md` Pending). Everything below is blocked until a contract
-> exists.
-
-- [ ] Define the sutra catalog / chapter API contract(s) with the backend team
-- [ ] Create `ILSutraDetailDTO` + `ILSutraDetailMapper` (once the contract is
-      confirmed)
-- [ ] Create `SutraDetailEndpoint` under `Data/DataSources/Remote/`
-- [ ] Create `ILSutraDetailRepository` protocol + `ILSutraDetailRepositoryImpl`
-      wrapping `NetworkService`
-- [ ] Replace the static catalog in `ILSutraDetailUseCaseImpl` with real data
-- [ ] Connect `readingProgress` to real per-user progress
-- [ ] Update `ILSutraDetailViewModelTests` + add a mock repository
-- [ ] Visual QA on simulator/device (scroll, hero under status bar, dark mode)
-- [ ] Manual test against a real/staging backend once available
+- [x] Contract confirmed by the backend team (2026-10-07; BE `docs/specs/api/openapi.yaml`)
+- [x] `ILSutraDTO` + `ILSutraMapper`, `SutraDetailEndpoint`, `ILSutraRepository` + `ILSutraRepositoryImpl`
+- [x] Replace the static catalog: `ILSutraDetailUseCaseImpl.loadSutra(id:)`; entity / ViewModel / StateModel reshaped
+- [x] Update `ILSutraDetailViewModelTests` + `ILSutraDetailUseCaseTests`, `ILSutraRepositoryTests`, mock repository — written, not run
+- [ ] Run the unit tests (needs a device / simulator destination)
+- [ ] Reading progress (TD-SutraDetail-002) · Reader / Player integration (TD-SutraDetail-003)
+- [ ] Visual QA on device (hero, empty TOC, long license text, dark mode)
 
 ## Phase 4 — Download destination (pending, separate scope)
 

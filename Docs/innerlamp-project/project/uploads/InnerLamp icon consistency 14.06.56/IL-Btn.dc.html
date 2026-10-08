@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>@keyframes ilspin{to{transform:rotate(360deg)}}</style></helmet>
+<div onClick="{{ tap }}" style="height:50px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:9px;box-sizing:border-box;padding:0 22px;transition:transform .12s ease,background .18s ease,box-shadow .18s ease;cursor: {{ cursor }};width: {{ width }};background: {{ bg }};color: {{ fg }};border:1px solid {{ bd }};box-shadow: {{ shadow }}" style-hover="{{ hoverStyle }}" style-active="{{ activeStyle }}">
+  <div style="width:14px;height:14px;border-radius:50%;box-sizing:border-box;animation:ilspin .9s linear infinite;display: {{ spinnerShow }};border:2px solid {{ spinnerTrack }};border-top-color: {{ fg }}"></div>
+  <div style="font:500 13.5px 'Be Vietnam Pro',sans-serif;letter-spacing:.01em">{{ label }}</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:320,&quot;height&quot;:70},&quot;label&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Bắt đầu thời khóa&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;primary&quot;,&quot;gold&quot;,&quot;ghost&quot;,&quot;light&quot;,&quot;onDark&quot;,&quot;danger&quot;],&quot;default&quot;:&quot;primary&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;default&quot;,&quot;loading&quot;,&quot;disabled&quot;],&quot;default&quot;:&quot;default&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;loadingLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Đang xử lý…&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;full&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onTap&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    const v = p.variant || 'primary';
+    const map = {
+      primary: { bg: 'var(--il-ink)', fg: 'var(--il-canvas)', bd: 'var(--il-ink)', hover: '#332D25', shadow: '0 8px 24px var(--il-ink-16)' },
+      gold: { bg: '#B8862F', fg: 'var(--il-card)', bd: '#B8862F', hover: '#A2751F', shadow: '0 8px 24px rgba(184,134,47,.24)' },
+      ghost: { bg: 'var(--il-card)', fg: 'var(--il-ink)', bd: 'var(--il-ink-18)', hover: '#F3ECDE', shadow: 'none' },
+      light: { bg: '#F5EEE0', fg: '#221E19', bd: '#F5EEE0', hover: '#E9DFCB', shadow: 'none' },
+      onDark: { bg: 'transparent', fg: '#F5EEE0', bd: 'rgba(242,235,221,.24)', hover: 'rgba(245,238,224,.1)', shadow: 'none' },
+      danger: { bg: 'var(--il-card)', fg: '#A7443F', bd: 'rgba(167,68,63,.4)', hover: 'rgba(194,133,127,.14)', shadow: 'none' },
+    };
+    const t = map[v] || map.primary;
+    const state = p.state || (p.disabled ? 'disabled' : 'default');
+    const off = state === 'disabled' || state === 'loading';
+    return {
+      label: state === 'loading' ? (p.loadingLabel || 'Đang xử lý…') : (p.label || 'Nút'),
+      width: p.full === false ? 'auto' : '100%',
+      bg: state === 'disabled' ? 'var(--il-ink-12)' : t.bg,
+      fg: state === 'disabled' ? 'var(--il-ink-38)' : t.fg,
+      bd: state === 'disabled' ? 'transparent' : t.bd,
+      shadow: off ? 'none' : t.shadow,
+      spinnerShow: state === 'loading' ? 'block' : 'none',
+      spinnerTrack: v === 'primary' || v === 'gold' ? 'rgba(255,255,255,.28)' : 'var(--il-ink-18)',
+      hoverStyle: off ? {} : { background: t.hover },
+      activeStyle: off ? {} : { transform: 'scale(.978)', boxShadow: 'none' },
+      cursor: state === 'loading' ? 'progress' : state === 'disabled' || !p.onTap ? 'default' : 'pointer',
+      tap: off ? undefined : p.onTap,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

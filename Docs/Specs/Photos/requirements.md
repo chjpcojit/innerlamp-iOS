@@ -1,16 +1,16 @@
 # Requirements — Photos
 
-Version: 1.0
-Last updated: 2026-09-27
-Status: implemented — 2-column masonry gallery with category filter on a static
-mock catalog; no photos API
+Version: 1.2
+Last updated: 2026-10-07
+Status: implemented against the real gallery API (`GET /v1/gallery`); build
+passes, unit tests written but not run, not checked on a device
 Feature folder: `InnerLamp/Presentation/Scenes/Photos/`
 
 > See `changelog.md` in this folder for the version history of this spec.
 
-> This spec is written retroactively from the already-implemented Photos
-> feature. It documents the shipped behavior, including the static mock
-> catalog.
+> v1.0 was written retroactively from the Photos feature built on a static
+> mock catalog. v1.1 replaces the catalog with the real gallery API, confirmed by
+> the backend team on 2026-10-06 (see `design.md` → "API contract").
 
 ## User Story
 
@@ -20,40 +20,57 @@ scenes, and festivals.
 
 ## Acceptance Criteria (EARS notation)
 
-- WHEN the Photos screen loads, THE SYSTEM SHALL show a 2-column masonry grid
-  of 12 photos with a horizontally scrollable category filter (Tất cả / Chùa /
-  Tượng Phật / Cảnh thiền / Lễ hội) and a header subtitle showing the photo
-  count.
-- WHEN the user selects a category filter, THE SYSTEM SHALL show only the
-  photos in that category and update the subtitle to reflect the filtered count
-  and category.
-- WHEN the user selects "Tất cả", THE SYSTEM SHALL show all photos.
+- WHEN the Photos screen loads, THE SYSTEM SHALL request the first page of the
+  gallery for all categories and show the photos in a 2-column grid with a
+  horizontally scrollable category filter (Tất cả / Chùa / Tượng Phật / Cảnh
+  thiền / Lễ hội) and a header subtitle showing the total photo count.
+- WHEN a photo cell is shown, THE SYSTEM SHALL load its thumbnail image and keep
+  a neutral placeholder tile until the image has loaded or if it fails to load.
+- WHEN the user scrolls near the bottom of the grid and more pages exist, THE
+  SYSTEM SHALL load the next page and append only the new photos, without
+  reloading the photos already shown.
+- WHILE a page is loading, THE SYSTEM SHALL show the loading footer; WHEN the
+  last page has been loaded, THE SYSTEM SHALL show the end-of-list footer.
+- WHEN the user selects a category filter, THE SYSTEM SHALL highlight the chip
+  at once, request the first page for that category while the current photos
+  stay visible, then crossfade the grid to the new photos, scroll it to the top
+  and update the subtitle to the server total for that category.
+- IF loading the first page of a newly selected category fails, THEN THE SYSTEM
+  SHALL keep the current photos, move the chip selection back to the category
+  they belong to, and show the error.
+- WHEN the user selects "Tất cả", THE SYSTEM SHALL request the first page for
+  all categories.
+- IF a page request fails, THEN THE SYSTEM SHALL keep the photos already loaded
+  and show the error message (offline / generic).
 - WHEN the user taps the back control, THE SYSTEM SHALL close the Photos screen
   and return to Home.
 
 ## Out of scope (this feature boundary, not backend work)
 
-- A photo lightbox / detail view — the prototype has no markup for one, so
-  photo cells are currently not tappable.
+- The photo lightbox / detail view — now its own feature: `Docs/Specs/PhotoViewer/`
+  (grid tiles open it).
+- (Home's "Ảnh chùa đẹp" strip now reads `GET /v1/gallery/top` — see
+  `Docs/Specs/Home/`.)
 
 ## Pending (not yet implemented — see `tasks.md`)
 
-- Real photos. Photo cells render a warm tint + category label as a placeholder;
-  there are no real images yet.
+- Author / license attribution. The backend serves CC BY / CC BY-SA images and
+  asks that author + license (+ `source_url`) be shown. That needs the detail
+  endpoint and a detail UI, which are out of scope here; recorded as tech debt
+  (`Docs/Tech-Debt/Photos/TD-Photos-001-*`).
+- Visual QA (grid, scrollable chips, dark mode, real device) has not been
+  verified — only build + unit tests.
 
-  > ⚠️ Not confirmed: the photos API / asset source — the catalog is static
-  > (`Component.PHOTOS` from the design handoff), and real images are expected
-  > from the product side. Blocks `tasks.md` Phase 3.
+## Open questions (resolved)
 
-- The per-photo display height (`imageHeight`) is a provisional ratio from the
-  prototype; it should be replaced by real image dimensions/aspect ratio once
-  real photos exist.
-
-- Visual QA (masonry grid, scrollable chips, dark mode) has not been verified
-  on simulator/device yet — only build + unit tests pass.
-
-## Open questions (resolved during implementation)
-
-- ~~Is "Tất cả" a category?~~ → No, it is a filter, represented by
-  `selectedCategory == nil` on the entity (not a 5th `ILPhotosCategory` case).
+- ~~Is "Tất cả" a category?~~ → No, it is a filter (`selectedCategory == nil`).
   Resolved during implementation (see `Presentation/Scenes/Photos/README.md`).
+- ~~The photos API / asset source~~ → Resolved 2026-10-06: the backend serves
+  `GET /v1/gallery` (REST, public, 20 per page, `type` filter) on dev. The
+  four `type` values map 1:1 onto the existing four categories. Impact: the
+  static catalog, `getInitialState()` / `selectCategory` / `filteredPhotos`
+  and the mock copy are replaced; `design.md` and `tasks.md` updated.
+- ~~Real image dimensions~~ → The API returns no width/height. Resolved with an
+  assumption: every tile uses a fixed 4:3 ratio (`Docs/Assumptions/Photos/
+  AS-Photos-001-*`); 12 sampled thumbnails (2026-10-06) are all landscape
+  (500x281 – 500x466).

@@ -65,6 +65,9 @@ DerivedData/
 # Sensitive file
 *.pem
 *.json
+# The gRPC Swift 2 proto codegen config is project configuration, not sensitive data — it must
+# stay tracked so the build-tool plugin can regenerate stubs on every checkout.
+!**/grpc-swift-proto-generator-config.json
 *.yaml
 *-adminsdk-*.json
 *.sh

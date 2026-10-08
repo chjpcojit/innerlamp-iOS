@@ -29,6 +29,7 @@ final class ILSettingsViewModel: ILSettingsViewModelProtocol {
     // MARK: - Input / Output
     struct Input {
         let viewDidLoad: AnyPublisher<Void, Never>
+        let viewWillAppear: AnyPublisher<Void, Never>
         let backTapped: AnyPublisher<Void, Never>
         let profileTapped: AnyPublisher<Void, Never>
         let bellToggleChanged: AnyPublisher<Bool, Never>
@@ -75,6 +76,10 @@ final class ILSettingsViewModel: ILSettingsViewModelProtocol {
     func transform(input: Input) -> Output {
         input.viewDidLoad
             .sink { [weak self] _ in self?.handleViewDidLoad() }
+            .store(in: &cancellables)
+
+        input.viewWillAppear
+            .sink { [weak self] _ in self?.handleViewWillAppear() }
             .store(in: &cancellables)
 
         input.backTapped
@@ -143,6 +148,18 @@ final class ILSettingsViewModel: ILSettingsViewModelProtocol {
         stateSubject.send(.success(currentState))
     }
 
+    /// Returning from the Language screen: re-read only the display summaries (theme / language /
+    /// font size) so unsaved mock toggles on this screen are not reset.
+    private func handleViewWillAppear() {
+        settings = useCase.getSettings()
+        var updated = currentState
+        updated.themeTitle = ILSettingsViewModel.themeTitle(settings.theme)
+        updated.languageSummary = ILSettingsViewModel.languageSummary(settings)
+        guard updated != currentState else { return }
+        currentState = updated
+        stateSubject.send(.success(currentState))
+    }
+
     private func handleBellToggle(_ value: Bool) {
         currentState.bellEnabled = value
         stateSubject.send(.success(currentState))
@@ -194,7 +211,7 @@ final class ILSettingsViewModel: ILSettingsViewModelProtocol {
             settings.downloadsCount,
             settings.downloadsSizeMB
         )
-        model.languageSummary = "settings.row.language.sub".localized
+        model.languageSummary = languageSummary(settings)
 
         model.hideJournalFromSangha = settings.hideJournalFromSangha
 
@@ -211,6 +228,15 @@ final class ILSettingsViewModel: ILSettingsViewModelProtocol {
             format: "settings.account.subtitle".localized,
             account.dharmaName,
             account.phoneNumber
+        )
+    }
+
+    /// "Tiếng Việt · cỡ chữ vừa"
+    static func languageSummary(_ settings: ILSettingsEntity) -> String {
+        String(
+            format: "settings.row.language.sub".localized,
+            ILLanguageViewModel.languageTitle(settings.language),
+            ILLanguageViewModel.fontSizeTitle(settings.scriptureFontSize).lowercased()
         )
     }
 

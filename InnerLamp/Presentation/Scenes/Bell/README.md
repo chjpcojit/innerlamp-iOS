@@ -37,7 +37,7 @@ shown.
 Feature views in `Scenes/Bell/Views/` (all immersive-med-specific, no other screen uses them):
 `ILBellChipView`, `ILBellModeSegmentedView`, `ILBellPadView`, `ILBellRateCardView`,
 `ILBellActionBarView`. New tokens: `ILColors.medCard` (asset), `.medTrackSubtle`, `.medInkStrong`,
-`.medGoldChipBorder`, `.medGoldHalo`, `.medGoldStrikeBorder`; `ILTypography.bellPadNumber`,
+`.medGoldChipBorder`, `.medGoldHalo`, `.medGoldRippleMo`, `.medGoldRippleBell`; `ILTypography.bellPadNumber`,
 `.bellRateValue`.
 
 ## Navigation events
@@ -63,6 +63,12 @@ Feature views in `Scenes/Bell/Views/` (all immersive-med-specific, no other scre
 
 ## Changelog
 
+- 2026-10-03 — new UI from `Docs/InnerLamp icon consistency` (`InnerLamp Prototype.dc.html`, `bell`):
+  `ILBellPadView` is now a stage — photo of the singing bowl / wooden fish (`ILIcons.bellChuong` /
+  `.bellMo`) with a swinging mallet (`.bellMalletMo` / `.bellMalletBell`), ripples and a halo that
+  only shows on strikes; the count + hint moved below the stage (tag and number on one baseline,
+  number 34pt). Removed token `medGoldStrikeBorder`; added `medGoldRippleMo` / `medGoldRippleBell`.
+  Mallet PNGs were rendered from the design's CSS gradients (TD-Bell-001).
 - 2026-09-26 — initial scaffold + implementation by il-screen-builder (from
   `Docs/design_handoff_innerlamp`, the `bell` screen).
 - 2026-09-26 — added real strike audio: bundled `bell_strike.m4a` + `mo_strike.m4a`, a new

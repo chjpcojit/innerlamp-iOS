@@ -4,6 +4,24 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v1.1
+
+- Redesign per the updated handoff (`Docs/InnerLamp icon consistency/`, screen
+  `mala`): header "Xong" action and "Vòng N · biến x / goal" subtitle; goal chips
+  21 / 54 / 108; red cord and wooden beads; "Tròn N biến" completion popup with
+  "Niệm tiếp vòng mới"; the big count, hint line, footnote and bottom "Xong"
+  button are removed.
+- `requirements.md`: acceptance criteria rewritten (goal selection, round stops
+  at goal instead of wrapping, next-round popup). Behavior change: reaching the
+  goal no longer wraps to 1 — it waits for the user's choice.
+- `design.md`: Entity now has `round` + `isRoundComplete` (replaces
+  `completedRounds`); UseCase gains `selectGoal` / `startNextRound`; new
+  `ILMalaCompletionView` and `ILMalaProgressBarView` (replaces
+  `ILMalaCountDisplayView`).
+- `tasks.md`: new Phase 2b; test run and bead grain texture left open.
+- Also: bead-advance particle burst + ambient gold dust (`ILMalaParticleView`, design `mlFx`); one acceptance criterion extended.
+- Reason: align Mala with the new design handoff.
+
 ## v1.0 (initial)
 
 - Initial spec written retroactively from the already-implemented Mala feature

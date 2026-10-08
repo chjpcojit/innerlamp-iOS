@@ -13,6 +13,7 @@
 
 import GRPCCore
 import GRPCInProcessTransport
+import SwiftProtobuf
 
 /// Implements the generated `EchoTestService` against the test-only `.proto` contract, echoing
 /// the request back (unary) or emitting `count` echoes in order (server-streaming), with two
@@ -36,7 +37,7 @@ struct EchoTestServiceProvider: Innerlamp_Grpctest_EchoTestService.ServiceProtoc
 
         let response = Innerlamp_Grpctest_EchoResponse.with {
             $0.message = request.message.message
-            $0.receivedAuthorization = request.metadata[stringValues: "authorization"].first ?? ""
+            $0.receivedAuthorization = Array(request.metadata[stringValues: "authorization"]).first ?? ""
         }
         return ServerResponse(message: response)
     }
@@ -50,7 +51,7 @@ struct EchoTestServiceProvider: Innerlamp_Grpctest_EchoTestService.ServiceProtoc
         }
 
         let requestMessage = request.message
-        let authorization = request.metadata[stringValues: "authorization"].first ?? ""
+        let authorization = Array(request.metadata[stringValues: "authorization"]).first ?? ""
         return StreamingServerResponse(of: Innerlamp_Grpctest_EchoResponse.self) { writer in
             for index in 0..<requestMessage.count {
                 try await writer.write(
@@ -89,9 +90,12 @@ final class GRPCTestServer {
     private var serverTask: Task<Void, Error>?
     private var clientTask: Task<Void, Error>?
 
-    init(interceptors: [any ClientInterceptor] = []) {
+    init(
+        services: [any RegistrableRPCService] = [EchoTestServiceProvider()],
+        interceptors: [any ClientInterceptor] = []
+    ) {
         let transport = InProcessTransport()
-        self.server = GRPCServer(transport: transport.server, services: [EchoTestServiceProvider()])
+        self.server = GRPCServer(transport: transport.server, services: services)
         self.client = GRPCClient(transport: transport.client, interceptors: interceptors)
     }
 

@@ -5,13 +5,14 @@
 
 import UIKit
 
-/// Ảnh hero màn Bài viết Phật pháp (cao 210pt, bo góc 22). Chưa có ảnh thật (`image-slot` trong
-/// design handoff) nên ô ảnh dùng nền tint ấm với nhãn danh mục làm placeholder, khớp ghi chú
-/// "cần ảnh thật từ phía sản phẩm" ở README.
+/// Ảnh hero màn Bài viết Phật pháp (cao 210pt, bo góc 22). Ảnh tải từ `image_url` của server
+/// (hotlink từ trang gốc, có thể bị chặn/hỏng về sau); nền tint ấm với nhãn danh mục là placeholder
+/// khi bài không có ảnh, đang tải hoặc tải lỗi.
 final class ILArticleHeroImageView: UIView {
 
     // MARK: - UI Elements
     private let placeholderLabel = UILabel()
+    private let imageView = ILRemoteImageView(frame: .zero)
 
     // MARK: - Initializer
     init() {
@@ -24,8 +25,9 @@ final class ILArticleHeroImageView: UIView {
     }
 
     // MARK: - Configuration
-    func configure(category: String) {
+    func configure(category: String, imageURL: String?) {
         placeholderLabel.attributedText = ILTypography.makeEyebrow(text: category, color: ILColors.inkTertiary)
+        imageView.setImage(urlString: imageURL)
     }
 
     // MARK: - Setup
@@ -39,10 +41,18 @@ final class ILArticleHeroImageView: UIView {
         placeholderLabel.textAlignment = .center
         placeholderLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+
         addSubview(placeholderLabel)
+        addSubview(imageView)
 
         NSLayoutConstraint.activate([
             heightAnchor.constraint(equalToConstant: 210),
+
+            imageView.topAnchor.constraint(equalTo: topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: bottomAnchor),
 
             placeholderLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
             placeholderLabel.centerYAnchor.constraint(equalTo: centerYAnchor),

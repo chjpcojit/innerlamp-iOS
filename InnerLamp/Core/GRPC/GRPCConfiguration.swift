@@ -2,61 +2,66 @@
 //  GRPCConfiguration.swift
 //  InnerLamp
 //
-//  Builds the one gRPC channel the app uses for every RPC — the gRPC analogue of
+//  Builds the one gRPC client the app uses for every RPC — the gRPC analogue of
 //  NetworkConfiguration's single URLSession. See Docs/Specs/GRPC/design.md § "Channel lifecycle".
 //
-//  Migrated to gRPC Swift 1.x (the `GRPC` product) because gRPC Swift 2 requires iOS 18.0+,
-//  while InnerLamp supports iOS 15.0+. In 1.x the shared object is a `ClientConnection`
-//  (channel) plus the `EventLoopGroup` that backs it — both held for the app's lifetime.
+//  gRPC Swift 2.x: the shared object is a `GRPCClient` wrapping an HTTP/2 transport built on
+//  NIOTransportServices (Network.framework) — the recommended Darwin transport. Interceptors are
+//  attached to the client at construction time; gRPC Swift 2 requires iOS 18.0+, matching the
+//  app's deployment target.
 //
 
-import GRPC
-import NIOCore
+import Foundation
+import GRPCCore
+import GRPCNIOTransportHTTP2
 
 /// `nonisolated` throughout — a pure factory namespace with no main-actor state, mirroring
-/// `NetworkConfiguration`. The resulting channel is `Sendable` and is held for the app's
+/// `NetworkConfiguration`. The resulting client is `Sendable` and is held for the app's
 /// lifetime, called from any isolation domain.
 nonisolated enum GRPCConfiguration {
+    /// The concrete client/transport pair the app uses, so call sites (e.g. `DIContainer`) can
+    /// name it without importing the transport module directly.
+    typealias Client = GRPCClient<HTTP2ClientTransport.TransportServices>
+    typealias Service = GRPCService<HTTP2ClientTransport.TransportServices>
+
     /// Default per-call deadline when a caller specifies none — matches
     /// `NetworkConfiguration.requestTimeoutInterval`'s existing REST request timeout
     /// (FR-008, NFR-001).
-    static let defaultCallTimeout: TimeAmount = .seconds(30)
+    static let defaultCallTimeout: Duration = .seconds(30)
 
-    /// Owns the shared channel *and* the event-loop group that keeps it alive. The group must
-    /// outlive the channel, so both are returned together rather than leaking the group.
-    final class ChannelLifetime: @unchecked Sendable {
-        let channel: any GRPCChannel
-        let eventLoopGroup: any EventLoopGroup
-
-        init(channel: any GRPCChannel, eventLoopGroup: any EventLoopGroup) {
-            self.channel = channel
-            self.eventLoopGroup = eventLoopGroup
+    /// Builds the shared client for `APIConfig`'s active `Environment`, with the auth and
+    /// logging interceptors attached in that order (logging first so it starts timing before
+    /// auth-metadata injection — FR-002, FR-010). Server-authenticated TLS only: no identity
+    /// provider is configured, so no client certificate is ever presented (FR-003; mutual TLS is
+    /// out of scope).
+    static func makeClient(
+        authTokenProvider: any AuthTokenProviding,
+        loggingService: any LoggingService
+    ) -> Client {
+        do {
+            let transport = try HTTP2ClientTransport.TransportServices(
+                target: ResolvableTargets.DNS(host: APIConfig.grpcHost, port: APIConfig.grpcPort),
+                transportSecurity: .tls
+            )
+            return Client(
+                transport: transport,
+                interceptors: [
+                    GRPCLogger(loggingService: loggingService),
+                    GRPCAuthInterceptor(authTokenProvider: authTokenProvider)
+                ]
+            )
+        } catch {
+            // The only documented failure here is "no resolver for the target"; `.dns` always has
+            // one registered in the default registry, so this is unreachable in practice.
+            preconditionFailure("Unable to build the gRPC transport: \(error)")
         }
-    }
-
-    /// Builds the shared channel for `APIConfig`'s active `Environment`. Server-authenticated
-    /// TLS only — no identity provider is configured, so no client certificate is ever presented
-    /// (FR-003; mutual TLS is out of scope).
-    static func makeChannelLifetime() -> ChannelLifetime {
-        let group = PlatformSupport.makeEventLoopGroup(loopCount: 1)
-        let channel = ClientConnection
-            .usingPlatformAppropriateTLS(for: group)
-            .connect(host: APIConfig.grpcHost, port: APIConfig.grpcPort)
-        return ChannelLifetime(channel: channel, eventLoopGroup: group)
-    }
-
-    /// Wraps the shared channel in the generic call client `GRPCService` calls through. Built
-    /// once, at the composition root (`DIContainer`) — never per call, per FR-001.
-    static func makeClient(channel: any GRPCChannel) -> GRPCAnyServiceClient {
-        GRPCAnyServiceClient(
-            channel: channel,
-            defaultCallOptions: callOptions(timeout: nil)
-        )
     }
 
     /// Builds the per-call options, applying the 30s default deadline when the caller specifies
     /// none (FR-008, NFR-001).
-    static func callOptions(timeout: TimeAmount?) -> CallOptions {
-        CallOptions(timeLimit: .timeout(timeout ?? defaultCallTimeout))
+    static func callOptions(timeout: Duration?) -> CallOptions {
+        var options = CallOptions.defaults
+        options.timeout = timeout ?? defaultCallTimeout
+        return options
     }
 }

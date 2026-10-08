@@ -35,6 +35,7 @@ the tab bar, not by this screen). Design: prototype screen `profile`
 - `openReminder` — "Chuông tỉnh thức" row tapped. TODO (`remind` not built).
 - `openSettings` — "Cài đặt" row tapped. Pushed to `ILSettingsCoordinator`.
 - `openNotifications` — "Thông báo" row tapped. Pushed to `ILNotificationsCoordinator`.
+- `openFamilyTree` — "Gia phả" row tapped. Pushed to `ILFamilyTreeCoordinator` (`Scenes/FamilyTree/`).
 - `openCommunity(id:)` — "Đạo tràng của tôi" row tapped (only when the user has a community). TODO (`temple` not built).
 
 ## Known gaps / not implemented yet
@@ -54,3 +55,4 @@ the tab bar, not by this screen). Design: prototype screen `profile`
 
 - 2026-09-20 — initial implementation from design handoff prototype screen `profile` (il-screen-builder). Added shared `ILStatSummaryCardView`, `ILHeatmapGridView`, `ILTypography.statValue/microCaption`.
 - 2026-09-27 — `editProfile` now opens the new Edit Profile screen (il-screen-builder, `EditProfile`).
+- 2026-10-03 — added the "Gia phả" menu row (`openFamilyTree`).
