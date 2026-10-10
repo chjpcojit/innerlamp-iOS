@@ -36,7 +36,7 @@ final class ILHomeUseCaseTests: XCTestCase {
     func test_loadBuddhistEventMonths_spansFullCalendarYear() async throws {
         let mock = MockILBuddhistEventUseCase()
         mock.templates = [template]
-        let sut = ILHomeUseCaseImpl(keychainService: KeychainServiceImpl(), buddhistEventUseCase: mock, sutraQuoteUseCase: MockILSutraQuoteUseCase(), templeRepository: MockILTempleRepository(), deityCatalogRepository: MockILDeityCatalogRepository(), articleRepository: MockILArticleRepository(), photosRepository: MockILPhotosRepository())
+        let sut = ILHomeUseCaseImpl(buddhistEventUseCase: mock, sutraQuoteUseCase: MockILSutraQuoteUseCase(), templeRepository: MockILTempleRepository(), deityCatalogRepository: MockILDeityCatalogRepository(), articleRepository: MockILArticleRepository(), photosRepository: MockILPhotosRepository())
 
         let date = calendar.date(from: DateComponents(year: 2026, month: 9, day: 27))
         let midYear = try XCTUnwrap(date)
@@ -51,7 +51,7 @@ final class ILHomeUseCaseTests: XCTestCase {
     func test_loadBuddhistEventMonths_returnsEmpty_whenNoTemplates() async throws {
         let mock = MockILBuddhistEventUseCase()
         mock.templates = []
-        let sut = ILHomeUseCaseImpl(keychainService: KeychainServiceImpl(), buddhistEventUseCase: mock, sutraQuoteUseCase: MockILSutraQuoteUseCase(), templeRepository: MockILTempleRepository(), deityCatalogRepository: MockILDeityCatalogRepository(), articleRepository: MockILArticleRepository(), photosRepository: MockILPhotosRepository())
+        let sut = ILHomeUseCaseImpl(buddhistEventUseCase: mock, sutraQuoteUseCase: MockILSutraQuoteUseCase(), templeRepository: MockILTempleRepository(), deityCatalogRepository: MockILDeityCatalogRepository(), articleRepository: MockILArticleRepository(), photosRepository: MockILPhotosRepository())
 
         let date = calendar.date(from: DateComponents(year: 2026, month: 9, day: 27))
         let midYear = try XCTUnwrap(date)
@@ -285,7 +285,6 @@ final class ILHomeUseCaseTests: XCTestCase {
         photosRepository: ILPhotosRepository = MockILPhotosRepository()
     ) -> ILHomeUseCaseImpl {
         ILHomeUseCaseImpl(
-            keychainService: KeychainServiceImpl(),
             buddhistEventUseCase: MockILBuddhistEventUseCase(),
             sutraQuoteUseCase: sutraQuoteUseCase,
             templeRepository: templeRepository,

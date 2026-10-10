@@ -1,7 +1,7 @@
 # Otp
 
 <!--
-Generated/maintained per il-screen-builder. This is a living status doc for this screen, not a
+Generated/maintained per ui-builder. This is a living status doc for this screen, not a
 one-time scaffold artifact — update it (don't recreate it) whenever this feature's files change.
 -->
 
@@ -62,7 +62,7 @@ Countdown "Gửi lại" và câu "Mã có hiệu lực trong …" lấy từ ser
   mock). Đã đổi `resendCode`/`verifyCode` thành stub TODO đúng chuẩn; `getInitialState` chỉ còn
   gán `phoneNumber`, bỏ hẳn side-effect ghi Keychain. Cập nhật `DIContainer.makeOtpUseCase()` bỏ
   tham số `keychainService` không còn cần.
-- 2026-09-14 — refactor toàn bộ scene sang đúng chuẩn `il-screen-builder`: ViewModel/Coordinator
+- 2026-09-14 — refactor toàn bộ scene sang đúng chuẩn `ui-builder`: ViewModel/Coordinator
   chuyển từ closure-callback sang Combine (`Input`/`Output` publisher, `navigationEventPublisher`);
   tách `ILOtpVoiceCallBannerView`/`ILOtpResendRowView` khỏi `ViewController`; subview chuyển sang
   `private lazy var`; thêm `ILOtpViewModelTests.swift`; thêm README này.

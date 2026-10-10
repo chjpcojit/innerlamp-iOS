@@ -56,4 +56,4 @@ Not applicable — no network call exists in this feature. Persistence is local
       notes, status table, changelog)
 - [ ] `Docs/Knowledge/features/onboarding.md` (OKF concept) — see
       `Docs/Specs/OKF.md`; the concept is listed as "not yet written" there and
-      is a separate `il-okf-writer` task.
+      is a separate `okf-writer` task.

@@ -9,7 +9,7 @@ protocol ILMeditationHubUseCase {
     func getInitialState() -> ILMeditationHubEntity
 
     /// Tải 1 bài thiền dẫn về máy. Việc thật cần network + lưu trữ cục bộ nên thuộc ngoài phạm vi
-    /// của il-screen-builder — giữ nguyên chữ ký, thân hàm là 1 dòng TODO.
+    /// của ui-builder — giữ nguyên chữ ký, thân hàm là 1 dòng TODO.
     /// Xem `references/data_layer_boundaries.md`.
     func downloadGuidedMeditation(id: String) async throws
 }
@@ -89,7 +89,7 @@ final class ILMeditationHubUseCaseImpl: ILMeditationHubUseCase {
     }
 
     func downloadGuidedMeditation(id: String) async throws {
-        print("TODO: implement downloadGuidedMeditation — network/repository call, not built by il-screen-builder")
+        print("TODO: implement downloadGuidedMeditation — network/repository call, not built by ui-builder")
     }
 
     /// Mock 84 ngày (12 tuần × 7 ngày) theo cùng công thức giả lập của prototype, xếp theo hàng để

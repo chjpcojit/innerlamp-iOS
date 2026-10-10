@@ -1,7 +1,7 @@
 # Màn hình Quên mật khẩu (ForgotPassword)
 
 <!--
-Generated/rà soát theo `.claude/skills/il-screen-builder/SKILL.md`. Đây là tài liệu trạng thái
+Generated/rà soát theo `.claude/skills/ui-builder/SKILL.md`. Đây là tài liệu trạng thái
 sống của màn hình này — cập nhật tại chỗ (không viết lại từ template) khi có thay đổi.
 -->
 
@@ -42,7 +42,7 @@ xác thực riêng (ngoài scope hiện tại).
 
 - `ILForgotPasswordUseCaseImpl.getInitialState()` không đọc Keychain nữa — nạp số điện
   thoại/email đã đăng ký là một local Repository call, ngoài scope thật của
-  `il-screen-builder` (xem `references/data_layer_boundaries.md`). **Hệ quả**: 2 thẻ lựa chọn
+  `ui-builder` (xem `references/data_layer_boundaries.md`). **Hệ quả**: 2 thẻ lựa chọn
   hiện trống cho tới khi có implementation thật; nút gửi hướng dẫn bị disable
   (`isSubmitEnabled == false`) vì `selectedContact` rỗng.
 - `ILForgotPasswordUseCaseImpl.sendResetInstructions` — stub `print("TODO: ...")`, chờ Auth API
@@ -52,7 +52,7 @@ xác thực riêng (ngoài scope hiện tại).
 
 ## Changelog
 
-- 2026-09-15 — Rà soát lại theo `.claude/skills/il-screen-builder/SKILL.md` (feature này được
+- 2026-09-15 — Rà soát lại theo `.claude/skills/ui-builder/SKILL.md` (feature này được
   viết trước khi skill tồn tại, giống `Onboarding`/`Login` trước khi sửa) — các điểm không khớp
   hard rule được sửa:
   1. `ILForgotPasswordStateModel` từng bị đặt nhầm ở
@@ -65,7 +65,7 @@ xác thực riêng (ngoài scope hiện tại).
      thành computed property trên StateModel (display-only formatting) thay vì field lưu sẵn từ
      UseCase.
   3. `ILForgotPasswordUseCaseImpl.getInitialState()` trước đó gọi thẳng `KeychainService` để nạp
-     số điện thoại vừa đăng ký — đây là local Repository call mà `il-screen-builder` không được
+     số điện thoại vừa đăng ký — đây là local Repository call mà `ui-builder` không được
      phép implement thật (xem `references/data_layer_boundaries.md`, cùng cách xử lý đã áp dụng
      cho `ILLoginUseCaseImpl`/`ILSignUpUseCaseImpl`, xem `Login/README.md`). Đưa về trả
      `ILForgotPasswordEntity.empty`, bỏ `keychainService` khỏi `init` và khỏi

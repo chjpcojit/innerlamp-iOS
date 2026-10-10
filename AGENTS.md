@@ -254,6 +254,19 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let the agent loop independently; weak criteria ("make it work") require constant clarification.
 
+### 9.5. Work Lanes — pick one before starting
+State the lane in your first response of a task. The documentation chain is sized to the change, so a small fix does not pay the cost of a new feature.
+
+| | **Light lane** | **Full lane** |
+|---|---|---|
+| **Use for** | Bug fix, visual/UX tweak, copy change, performance fix, refactor with no behavior change — touching existing code only | New feature or screen, any change to documented behavior or a confirmed requirement, new or changed API integration, new domain entity, anything spanning several features |
+| **Chain** | Surgical change (9.3) → verify → `/handoff` | `ba-writer` → `spec-writer` → `ui-builder` → `data-builder` → verify → `okf-writer` (after verification) → `/handoff` |
+| **Docs required** | None beyond section 10 — still record every Assumption and Tech Debt you create | SRS (with Gherkin acceptance criteria), `requirements.md` / `design.md` / `tasks.md` + `changelog.md`, then OKF concepts |
+| **Never skipped** | Section 10 records, build verification, the final-response list of new or changed Assumption/Tech Debt entries | Same, plus every unanswered question recorded as `⚠️ Not confirmed` |
+
+**Escalate to the full lane** (stop, say so, then continue in that lane) as soon as a light-lane task would: change behavior described in `Docs/Specs/<Feature>/`, need a network call or contract that is not confirmed, or add a screen or entity. If a spec already exists for the feature, update it with `spec-writer` instead of leaving it describing old behavior.
+
+**When unsure, choose the full lane.** A skipped light-lane check costs a note; a skipped full-lane step costs a wrong feature.
 
 ---
 
@@ -277,6 +290,7 @@ Whenever you make an assumption instead of receiving a confirmed answer (busines
 - Keep `files:` accurate (path, optionally `:line`); update it when code moves.
 - Mention every new or changed entry in your final response to the user.
 - If code was written on top of a `⚠️ Not confirmed` item in a spec, it **must** also have an entry in `Docs/Assumptions/`; the spec marker stays inline.
+- **Run the doc check before finishing any task that touched `Docs/`:** `python3 -I Scripts/doc-check.py --changed` (all files: omit `--changed`). It reports `ERROR` for a broken Assumption/Tech Debt entry (missing frontmatter key, invalid level/status, id not matching the file name, unbalanced `EN:`/`VI:`, closed entry still carrying the placeholder Outcome/Resolution, duplicate id) and for an SRS functional requirement without a Gherkin scenario; it reports `WARN` for a `files:` path that no longer exists and for a spec with `⚠️ Not confirmed` plus ticked tasks but no Assumption. Fix every `ERROR` you introduced; say in the final response which findings you left and why. Findings in files you did not touch are pre-existing — mention them, do not fix them silently (9.3).
 
 **Level scale** (same for both, 4 tiers):
 

@@ -27,8 +27,8 @@ EN: The tab looks complete but shows static content; spec drifts from code; Post
 VI: Tab trông đầy đủ nhưng nội dung tĩnh; spec lệch code; code màn Post thành code chết.
 
 ## Proposed fix / Hướng xử lý
-EN: Get API contracts and build the repository (il-data-layer-builder); rewrite `Docs/Specs/Sangha/` (il-spec-writer); add the swap icon to `ILIcons`; wire Offer / online sessions; decide the fate of Post.
-VI: Lấy contract API và dựng repository (il-data-layer-builder); viết lại `Docs/Specs/Sangha/` (il-spec-writer); thêm icon đổi chiều vào `ILIcons`; nối Cúng dường / buổi tu trực tuyến; quyết định số phận màn Post.
+EN: Get API contracts and build the repository (data-builder); rewrite `Docs/Specs/Sangha/` (spec-writer); add the swap icon to `ILIcons`; wire Offer / online sessions; decide the fate of Post.
+VI: Lấy contract API và dựng repository (data-builder); viết lại `Docs/Specs/Sangha/` (spec-writer); thêm icon đổi chiều vào `ILIcons`; nối Cúng dường / buổi tu trực tuyến; quyết định số phận màn Post.
 
 ## Resolution / Kết quả xử lý
 EN: _(fill in when Resolved: date, commit/PR)_

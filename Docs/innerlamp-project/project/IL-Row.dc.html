@@ -8,17 +8,15 @@
 <body>
 <x-dc>
 <div onClick="{{ tap }}" style="display:flex;align-items:center;gap:14px;border-radius:18px;padding:13px 16px;transition:background .16s ease,border-color .16s ease,transform .12s ease;opacity: {{ opacity }};cursor: {{ cursor }};background: {{ cardBg }};border:1px solid {{ cardBd }}" style-hover="{{ hoverStyle }}" style-active="{{ activeStyle }}">
-  <div style="width:44px;height:44px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center;background: {{ iconBg }}">
-    <div style="width:15px;height:15px;border-radius: {{ glyphRadius }};background: {{ glyphFill }};border: {{ glyphBorder }};box-sizing:border-box"></div>
-  </div>
+  <dc-import name="IL-Icon" icon="{{ icon }}" size="44" tone="{{ iconTone }}" hint-size="44px,44px"></dc-import>
   <div style="flex:1;min-width:0">
-    <div style="font:500 14px 'Be Vietnam Pro',sans-serif;color: {{ titleColor }}">{{ title }}</div>
-    <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;margin-top:2px;color: {{ subColor }}">{{ sub }}</div>
+    <div style="font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color: {{ titleColor }}">{{ title }}</div>
+    <div style="font:400 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;margin-top:2px;color: {{ subColor }}">{{ sub }}</div>
   </div>
-  <div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;white-space:nowrap;color: {{ trailColor }}">{{ trailing }}</div>
+  <div style="font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;white-space:nowrap;color: {{ trailColor }}">{{ trailing }}</div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:362,&quot;height&quot;:72},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Thiền hơi thở buổi sáng&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sub&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;12 phút · Thầy Minh Đạo&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;trailing&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;default&quot;,&quot;selected&quot;,&quot;disabled&quot;],&quot;default&quot;:&quot;default&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;tone&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;gold&quot;,&quot;green&quot;,&quot;rose&quot;,&quot;ink&quot;],&quot;default&quot;:&quot;gold&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;glyph&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;leaf&quot;,&quot;book&quot;,&quot;circle&quot;,&quot;dot&quot;],&quot;default&quot;:&quot;leaf&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onTap&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:362,&quot;height&quot;:72},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Thiền hơi thở buổi sáng&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sub&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;12 phút · Thầy Minh Đạo&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;trailing&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;default&quot;,&quot;selected&quot;,&quot;disabled&quot;],&quot;default&quot;:&quot;default&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;tone&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;gold&quot;,&quot;green&quot;,&quot;rose&quot;,&quot;ink&quot;],&quot;default&quot;:&quot;gold&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;glyph&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;leaf&quot;,&quot;book&quot;,&quot;circle&quot;,&quot;dot&quot;],&quot;default&quot;:&quot;leaf&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;icon&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;&quot;,&quot;book&quot;,&quot;talk&quot;,&quot;med&quot;,&quot;lamp&quot;,&quot;mo&quot;,&quot;beads&quot;,&quot;bell&quot;,&quot;notif&quot;,&quot;journal&quot;,&quot;progress&quot;,&quot;lotus&quot;,&quot;tree&quot;,&quot;plus&quot;,&quot;calendar&quot;,&quot;gear&quot;,&quot;temple&quot;],&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onTap&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
 class Component extends DCLogic {
   renderVals() {
     const p = this.props, dark = !!p.dark;
@@ -52,7 +50,7 @@ class Component extends DCLogic {
       subColor: dark ? 'rgba(242,235,221,.42)' : 'var(--il-ink-5)',
       trailColor: dark ? 'rgba(242,235,221,.35)' : 'var(--il-ink-42)',
       iconBg: tints[p.tone] || tints.gold,
-      glyphRadius: g.r, glyphFill: g.fill, glyphBorder: g.bd,
+      icon: p.icon || ({ leaf: 'med', book: 'book', circle: 'lamp', dot: 'talk' })[glyph] || 'book', iconTone: p.icon ? (p.iconTone || '') : (p.tone === 'ink' ? 'ink' : p.tone || ''),
       cursor: off ? 'default' : p.onTap ? 'pointer' : 'default',
       tap: off ? undefined : p.onTap,
     };

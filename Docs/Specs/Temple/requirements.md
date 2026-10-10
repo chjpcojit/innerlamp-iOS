@@ -9,7 +9,7 @@ Feature folder: `InnerLamp/Presentation/Scenes/Temple/`
 > See `changelog.md` in this folder for the version history of this spec.
 
 > `SRS.md` in this folder is an upstream business requirements document (from
-> `il-ba`) that describes a **larger** feature — a discovery/list screen plus
+> `ba-writer`) that describes a **larger** feature — a discovery/list screen plus
 > this detail screen. Only the **detail** screen is implemented; the
 > list/discovery half (`FR-001`–`FR-012` in `SRS.md`) is not.
 

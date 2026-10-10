@@ -60,7 +60,7 @@ Scope folder: `InnerLamp/Core/Networking/`
 ## Phase 2 — Auth header injection
 
 - [x] Resolve the ⚠️ marker this phase depends on: the exact Keychain key the access token is
-      stored under. `il-data-layer-builder` needs the same answer for the login repository — do not
+      stored under. `data-builder` needs the same answer for the login repository — do not
       invent a key string
 - [x] Create `Core/Networking/AuthTokenProvider.swift` — `AuthTokenProviding` protocol, plus a
       `Keychain`-backed implementation reading through the existing `KeychainService` from

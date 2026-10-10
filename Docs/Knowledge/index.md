@@ -43,7 +43,7 @@ Planned, not yet populated:
 | [features/forgot-password.md](features/forgot-password.md) | Feature | draft (sendResetInstructions stub; no reset contract) |
 | [features/onboarding.md](features/onboarding.md) | Feature | stable (complete local flow, no backend) |
 | [features/home.md](features/home.md) | Feature | draft (mock data; no dashboard API) |
-| [features/splash.md](features/splash.md) | Feature | draft (post-splash route hardcoded to Onboarding) |
+| [features/splash.md](features/splash.md) | Feature | draft (Main / Login / Onboarding by session + onboarding flag) |
 | [features/bell.md](features/bell.md) | Feature | draft (memory-only; no persistence or sound picker) |
 | [features/library.md](features/library.md) | Feature | draft (mock catalog; search/item destinations TODO) |
 | [features/main.md](features/main.md) | Feature | stable (complete container, no backend) |

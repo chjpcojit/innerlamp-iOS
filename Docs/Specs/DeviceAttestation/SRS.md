@@ -8,8 +8,8 @@
 | Version | 0.1 (draft) |
 | Last updated | 2026-09-27 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
-| Owner / author | il-ba (Business Analyst) |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Owner / author | ba-writer (Business Analyst) |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 ---
 
@@ -297,15 +297,15 @@ stable even though the paths are not.
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | Support/bypass gate | → il-spec-writer | TBD |
-| FR-002 | Key reuse + attestation | → il-spec-writer | TBD |
-| FR-003 | Entity shape | → il-spec-writer | TBD |
-| FR-004 | Auto re-attest | → il-spec-writer | TBD |
-| FR-005 | Assertion flow | → il-spec-writer | TBD |
-| FR-006 | Bypass mode | → il-spec-writer | TBD |
-| FR-007 | Fail-closed + retryable server | → il-spec-writer | TBD |
-| NFR-001 | Async on-device steps | → il-spec-writer | TBD |
-| NFR-002 | No silent retries | → il-spec-writer | TBD |
+| FR-001 | Support/bypass gate | → spec-writer | TBD |
+| FR-002 | Key reuse + attestation | → spec-writer | TBD |
+| FR-003 | Entity shape | → spec-writer | TBD |
+| FR-004 | Auto re-attest | → spec-writer | TBD |
+| FR-005 | Assertion flow | → spec-writer | TBD |
+| FR-006 | Bypass mode | → spec-writer | TBD |
+| FR-007 | Fail-closed + retryable server | → spec-writer | TBD |
+| NFR-001 | Async on-device steps | → spec-writer | TBD |
+| NFR-002 | No silent retries | → spec-writer | TBD |
 
 ---
 

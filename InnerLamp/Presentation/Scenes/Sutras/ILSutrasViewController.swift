@@ -35,6 +35,7 @@ final class ILSutrasViewController: BaseViewController {
     private let lengthChips = ILChipScrollView()
     private let listView = ILSutrasListView()
     private let emptyStateView = ILStateView(kind: .empty)
+    private let loadingView = ILSutrasSkeletonView()
 
     // MARK: - Initializer
     init(viewModel: ILSutrasViewModel) {
@@ -87,10 +88,12 @@ final class ILSutrasViewController: BaseViewController {
         listView.onItemTap = { [weak self] item in self?.sutraTappedSubject.send(item.id) }
         listView.onLoadMore = { [weak self] in self?.loadMoreTriggeredSubject.send(()) }
         emptyStateView.isHidden = true
+        loadingView.isHidden = true
 
         [headerView, searchInput, categoryChips, lengthChips].forEach(headerBand.addSubview)
         view.addSubview(listView)
         view.addSubview(emptyStateView)
+        view.addSubview(loadingView)
         view.addSubview(headerBand)
     }
 
@@ -98,7 +101,7 @@ final class ILSutrasViewController: BaseViewController {
         super.setupConstraints()
         [
             headerBand, headerView, searchInput, categoryChips, lengthChips,
-            listView, emptyStateView
+            listView, emptyStateView, loadingView
         ].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
 
         let horizontal = ILMetrics.screenHorizontal
@@ -137,7 +140,12 @@ final class ILSutrasViewController: BaseViewController {
             emptyStateView.topAnchor.constraint(equalTo: headerBand.bottomAnchor),
             emptyStateView.leadingAnchor.constraint(equalTo: listView.leadingAnchor),
             emptyStateView.trailingAnchor.constraint(equalTo: listView.trailingAnchor),
-            emptyStateView.bottomAnchor.constraint(equalTo: listView.bottomAnchor)
+            emptyStateView.bottomAnchor.constraint(equalTo: listView.bottomAnchor),
+
+            loadingView.topAnchor.constraint(equalTo: headerBand.bottomAnchor),
+            loadingView.leadingAnchor.constraint(equalTo: listView.leadingAnchor),
+            loadingView.trailingAnchor.constraint(equalTo: listView.trailingAnchor),
+            loadingView.bottomAnchor.constraint(equalTo: listView.bottomAnchor)
         ])
     }
 
@@ -192,11 +200,13 @@ final class ILSutrasViewController: BaseViewController {
         listView.footerState = Self.footerState(for: model)
         emptyStateView.title = model.emptyTitle
         emptyStateView.message = model.emptyMessage
-        // While the first page is loading there are no rows yet, but the list (with its footer
-        // spinner) must stay visible instead of flashing the empty state.
+        // While the first page is loading there are no rows yet: show the card skeleton instead of
+        // flashing the empty state. The skeleton bars start pulsing once the view is in a window.
+        let showsSkeleton = model.items.isEmpty && model.isLoadingMore
         let showsEmptyState = model.items.isEmpty && !model.isLoadingMore
+        loadingView.isHidden = !showsSkeleton
         emptyStateView.isHidden = !showsEmptyState
-        listView.isHidden = showsEmptyState
+        listView.isHidden = showsEmptyState || showsSkeleton
     }
 
     private static func footerState(for model: ILSutrasStateModel) -> ILLoadMoreFooterView.State {

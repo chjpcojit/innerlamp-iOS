@@ -45,12 +45,8 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
     private let scrollView = UIScrollView()
     private let contentView = UIView()
 
-    // Ảnh minh họa đèn dùng chung với Onboarding intro (full-color, không tô màu).
-    private let lampIcon: UIImageView = {
-        let imageView = UIImageView(image: ILIcons.onboardingLamp)
-        imageView.contentMode = .scaleAspectFit
-        return imageView
-    }()
+    /// `IL-Logo` 56px ở đầu màn (design `isLogin`).
+    private let lampIcon = ILLogoView(size: 56)
 
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
@@ -137,12 +133,12 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
         contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
 
-        titleLabel.font = ILTypography.authTitle
+        titleLabel.font = ILTypography.loginTitle
         titleLabel.textColor = ILColors.ink
         titleLabel.numberOfLines = 0
         titleLabel.text = "login.title".localized
 
-        subtitleLabel.font = ILTypography.body
+        subtitleLabel.font = ILTypography.bodyLarge
         subtitleLabel.textColor = ILColors.inkTertiary
         subtitleLabel.numberOfLines = 0
         subtitleLabel.text = "login.subtitle".localized
@@ -200,7 +196,7 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
 
         guestPreviewButton.translatesAutoresizingMaskIntoConstraints = false
         guestPreviewButton.setTitle("login.guestPreview".localized, for: .normal)
-        guestPreviewButton.titleLabel?.font = ILTypography.bodySmall
+        guestPreviewButton.titleLabel?.font = ILTypography.note
         guestPreviewButton.setTitleColor(ILColors.inkSubtle, for: .normal)
         guestPreviewButton.addTarget(self, action: #selector(handleGuestPreviewTapped), for: .touchUpInside)
 
@@ -234,8 +230,6 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
 
             lampIcon.topAnchor.constraint(equalTo: contentView.topAnchor, constant: ILMetrics.spaceLarge),
             lampIcon.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            lampIcon.widthAnchor.constraint(equalToConstant: ILMetrics.loginLampSize.width),
-            lampIcon.heightAnchor.constraint(equalToConstant: ILMetrics.loginLampSize.height),
 
             titleLabel.topAnchor.constraint(equalTo: lampIcon.bottomAnchor, constant: ILMetrics.spaceMedium),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),

@@ -71,9 +71,9 @@ app's main sections, so that I can get oriented and start a session quickly.
   > home-dashboard endpoint in `Docs/Specs/API/openapi.yaml` v3.9. Blocks
   > `tasks.md` Phase 3.
 
-- A real session/current-user service. The greeting name is read via
-  `KeychainService` using the shared `signup_pending_credentials` key (a
-  temporary arrangement until a real session exists).
+- A real session/current-user service. The greeting name has no source
+  (always "khách"): it used to read a temporary Keychain item holding the
+  plaintext sign-up password, which was removed ({D}, TD-Home-002).
 
 - The bead count is memory-only: it is not persisted locally and is not synced
   with the full-screen Mala screen.

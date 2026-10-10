@@ -24,8 +24,8 @@ EN: Everything written in Phả ký disappears on relaunch.
 VI: Mọi nội dung đã ghi trong Phả ký biến mất khi mở lại app.
 
 ## Proposed fix / Hướng xử lý
-EN: Once a Repository exists, use il-data-layer-builder: DTO + mapper + repository, replace the stub body and mock the Repository in the tests.
-VI: Khi có Repository, dùng il-data-layer-builder: DTO + mapper + repository, thay thân stub và mock Repository trong test.
+EN: Once a Repository exists, use data-builder: DTO + mapper + repository, replace the stub body and mock the Repository in the tests.
+VI: Khi có Repository, dùng data-builder: DTO + mapper + repository, thay thân stub và mock Repository trong test.
 
 ## Resolution / Kết quả xử lý
 EN: _(fill in when Resolved: date, commit/PR)_

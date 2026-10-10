@@ -7,7 +7,7 @@ import Foundation
 
 protocol ILSettingsUseCase {
     /// Trả về cài đặt hiện tại. Hiện là dữ liệu mẫu vì chưa có contract lưu trữ/API được xác nhận —
-    /// khi có Repository thật sẽ thay bằng `ILSettingsRepository` (dùng il-data-layer-builder).
+    /// khi có Repository thật sẽ thay bằng `ILSettingsRepository` (dùng data-builder).
     func getSettings() -> ILSettingsEntity
 }
 
@@ -24,7 +24,7 @@ final class ILSettingsUseCaseImpl: ILSettingsUseCase {
         let display = languageUseCase.currentPreferences()
 
         // TODO: chưa có contract lưu trữ/API — thay dữ liệu mẫu bằng ILSettingsRepository khi có
-        // contract (dùng il-data-layer-builder). Mọi toggle/giá trị dưới đây là mock khớp prototype.
+        // contract (dùng data-builder). Mọi toggle/giá trị dưới đây là mock khớp prototype.
         return ILSettingsEntity(
             account: ILSettingsAccountEntity(
                 fullName: "settings.mock.fullName".localized,

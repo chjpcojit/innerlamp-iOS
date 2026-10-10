@@ -16,8 +16,8 @@ EN: `ILFamilyTreeCreateUseCaseImpl.save(_:)` only prints a TODO. After "Tạo gi
 VI: `ILFamilyTreeCreateUseCaseImpl.save(_:)` chỉ in TODO. Sau khi bấm "Tạo gia phả", cây mới được chuyển sang màn cây gia phả trong bộ nhớ (`ILFamilyTreeViewModel.showCreatedTree`) nhưng không được lưu, và `loadTree()` vẫn trả cây rỗng (`TD-FamilyTree-001`), nên lần mở app sau lại thấy màn trống.
 
 ## Why it was taken on / Lý do chấp nhận nợ
-EN: No API contract or local storage model for the clan book exists, and il-screen-builder forbids guessing network/Repository code.
-VI: Chưa có API contract hay mô hình lưu trữ cục bộ cho gia phả, và il-screen-builder cấm đoán code network/Repository.
+EN: No API contract or local storage model for the clan book exists, and ui-builder forbids guessing network/Repository code.
+VI: Chưa có API contract hay mô hình lưu trữ cục bộ cho gia phả, và ui-builder cấm đoán code network/Repository.
 
 ## Impact / Ảnh hưởng
 EN: Users can create a tree and see it, but lose it on relaunch.

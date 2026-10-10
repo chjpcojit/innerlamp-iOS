@@ -126,7 +126,7 @@ timing ⚠️ is resolved — SignUp passes the server's `expires_in_seconds` /
       condition is now cleared (Phase 3 landed), so this can be written:
       the existing file is **stale**, still describing
       `sendVerificationCode` as a `print("TODO: …")` stub and claiming no
-      DTO/Mapper/Endpoint/Repository exist. Rewrite it via `il-okf-writer`
+      DTO/Mapper/Endpoint/Repository exist. Rewrite it via `okf-writer`
       (this skill does not write to `Docs/Knowledge/`), and reconcile its
       "on PHONE_TAKEN the ViewModel navigates to Login" statement with the
       shipped behavior (it sets `submitError` and stays on the screen)

@@ -39,4 +39,4 @@ Design source: screen "Tạo gia phả" in `Docs/InnerLamp project/IL-GiaPha.dc.
 
 ## Changelog
 
-- 2026-10-03 — initial build from the "Tạo gia phả" prototype screen via il-screen-builder.
+- 2026-10-03 — initial build from the "Tạo gia phả" prototype screen via ui-builder.

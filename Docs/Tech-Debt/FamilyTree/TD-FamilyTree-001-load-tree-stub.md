@@ -16,8 +16,8 @@ EN: `ILFamilyTreeUseCaseImpl.loadTrees()` (was `loadTree()` before the multi-boo
 VI: `ILFamilyTreeUseCaseImpl.loadTrees()` (trước 2026-10-04 là `loadTree()`) chỉ in TODO và trả về không có gia phả nào (xem thêm TD-FamilyTree-011), nên màn hình luôn hiện trạng thái rỗng trong app. Toàn bộ hành vi (bố cục, chọn người, tìm kiếm, sheet) đã làm và có test với mẫu 24 người của design, nhưng chưa có dữ liệu dòng họ thật.
 
 ## Why it was taken on / Lý do chấp nhận nợ
-EN: No API contract or local storage model for the clan book exists, and il-screen-builder forbids guessing network/Repository code or inventing data.
-VI: Chưa có API contract hay mô hình lưu trữ cục bộ cho gia phả, và il-screen-builder cấm đoán code network/Repository hoặc tự bịa dữ liệu.
+EN: No API contract or local storage model for the clan book exists, and ui-builder forbids guessing network/Repository code or inventing data.
+VI: Chưa có API contract hay mô hình lưu trữ cục bộ cho gia phả, và ui-builder cấm đoán code network/Repository hoặc tự bịa dữ liệu.
 
 ## Impact / Ảnh hưởng
 EN: The feature is not usable end to end; users see "Chưa có gia phả".

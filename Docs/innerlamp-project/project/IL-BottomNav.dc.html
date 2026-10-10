@@ -8,12 +8,12 @@
 <body>
 <x-dc>
 <div ref="{{ rootRef }}" style="margin:0 -20px;overflow:hidden;transition:height .32s cubic-bezier(.22,.61,.36,1);height: {{ boxH }}">
-<div style="padding:10px 22px 30px;display:flex;align-items:flex-end;justify-content:space-between;will-change:transform;transition:transform .34s cubic-bezier(.22,.61,.36,1);background: {{ fade }};transform: {{ shift }}">
-  <div onClick="{{ hHome }}" style="text-align:center;flex:1;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ c0 }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 4px"><path d="M12 2.5v2"></path><path d="M4 11.5c3-1 5.5-3.3 8-6.5 2.5 3.2 5 5.5 8 6.5"></path><path d="M6 11v9h12v-9"></path><path d="M10 20v-4.5a2 2 0 0 1 4 0V20" fill="{{ f0 }}"></path></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;color: {{ c0 }}">Trang chủ</div></div>
-  <div onClick="{{ hLib }}" style="text-align:center;flex:1;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ c1 }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 4px"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z" fill="{{ f1 }}"></path><path d="M12 6.5v13"></path></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;color: {{ c1 }}">Thư viện</div></div>
-  <div onClick="{{ hLamp }}" style="text-align:center;flex:1;cursor:pointer"><div style="width:48px;height:48px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;background: {{ lampBg }};box-shadow: {{ lampShadow }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="display:block"><path d="M12 2.5c2.6 3 3.6 5.2 3.6 7.1a3.6 3.6 0 0 1-7.2 0c0-1.9 1-4.1 3.6-7.1z" fill="{{ lampFlame }}"></path><path d="M4.5 15.5c2 3 4.6 4.5 7.5 4.5s5.5-1.5 7.5-4.5c-2.6.3-5 .2-7.5-1.2-2.5 1.4-4.9 1.5-7.5 1.2z" fill="{{ lampFlame }}"></path></svg></div></div>
-  <div onClick="{{ hSangha }}" style="text-align:center;flex:1;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ c2 }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 4px"><path d="M2.5 9.5c3.5-.4 6.6-2.4 9.5-6 2.9 3.6 6 5.6 9.5 6"></path><path d="M5 9.5h14"></path><path d="M6.5 9.5V20M17.5 9.5V20"></path><path d="M4 20h16"></path><path d="M10 20v-5.5h4V20" fill="{{ f2 }}"></path></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;color: {{ c2 }}">Chùa</div></div>
-  <div onClick="{{ hMe }}" style="text-align:center;flex:1;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ c3 }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 4px"><circle cx="12" cy="8" r="3.6" fill="{{ f3 }}"></circle><path d="M4.5 20.5c.8-4 3.8-6.5 7.5-6.5s6.7 2.5 7.5 6.5"></path></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;color: {{ c3 }}">Tôi</div></div>
+<div style="padding:10px 22px 30px;display:flex;align-items:flex-end;justify-content:space-between;will-change:transform;transition:transform .34s cubic-bezier(.22,.61,.36,1);background: {{ fade }};box-shadow: {{ bar }};transform: {{ shift }}">
+  <div onClick="{{ hHome }}" style="text-align:center;flex:1;cursor:pointer"><svg width="24" height="24" viewBox="0 0 44 44" fill="{{ c0 }}" style="display:block;margin:0 auto 4px"><path d="M5.5 21.5L22 7.5l16.5 14v2.5h-33z"></path><path d="M9.5 24h25v12.5h-25z"></path><path d="M18.5 36.5v-6.5a3.5 3.5 0 0 1 7 0v6.5z" fill="{{ cut }}"></path></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color: {{ c0 }}">Trang chủ</div></div>
+  <div onClick="{{ hLib }}" style="text-align:center;flex:1;cursor:pointer"><svg width="24" height="24" viewBox="0 0 44 44" fill="{{ c1 }}" style="display:block;margin:0 auto 4px"><g transform="rotate(-8 21 32)"><rect x="8" y="11" width="13" height="21" rx="2.5"></rect></g><g transform="rotate(8 23 32)"><rect x="23" y="11" width="13" height="21" rx="2.5"></rect></g></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color: {{ c1 }}">Thư viện</div></div>
+  <div onClick="{{ hLamp }}" style="text-align:center;flex:1;cursor:pointer"><div style="width:48px;height:48px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;background: {{ lampBg }};box-shadow: {{ lampShadow }}"><svg width="17" height="24" viewBox="0 0 40 56" style="display:block;overflow:visible;margin-top:-2px"><path d="M23 1C25 11 36 19 36 34c0 12-8 20-16 20S4 47 4 37c0-9 6-14 9-21 2 7 5 10 8 11-2-9-2-17 2-26z" fill="{{ lampFlame }}"></path><path d="M21 30c2 5 5 8 5 12a6 6 0 0 1-12 0c0-3 2-5 3-8 1 2 2 3 3 3-1-2-1-4 1-7z" fill="{{ lampCore }}"></path></svg></div></div>
+  <div onClick="{{ hSangha }}" style="text-align:center;flex:1;cursor:pointer"><svg width="24" height="24" viewBox="0 0 44 44" fill="{{ c2 }}" style="display:block;margin:0 auto 4px"><circle cx="22" cy="6.3" r="1.9"></circle><rect x="21" y="7" width="2" height="5.5"></rect><path d="M5.5 19Q22 8 38.5 19q-4-.5-6 1.5H11.5q-2-2-6-1.5z"></path><path d="M11 20.5h22v13h-7v-6a4 4 0 0 0-8 0v6h-7z"></path><rect x="8.5" y="33.5" width="27" height="3.5" rx="1.4"></rect></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color: {{ c2 }}">Chùa</div></div>
+  <div onClick="{{ hMe }}" style="text-align:center;flex:1;cursor:pointer"><svg width="24" height="24" viewBox="0 0 44 44" fill="{{ c3 }}" style="display:block;margin:0 auto 4px"><circle cx="22" cy="14" r="6.5"></circle><path d="M8.5 37c1-8 6.5-12.5 13.5-12.5S34.5 29 35.5 37z"></path></svg><div style="font:500 9.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color: {{ c3 }}">Tôi</div></div>
 </div>
 </div>
 </x-dc>
@@ -24,23 +24,24 @@ class Component extends DCLogic {
   renderVals() {
     const dark = !!this.props.dark;
     const active = this.props.active || 'home';
-    const on = dark ? '#D9963C' : 'var(--il-ink)';
-    const off = dark ? 'rgba(242,235,221,.4)' : 'var(--il-ink-4)';
+    const on = dark ? '#D9963C' : '#8A5A18';
+    const off = dark ? 'rgba(242,235,221,.5)' : 'var(--il-ink-42, rgba(34,30,25,.42))';
     const go = k => () => this.props.onNav && this.props.onNav(k);
     const c = k => (active === k ? on : off);
-    const f = k => (active === k ? (dark ? 'rgba(217,150,60,.22)' : 'var(--il-ink-12, rgba(0,0,0,.1))') : 'none');
+    
     return {
       rootRef: this._ref,
       shift: this.props.hidden ? 'translateY(calc(100% + 12px))' : 'translateY(0)',
       boxH: this.props.hidden ? '0px' : '88px',
       fade: dark
-        ? 'linear-gradient(180deg,rgba(20,18,15,0),#14120F 34%)'
-        : 'linear-gradient(180deg,transparent,var(--il-canvas) 32%)',
+        ? 'linear-gradient(180deg,rgba(28,24,20,0),#1C1814 34%)'
+        : 'var(--il-card, #FFFDF8)',
       c0: c('home'), c1: c('lib'), c2: c('sangha'), c3: c('me'),
-      f0: f('home'), f1: f('lib'), f2: f('sangha'), f3: f('me'),
-      lampBg: dark ? '#D9963C' : 'var(--il-ink)',
-      lampFlame: dark ? '#1A1611' : '#E6A94E',
-      lampShadow: dark ? '0 0 28px rgba(217,150,60,.45)' : '0 8px 20px var(--il-ink-28)',
+      cut: dark ? '#1C1814' : 'var(--il-card, #FFFDF8)',
+      lampBg: dark ? '#D9963C' : 'linear-gradient(160deg,#E6A94E,#B8862F)',
+      lampFlame: dark ? '#1A1611' : '#FFF8EC', lampCore: dark ? 'rgba(26,22,17,.55)' : 'rgba(184,134,47,.55)',
+      lampShadow: dark ? '0 0 28px rgba(217,150,60,.45)' : '0 6px 16px rgba(184,134,47,.35)',
+      bar: dark ? 'none' : '0 -1px 0 var(--il-ink-08, rgba(34,30,25,.08)), 0 -8px 24px rgba(34,30,25,.04)',
       hHome: go('home'), hLib: go('lib'), hSangha: go('sangha'), hMe: go('me'), hLamp: go('lamp'),
     };
   }

@@ -37,6 +37,15 @@ public final class ILSettingRow: UIControl {
     public var kind: Kind = .chevron {
         didSet { updateKindViews() }
     }
+
+    /// Optional leading glyph (a template `ILIcons` image) drawn on a tinted tile; nil = no tile.
+    public var icon: UIImage? {
+        didSet { updateIcon() }
+    }
+
+    public var iconTone: ILColors.Tone = .gold {
+        didSet { updateAppearance() }
+    }
     
     public var isOn: Bool = false {
         didSet {
@@ -52,6 +61,8 @@ public final class ILSettingRow: UIControl {
     public var onTap: (() -> Void)?
     
     // MARK: - UI Elements
+    private let iconTile = UIView()
+    private let iconImageView = UIImageView()
     private let titleLabel = UILabel()
     private let subLabel = UILabel()
     private let textStack = UIStackView()
@@ -71,7 +82,9 @@ public final class ILSettingRow: UIControl {
         valueText: String = "",
         kind: Kind = .chevron,
         isOn: Bool = false,
-        isLast: Bool = false
+        isLast: Bool = false,
+        icon: UIImage? = nil,
+        iconTone: ILColors.Tone = .gold
     ) {
         self.title = title
         self.subtitle = subtitle
@@ -79,6 +92,8 @@ public final class ILSettingRow: UIControl {
         self.kind = kind
         self.isOn = isOn
         self.isLast = isLast
+        self.icon = icon
+        self.iconTone = iconTone
         super.init(frame: .zero)
         setupViews()
     }
@@ -127,6 +142,23 @@ public final class ILSettingRow: UIControl {
         contentStack.alignment = .center
         contentStack.isUserInteractionEnabled = false
         contentStack.translatesAutoresizingMaskIntoConstraints = false
+
+        // The 44×44 icon asset carries its own padding, so it fills the whole tile (same as `ILRow`).
+        iconTile.layer.cornerRadius = ILMetrics.radiusSettingIconTile
+        iconTile.clipsToBounds = true
+        iconTile.isUserInteractionEnabled = false
+        iconImageView.contentMode = .scaleAspectFit
+        iconImageView.translatesAutoresizingMaskIntoConstraints = false
+        iconTile.addSubview(iconImageView)
+        NSLayoutConstraint.activate([
+            iconTile.widthAnchor.constraint(equalToConstant: ILMetrics.settingIconTileSize),
+            iconTile.heightAnchor.constraint(equalToConstant: ILMetrics.settingIconTileSize),
+            iconImageView.leadingAnchor.constraint(equalTo: iconTile.leadingAnchor),
+            iconImageView.trailingAnchor.constraint(equalTo: iconTile.trailingAnchor),
+            iconImageView.topAnchor.constraint(equalTo: iconTile.topAnchor),
+            iconImageView.bottomAnchor.constraint(equalTo: iconTile.bottomAnchor)
+        ])
+        contentStack.addArrangedSubview(iconTile)
         contentStack.addArrangedSubview(textStack)
         contentStack.addArrangedSubview(valueLabel)
         contentStack.addArrangedSubview(rightStack)
@@ -153,7 +185,13 @@ public final class ILSettingRow: UIControl {
         addTarget(self, action: #selector(handleTapAction), for: .touchUpInside)
         
         updateKindViews()
+        updateIcon()
         updateAppearance()
+    }
+
+    private func updateIcon() {
+        iconImageView.image = icon
+        iconTile.isHidden = icon == nil
     }
     
     private func updateKindViews() {
@@ -176,6 +214,8 @@ public final class ILSettingRow: UIControl {
         valueLabel.textColor = ILColors.inkTertiary
         chevronLabel.textColor = ILColors.inkMuted
         dividerView.backgroundColor = ILColors.border
+        iconTile.backgroundColor = iconTone.tintBackground
+        iconImageView.tintColor = iconTone.textColor
     }
     
     @objc private func switchValueChanged() {

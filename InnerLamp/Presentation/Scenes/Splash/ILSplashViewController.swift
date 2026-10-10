@@ -10,20 +10,18 @@ import Combine
 /// Tự chuyển tiếp sau một khoảng thời gian ngắn để lộ hết animation của ngọn đèn.
 ///
 /// Bố cục bám sát `isSplash` của design handoff: khối giữa (vòng đèn → wordmark → slogan) được
-/// canh giữa màn theo kiểu flexbox, còn quầng sáng / ripple / tia sáng / hàng chấm neo theo tỉ lệ
+/// canh giữa màn theo kiểu flexbox, còn quầng sáng / ripple / tia sáng neo theo tỉ lệ
 /// chiều cao màn. Màn này đi qua bộ token `--il-spl-*` nên đảo màu theo light/dark.
 final class ILSplashViewController: BaseViewController {
 
     // MARK: - Spec
     private enum Metrics {
-        /// Vòng đèn 96px, lửa 14×20 — tỉ lệ đã nằm trong `ILLampGlowView`.
+        /// Vòng đèn 96px — tỉ lệ vòng/lửa nằm trong `ILLogoView`.
         static let lampDiameter: CGFloat = 96
         /// Khoảng cách wordmark xuống từ đáy vòng đèn (`margin-top:26px`).
         static let wordmarkTopSpacing: CGFloat = 26
         /// Khoảng cách slogan xuống từ wordmark (`margin-top:12px`).
         static let taglineTopSpacing: CGFloat = 12
-        /// Hàng chấm cách đáy màn 62px (`bottom:62px`).
-        static let dotsBottomInset: CGFloat = 62
     }
 
     private enum Timing {
@@ -50,14 +48,13 @@ final class ILSplashViewController: BaseViewController {
     // MARK: - UI Elements
     private let backdropView = ILSplashBrandBackdropView()
     private let ambienceView = ILSplashAmbienceView()
-    private let lampGlowView = ILLampGlowView(diameter: Metrics.lampDiameter, style: .splash)
+    private let lampGlowView = ILLogoView(size: Metrics.lampDiameter)
     private let emberFieldView = ILSplashEmberFieldView()
     private let wordmarkLabel = ILSplashWordmarkLabel(text: "splash.wordmark".localized)
-    private let loadingIndicatorView = ILSplashLoadingIndicatorView()
 
     private let taglineLabel: UILabel = {
         let label = UILabel()
-        label.font = ILTypography.splashTagline.italic()
+        label.font = ILTypography.splashTagline
         label.textColor = ILColors.splashInkSub
         label.textAlignment = .center
         label.numberOfLines = 0
@@ -99,7 +96,6 @@ final class ILSplashViewController: BaseViewController {
         // Thứ tự addSubview quyết định thứ tự vẽ, khớp đúng thứ tự phần tử trong design.
         [backdropView, ambienceView, lampGlowView, emberFieldView, wordmarkLabel, taglineLabel]
             .forEach(view.addSubview)
-        view.addSubview(loadingIndicatorView)
         view.addLayoutGuide(columnGuide)
 
         taglineLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -157,12 +153,6 @@ final class ILSplashViewController: BaseViewController {
             taglineLabel.trailingAnchor.constraint(
                 lessThanOrEqualTo: view.trailingAnchor,
                 constant: -ILMetrics.screenHorizontal
-            ),
-
-            loadingIndicatorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            loadingIndicatorView.bottomAnchor.constraint(
-                equalTo: view.bottomAnchor,
-                constant: -Metrics.dotsBottomInset
             )
         ])
     }
@@ -211,7 +201,6 @@ final class ILSplashViewController: BaseViewController {
         emberFieldView.startAnimations()
         wordmarkLabel.startRevealAnimation()
         startTaglineRiseAnimation()
-        loadingIndicatorView.startPulsingAnimation()
     }
 
     /// `ilrise` — slogan trồi lên kèm mờ dần. Vòng đèn có bản `ilrise` riêng trong
@@ -245,12 +234,5 @@ final class ILSplashViewController: BaseViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + Timing.autoAdvanceDelay) { [weak self] in
             self?.splashFinishedSubject.send(())
         }
-    }
-}
-
-// MARK: - UIFont Italic Helper
-private extension UIFont {
-    func italic() -> UIFont {
-        return UIFont(descriptor: fontDescriptor.withSymbolicTraits(.traitItalic) ?? fontDescriptor, size: pointSize)
     }
 }

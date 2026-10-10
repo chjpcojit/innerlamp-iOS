@@ -6,45 +6,72 @@
 //
 
 import UIKit
+import CoreText
 
 public enum ILTypography {
     
     // MARK: - Font Family Names
-    public static let loraRegularName = "Lora-Regular"
-    public static let loraMediumName = "Lora-Medium"
-    public static let loraSemiBoldName = "Lora-SemiBold"
-    public static let loraBoldName = "Lora-Bold"
-    
+    public static let cormorantMediumName = "CormorantGaramond-Medium"
+    public static let cormorantMediumItalicName = "CormorantGaramond-MediumItalic"
+    public static let cormorantSemiBoldName = "CormorantGaramond-SemiBold"
+    public static let cormorantBoldName = "CormorantGaramond-Bold"
+
+    public static let literataRegularName = "Literata-Regular"
+    public static let literataItalicName = "Literata-Italic"
+
     public static let beVietnamProRegularName = "BeVietnamPro-Regular"
     public static let beVietnamProMediumName = "BeVietnamPro-Medium"
     public static let beVietnamProSemiBoldName = "BeVietnamPro-SemiBold"
     public static let beVietnamProBoldName = "BeVietnamPro-Bold"
-    
+
     // MARK: - Font Resolvers with Fallback
-    
-    /// Font Lora (Serif) dùng cho tiêu đề màn, kinh văn, số lớn
-    public static func lora(size: CGFloat, weight: UIFont.Weight = .regular) -> UIFont {
+
+    /// Cormorant Garamond (Serif) — display font: tiêu đề màn, tiêu đề thẻ/hàng, số lớn
+    /// (`font:500 … 'Cormorant Garamond'` của design). Regular và medium đều dùng weight 500 của design.
+    public static func cormorant(size: CGFloat, weight: UIFont.Weight = .regular, italic: Bool = false) -> UIFont {
         let fontName: String
         switch weight {
         case .bold, .heavy, .black:
-            fontName = loraBoldName
+            fontName = cormorantBoldName
         case .semibold:
-            fontName = loraSemiBoldName
-        case .medium:
-            fontName = loraMediumName
+            fontName = cormorantSemiBoldName
         default:
-            fontName = loraRegularName
+            fontName = italic ? cormorantMediumItalicName : cormorantMediumName
         }
-        
         if let customFont = UIFont(name: fontName, size: size) {
-            return customFont
+            return withLiningNumerals(customFont)
         }
-        
-        // Fallback to system serif font if custom font file is not present in bundle
-        let descriptor = UIFont.systemFont(ofSize: size, weight: weight).fontDescriptor.withDesign(.serif) ?? UIFont.systemFont(ofSize: size, weight: weight).fontDescriptor
+        // Fallback to the system serif font if the font file is missing from the bundle.
+        let base = UIFont.systemFont(ofSize: size, weight: weight == .regular ? .medium : weight)
+        let descriptor = base.fontDescriptor.withDesign(.serif) ?? base.fontDescriptor
         return UIFont(descriptor: descriptor, size: size)
     }
-    
+
+    /// Cormorant Garamond defaults to old-style figures, where "1" is drawn like a small-cap "I"
+    /// (lunar day "1", "11"…). The design turns on `lnum` everywhere (`font-variant-numeric:
+    /// lining-nums` / "Luôn bật chữ số thẳng hàng (lnum)" in the Design System), so every Cormorant
+    /// font is created with Number Case = Upper Case Numbers, which CoreText maps to `lnum`.
+    private static func withLiningNumerals(_ font: UIFont) -> UIFont {
+        let descriptor = font.fontDescriptor.addingAttributes([
+            .featureSettings: [[
+                UIFontDescriptor.FeatureKey.type: kNumberCaseType,
+                UIFontDescriptor.FeatureKey.selector: kUpperCaseNumbersSelector
+            ]]
+        ])
+        return UIFont(descriptor: descriptor, size: font.pointSize)
+    }
+
+    /// Literata (Serif) — chữ đọc: thân kinh văn, bài viết, bài đăng, dòng phụ nghiêng
+    /// (`font:400 16px/1.8 Literata`, `italic 400 13px/1.5 Literata` của design).
+    public static func literata(size: CGFloat, italic: Bool = false) -> UIFont {
+        if let customFont = UIFont(name: italic ? literataItalicName : literataRegularName, size: size) {
+            return customFont
+        }
+        let base = UIFont.systemFont(ofSize: size, weight: .regular)
+        let descriptor = base.fontDescriptor.withDesign(.serif) ?? base.fontDescriptor
+        return UIFont(descriptor: italic ? (descriptor.withSymbolicTraits(.traitItalic) ?? descriptor) : descriptor, size: size)
+    }
+
     /// Font Be Vietnam Pro (Sans-serif) dùng cho UI, body, labels, buttons
     public static func beVietnamPro(size: CGFloat, weight: UIFont.Weight = .regular) -> UIFont {
         let fontName: String
@@ -68,102 +95,91 @@ public enum ILTypography {
     
     // MARK: - Preset Styles
     
-    // Display & Scripture (Lora Serif)
-    public static let displayLarge = lora(size: 30, weight: .regular)
-    public static let displayMedium = lora(size: 26, weight: .regular)
-    /// Tiêu đề track trình phát toàn màn (vd. "Phẩm Song Yếu") — 25px Lora theo design handoff
-    /// (màn `player`, `font:400 25px/1.3 Lora`).
-    public static let playerTitle = lora(size: 25, weight: .regular)
-    /// Tiêu đề Lora lớn trong hero tối của màn chi tiết nội dung (kinh / pháp thoại) — 29px theo
+    // Display (Cormorant Garamond 500) & reading text (Literata) — sizes follow the design scale:
+    // display 18 / 22 / 28 / 32, reading 16 (body) / 13 (italic secondary).
+    public static let displayLarge = cormorant(size: 32)
+    public static let displayMedium = cormorant(size: 28)
+    /// Tiêu đề track trình phát toàn màn (vd. "Phẩm Song Yếu") — 25px Cormorant Garamond theo design handoff
+    /// (màn `player`, `font:400 25px/1.3 Cormorant Garamond`).
+    public static let playerTitle = cormorant(size: 28)
+    /// Tiêu đề Cormorant Garamond lớn trong hero tối của màn chi tiết nội dung (kinh / pháp thoại) — 29px theo
     /// design handoff (màn `detail`, dòng tiêu đề "Kinh Pháp Cú").
-    public static let contentHeroTitle = lora(size: 29, weight: .regular)
-    /// Tiêu đề Lora hero màn Pháp thoại — 27px theo design handoff (màn `talk`, dòng tiêu đề
-    /// "Hiếu là đạo, đạo cũng là hiếu", `font:400 27px/1.32 Lora`). Khác `contentHeroTitle` (29px)
+    public static let contentHeroTitle = cormorant(size: 28)
+    /// Tiêu đề Cormorant Garamond hero màn Pháp thoại — 27px theo design handoff (màn `talk`, dòng tiêu đề
+    /// "Hiếu là đạo, đạo cũng là hiếu", `font:400 27px/1.32 Cormorant Garamond`). Khác `contentHeroTitle` (29px)
     /// một nhịp nên cần preset riêng.
-    public static let talkTitle = lora(size: 27, weight: .regular)
-    /// Số ngày âm lớn ở hero màn "Chi tiết ngày âm" — 72px Lora theo design handoff (`font:400 72px/0.9`).
-    public static let lunarHeroDay = lora(size: 72, weight: .regular)
-    public static let scriptureTitle = lora(size: 22, weight: .regular)
-    public static let scriptureBodyLarge = lora(size: 20, weight: .regular)
-    /// Four user-selectable sizes (17 / 20 / 23 / 26px Lora) of a chanted line on the Reader screen
+    public static let talkTitle = cormorant(size: 28)
+    /// Số ngày âm lớn ở hero màn "Chi tiết ngày âm" — 72px Cormorant Garamond theo design handoff (`font:400 72px/0.9`).
+    public static let lunarHeroDay = cormorant(size: 84)
+    public static let scriptureTitle = cormorant(size: 22)
+    public static let scriptureBodyLarge = literata(size: 16)
+    /// Four user-selectable sizes (17 / 20 / 23 / 26px Literata) of a chanted line on the Reader screen
     /// (`isReader`, "Cỡ chữ" panel); always used with line-height 1.55 at the call site.
-    public static let readerLineFonts: [UIFont] = [17, 20, 23, 26].map { lora(size: $0, weight: .regular) }
-    /// Preview sentence on the Language screen for the 4 sutra font-size presets (14 / 16 / 19 / 22px Lora).
-    public static let languagePreviewFonts: [UIFont] = [14, 16, 19, 22].map { lora(size: $0, weight: .regular) }
-    /// English gloss under a chanted line on the Reader screen — 12.5px Lora italic, line-height 1.6.
-    public static let readerGloss: UIFont = {
-        let base = lora(size: 12.5, weight: .regular)
-        guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
-        return UIFont(descriptor: descriptor, size: 12.5)
-    }()
+    public static let readerLineFonts: [UIFont] = [17, 20, 23, 26].map { literata(size: $0) }
+    /// Preview sentence on the Language screen for the 4 sutra font-size presets (14 / 16 / 19 / 22px Literata).
+    public static let languagePreviewFonts: [UIFont] = [14, 16, 19, 22].map { literata(size: $0) }
+    /// English gloss under a chanted line on the Reader screen — 12.5px Literata italic, line-height 1.6.
+    public static let readerGloss = literata(size: 13, italic: true)
     /// Bell / wooden-fish cue glyph (◉ •) in front of a chanted line — 11px semibold.
     public static let readerCue = beVietnamPro(size: 11, weight: .semibold)
-    /// "A" tile of the Reader font-size picker — 13px Lora (`font:400 13px Lora`).
-    public static let readerOptionSize = lora(size: 13, weight: .regular)
-    /// Tiêu đề thẻ tối nổi bật (vd. "Thời khóa tối cùng đạo tràng") — 19px Lora theo design handoff.
-    public static let heroCardTitle = lora(size: 19, weight: .regular)
-    public static let scriptureBody = lora(size: 18, weight: .regular)
-    /// Số serif (Lora) 18px — vd. số phút trong vòng tròn preset thiền ở màn Thiền định.
-    public static let serifNumber = lora(size: 18, weight: .regular)
-    /// Số ngày trong ô ngày của thẻ sự kiện (17px Lora theo design handoff).
-    public static let dateTileDay = lora(size: 17, weight: .regular)
-    public static let scriptureBodySmall = lora(size: 15, weight: .regular)
-    /// Đoạn mô tả ngắn dưới hero (vd. giới thiệu bộ kinh ở màn chi tiết bài kinh) — 14px Lora, luôn
+    /// "A" tile of the Reader font-size picker — 13px Literata (`font:400 13px Literata`).
+    public static let readerOptionSize = literata(size: 13)
+    /// Tiêu đề thẻ tối nổi bật (vd. "Thời khóa tối cùng đạo tràng") — 19px Cormorant Garamond theo design handoff.
+    public static let heroCardTitle = cormorant(size: 22)
+    public static let scriptureBody = literata(size: 16)
+    /// Số serif (Cormorant Garamond) 18px — vd. số phút trong vòng tròn preset thiền ở màn Thiền định.
+    public static let serifNumber = cormorant(size: 22)
+    /// Số ngày trong ô ngày của thẻ sự kiện (17px Cormorant Garamond theo design handoff).
+    public static let dateTileDay = cormorant(size: 18)
+    public static let scriptureBodySmall = literata(size: 16)
+    /// Đoạn mô tả ngắn dưới hero (vd. giới thiệu bộ kinh ở màn chi tiết bài kinh) — 14px Literata, luôn
     /// dùng cùng line-height ~1.75 ở nơi gọi.
-    public static let scriptureDescription = lora(size: 14, weight: .regular)
-    /// Tiêu đề ảnh trong gallery "Ảnh chùa đẹp" — 13.5px Lora theo design handoff.
-    public static let photoCaptionTitle = lora(size: 13.5, weight: .regular)
+    public static let scriptureDescription = literata(size: 14)
+    /// Tiêu đề ảnh trong gallery "Ảnh chùa đẹp" — 13.5px Cormorant Garamond theo design handoff.
+    public static let photoCaptionTitle = cormorant(size: 18)
     /// Nhãn ô truy cập nhanh màn Thư viện (Kinh sách/Thiền định/Pháp thoại/Phật & Bồ Tát) — 16px
-    /// Lora theo design handoff (`isLib`, `font:400 16px Lora`).
-    public static let quickAccessTileTitle = lora(size: 16, weight: .regular)
-    /// Tiêu đề serif (Lora) 16px cho thẻ/hàng danh sách (vd. tên preset thiền chuông và tên bài
-    /// thiền dẫn ở màn Thiền định) — `font:400 16px Lora` trong design handoff.
-    public static let serifCardTitle = lora(size: 16, weight: .regular)
-    /// Chữ "A" nhỏ ở đầu trái thanh chỉnh cỡ chữ kinh văn (màn Cài đặt) — 12px Lora theo design handoff.
-    public static let scriptureBodyTiny = lora(size: 12, weight: .regular)
-    /// Đoạn thân bài viết Phật pháp (màn Bài viết) — 16px Lora, luôn dùng cùng line-height 1.85
+    /// Cormorant Garamond theo design handoff (`isLib`, `font:400 16px Cormorant Garamond`).
+    public static let quickAccessTileTitle = cormorant(size: 18)
+    /// Tiêu đề serif (Cormorant Garamond) 16px cho thẻ/hàng danh sách (vd. tên preset thiền chuông và tên bài
+    /// thiền dẫn ở màn Thiền định) — `font:400 16px Cormorant Garamond` trong design handoff.
+    public static let serifCardTitle = cormorant(size: 18)
+    /// Chữ "A" nhỏ ở đầu trái thanh chỉnh cỡ chữ kinh văn (màn Cài đặt) — 12px Literata theo design handoff.
+    public static let scriptureBodyTiny = literata(size: 12)
+    /// Đoạn thân bài viết Phật pháp (màn Bài viết) — 16px Literata, luôn dùng cùng line-height 1.85
     /// ở nơi gọi (`makeParagraph(cssLineHeight: 1.85)`).
-    public static let articleBody = lora(size: 16, weight: .regular)
-    /// Thân bài đăng đạo tràng (màn Bài đăng) — 14.5px Lora theo design handoff (`font:400
-    /// 14.5px/1.8 Lora`), luôn dùng cùng line-height 1.8 ở nơi gọi (`makeParagraph(cssLineHeight: 1.8)`).
-    public static let postBody = lora(size: 14.5, weight: .regular)
-    /// Câu trích dẫn nổi bật trong bài viết Phật pháp — 18px Lora nghiêng, luôn dùng cùng
+    public static let articleBody = literata(size: 16)
+    /// Thân bài đăng đạo tràng (màn Bài đăng) — 14.5px Literata theo design handoff (`font:400
+    /// 14.5px/1.8 Literata`), luôn dùng cùng line-height 1.8 ở nơi gọi (`makeParagraph(cssLineHeight: 1.8)`).
+    public static let postBody = literata(size: 16)
+    /// Câu trích dẫn nổi bật trong bài viết Phật pháp — 18px Cormorant Garamond nghiêng, luôn dùng cùng
     /// line-height 1.6 ở nơi gọi (xem `ILArticleQuoteView`).
-    public static let articleQuote: UIFont = {
-        let base = lora(size: 18, weight: .regular)
-        guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
-        return UIFont(descriptor: descriptor, size: 18)
-    }()
-    /// Danh xưng lớn trên hero ảnh (màn chi tiết Phật & Bồ Tát) — 28px Lora, line-height 1.2.
-    public static let imageHeroTitle = lora(size: 28, weight: .regular)
-    /// Dòng phụ nghiêng dưới tiêu đề hero / Phạn ngữ trên thẻ thần chú — 13px Lora nghiêng.
-    public static let heroSubtitleItalic: UIFont = {
-        let base = lora(size: 13, weight: .regular)
-        guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
-        return UIFont(descriptor: descriptor, size: 13)
-    }()
+    public static let articleQuote = cormorant(size: 20, italic: true)
+    /// Danh xưng lớn trên hero ảnh (màn chi tiết Phật & Bồ Tát) — 28px Cormorant Garamond, line-height 1.2.
+    public static let imageHeroTitle = cormorant(size: 28)
+    /// Dòng phụ nghiêng dưới tiêu đề hero / Phạn ngữ trên thẻ thần chú — 13px Literata nghiêng.
+    public static let heroSubtitleItalic = literata(size: 13, italic: true)
 
-    // Family tree (Gia phả) — Lora stands in for the design's Cormorant Garamond
+    // Family tree (Gia phả) — Cormorant Garamond, as in the design
     /// Name under a node on the tree canvas — 13.5px bold serif.
-    public static let treeNodeName = lora(size: 13.5, weight: .bold)
+    public static let treeNodeName = cormorant(size: 13.5, weight: .bold)
     /// "ĐỜI 5" caption under a node name — 9px medium, kern .08em applied at the call site.
     public static let treeNodeMeta = beVietnamPro(size: 9, weight: .medium)
     /// Selected person's name in the detail sheet header — 22px bold serif.
-    public static let treeSheetName = lora(size: 22, weight: .bold)
+    public static let treeSheetName = cormorant(size: 22, weight: .bold)
     /// Relation / lineage row name in the detail sheet — 16px semibold serif.
-    public static let treeRelationName = lora(size: 16, weight: .semibold)
+    public static let treeRelationName = cormorant(size: 16, weight: .semibold)
     /// Lineage chain row name — 15px semibold serif.
-    public static let treeChainName = lora(size: 15, weight: .semibold)
+    public static let treeChainName = cormorant(size: 15, weight: .semibold)
     /// Italic biography note — 16px medium serif italic.
     public static let treeNote: UIFont = {
-        let base = lora(size: 16, weight: .medium)
+        let base = cormorant(size: 16, weight: .medium)
         guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
         return UIFont(descriptor: descriptor, size: 16)
     }()
     /// Clan name in the tree header — 25px semibold serif.
-    public static let treeHeaderTitle = lora(size: 25, weight: .semibold)
+    public static let treeHeaderTitle = cormorant(size: 25, weight: .semibold)
     /// 譜 glyph on the tree header seal — 19px bold serif.
-    public static let treeHeaderSeal = lora(size: 19, weight: .bold)
+    public static let treeHeaderSeal = cormorant(size: 19, weight: .bold)
     /// Generation chip — 12px medium.
     public static let treeChip = beVietnamPro(size: 12, weight: .medium)
     /// "DỨT NHÁNH" marker under a node — 8.5px semibold, kern .14em applied at the call site.
@@ -173,33 +189,37 @@ public enum ILTypography {
     /// "BẠN" badge in the legend — 7px bold, kern .08em applied at the call site.
     public static let treeMeLegend = beVietnamPro(size: 7, weight: .bold)
     /// 忌 glyph and title of the TƯỞNG NIỆM card — 18px bold serif.
-    public static let treeMemorialTitle = lora(size: 18, weight: .bold)
+    public static let treeMemorialTitle = cormorant(size: 18, weight: .bold)
     /// Tile title in the TƯỞNG NIỆM card ("Thắp đèn") — 12.5px semibold.
     public static let treeTileTitle = beVietnamPro(size: 12.5, weight: .semibold)
     /// 譜 seal on the "Cây gia phả" empty-state / legend — 12px bold serif.
-    public static let treeSealSmall = lora(size: 12, weight: .bold)
+    public static let treeSealSmall = cormorant(size: 12, weight: .bold)
     /// 譜 seal on the "Lấy từ gia phả" card of the empty memorial book — 17px semibold serif.
-    public static let treeSealMedium = lora(size: 17, weight: .semibold)
+    public static let treeSealMedium = cormorant(size: 17, weight: .semibold)
     /// Book name in the switcher menu — 18px semibold serif.
-    public static let treeSwitcherTitle = lora(size: 18, weight: .semibold)
+    public static let treeSwitcherTitle = cormorant(size: 18, weight: .semibold)
     /// Title of a tab/screen empty state with an illustration — 24px serif.
-    public static let emptyStateTitle = lora(size: 24, weight: .regular)
+    public static let emptyStateTitle = cormorant(size: 28)
     /// Title of the empty family tree ("Chưa có gia phả") — 28px bold serif.
-    public static let treeEmptyTitle = lora(size: 28, weight: .bold)
+    public static let treeEmptyTitle = cormorant(size: 28, weight: .bold)
     /// Header card title of the "Tạo gia phả" form — 26px semi-bold serif.
-    public static let treeCreateTitle = lora(size: 26, weight: .semibold)
+    public static let treeCreateTitle = cormorant(size: 26, weight: .semibold)
 
-    // Splash / Onboarding intro (Lora Serif)
-    public static let introDisplay = lora(size: 40, weight: .regular)
-    public static let stepTitle = lora(size: 32, weight: .regular)
-    /// Tiêu đề màn xác thực (Đăng ký, OTP, Đăng nhập...) — 29px Lora theo design handoff.
-    public static let authTitle = lora(size: 29, weight: .regular)
+    // Splash / Onboarding intro (Cormorant Garamond Serif)
+    public static let introDisplay = cormorant(size: 32)
+    public static let stepTitle = cormorant(size: 32)
+    /// Tiêu đề màn xác thực (Đăng ký, OTP, Đăng nhập...) — 29px Cormorant Garamond theo design handoff.
+    public static let authTitle = cormorant(size: 28)
     /// Dòng phụ đề chữ nghiêng dưới wordmark/tiêu đề — luôn dùng cùng `.italic()` ở nơi gọi.
-    public static let taglineItalic = lora(size: 14, weight: .regular)
-    /// Wordmark "InnerLamp" màn Splash — 34px Lora theo design handoff.
-    public static let splashWordmark = lora(size: 34, weight: .regular)
-    /// Slogan nghiêng dưới wordmark màn Splash — 15px Lora, luôn dùng cùng `.italic()` ở nơi gọi.
-    public static let splashTagline = lora(size: 15, weight: .regular)
+    public static let taglineItalic = literata(size: 13, italic: true)
+    /// Wordmark "InnerLamp" màn Splash — 32px Cormorant Garamond 500 theo design handoff.
+    public static let splashWordmark = cormorant(size: 32)
+    /// Slogan nghiêng dưới wordmark màn Splash — 20px Cormorant Garamond 500 italic.
+    public static let splashTagline = cormorant(size: 20, italic: true)
+    /// Tiêu đề màn Đăng nhập — 32px Cormorant Garamond 500 (`isLogin`, "Kính chào bạn").
+    public static let loginTitle = cormorant(size: 32)
+    /// Tiêu đề màn Đăng ký — 28px Cormorant Garamond 500 (`isSignup`, "Kết duyên cùng InnerLamp").
+    public static let signUpTitle = cormorant(size: 28)
     
     // Body & UI (Be Vietnam Pro Sans-serif)
     public static let eyebrow = beVietnamPro(size: 10, weight: .semibold)
@@ -246,8 +266,8 @@ public enum ILTypography {
     public static let statNumber = beVietnamPro(size: 38, weight: .regular)
     /// Mũi tên "›" ở cuối hàng/thẻ điều hướng
     public static let chevron = beVietnamPro(size: 18, weight: .regular)
-    /// Tên chùa tu tập trên thẻ tab Chùa — 20px Lora (`font:400 20px/1.3 Lora`).
-    public static let templeCardTitle = lora(size: 20, weight: .regular)
+    /// Tên chùa tu tập trên thẻ tab Chùa — 20px Cormorant Garamond (`font:400 20px/1.3 Cormorant Garamond`).
+    public static let templeCardTitle = cormorant(size: 22)
     /// Số ngày ở cột ngày-tháng của hàng khóa tu / ngày lễ — 18px medium (`font:500 18px`).
     public static let dateNumber = beVietnamPro(size: 18, weight: .medium)
     /// Số thống kê vừa 22px medium (vd. "168 giờ tu tập" ở thẻ 3 ô số liệu)
@@ -256,9 +276,9 @@ public enum ILTypography {
     public static let statValueMedium = beVietnamPro(size: 19, weight: .medium)
     /// Hero stat number on a featured card — 46px regular (e.g. "42" streak days on Stats).
     public static let statHero = beVietnamPro(size: 46, weight: .regular)
-    /// Số liệu lớn kiểu serif (Lora) trên thẻ nổi bật — 34px theo design handoff (vd. "7 ngày thiền
+    /// Số liệu lớn kiểu serif (Cormorant Garamond) trên thẻ nổi bật — 34px theo design handoff (vd. "7 ngày thiền
     /// liên tục" ở màn Thiền định).
-    public static let statDisplay = lora(size: 34, weight: .regular)
+    public static let statDisplay = cormorant(size: 32)
     /// Value inside a half-width stat tile — 24px medium (e.g. "168" hours on Stats).
     public static let statTileValue = beVietnamPro(size: 24, weight: .medium)
     /// Chú thích rất nhỏ 10px regular (vd. dòng phụ dưới tên dấu ấn)
@@ -269,12 +289,11 @@ public enum ILTypography {
     public static let captionMedium = beVietnamPro(size: 10.5, weight: .medium)
     /// Số ngày âm nhỏ dưới số ngày dương trong ô lịch tháng — 8.5px regular
     public static let calendarLunarDay = beVietnamPro(size: 8.5, weight: .regular)
-    /// Câu chia sẻ ngắn dạng trích dẫn: Lora 14px nghiêng
-    public static let quoteItalic: UIFont = {
-        let base = lora(size: 14, weight: .regular)
-        guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
-        return UIFont(descriptor: descriptor, size: 14)
-    }()
+    /// Câu chia sẻ ngắn dạng trích dẫn: Literata 14px nghiêng
+    public static let quoteItalic = literata(size: 13, italic: true)
+
+    /// Số hạt trong vòng tràng hạt nhỏ của thẻ tràng hạt ở Trang chủ — 24px medium
+    public static let malaCardCount = beVietnamPro(size: 24, weight: .medium)
 
     /// Số đếm lớn trên màn immersive (vd. số hạt màn Niệm Phật) — thiết kế dùng weight 300 nhưng
     /// bộ font Be Vietnam Pro trong bundle chưa có bản Light nên dùng Regular.
@@ -286,12 +305,8 @@ public enum ILTypography {
     public static let immersiveTimer = beVietnamPro(size: 54, weight: .regular)
     /// Giá trị nhịp/khoảng cách trên thẻ nhịp màn Chuông mõ (17px medium).
     public static let bellRateValue = beVietnamPro(size: 17, weight: .medium)
-    /// Dòng gợi ý thao tác dưới câu niệm: Lora 12.5px nghiêng
-    public static let hintItalic: UIFont = {
-        let base = lora(size: 12.5, weight: .regular)
-        guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
-        return UIFont(descriptor: descriptor, size: 12.5)
-    }()
+    /// Dòng gợi ý thao tác dưới câu niệm: Literata 12.5px nghiêng
+    public static let hintItalic = literata(size: 13, italic: true)
 
     /// Đoạn mô tả dài dưới tiêu đề intro (Onboarding)
     public static let introBody = beVietnamPro(size: 15, weight: .regular)
@@ -299,13 +314,13 @@ public enum ILTypography {
     /// Value text inside a labeled input card (Edit Profile fields, 15px)
     public static let fieldValue = beVietnamPro(size: 15, weight: .regular)
     /// Wordmark viết hoa, letter-spacing rộng ở top bar (Onboarding)
-    public static let logoMark = beVietnamPro(size: 11.5, weight: .semibold)
+    public static let logoMark = beVietnamPro(size: 13, weight: .semibold)
 
     // MARK: - Alert / Error Popups
-    /// Error bottom-sheet title and the large "!" glyph on sheet / dialog: Lora 24px
-    public static let alertTitle = lora(size: 24, weight: .regular)
-    /// Small "!" glyph on toast / banner: Lora 14px medium
-    public static let alertGlyphSmall = lora(size: 14, weight: .medium)
+    /// Error bottom-sheet title and the large "!" glyph on sheet / dialog: Cormorant Garamond 24px
+    public static let alertTitle = cormorant(size: 28)
+    /// Small "!" glyph on toast / banner: Cormorant Garamond 14px medium
+    public static let alertGlyphSmall = cormorant(size: 18, weight: .medium)
     /// Toast / banner headline: 13.5px medium
     public static let alertHeadline = beVietnamPro(size: 13.5, weight: .medium)
     /// Close "×" on the toast: 15px
@@ -383,7 +398,7 @@ public enum ILTypography {
         )
     }
     
-    /// Định dạng câu kinh văn với Lora và line-height thoáng (1.75)
+    /// Định dạng câu kinh văn với Literata và line-height thoáng (1.75)
     public static func makeScriptureText(
         text: String,
         size: CGFloat = 18,
@@ -392,7 +407,7 @@ public enum ILTypography {
     ) -> NSAttributedString {
         makeAttributedString(
             text: text,
-            font: lora(size: size, weight: .regular),
+            font: literata(size: size),
             color: color,
             lineHeightMultiple: 1.75,
             alignment: alignment

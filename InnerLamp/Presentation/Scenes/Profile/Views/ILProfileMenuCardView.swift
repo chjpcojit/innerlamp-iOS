@@ -5,42 +5,62 @@
 
 import UIKit
 
-/// Nhóm 5 hàng điều hướng cuối màn Tôi (Chuông tỉnh thức / Cài đặt / Thông báo / Gia phả / Đạo
-/// tràng của tôi) trong 1 thẻ bo góc. Là composition riêng của màn Tôi từ `ILSettingRow` dùng chung.
+/// Nhóm 7 hàng điều hướng có icon cuối màn Tôi (Gia phả dòng họ / Tạo gia phả mới / Chuông tỉnh thức /
+/// Sổ công đức / Cài đặt / Thông báo / Chùa tu tập) trong 1 thẻ bo góc. Là composition riêng của
+/// màn Tôi từ `ILSettingRow` dùng chung.
 final class ILProfileMenuCardView: UIView {
 
     // MARK: - Properties
+    var onFamilyTreeTapped: (() -> Void)?
+    var onCreateFamilyTreeTapped: (() -> Void)?
     var onReminderTapped: (() -> Void)?
+    var onMeritBookTapped: (() -> Void)?
     var onSettingsTapped: (() -> Void)?
     var onNotificationsTapped: (() -> Void)?
-    var onFamilyTreeTapped: (() -> Void)?
     var onCommunityTapped: (() -> Void)?
 
     // MARK: - UI Elements
+    private lazy var familyTreeRow = ILSettingRow(
+        title: "profile.menu.familyTree".localized,
+        kind: .value,
+        icon: ILIcons.rowTree
+    )
+
+    private lazy var createFamilyTreeRow = ILSettingRow(
+        title: "profile.menu.createFamilyTree".localized,
+        kind: .value,
+        icon: ILIcons.rowPlus
+    )
+
     private lazy var reminderRow = ILSettingRow(
         title: "profile.menu.reminder".localized,
-        kind: .value
+        kind: .value,
+        icon: ILIcons.rowBell
+    )
+
+    private lazy var meritBookRow = ILSettingRow(
+        title: "profile.menu.meritBook".localized,
+        kind: .chevron,
+        icon: ILIcons.rowJournal
     )
 
     private lazy var settingsRow = ILSettingRow(
         title: "profile.menu.settings".localized,
-        kind: .chevron
+        kind: .chevron,
+        icon: ILIcons.rowGear
     )
 
     private lazy var notificationsRow = ILSettingRow(
         title: "profile.menu.notifications".localized,
-        kind: .chevron
-    )
-
-    private lazy var familyTreeRow = ILSettingRow(
-        title: "profile.menu.familyTree".localized,
-        kind: .chevron
+        kind: .chevron,
+        icon: ILIcons.rowNotif
     )
 
     private lazy var communityRow = ILSettingRow(
         title: "profile.menu.community".localized,
         kind: .value,
-        isLast: true
+        isLast: true,
+        icon: ILIcons.rowTemple
     )
 
     // MARK: - Initializer
@@ -62,7 +82,9 @@ final class ILProfileMenuCardView: UIView {
         layer.borderColor = ILColors.border.cgColor
         clipsToBounds = true
 
-        let stack = UIStackView(arrangedSubviews: [reminderRow, settingsRow, notificationsRow, familyTreeRow, communityRow])
+        let stack = UIStackView(arrangedSubviews: [
+            familyTreeRow, createFamilyTreeRow, reminderRow, meritBookRow, settingsRow, notificationsRow, communityRow
+        ])
         stack.axis = .vertical
         stack.alignment = .fill
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -75,10 +97,12 @@ final class ILProfileMenuCardView: UIView {
             stack.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
 
+        familyTreeRow.onTap = { [weak self] in self?.onFamilyTreeTapped?() }
+        createFamilyTreeRow.onTap = { [weak self] in self?.onCreateFamilyTreeTapped?() }
         reminderRow.onTap = { [weak self] in self?.onReminderTapped?() }
+        meritBookRow.onTap = { [weak self] in self?.onMeritBookTapped?() }
         settingsRow.onTap = { [weak self] in self?.onSettingsTapped?() }
         notificationsRow.onTap = { [weak self] in self?.onNotificationsTapped?() }
-        familyTreeRow.onTap = { [weak self] in self?.onFamilyTreeTapped?() }
         communityRow.onTap = { [weak self] in self?.onCommunityTapped?() }
     }
 

@@ -51,23 +51,8 @@ final class ILOnboardingViewController: BaseViewController {
         return view
     }()
 
-    private lazy var logoDot: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerRadius = 3.0
-        view.backgroundColor = ILColors.goldBright
-        return view
-    }()
-
-    private lazy var logoIcon: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerRadius = 10.0
-        view.layer.borderWidth = 1.4
-        view.layer.borderColor = ILColors.gold.cgColor
-        view.addSubview(logoDot)
-        return view
-    }()
+    /// `IL-Logo` 32px ở thanh trên (design `isOnb`), kèm wordmark bên cạnh.
+    private let logoIcon = ILLogoView(size: 32)
 
     private lazy var logoLabel: UILabel = {
         let label = UILabel()
@@ -77,7 +62,7 @@ final class ILOnboardingViewController: BaseViewController {
             text: "onboarding.wordmark".localized,
             font: ILTypography.logoMark,
             color: ILColors.ink,
-            letterSpacingEm: 0.18
+            letterSpacingEm: 0.2
         )
         return label
     }()
@@ -85,7 +70,7 @@ final class ILOnboardingViewController: BaseViewController {
     private lazy var logoStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [logoIcon, logoLabel])
         stack.axis = .horizontal
-        stack.spacing = 9
+        stack.spacing = 10
         stack.alignment = .center
         stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
@@ -259,14 +244,6 @@ final class ILOnboardingViewController: BaseViewController {
             topGlowCircle.topAnchor.constraint(equalTo: view.topAnchor, constant: -120),
             topGlowCircle.widthAnchor.constraint(equalToConstant: 420),
             topGlowCircle.heightAnchor.constraint(equalToConstant: 420),
-
-            // Logo dot
-            logoIcon.widthAnchor.constraint(equalToConstant: 20),
-            logoIcon.heightAnchor.constraint(equalToConstant: 20),
-            logoDot.centerXAnchor.constraint(equalTo: logoIcon.centerXAnchor),
-            logoDot.centerYAnchor.constraint(equalTo: logoIcon.centerYAnchor),
-            logoDot.widthAnchor.constraint(equalToConstant: 6),
-            logoDot.heightAnchor.constraint(equalToConstant: 6),
 
             // Top Bar
             topBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),

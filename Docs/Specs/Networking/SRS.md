@@ -8,8 +8,8 @@
 | Version | 0.1 (draft) |
 | Last updated | 2026-09-27 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
-| Owner / author | il-ba (Business Analyst) |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Owner / author | ba-writer (Business Analyst) |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 ---
 
@@ -315,23 +315,23 @@ Swift `APIEnvelope<T>` / `APIErrorDetail`). A feature `Repository` builds an `En
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | Attach stored token | → il-spec-writer | TBD |
-| FR-002 | No token, still send | → il-spec-writer | TBD |
-| FR-003 | Explicit header wins | → il-spec-writer | TBD |
-| FR-004 | `requiresAuth == false` | → il-spec-writer | TBD |
-| FR-005 | 2xx envelope decode | → il-spec-writer | TBD |
-| FR-006 | 2xx success=false | → il-spec-writer | TBD |
-| FR-007 | 4xx/5xx envelope decode | → il-spec-writer | TBD |
-| FR-008 | Unparseable error body | → il-spec-writer | TBD |
-| FR-009 | Bare decode | → il-spec-writer | TBD |
-| FR-010 | No connectivity | → il-spec-writer | TBD |
-| FR-011 | Timeout | → il-spec-writer | TBD |
-| FR-012 | 401 → unauthorized | → il-spec-writer | TBD |
-| FR-013 | Explicit session config | → il-spec-writer | TBD |
-| FR-014 | One log record | → il-spec-writer | TBD |
-| FR-015 | PII masking | → il-spec-writer | TBD |
-| FR-016 | Failure classification | → il-spec-writer | TBD |
-| NFR-001 | Timeouts | → il-spec-writer | TBD |
+| FR-001 | Attach stored token | → spec-writer | TBD |
+| FR-002 | No token, still send | → spec-writer | TBD |
+| FR-003 | Explicit header wins | → spec-writer | TBD |
+| FR-004 | `requiresAuth == false` | → spec-writer | TBD |
+| FR-005 | 2xx envelope decode | → spec-writer | TBD |
+| FR-006 | 2xx success=false | → spec-writer | TBD |
+| FR-007 | 4xx/5xx envelope decode | → spec-writer | TBD |
+| FR-008 | Unparseable error body | → spec-writer | TBD |
+| FR-009 | Bare decode | → spec-writer | TBD |
+| FR-010 | No connectivity | → spec-writer | TBD |
+| FR-011 | Timeout | → spec-writer | TBD |
+| FR-012 | 401 → unauthorized | → spec-writer | TBD |
+| FR-013 | Explicit session config | → spec-writer | TBD |
+| FR-014 | One log record | → spec-writer | TBD |
+| FR-015 | PII masking | → spec-writer | TBD |
+| FR-016 | Failure classification | → spec-writer | TBD |
+| NFR-001 | Timeouts | → spec-writer | TBD |
 
 ---
 

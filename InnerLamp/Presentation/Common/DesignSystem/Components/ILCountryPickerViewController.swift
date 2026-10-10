@@ -8,7 +8,7 @@ import UIKit
 /// Bộ chọn quốc gia dạng bottom sheet (cờ + tên + mã vùng + ô tìm kiếm) — khớp sheet `ccOpen`
 /// trong design handoff. Thuần lựa chọn dữ liệu tĩnh (`ILCountry.all`), không có UseCase/luồng
 /// điều hướng riêng nên trình bày qua `present(_:)` trực tiếp từ nơi gọi thay vì đi qua
-/// Coordinator — không phải một "màn hình" theo nghĩa `il-screen-builder` (không push lên
+/// Coordinator — không phải một "màn hình" theo nghĩa `ui-builder` (không push lên
 /// navigation stack, không có state cần lưu qua session).
 final class ILCountryPickerViewController: BaseViewController {
 

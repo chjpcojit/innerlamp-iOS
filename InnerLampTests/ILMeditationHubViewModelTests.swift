@@ -270,7 +270,7 @@ final class ILMeditationHubUseCaseTests: XCTestCase {
     }
 
     func test_downloadGuidedMeditation_isAStubThatDoesNotThrow() async throws {
-        // The real download needs network + local storage — out of scope for il-screen-builder.
+        // The real download needs network + local storage — out of scope for ui-builder.
         try await sut.downloadGuidedMeditation(id: "guided.relax")
     }
 }

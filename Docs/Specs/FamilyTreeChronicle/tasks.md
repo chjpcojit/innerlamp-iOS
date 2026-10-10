@@ -12,4 +12,4 @@ Source: design.md v1.0
 - [x] Tech debt + assumptions recorded (TD-001…004, AS-001…003)
 - [ ] Wiring: `DIContainer` factories + `ILFamilyTreeCoordinator` (seal tap, switcher row) — done by the FamilyTree work
 - [ ] `xcodebuild build` (generic/platform=iOS) passes
-- [ ] Persistence (`il-data-layer-builder`) once an API / store is confirmed
+- [ ] Persistence (`data-builder`) once an API / store is confirmed

@@ -82,8 +82,8 @@ built).
   `ILHomeUseCaseImpl` with TODO comments.
   > ⚠️ Not confirmed: the dashboard/content API contract(s) — no home-dashboard
   > endpoint in `Docs/Specs/API/openapi.yaml` v3.9. Blocks `tasks.md` Phase 3.
-- A real session/current-user service. The greeting name reads
-  `KeychainService` key `signup_pending_credentials` (temporary).
+- A real session/current-user service. The greeting name has no source yet
+  (empty → "khách", TD-Home-002); the old `signup_pending_credentials` read was removed.
 - The bead count is memory-only — not persisted and not synced with the
   full-screen Mala screen.
 - Promote to `stable` once the dashboard API lands and the flow is exercised

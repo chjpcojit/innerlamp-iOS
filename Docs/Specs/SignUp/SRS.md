@@ -8,8 +8,8 @@
 | Version | 0.1 (draft) |
 | Last updated | 2026-09-27 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
-| Owner / author | il-ba (Business Analyst) |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Owner / author | ba-writer (Business Analyst) |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 ---
 
@@ -338,26 +338,26 @@ here — it happens in `verify-otp` (Otp).
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | Load state | → il-spec-writer | TBD |
-| FR-002 | Dharma-name suggestion | → il-spec-writer | TBD |
-| FR-003 | Country picker | → il-spec-writer | TBD |
-| FR-004 | Phone hint | → il-spec-writer | TBD |
-| FR-005 | Ordination place | → il-spec-writer | TBD |
-| FR-006 | Email validation | → il-spec-writer | TBD |
-| FR-007 | Password strength | → il-spec-writer | TBD |
-| FR-008 | Terms checkbox | → il-spec-writer | TBD |
-| FR-009 | Submit validation | → il-spec-writer | TBD |
-| FR-010 | Submit | → il-spec-writer | TBD |
-| FR-011 | Phone format | → il-spec-writer | TBD |
-| FR-012 | Double-submit guard | → il-spec-writer | TBD |
-| FR-013 | Existing account | → il-spec-writer | TBD |
-| FR-014 | Back | → il-spec-writer | TBD |
-| FR-015 | ToS | → il-spec-writer | TBD |
-| FR-016 | Privacy Policy | → il-spec-writer | TBD |
-| FR-017 | Dismiss legal | → il-spec-writer | TBD |
-| FR-018 | Legal content source | → il-spec-writer | TBD |
-| FR-019 | Legal offline state | → il-spec-writer | TBD |
-| NFR-001 | Submit responsiveness | → il-spec-writer | TBD |
+| FR-001 | Load state | → spec-writer | TBD |
+| FR-002 | Dharma-name suggestion | → spec-writer | TBD |
+| FR-003 | Country picker | → spec-writer | TBD |
+| FR-004 | Phone hint | → spec-writer | TBD |
+| FR-005 | Ordination place | → spec-writer | TBD |
+| FR-006 | Email validation | → spec-writer | TBD |
+| FR-007 | Password strength | → spec-writer | TBD |
+| FR-008 | Terms checkbox | → spec-writer | TBD |
+| FR-009 | Submit validation | → spec-writer | TBD |
+| FR-010 | Submit | → spec-writer | TBD |
+| FR-011 | Phone format | → spec-writer | TBD |
+| FR-012 | Double-submit guard | → spec-writer | TBD |
+| FR-013 | Existing account | → spec-writer | TBD |
+| FR-014 | Back | → spec-writer | TBD |
+| FR-015 | ToS | → spec-writer | TBD |
+| FR-016 | Privacy Policy | → spec-writer | TBD |
+| FR-017 | Dismiss legal | → spec-writer | TBD |
+| FR-018 | Legal content source | → spec-writer | TBD |
+| FR-019 | Legal offline state | → spec-writer | TBD |
+| NFR-001 | Submit responsiveness | → spec-writer | TBD |
 
 ---
 

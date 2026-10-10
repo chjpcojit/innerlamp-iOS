@@ -30,42 +30,42 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3A2A1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M15 5l-7 7 7 7"></path></svg>
     </div>
     <div onClick="{{ openPk }}" style="cursor:pointer;width:34px;height:34px;flex:none;border-radius:5px;background:#9E3B2C;display:flex;align-items:center;justify-content:center;transform:rotate(-4deg);box-shadow:inset 0 0 0 2px #9E3B2C,inset 0 0 0 3px #F4EBD6">
-      <div style="font:700 19px 'Cormorant Garamond',serif;color:#F4EBD6;line-height:1">譜</div>
+      <div style="font:700 19px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#F4EBD6;line-height:1">譜</div>
     </div>
     <div onClick="{{ toggleSwitcher }}" style="flex:1;min-width:0;cursor:pointer">
       <div style="display:flex;align-items:center;gap:6px;min-width:0">
-        <div style="font:600 25px/1.05 'Cormorant Garamond',serif;color:#2A3B2C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ clanName }}</div>
+        <div style="font:600 25px/1.05 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ clanName }}</div>
         <sc-if value="{{ canSwitch }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A3E2B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none;margin-top:3px"><path d="M6 9l6 6 6-6"></path></svg></sc-if>
       </div>
-      <div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.7);margin-top:2px">{{ clanHome }} · {{ clanMeta }}</div>
+      <div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.7);margin-top:2px">{{ clanHome }} · {{ clanMeta }}</div>
     </div>
     <div onClick="{{ toggleSearch }}" style="width:44px;height:44px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background: {{ searchBtnBg }}">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3A2A1C" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4 4"></path></svg>
     </div>
     <div onClick="{{ addTap }}" style="width:44px;height:44px;flex:none;border-radius:50%;background:#2F4A36;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 14px -8px rgba(47,74,54,.8)">
-      <div style="font:300 24px 'Be Vietnam Pro',sans-serif;color:#F4EBD6;line-height:1;margin-top:-2px">+</div>
+      <div style="font:300 24px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#F4EBD6;line-height:1;margin-top:-2px">+</div>
     </div>
   </header>
 
   <sc-if value="{{ searchOpen }}">
     <div style="position:relative;z-index:3;flex:none;padding:12px 16px 0">
       <div style="display:flex;align-items:center;gap:8px;height:44px;padding:0 16px;box-sizing:border-box;border-radius:999px;background:rgba(251,246,234,.92);border:1px solid rgba(90,62,43,.22)">
-        <input value="{{ q }}" onChange="{{ onQ }}" onKeyDown="{{ onQKey }}" placeholder="Tìm người trong họ…" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C">
-        <sc-if value="{{ qHas }}"><div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6);white-space:nowrap">{{ qCount }}</div></sc-if>
+        <input value="{{ q }}" onChange="{{ onQ }}" onKeyDown="{{ onQKey }}" placeholder="Tìm người trong họ…" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C">
+        <sc-if value="{{ qHas }}"><div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.6);white-space:nowrap">{{ qCount }}</div></sc-if>
       </div>
     </div>
   </sc-if>
 
   <div class="gp-chips" style="position:relative;z-index:3;flex:none;display:flex;gap:6px;overflow-x:auto;padding:12px 16px 0;scrollbar-width:none">
     <sc-for list="{{ gens }}" as="g" hint-placeholder-count="7">
-      <div onClick="{{ g.pick }}" style="flex:none;height:34px;padding:0 14px;border-radius:999px;display:flex;align-items:center;font:500 12px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ g.bg }};color: {{ g.fg }};border:1px solid {{ g.bd }}">{{ g.label }}</div>
+      <div onClick="{{ g.pick }}" style="flex:none;height:34px;padding:0 14px;border-radius:999px;display:flex;align-items:center;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;transition:all .18s ease;background: {{ g.bg }};color: {{ g.fg }};border:1px solid {{ g.bd }}">{{ g.label }}</div>
     </sc-for>
   </div>
 
   <sc-if value="{{ showLegend }}" hint-placeholder-val="{{ true }}">
-    <div style="position:relative;z-index:3;flex:none;display:flex;align-items:center;gap:12px;padding:10px 20px 0;font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.72);flex-wrap:wrap">
+    <div style="position:relative;z-index:3;flex:none;display:flex;align-items:center;gap:12px;padding:10px 20px 0;font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.72);flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:11px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(135deg,#E8C977,#A7782C)"></div>Thủy tổ</div>
-      <div style="display:flex;align-items:center;gap:5px"><div style="padding:0 4px;height:11px;border-radius:999px;background:#C9A04A;font:700 7px/11px 'Be Vietnam Pro',sans-serif;color:#2A1D14;letter-spacing:.08em">BẠN</div>Vị trí của bạn</div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="padding:0 4px;height:11px;border-radius:999px;background:#C9A04A;font:700 7px/11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#2A1D14;letter-spacing:.08em">BẠN</div>Vị trí của bạn</div>
       <sc-if value="{{ isGop }}">
         <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:3px;border-radius:2px;background:#4A3322"></div>Bên nội</div>
         <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:3px;border-radius:2px;background:#9E5B3C"></div>Bên ngoại</div>
@@ -99,11 +99,11 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
             <ellipse cx="{{ l.x }}" cy="{{ l.y }}" rx="{{ l.rx }}" ry="{{ l.ry }}" transform="{{ l.tf }}" fill="{{ l.c }}" opacity="{{ l.o }}"></ellipse>
           </sc-for>
         </svg>
-        <div style="position:absolute;left:50%;bottom:1%;pointer-events:none;transform:translateX(-50%);font:italic 500 15px 'Cormorant Garamond',serif;color:rgba(74,51,34,.7);white-space:nowrap">Uống nước nhớ nguồn</div>
+        <div style="position:absolute;left:50%;bottom:1%;pointer-events:none;transform:translateX(-50%);font:italic 500 15px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:rgba(74,51,34,.7);white-space:nowrap">Uống nước nhớ nguồn</div>
 
         <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="12">
           <div style="position:absolute;width:0;height:0;transition:opacity .25s ease;left: {{ n.l }};top: {{ n.t }};opacity: {{ n.op }};z-index: {{ n.z }}">
-            <sc-if value="{{ n.isMe }}"><div style="position:absolute;left:-21px;width:42px;height:18px;border-radius:999px;background:#C9A04A;box-shadow:0 0 0 2px #F4EBD6,0 4px 8px -4px rgba(58,42,28,.6);display:flex;align-items:center;justify-content:center;font:700 9.5px 'Be Vietnam Pro',sans-serif;letter-spacing:.12em;color:#2A1D14;pointer-events:none;z-index:2;top: {{ n.meT }}">BẠN</div></sc-if>
+            <sc-if value="{{ n.isMe }}"><div style="position:absolute;left:-21px;width:42px;height:18px;border-radius:999px;background:#C9A04A;box-shadow:0 0 0 2px #F4EBD6,0 4px 8px -4px rgba(58,42,28,.6);display:flex;align-items:center;justify-content:center;font:700 9.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.12em;color:#2A1D14;pointer-events:none;z-index:2;top: {{ n.meT }}">BẠN</div></sc-if>
             <sc-if value="{{ n.sel }}"><div style="position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(224,183,92,.6),rgba(224,183,92,0));pointer-events:none;width: {{ n.haloS }};height: {{ n.haloS }};left: {{ n.haloO }};top: {{ n.haloO }}"></div></sc-if>
             <div onClick="{{ n.pick }}" style="position:absolute;cursor:pointer;transition:transform .2s ease;filter:drop-shadow(0 3px 5px rgba(58,42,28,.28));width: {{ n.w }};height: {{ n.h }};left: {{ n.ml }};top: {{ n.mt }}" style-active="{{ nodeActive }}">
               <div style="position:absolute;inset:0;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background: {{ n.trim }}"></div>
@@ -117,13 +117,13 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
                 <sc-if value="{{ n.male }}"><div style="position:absolute;left:30%;width:40%;top:24%;height:11%;border-radius:40% 40% 20% 20%;background:repeating-linear-gradient(170deg,#2A1D14 0 2px,#4A3322 2px 3.5px)"></div></sc-if>
                 <sc-if value="{{ n.female }}"><div style="position:absolute;left:41%;width:18%;top:17%;aspect-ratio:1;border-radius:50%;background:#2A1D14"></div><div style="position:absolute;left:31%;width:38%;top:26%;height:11%;border-radius:50% 50% 18% 18%;background:#2A1D14"></div></sc-if>
               </div>
-              <sc-if value="{{ n.head }}"><div style="position:absolute;right:-8px;top:-3px;width:20px;height:20px;border-radius:3px;background:#9E3B2C;transform:rotate(-8deg);box-shadow:inset 0 0 0 1.5px #9E3B2C,inset 0 0 0 2.5px #F4EBD6;display:flex;align-items:center;justify-content:center;font:700 12px 'Cormorant Garamond',serif;color:#F4EBD6">長</div></sc-if>
+              <sc-if value="{{ n.head }}"><div style="position:absolute;right:-8px;top:-3px;width:20px;height:20px;border-radius:3px;background:#9E3B2C;transform:rotate(-8deg);box-shadow:inset 0 0 0 1.5px #9E3B2C,inset 0 0 0 2.5px #F4EBD6;display:flex;align-items:center;justify-content:center;font:700 12px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#F4EBD6">長</div></sc-if>
               <sc-if value="{{ n.living }}"><div style="position:absolute;left:50%;bottom:-3px;margin-left:-4px;width:8px;height:8px;border-radius:50%;background:#4F7A57;box-shadow:0 0 0 2px #F4EBD6"></div></sc-if>
             </div>
             <div style="position:absolute;left:-65px;width:130px;text-align:center;pointer-events:none;text-shadow:0 0 3px #F6EEDB,0 0 6px #F6EEDB,0 0 10px #F6EEDB;top: {{ n.lblT }}">
-              <div style="font:700 13.5px/1.1 'Cormorant Garamond',serif;color: {{ n.nameC }}">{{ n.name }}</div>
-              <div style="font:500 9px 'Be Vietnam Pro',sans-serif;letter-spacing:.08em;white-space:nowrap;color:rgba(58,42,28,.62);margin-top:1px">{{ n.meta }}</div>
-              <sc-if value="{{ n.ended }}"><div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:3px"><div style="width:10px;height:1.5px;background:#5A3E2B"></div><div style="font:600 8.5px 'Be Vietnam Pro',sans-serif;letter-spacing:.14em;color:#5A3E2B">DỨT NHÁNH</div><div style="width:10px;height:1.5px;background:#5A3E2B"></div></div></sc-if>
+              <div style="font:700 13.5px/1.1 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color: {{ n.nameC }}">{{ n.name }}</div>
+              <div style="font:500 9px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.08em;white-space:nowrap;color:rgba(58,42,28,.62);margin-top:1px">{{ n.meta }}</div>
+              <sc-if value="{{ n.ended }}"><div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:3px"><div style="width:10px;height:1.5px;background:#5A3E2B"></div><div style="font:600 8.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.14em;color:#5A3E2B">DỨT NHÁNH</div><div style="width:10px;height:1.5px;background:#5A3E2B"></div></div></sc-if>
             </div>
           </div>
         </sc-for>
@@ -131,8 +131,8 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
     </div>
 
     <div style="position:absolute;right:14px;bottom:146px;z-index:4;display:flex;flex-direction:column;gap:6px">
-      <div onClick="{{ zoomIn }}" style="width:44px;height:44px;border-radius:14px;background:rgba(251,246,234,.94);border:1px solid rgba(90,62,43,.25);display:flex;align-items:center;justify-content:center;font:400 20px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;cursor:pointer;box-shadow:0 4px 10px -6px rgba(58,42,28,.5)">+</div>
-      <div onClick="{{ zoomOut }}" style="width:44px;height:44px;border-radius:14px;background:rgba(251,246,234,.94);border:1px solid rgba(90,62,43,.25);display:flex;align-items:center;justify-content:center;font:400 20px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;cursor:pointer;box-shadow:0 4px 10px -6px rgba(58,42,28,.5)">−</div>
+      <div onClick="{{ zoomIn }}" style="width:44px;height:44px;border-radius:14px;background:rgba(251,246,234,.94);border:1px solid rgba(90,62,43,.25);display:flex;align-items:center;justify-content:center;font:400 20px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;cursor:pointer;box-shadow:0 4px 10px -6px rgba(58,42,28,.5)">+</div>
+      <div onClick="{{ zoomOut }}" style="width:44px;height:44px;border-radius:14px;background:rgba(251,246,234,.94);border:1px solid rgba(90,62,43,.25);display:flex;align-items:center;justify-content:center;font:400 20px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;cursor:pointer;box-shadow:0 4px 10px -6px rgba(58,42,28,.5)">−</div>
       <sc-if value="{{ hasMe }}"><div onClick="{{ toMe }}" style="width:44px;height:44px;border-radius:14px;background:#C9A04A;display:flex;align-items:center;justify-content:center;color:#2A1D14;cursor:pointer;box-shadow:0 4px 10px -6px rgba(58,42,28,.7)">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c1-3.8 3.8-5.5 7-5.5s6 1.7 7 5.5"></path></svg>
       </div></sc-if>
@@ -160,14 +160,14 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
               <sc-if value="{{ sel.male }}"><div style="position:absolute;left:30%;width:40%;top:24%;height:11%;border-radius:40% 40% 20% 20%;background:#2A1D14"></div></sc-if>
               <sc-if value="{{ sel.female }}"><div style="position:absolute;left:41%;width:18%;top:17%;aspect-ratio:1;border-radius:50%;background:#2A1D14"></div><div style="position:absolute;left:31%;width:38%;top:26%;height:11%;border-radius:50% 50% 18% 18%;background:#2A1D14"></div></sc-if>
             </div>
-            <sc-if value="{{ sel.head }}"><div style="position:absolute;right:-7px;top:-2px;width:20px;height:20px;border-radius:3px;background:#9E3B2C;transform:rotate(-8deg);box-shadow:inset 0 0 0 1.5px #9E3B2C,inset 0 0 0 2.5px #F4EBD6;display:flex;align-items:center;justify-content:center;font:700 12px 'Cormorant Garamond',serif;color:#F4EBD6">長</div></sc-if>
+            <sc-if value="{{ sel.head }}"><div style="position:absolute;right:-7px;top:-2px;width:20px;height:20px;border-radius:3px;background:#9E3B2C;transform:rotate(-8deg);box-shadow:inset 0 0 0 1.5px #9E3B2C,inset 0 0 0 2.5px #F4EBD6;display:flex;align-items:center;justify-content:center;font:700 12px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#F4EBD6">長</div></sc-if>
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font:700 22px/1.1 'Cormorant Garamond',serif;color:#2A3B2C">{{ sel.name }}</div>
-            <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.72);margin-top:3px">{{ sel.meta }}</div>
+            <div style="font:700 22px/1.1 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">{{ sel.name }}</div>
+            <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.72);margin-top:3px">{{ sel.meta }}</div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">
-              <div style="padding:2px 9px;border-radius:999px;font:500 10.5px 'Be Vietnam Pro',sans-serif;background: {{ sel.stBg }};color: {{ sel.stFg }}">{{ sel.status }}</div>
-              <sc-if value="{{ sel.role }}"><div style="padding:2px 9px;border-radius:999px;font:500 10.5px 'Be Vietnam Pro',sans-serif;background: {{ sel.roleBg }};color:#F4EBD6">{{ sel.role }}</div></sc-if>
+              <div style="padding:2px 9px;border-radius:999px;font:500 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;background: {{ sel.stBg }};color: {{ sel.stFg }}">{{ sel.status }}</div>
+              <sc-if value="{{ sel.role }}"><div style="padding:2px 9px;border-radius:999px;font:500 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;background: {{ sel.roleBg }};color:#F4EBD6">{{ sel.role }}</div></sc-if>
             </div>
           </div>
           <div style="width:36px;height:36px;flex:none;border-radius:50%;background:rgba(90,62,43,.08);display:flex;align-items:center;justify-content:center">
@@ -177,7 +177,7 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
       </div>
 
       <div style="flex:1;min-height:0;overflow-y:auto;padding:0 18px 40px">
-        <div style="border-top:1px solid rgba(90,62,43,.2);padding-top:14px;display:grid;grid-template-columns:84px minmax(0,1fr);row-gap:9px;column-gap:12px;font:400 12.5px/1.5 'Be Vietnam Pro',sans-serif">
+        <div style="border-top:1px solid rgba(90,62,43,.2);padding-top:14px;display:grid;grid-template-columns:84px minmax(0,1fr);row-gap:9px;column-gap:12px;font:400 12.5px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums">
           <sc-if value="{{ sel.kin }}"><div style="color:rgba(58,42,28,.6)">Với bạn</div><div style="color:#8A4A1C;font-weight:600">{{ sel.kin }}</div></sc-if>
           <div style="color:rgba(58,42,28,.6)">Sinh – mất</div><div style="color:#3A2A1C">{{ sel.years }}</div>
           <sc-if value="{{ sel.gio }}"><div style="color:rgba(58,42,28,.6)">Ngày giỗ</div><div style="color:#3A2A1C">{{ sel.gio }}</div></sc-if>
@@ -188,46 +188,46 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
           <div style="color:rgba(58,42,28,.6)">Chi</div><div style="color:#3A2A1C">{{ sel.branch }}</div>
         </div>
         <sc-if value="{{ sel.note }}">
-          <div style="margin-top:14px;padding:12px 14px;border-radius:4px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.16);font:italic 500 16px/1.5 'Cormorant Garamond',serif;color:#3A2A1C;text-wrap:pretty">{{ sel.note }}</div>
+          <div style="margin-top:14px;padding:12px 14px;border-radius:4px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.16);font:italic 500 16px/1.5 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#3A2A1C;text-wrap:pretty">{{ sel.note }}</div>
         </sc-if>
 
         <sc-if value="{{ sel.dead }}">
-          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:20px">TƯỞNG NIỆM</div>
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B;margin-top:20px">TƯỞNG NIỆM</div>
           <div style="margin-top:10px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);padding:14px">
             <div style="display:flex;align-items:center;gap:12px">
-              <div style="width:44px;height:44px;flex:none;border-radius:50%;background:rgba(158,59,44,.1);box-shadow:inset 0 0 0 1px rgba(158,59,44,.28);display:flex;align-items:center;justify-content:center;font:700 18px 'Cormorant Garamond',serif;color:#9E3B2C">忌</div>
+              <div style="width:44px;height:44px;flex:none;border-radius:50%;background:rgba(158,59,44,.1);box-shadow:inset 0 0 0 1px rgba(158,59,44,.28);display:flex;align-items:center;justify-content:center;font:700 18px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#9E3B2C">忌</div>
               <div style="flex:1;min-width:0">
-                <div style="font:700 18px/1.2 'Cormorant Garamond',serif;color:#2A3B2C">{{ sel.gioTitle }}</div>
-                <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-top:2px">{{ sel.gioSub }}</div>
+                <div style="font:700 18px/1.2 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">{{ sel.gioTitle }}</div>
+                <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-top:2px">{{ sel.gioSub }}</div>
               </div>
             </div>
-            <div onClick="{{ sel.gioTap }}" style="margin-top:12px;min-height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;font:500 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer;background: {{ sel.gioBtnBg }};color: {{ sel.gioBtnFg }};box-shadow: {{ sel.gioBtnBd }}">{{ sel.gioBtn }}</div>
+            <div onClick="{{ sel.gioTap }}" style="margin-top:12px;min-height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;font:500 12.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;background: {{ sel.gioBtnBg }};color: {{ sel.gioBtnFg }};box-shadow: {{ sel.gioBtnBd }}">{{ sel.gioBtn }}</div>
           </div>
           <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:8px">
             <div onClick="{{ sel.offer }}" style="min-height:64px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);padding:10px 12px;display:flex;flex-direction:column;justify-content:center;cursor:pointer">
-              <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:14px;border-radius:50% 50% 45% 45%/62% 62% 38% 38%;background:linear-gradient(180deg,#F3C673,#D9963C);flex:none"></div><div style="font:600 12.5px 'Be Vietnam Pro',sans-serif;color:#3A2A1C">Thắp đèn</div></div>
-              <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6);margin-top:4px">Cúng dường hồi hướng</div>
+              <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:14px;border-radius:50% 50% 45% 45%/62% 62% 38% 38%;background:linear-gradient(180deg,#F3C673,#D9963C);flex:none"></div><div style="font:600 12.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C">Thắp đèn</div></div>
+              <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.6);margin-top:4px">Cúng dường hồi hướng</div>
             </div>
             <div onClick="{{ sel.chant }}" style="min-height:64px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);padding:10px 12px;display:flex;flex-direction:column;justify-content:center;cursor:pointer">
-              <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:2px;box-shadow:inset 0 0 0 1.5px #5A3E2B;flex:none"></div><div style="font:600 12.5px 'Be Vietnam Pro',sans-serif;color:#3A2A1C">Tụng kinh</div></div>
-              <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6);margin-top:4px">Hồi hướng công đức</div>
+              <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:2px;box-shadow:inset 0 0 0 1.5px #5A3E2B;flex:none"></div><div style="font:600 12.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C">Tụng kinh</div></div>
+              <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.6);margin-top:4px">Hồi hướng công đức</div>
             </div>
           </div>
         </sc-if>
 
-        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:20px">QUAN HỆ</div>
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B;margin-top:20px">QUAN HỆ</div>
         <div style="display:flex;flex-direction:column;margin-top:4px">
           <sc-for list="{{ sel.rels }}" as="r" hint-placeholder-count="3">
             <div onClick="{{ r.pick }}" style="display:flex;align-items:center;gap:10px;min-height:44px;border-bottom:1px solid rgba(90,62,43,.1);cursor:pointer">
-              <div style="width:64px;flex:none;font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6)">{{ r.k }}</div>
-              <div style="flex:1;min-width:0;padding:6px 0"><div style="font:600 16px 'Cormorant Garamond',serif;color:#2A3B2C">{{ r.name }}</div><sc-if value="{{ r.live }}"><div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.55);margin-top:1px">{{ r.live }}</div></sc-if></div>
-              <div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.5)">{{ r.gen }}</div>
+              <div style="width:64px;flex:none;font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.6)">{{ r.k }}</div>
+              <div style="flex:1;min-width:0;padding:6px 0"><div style="font:600 16px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">{{ r.name }}</div><sc-if value="{{ r.live }}"><div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.55);margin-top:1px">{{ r.live }}</div></sc-if></div>
+              <div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.5)">{{ r.gen }}</div>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(58,42,28,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none"><path d="M9 5l7 7-7 7"></path></svg>
             </div>
           </sc-for>
         </div>
 
-        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:20px">{{ chainLbl }}</div>
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B;margin-top:20px">{{ chainLbl }}</div>
         <div style="display:flex;flex-direction:column;margin-top:10px">
           <sc-for list="{{ sel.chain }}" as="c" hint-placeholder-count="4">
             <div onClick="{{ c.pick }}" style="display:flex;align-items:stretch;gap:12px;cursor:pointer">
@@ -236,16 +236,16 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
                 <sc-if value="{{ c.more }}"><div style="flex:1;width:1.5px;background:rgba(201,160,74,.7);min-height:14px"></div></sc-if>
               </div>
               <div style="padding-bottom:10px;min-width:0">
-                <div style="font:600 15px 'Cormorant Garamond',serif;color: {{ c.fg }}">{{ c.name }}</div>
-                <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.55)">{{ c.meta }}</div>
+                <div style="font:600 15px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color: {{ c.fg }}">{{ c.name }}</div>
+                <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.55)">{{ c.meta }}</div>
               </div>
             </div>
           </sc-for>
         </div>
 
         <div style="display:flex;gap:8px;margin-top:16px">
-          <div style="flex:1;height:48px;border-radius:999px;background:#2F4A36;color:#F4EBD6;display:flex;align-items:center;justify-content:center;font:500 13.5px 'Be Vietnam Pro',sans-serif;cursor:pointer" onClick="{{ pfOpenTap }}">Hồ sơ đầy đủ</div>
-          <div onClick="{{ ctaTap }}" style="flex:1;height:48px;border-radius:999px;border:1px solid rgba(47,74,54,.45);color:#2F4A36;display:flex;align-items:center;justify-content:center;font:500 13.5px 'Be Vietnam Pro',sans-serif;cursor:pointer">{{ sel.cta }}</div>
+          <div style="flex:1;height:48px;border-radius:999px;background:#2F4A36;color:#F4EBD6;display:flex;align-items:center;justify-content:center;font:500 13.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer" onClick="{{ pfOpenTap }}">Hồ sơ đầy đủ</div>
+          <div onClick="{{ ctaTap }}" style="flex:1;height:48px;border-radius:999px;border:1px solid rgba(47,74,54,.45);color:#2F4A36;display:flex;align-items:center;justify-content:center;font:500 13.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer">{{ sel.cta }}</div>
         </div>
       </div>
     </div>
@@ -260,22 +260,22 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
       <sc-if value="{{ pfView }}">
         <div style="flex:none;display:flex;align-items:center;gap:8px;padding:56px 12px 10px;border-bottom:1px solid rgba(90,62,43,.16)">
           <div onClick="{{ pfClose }}" style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3A2A1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M15 5l-7 7 7 7"></path></svg></div>
-          <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;color:#2A3B2C">Hồ sơ</div>
-          <div onClick="{{ pfStartEdit }}" style="height:44px;min-width:44px;padding:0 10px;display:flex;align-items:center;justify-content:flex-end;font:600 14px 'Be Vietnam Pro',sans-serif;color:#2F4A36;cursor:pointer">Sửa</div>
+          <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">Hồ sơ</div>
+          <div onClick="{{ pfStartEdit }}" style="height:44px;min-width:44px;padding:0 10px;display:flex;align-items:center;justify-content:flex-end;font:600 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#2F4A36;cursor:pointer">Sửa</div>
         </div>
         <div style="flex:1;min-height:0;overflow-y:auto;padding:0 20px 40px">
           <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:24px">
             <div style="position:relative;width:112px;height:112px;border-radius:50%;overflow:hidden;background:rgba(90,62,43,.1);box-shadow:0 0 0 3px #F6EEDB,0 0 0 4.5px #C9A04A"><image-slot id="{{ pfImg }}" shape="circle" placeholder="Ảnh chân dung"></image-slot></div>
-            <div style="font:700 30px/1.1 'Cormorant Garamond',serif;color:#2A3B2C;margin-top:16px">{{ sel.name }}</div>
-            <div style="font:400 12px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.7);margin-top:4px">{{ sel.meta }}</div>
+            <div style="font:700 30px/1.1 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C;margin-top:16px">{{ sel.name }}</div>
+            <div style="font:400 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.7);margin-top:4px">{{ sel.meta }}</div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:9px">
-              <div style="padding:3px 10px;border-radius:999px;font:500 11px 'Be Vietnam Pro',sans-serif;background: {{ sel.stBg }};color: {{ sel.stFg }}">{{ sel.status }}</div>
-              <sc-if value="{{ sel.role }}"><div style="padding:3px 10px;border-radius:999px;font:500 11px 'Be Vietnam Pro',sans-serif;background: {{ sel.roleBg }};color:#F4EBD6">{{ sel.role }}</div></sc-if>
-              <sc-if value="{{ sel.kin }}"><div style="padding:3px 10px;border-radius:999px;font:600 11px 'Be Vietnam Pro',sans-serif;background:rgba(138,74,28,.1);color:#8A4A1C">{{ pfKin }}</div></sc-if>
+              <div style="padding:3px 10px;border-radius:999px;font:500 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;background: {{ sel.stBg }};color: {{ sel.stFg }}">{{ sel.status }}</div>
+              <sc-if value="{{ sel.role }}"><div style="padding:3px 10px;border-radius:999px;font:500 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;background: {{ sel.roleBg }};color:#F4EBD6">{{ sel.role }}</div></sc-if>
+              <sc-if value="{{ sel.kin }}"><div style="padding:3px 10px;border-radius:999px;font:600 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;background:rgba(138,74,28,.1);color:#8A4A1C">{{ pfKin }}</div></sc-if>
             </div>
           </div>
-          <div style="margin-top:26px"><div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">THÔNG TIN</div></div>
-          <div style="margin-top:10px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);padding:14px;display:grid;grid-template-columns:96px minmax(0,1fr);row-gap:10px;column-gap:12px;font:400 12.5px/1.5 'Be Vietnam Pro',sans-serif">
+          <div style="margin-top:26px"><div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B">THÔNG TIN</div></div>
+          <div style="margin-top:10px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);padding:14px;display:grid;grid-template-columns:96px minmax(0,1fr);row-gap:10px;column-gap:12px;font:400 12.5px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums">
             <div style="color:rgba(58,42,28,.6)">Sinh – mất</div><div style="color:#3A2A1C">{{ sel.years }}</div>
             <sc-if value="{{ sel.gio }}"><div style="color:rgba(58,42,28,.6)">Ngày giỗ</div><div style="color:#3A2A1C">{{ sel.gio }}</div></sc-if>
             <sc-if value="{{ sel.live }}"><div style="color:rgba(58,42,28,.6)">Đang sống tại</div><div style="color:#3A2A1C">{{ sel.live }}</div></sc-if>
@@ -284,24 +284,24 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
             <sc-if value="{{ sel.tho }}"><div style="color:rgba(58,42,28,.6)">Bài vị thờ tại</div><div onClick="{{ sel.openTho }}" style="color:#8A4A1C;font-weight:500;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(138,74,28,.35);text-underline-offset:3px">{{ sel.tho }}</div></sc-if>
             <div style="color:rgba(58,42,28,.6)">Chi</div><div style="color:#3A2A1C">{{ sel.branch }}</div>
           </div>
-          <div style="margin-top:22px"><div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">TIỂU SỬ</div></div>
-          <sc-if value="{{ pfHasNote }}"><div style="margin-top:10px;padding:12px 14px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.16);font:italic 500 16px/1.55 'Cormorant Garamond',serif;color:#3A2A1C;text-wrap:pretty">{{ sel.note }}</div></sc-if>
-          <sc-if value="{{ pfNoNote }}"><div onClick="{{ pfStartEdit }}" style="margin-top:10px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);cursor:pointer">Chưa có tiểu sử. Bấm để ghi về cuộc đời, nghề nghiệp, công đức của người này.</div></sc-if>
+          <div style="margin-top:22px"><div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B">TIỂU SỬ</div></div>
+          <sc-if value="{{ pfHasNote }}"><div style="margin-top:10px;padding:12px 14px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.16);font:italic 500 16px/1.55 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#3A2A1C;text-wrap:pretty">{{ sel.note }}</div></sc-if>
+          <sc-if value="{{ pfNoNote }}"><div onClick="{{ pfStartEdit }}" style="margin-top:10px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);cursor:pointer">Chưa có tiểu sử. Bấm để ghi về cuộc đời, nghề nghiệp, công đức của người này.</div></sc-if>
           <sc-if value="{{ sel.dead }}">
-            <div style="margin-top:22px"><div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">TƯỞNG NIỆM</div></div>
+            <div style="margin-top:22px"><div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B">TƯỞNG NIỆM</div></div>
             <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px">
-              <div onClick="{{ sel.gioTap }}" style="min-height:52px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;font:500 12px/1.3 'Be Vietnam Pro',sans-serif;color:#3A2A1C;cursor:pointer">Nhắc giỗ</div>
-              <div onClick="{{ sel.offer }}" style="min-height:52px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;font:500 12px/1.3 'Be Vietnam Pro',sans-serif;color:#3A2A1C;cursor:pointer">Thắp đèn</div>
-              <div onClick="{{ sel.chant }}" style="min-height:52px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;font:500 12px/1.3 'Be Vietnam Pro',sans-serif;color:#3A2A1C;cursor:pointer">Tụng kinh</div>
+              <div onClick="{{ sel.gioTap }}" style="min-height:52px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;font:500 12px/1.3 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;cursor:pointer">Nhắc giỗ</div>
+              <div onClick="{{ sel.offer }}" style="min-height:52px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;font:500 12px/1.3 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;cursor:pointer">Thắp đèn</div>
+              <div onClick="{{ sel.chant }}" style="min-height:52px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;font:500 12px/1.3 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;cursor:pointer">Tụng kinh</div>
             </div>
           </sc-if>
-          <div style="margin-top:22px"><div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">QUAN HỆ</div></div>
+          <div style="margin-top:22px"><div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B">QUAN HỆ</div></div>
           <div style="display:flex;flex-direction:column;margin-top:4px">
             <sc-for list="{{ sel.rels }}" as="r" hint-placeholder-count="3">
               <div onClick="{{ r.pick }}" style="display:flex;align-items:center;gap:10px;min-height:48px;border-bottom:1px solid rgba(90,62,43,.1);cursor:pointer">
-                <div style="width:64px;flex:none;font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6)">{{ r.k }}</div>
-                <div style="flex:1;min-width:0;padding:6px 0"><div style="font:600 16px 'Cormorant Garamond',serif;color:#2A3B2C">{{ r.name }}</div></div>
-                <div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.5)">{{ r.gen }}</div>
+                <div style="width:64px;flex:none;font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.6)">{{ r.k }}</div>
+                <div style="flex:1;min-width:0;padding:6px 0"><div style="font:600 16px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">{{ r.name }}</div></div>
+                <div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.5)">{{ r.gen }}</div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(58,42,28,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none"><path d="M9 5l7 7-7 7"></path></svg>
               </div>
             </sc-for>
@@ -310,61 +310,61 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
       </sc-if>
       <sc-if value="{{ pfEditing }}">
         <div style="flex:none;display:flex;align-items:center;gap:8px;padding:56px 12px 10px;border-bottom:1px solid rgba(90,62,43,.16)">
-          <div onClick="{{ pfCancel }}" style="height:44px;padding:0 10px;display:flex;align-items:center;font:500 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;cursor:pointer">Hủy</div>
-          <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;color:#2A3B2C">Sửa hồ sơ</div>
-          <div onClick="{{ pfSave }}" style="height:44px;padding:0 10px;display:flex;align-items:center;font:600 14px 'Be Vietnam Pro',sans-serif;color:#2F4A36;cursor:pointer">Lưu</div>
+          <div onClick="{{ pfCancel }}" style="height:44px;padding:0 10px;display:flex;align-items:center;font:500 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;cursor:pointer">Hủy</div>
+          <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">Sửa hồ sơ</div>
+          <div onClick="{{ pfSave }}" style="height:44px;padding:0 10px;display:flex;align-items:center;font:600 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#2F4A36;cursor:pointer">Lưu</div>
         </div>
         <div style="flex:1;min-height:0;overflow-y:auto;padding:20px 20px 40px;display:flex;flex-direction:column;gap:20px">
           <div style="display:flex;align-items:center;gap:14px">
             <div style="position:relative;width:72px;height:72px;flex:none;border-radius:50%;overflow:hidden;background:rgba(90,62,43,.1);box-shadow:0 0 0 2px #F6EEDB,0 0 0 3px #C9A04A"><image-slot id="{{ pfImg }}" shape="circle" placeholder="Ảnh"></image-slot></div>
-            <div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);text-wrap:pretty">Kéo ảnh chân dung vào khung để thay ảnh.</div>
+            <div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);text-wrap:pretty">Kéo ảnh chân dung vào khung để thay ảnh.</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
-            <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">CƠ BẢN</div>
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Họ và tên</div><input value="{{ pfD.n }}" onChange="{{ pfOn.n }}" placeholder="VD: Nguyễn Hữu Nam" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;border:1.5px solid {{ pfE.n.bd }}"><sc-if value="{{ pfE.n.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ pfE.n.msg }}</div></sc-if></div>
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Giới tính</div><div style="display:flex;gap:8px"><sc-for list="{{ pfSex }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div></div>
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Năm sinh</div><input value="{{ pfD.b }}" onChange="{{ pfOn.b }}" inputmode="numeric" placeholder="VD: 1950" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;border:1.5px solid {{ pfE.b.bd }}"><sc-if value="{{ pfE.b.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ pfE.b.msg }}</div></sc-if></div>
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Trạng thái</div><div style="display:flex;gap:8px"><sc-for list="{{ pfSt }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div></div>
-            <sc-if value="{{ pfAlive }}"><div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Đang sống tại</div><input value="{{ pfD.live }}" onChange="{{ pfOn.live }}" placeholder="VD: Quận 3, TP. Hồ Chí Minh" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)"></div></sc-if>
+            <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B">CƠ BẢN</div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Họ và tên</div><input value="{{ pfD.n }}" onChange="{{ pfOn.n }}" placeholder="VD: Nguyễn Hữu Nam" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;border:1.5px solid {{ pfE.n.bd }}"><sc-if value="{{ pfE.n.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ pfE.n.msg }}</div></sc-if></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Giới tính</div><div style="display:flex;gap:8px"><sc-for list="{{ pfSex }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Năm sinh</div><input value="{{ pfD.b }}" onChange="{{ pfOn.b }}" inputmode="numeric" placeholder="VD: 1950" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;border:1.5px solid {{ pfE.b.bd }}"><sc-if value="{{ pfE.b.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ pfE.b.msg }}</div></sc-if></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Trạng thái</div><div style="display:flex;gap:8px"><sc-for list="{{ pfSt }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div></div>
+            <sc-if value="{{ pfAlive }}"><div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Đang sống tại</div><input value="{{ pfD.live }}" onChange="{{ pfOn.live }}" placeholder="VD: Quận 3, TP. Hồ Chí Minh" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)"></div></sc-if>
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
-            <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">QUAN HỆ &amp; VAI TRÒ</div>
+            <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B">QUAN HỆ &amp; VAI TRÒ</div>
             <div>
-              <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Vị trí trong cây</div>
+              <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Vị trí trong cây</div>
               <sc-if value="{{ pfRelEditable }}">
                 <div onClick="{{ pfRelOpenTap }}" style="display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 14px;box-sizing:border-box;border-radius:12px;background:#FBF6EA;border:1px solid rgba(90,62,43,.22);cursor:pointer">
-                  <div style="flex:1;min-width:0"><div style="font:600 16px 'Cormorant Garamond',serif;color:#2A3B2C">{{ pfRelLbl }}</div><div style="font:400 11.5px/1.45 'Be Vietnam Pro',sans-serif;margin-top:2px;text-wrap:pretty;color: {{ pfRelSubC }}">{{ pfRelSub }}</div></div>
-                  <div style="flex:none;font:600 13px 'Be Vietnam Pro',sans-serif;color:#2F4A36">Đổi</div>
+                  <div style="flex:1;min-width:0"><div style="font:600 16px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">{{ pfRelLbl }}</div><div style="font:400 11.5px/1.45 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;margin-top:2px;text-wrap:pretty;color: {{ pfRelSubC }}">{{ pfRelSub }}</div></div>
+                  <div style="flex:none;font:600 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#2F4A36">Đổi</div>
                 </div>
               </sc-if>
-              <sc-if value="{{ pfRelFixed }}"><div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);padding:12px 14px;border-radius:12px;background:rgba(90,62,43,.06)">{{ pfRelFixed }}</div></sc-if>
+              <sc-if value="{{ pfRelFixed }}"><div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);padding:12px 14px;border-radius:12px;background:rgba(90,62,43,.06)">{{ pfRelFixed }}</div></sc-if>
             </div>
             <sc-if value="{{ pfHeadOk }}">
               <div onClick="{{ pfHeadTap }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 14px;box-sizing:border-box;border-radius:12px;background:#FBF6EA;border:1px solid rgba(90,62,43,.22);cursor:pointer">
-                <div style="flex:1;min-width:0"><div style="font:500 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C">Tộc trưởng</div><div style="font:400 11.5px/1.45 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6);margin-top:2px;text-wrap:pretty">{{ pfHeadSub }}</div></div>
+                <div style="flex:1;min-width:0"><div style="font:500 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C">Tộc trưởng</div><div style="font:400 11.5px/1.45 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.6);margin-top:2px;text-wrap:pretty">{{ pfHeadSub }}</div></div>
                 <div style="flex:none;width:44px;height:26px;border-radius:999px;padding:3px;box-sizing:border-box;transition:background .18s ease;background: {{ pfHeadBg }}"><div style="width:20px;height:20px;border-radius:50%;background:#FBF6EA;box-shadow:0 1px 3px rgba(30,23,18,.3);transition:transform .18s ease;transform:translateX({{ pfHeadX }})"></div></div>
               </div>
             </sc-if>
-            <sc-if value="{{ pfHeadNA }}"><div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6)">{{ pfHeadNA }}</div></sc-if>
+            <sc-if value="{{ pfHeadNA }}"><div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.6)">{{ pfHeadNA }}</div></sc-if>
           </div>
           <sc-if value="{{ pfDead }}">
             <div style="display:flex;flex-direction:column;gap:14px">
-              <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">TƯỞNG NIỆM</div>
+              <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B">TƯỞNG NIỆM</div>
               <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:10px">
-                <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Năm mất</div><input value="{{ pfD.d }}" onChange="{{ pfOn.d }}" inputmode="numeric" placeholder="VD: 2010" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;border:1.5px solid {{ pfE.d.bd }}"><sc-if value="{{ pfE.d.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ pfE.d.msg }}</div></sc-if></div>
-                <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Ngày giỗ (âm lịch)</div><input value="{{ pfD.gio }}" onChange="{{ pfOn.gio }}" placeholder="VD: 15 tháng Chạp" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)"></div>
+                <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Năm mất</div><input value="{{ pfD.d }}" onChange="{{ pfOn.d }}" inputmode="numeric" placeholder="VD: 2010" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;border:1.5px solid {{ pfE.d.bd }}"><sc-if value="{{ pfE.d.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#9E3B2C"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ pfE.d.msg }}</div></sc-if></div>
+                <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Ngày giỗ (âm lịch)</div><input value="{{ pfD.gio }}" onChange="{{ pfOn.gio }}" placeholder="VD: 15 tháng Chạp" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)"></div>
               </div>
-              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Nơi an táng</div><input value="{{ pfD.an }}" onChange="{{ pfOn.an }}" placeholder="VD: Nghĩa trang họ, Hành Thiện" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)"></div>
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Nơi an táng</div><input value="{{ pfD.an }}" onChange="{{ pfOn.an }}" placeholder="VD: Nghĩa trang họ, Hành Thiện" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)"></div>
             </div>
           </sc-if>
           <div style="display:flex;flex-direction:column;gap:14px">
-            <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">TÂM LINH</div>
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Pháp danh</div><input value="{{ pfD.phap }}" onChange="{{ pfOn.phap }}" placeholder="VD: Phúc Thiện" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)"></div>
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Bài vị thờ tại</div><input value="{{ pfD.tho }}" onChange="{{ pfOn.tho }}" placeholder="VD: Chùa Keo Hành Thiện" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)"></div>
+            <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B">TÂM LINH</div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Pháp danh</div><input value="{{ pfD.phap }}" onChange="{{ pfOn.phap }}" placeholder="VD: Phúc Thiện" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)"></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Bài vị thờ tại</div><input value="{{ pfD.tho }}" onChange="{{ pfOn.tho }}" placeholder="VD: Chùa Keo Hành Thiện" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)"></div>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B">TIỂU SỬ</div>
-            <textarea value="{{ pfD.note }}" onChange="{{ pfOn.note }}" rows="5" placeholder="Cuộc đời, nghề nghiệp, công đức…" style="width:100%;box-sizing:border-box;border:1px solid rgba(90,62,43,.22);border-radius:12px;background:#FBF6EA;padding:12px 14px;outline:0;resize:vertical;font:400 14px/1.6 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></textarea>
+            <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B">TIỂU SỬ</div>
+            <textarea value="{{ pfD.note }}" onChange="{{ pfOn.note }}" rows="5" placeholder="Cuộc đời, nghề nghiệp, công đức…" style="width:100%;box-sizing:border-box;border:1px solid rgba(90,62,43,.22);border-radius:12px;background:#FBF6EA;padding:12px 14px;outline:0;resize:vertical;font:400 14px/1.6 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></textarea>
           </div>
         </div>
         <div style="flex:none;padding:12px 20px 30px;background:#F6EEDB;--il-ink:#2F4A36;--il-canvas:#F4EBD6;--il-ink-16:rgba(47,74,54,.28)"><dc-import name="IL-Btn" label="Lưu thay đổi" variant="primary" on-tap="{{ pfSave }}" hint-size="100%,50px"></dc-import></div>
@@ -374,18 +374,18 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
         <div style="position:absolute;left:0;right:0;bottom:0;height:80%;z-index:6;display:flex;flex-direction:column;border-radius:20px 20px 0 0;background:#F6EEDB;box-shadow:0 -18px 40px -16px rgba(30,23,18,.5)">
           <div style="flex:none;padding:10px 20px 12px;border-bottom:1px solid rgba(90,62,43,.14);display:flex;flex-direction:column;gap:12px">
             <div style="width:40px;height:4px;border-radius:2px;background:rgba(90,62,43,.25);margin:0 auto"></div>
-            <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font:700 21px 'Cormorant Garamond',serif;color:#2A3B2C">Đổi quan hệ</div><div onClick="{{ pfRelClose }}" style="height:36px;display:flex;align-items:center;font:500 13px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;cursor:pointer">Đóng</div></div>
-            <div style="display:flex;gap:6px"><sc-for list="{{ pfRelKinds }}" as="o" hint-placeholder-count="3"><div onClick="{{ o.pick }}" style="flex:1;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 12px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;white-space:nowrap;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div>
-            <input value="{{ pfRelQ }}" onChange="{{ pfRelOnQ }}" placeholder="Tìm theo tên" style="width:100%;box-sizing:border-box;height:42px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)">
+            <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font:700 21px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">Đổi quan hệ</div><div onClick="{{ pfRelClose }}" style="height:36px;display:flex;align-items:center;font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;cursor:pointer">Đóng</div></div>
+            <div style="display:flex;gap:6px"><sc-for list="{{ pfRelKinds }}" as="o" hint-placeholder-count="3"><div onClick="{{ o.pick }}" style="flex:1;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;transition:all .18s ease;white-space:nowrap;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div>
+            <input value="{{ pfRelQ }}" onChange="{{ pfRelOnQ }}" placeholder="Tìm theo tên" style="width:100%;box-sizing:border-box;height:42px;padding:0 14px;border-radius:12px;background:#FBF6EA;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;border:1px solid rgba(90,62,43,.22)">
           </div>
           <div style="flex:1;min-height:0;overflow-y:auto;padding:4px 20px 28px">
             <sc-for list="{{ pfRelList }}" as="c" hint-placeholder-count="5">
               <div onClick="{{ c.pick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;border-bottom:1px solid rgba(90,62,43,.1);cursor:pointer">
-                <div style="flex:1;min-width:0"><div style="font:600 17px 'Cormorant Garamond',serif;color:#2A3B2C">{{ c.name }}</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.62);margin-top:1px">{{ c.sub }}</div></div>
-                <sc-if value="{{ c.on }}"><div style="flex:none;padding:3px 9px;border-radius:999px;background:#2F4A36;font:500 10.5px 'Be Vietnam Pro',sans-serif;color:#F4EBD6">Đang chọn</div></sc-if>
+                <div style="flex:1;min-width:0"><div style="font:600 17px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">{{ c.name }}</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.62);margin-top:1px">{{ c.sub }}</div></div>
+                <sc-if value="{{ c.on }}"><div style="flex:none;padding:3px 9px;border-radius:999px;background:#2F4A36;font:500 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#F4EBD6">Đang chọn</div></sc-if>
               </div>
             </sc-for>
-            <sc-if value="{{ pfRelEmpty }}"><div style="padding:28px 8px;text-align:center;font:400 13px/1.6 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);text-wrap:pretty">{{ pfRelEmptyMsg }}</div></sc-if>
+            <sc-if value="{{ pfRelEmpty }}"><div style="padding:28px 8px;text-align:center;font:400 13px/1.6 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);text-wrap:pretty">{{ pfRelEmptyMsg }}</div></sc-if>
           </div>
         </div>
       </sc-if>
@@ -394,21 +394,21 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
   <sc-if value="{{ switcherOpen }}">
     <div onClick="{{ toggleSwitcher }}" style="position:absolute;inset:0;z-index:18;background:rgba(42,29,20,.28)"></div>
     <div style="position:absolute;left:12px;right:12px;top:106px;z-index:19;border-radius:20px;background:#F6EEDB;box-shadow:0 18px 40px -16px rgba(30,23,18,.6);padding:8px">
-      <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;padding:10px 12px 6px">GIA PHẢ CỦA BẠN</div>
+      <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B;padding:10px 12px 6px">GIA PHẢ CỦA BẠN</div>
       <sc-for list="{{ views }}" as="v" hint-placeholder-count="3">
         <div onClick="{{ v.pick }}" style="display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 12px;border-radius:14px;cursor:pointer;background: {{ v.bg }}">
-          <div style="width:36px;height:36px;flex:none;border-radius:6px;display:flex;align-items:center;justify-content:center;font:700 17px 'Cormorant Garamond',serif;color:#F4EBD6;transform:rotate(-4deg);background: {{ v.seal }}">{{ v.glyph }}</div>
+          <div style="width:36px;height:36px;flex:none;border-radius:6px;display:flex;align-items:center;justify-content:center;font:700 17px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#F4EBD6;transform:rotate(-4deg);background: {{ v.seal }}">{{ v.glyph }}</div>
           <div style="flex:1;min-width:0">
-            <div style="font:600 18px/1.15 'Cormorant Garamond',serif;color:#2A3B2C">{{ v.title }}</div>
-            <div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.62);margin-top:2px">{{ v.sub }}</div>
+            <div style="font:600 18px/1.15 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">{{ v.title }}</div>
+            <div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.62);margin-top:2px">{{ v.sub }}</div>
           </div>
           <sc-if value="{{ v.on }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F4A36" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
         </div>
       </sc-for>
       <div style="height:1px;background:rgba(90,62,43,.14);margin:6px 12px"></div>
       <div onClick="{{ openPk }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:6px 12px;border-radius:14px;cursor:pointer">
-        <div style="width:36px;height:36px;flex:none;border-radius:6px;display:flex;align-items:center;justify-content:center;font:700 17px 'Cormorant Garamond',serif;color:#9E3B2C;box-shadow:inset 0 0 0 1.5px #9E3B2C">記</div>
-        <div style="flex:1;min-width:0"><div style="font:600 17px/1.15 'Cormorant Garamond',serif;color:#2A3B2C">Phả ký dòng họ</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.62);margin-top:2px">Nguồn gốc, mốc lịch sử, nhà thờ họ, gia huấn</div></div>
+        <div style="width:36px;height:36px;flex:none;border-radius:6px;display:flex;align-items:center;justify-content:center;font:700 17px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#9E3B2C;box-shadow:inset 0 0 0 1.5px #9E3B2C">記</div>
+        <div style="flex:1;min-width:0"><div style="font:600 17px/1.15 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">Phả ký dòng họ</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.62);margin-top:2px">Nguồn gốc, mốc lịch sử, nhà thờ họ, gia huấn</div></div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(58,42,28,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none"><path d="M9 5l7 7-7 7"></path></svg>
       </div>
     </div>
@@ -419,148 +419,148 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
         <div onClick="{{ closePk }}" style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3A2A1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M15 5l-7 7 7 7"></path></svg>
         </div>
-        <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;color:#2A3B2C">Phả ký</div>
-        <div onClick="{{ pkEditTap }}" style="height:44px;min-width:44px;padding:0 10px;display:flex;align-items:center;justify-content:flex-end;font:600 14px 'Be Vietnam Pro',sans-serif;color:#2F4A36;cursor:pointer">{{ pkEditLbl }}</div>
+        <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">Phả ký</div>
+        <div onClick="{{ pkEditTap }}" style="height:44px;min-width:44px;padding:0 10px;display:flex;align-items:center;justify-content:flex-end;font:600 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#2F4A36;cursor:pointer">{{ pkEditLbl }}</div>
       </div>
       <div style="flex:1;min-height:0;overflow-y:auto;padding:0 20px 40px">
         <sc-if value="{{ pkTabsOn }}">
           <div style="display:flex;gap:6px;margin-top:14px">
             <sc-for list="{{ pkTabs }}" as="t" hint-placeholder-count="2">
-              <div onClick="{{ t.pick }}" style="flex:1;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer;background: {{ t.bg }};color: {{ t.fg }};border:1px solid {{ t.bd }}">{{ t.label }}</div>
+              <div onClick="{{ t.pick }}" style="flex:1;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 12.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;background: {{ t.bg }};color: {{ t.fg }};border:1px solid {{ t.bd }}">{{ t.label }}</div>
             </sc-for>
           </div>
         </sc-if>
         <div style="display:flex;flex-direction:column;align-items:center;text-align:center;margin-top:22px">
-          <div style="width:52px;height:52px;border-radius:6px;background:#9E3B2C;display:flex;align-items:center;justify-content:center;transform:rotate(-4deg);box-shadow:inset 0 0 0 2px #9E3B2C,inset 0 0 0 3px #F4EBD6;font:700 26px 'Cormorant Garamond',serif;color:#F4EBD6">{{ pk.seal }}</div>
-          <div style="font:700 30px/1.1 'Cormorant Garamond',serif;color:#2A3B2C;margin-top:14px">{{ pk.title }}</div>
-          <sc-if value="{{ pkView }}"><div style="font:400 12px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.7);margin-top:4px">{{ pk.home }}</div></sc-if>
-          <sc-if value="{{ pkEditing }}"><div style="width:100%;text-align:left;margin-top:14px"><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Quê gốc</div><input value="{{ pk.home }}" onChange="{{ pkOn.home }}" placeholder="Xã, huyện, tỉnh" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div></sc-if>
-          <div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;color:#8A4A1C;margin-top:6px">{{ pk.meta }}</div>
+          <div style="width:52px;height:52px;border-radius:6px;background:#9E3B2C;display:flex;align-items:center;justify-content:center;transform:rotate(-4deg);box-shadow:inset 0 0 0 2px #9E3B2C,inset 0 0 0 3px #F4EBD6;font:700 26px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#F4EBD6">{{ pk.seal }}</div>
+          <div style="font:700 30px/1.1 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C;margin-top:14px">{{ pk.title }}</div>
+          <sc-if value="{{ pkView }}"><div style="font:400 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.7);margin-top:4px">{{ pk.home }}</div></sc-if>
+          <sc-if value="{{ pkEditing }}"><div style="width:100%;text-align:left;margin-top:14px"><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Quê gốc</div><input value="{{ pk.home }}" onChange="{{ pkOn.home }}" placeholder="Xã, huyện, tỉnh" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></div></sc-if>
+          <div style="font:500 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#8A4A1C;margin-top:6px">{{ pk.meta }}</div>
         </div>
 
-        <sc-if value="{{ pkEditing }}"><div style="margin-top:16px;padding:10px 14px;border-radius:6px;background:rgba(47,74,54,.1);font:400 12px/1.5 'Be Vietnam Pro',sans-serif;color:#2F4A36">Đang sửa phả ký. Bấm <b>Xong</b> để lưu.</div></sc-if>
-        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:26px">NGUỒN GỐC</div>
+        <sc-if value="{{ pkEditing }}"><div style="margin-top:16px;padding:10px 14px;border-radius:6px;background:rgba(47,74,54,.1);font:400 12px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#2F4A36">Đang sửa phả ký. Bấm <b>Xong</b> để lưu.</div></sc-if>
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B;margin-top:26px">NGUỒN GỐC</div>
         <div onClick="{{ pk.openFounder }}" style="margin-top:10px;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);cursor:pointer">
           <div style="width:30px;height:33px;flex:none;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(135deg,#E8C977,#A7782C)"></div>
-          <div style="flex:1;min-width:0"><div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.6)">Thủy tổ</div><div style="font:700 18px/1.2 'Cormorant Garamond',serif;color:#2A3B2C">{{ pk.founder }}</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-top:1px">{{ pk.founderYears }}</div></div>
+          <div style="flex:1;min-width:0"><div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.6)">Thủy tổ</div><div style="font:700 18px/1.2 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">{{ pk.founder }}</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-top:1px">{{ pk.founderYears }}</div></div>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(58,42,28,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none"><path d="M9 5l7 7-7 7"></path></svg>
         </div>
         <sc-if value="{{ pkView }}">
-          <sc-if value="{{ pk.hasOrigin }}"><div style="margin-top:12px;font:500 17px/1.6 'Cormorant Garamond',serif;color:#3A2A1C;text-wrap:pretty">{{ pk.origin }}</div></sc-if>
-          <sc-if value="{{ pk.noOrigin }}"><div onClick="{{ pkEditTap }}" style="margin-top:12px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);cursor:pointer">Chưa có tiểu sử dòng họ. Bấm để viết về quê gốc, thủy tổ và quá trình lập nghiệp.</div></sc-if>
+          <sc-if value="{{ pk.hasOrigin }}"><div style="margin-top:12px;font:500 17px/1.6 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#3A2A1C;text-wrap:pretty">{{ pk.origin }}</div></sc-if>
+          <sc-if value="{{ pk.noOrigin }}"><div onClick="{{ pkEditTap }}" style="margin-top:12px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);cursor:pointer">Chưa có tiểu sử dòng họ. Bấm để viết về quê gốc, thủy tổ và quá trình lập nghiệp.</div></sc-if>
         </sc-if>
-        <sc-if value="{{ pkEditing }}"><textarea value="{{ pk.origin }}" onChange="{{ pkOnOrigin }}" rows="6" placeholder="Quê gốc, thủy tổ, quá trình lập nghiệp…" style="margin-top:12px;width:100%;box-sizing:border-box;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:10px 12px;outline:0;resize:vertical;font:400 13px/1.6 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></textarea></sc-if>
+        <sc-if value="{{ pkEditing }}"><textarea value="{{ pk.origin }}" onChange="{{ pkOnOrigin }}" rows="6" placeholder="Quê gốc, thủy tổ, quá trình lập nghiệp…" style="margin-top:12px;width:100%;box-sizing:border-box;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:10px 12px;outline:0;resize:vertical;font:400 13px/1.6 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></textarea></sc-if>
 
-        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:26px">MỐC LỊCH SỬ</div>
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B;margin-top:26px">MỐC LỊCH SỬ</div>
         <sc-if value="{{ pkEditing }}">
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
             <sc-for list="{{ pk.tlEd }}" as="e" hint-placeholder-count="3">
               <div style="display:flex;gap:8px;align-items:flex-start">
-                <input value="{{ e.y }}" onChange="{{ e.onY }}" inputmode="numeric" placeholder="Năm" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;width:72px;flex:none;padding:0 10px">
-                <textarea value="{{ e.t }}" onChange="{{ e.onT }}" rows="2" placeholder="Sự kiện" style="flex:1;min-width:0;box-sizing:border-box;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:10px 12px;outline:0;resize:vertical;font:400 13px/1.5 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></textarea>
+                <input value="{{ e.y }}" onChange="{{ e.onY }}" inputmode="numeric" placeholder="Năm" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;width:72px;flex:none;padding:0 10px">
+                <textarea value="{{ e.t }}" onChange="{{ e.onT }}" rows="2" placeholder="Sự kiện" style="flex:1;min-width:0;box-sizing:border-box;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:10px 12px;outline:0;resize:vertical;font:400 13px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></textarea>
                 <div onClick="{{ e.del }}" style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2" stroke-linecap="round" style="display:block"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
               </div>
             </sc-for>
-            <div onClick="{{ pk.tlAdd }}" style="min-height:44px;border-radius:6px;border:1px dashed rgba(47,74,54,.45);display:flex;align-items:center;justify-content:center;font:500 12.5px 'Be Vietnam Pro',sans-serif;color:#2F4A36;cursor:pointer">+ Thêm mốc</div>
+            <div onClick="{{ pk.tlAdd }}" style="min-height:44px;border-radius:6px;border:1px dashed rgba(47,74,54,.45);display:flex;align-items:center;justify-content:center;font:500 12.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#2F4A36;cursor:pointer">+ Thêm mốc</div>
           </div>
         </sc-if>
         <sc-if value="{{ pk.hasTlV }}">
           <div style="display:flex;flex-direction:column;margin-top:12px">
             <sc-for list="{{ pk.tl }}" as="e" hint-placeholder-count="4">
               <div style="display:flex;gap:12px;align-items:stretch">
-                <div style="width:46px;flex:none;font:700 17px/1.2 'Cormorant Garamond',serif;color:#8A4A1C;text-align:right">{{ e.y }}</div>
+                <div style="width:46px;flex:none;font:700 17px/1.2 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#8A4A1C;text-align:right">{{ e.y }}</div>
                 <div style="width:12px;flex:none;display:flex;flex-direction:column;align-items:center">
                   <div style="width:9px;height:9px;border-radius:50%;background:#C9A04A;margin-top:5px;flex:none"></div>
                   <sc-if value="{{ e.more }}"><div style="flex:1;width:1.5px;background:rgba(90,62,43,.22);margin-top:3px"></div></sc-if>
                 </div>
-                <div style="flex:1;min-width:0;padding-bottom:16px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;color:#3A2A1C;text-wrap:pretty">{{ e.t }}</div>
+                <div style="flex:1;min-width:0;padding-bottom:16px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;text-wrap:pretty">{{ e.t }}</div>
               </div>
             </sc-for>
           </div>
         </sc-if>
-        <sc-if value="{{ pk.noTlV }}"><div style="margin-top:10px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65)">Chưa có mốc nào. Ghi lại năm lập nghiệp, dựng nhà thờ họ, các lần tu bổ.</div></sc-if>
+        <sc-if value="{{ pk.noTlV }}"><div style="margin-top:10px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65)">Chưa có mốc nào. Ghi lại năm lập nghiệp, dựng nhà thờ họ, các lần tu bổ.</div></sc-if>
 
-        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:22px">NHÀ THỜ HỌ</div>
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B;margin-top:22px">NHÀ THỜ HỌ</div>
         <sc-if value="{{ pkEditing }}">
           <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Tên nhà thờ họ</div><input value="{{ pk.thoName }}" onChange="{{ pkOn.thoName }}" placeholder="Nhà thờ tổ họ …" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Địa chỉ</div><input value="{{ pk.thoAddr }}" onChange="{{ pkOn.thoAddr }}" placeholder="Thôn, xã, huyện, tỉnh" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Ngày chạp họ (âm lịch)</div><input value="{{ pk.chap }}" onChange="{{ pkOn.chap }}" placeholder="Ngày 20 tháng Chạp" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Tên nhà thờ họ</div><input value="{{ pk.thoName }}" onChange="{{ pkOn.thoName }}" placeholder="Nhà thờ tổ họ …" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Địa chỉ</div><input value="{{ pk.thoAddr }}" onChange="{{ pkOn.thoAddr }}" placeholder="Thôn, xã, huyện, tỉnh" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Ngày chạp họ (âm lịch)</div><input value="{{ pk.chap }}" onChange="{{ pkOn.chap }}" placeholder="Ngày 20 tháng Chạp" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></div>
           </div>
         </sc-if>
         <sc-if value="{{ pk.showTho }}">
           <div style="margin-top:10px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);overflow:hidden">
             <div style="position:relative;height:150px;background:rgba(90,62,43,.1)"><image-slot id="{{ pk.thoImg }}" shape="rect" placeholder="Ảnh nhà thờ họ"></image-slot></div>
             <div style="padding:14px">
-              <div style="font:700 19px/1.2 'Cormorant Garamond',serif;color:#2A3B2C">{{ pk.thoName }}</div>
-              <div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.7);margin-top:3px">{{ pk.thoAddr }}</div>
-              <div style="display:grid;grid-template-columns:96px minmax(0,1fr);row-gap:8px;column-gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(90,62,43,.14);font:400 12.5px/1.5 'Be Vietnam Pro',sans-serif">
-                <div style="color:rgba(58,42,28,.6);align-self:center">Trưởng họ</div><div style="display:flex;align-items:center;gap:8px;min-width:0"><div onClick="{{ pk.openKeeper }}" style="flex:1;min-width:0;color:#8A4A1C;font-weight:500;cursor:pointer">{{ pk.keeper }}</div><div onClick="{{ pk.headPick }}" style="flex:none;height:32px;padding:0 12px;border-radius:999px;display:flex;align-items:center;font:500 11.5px 'Be Vietnam Pro',sans-serif;color:#2F4A36;box-shadow:inset 0 0 0 1px rgba(47,74,54,.4);cursor:pointer">Đổi</div></div>
+              <div style="font:700 19px/1.2 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">{{ pk.thoName }}</div>
+              <div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.7);margin-top:3px">{{ pk.thoAddr }}</div>
+              <div style="display:grid;grid-template-columns:96px minmax(0,1fr);row-gap:8px;column-gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(90,62,43,.14);font:400 12.5px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums">
+                <div style="color:rgba(58,42,28,.6);align-self:center">Trưởng họ</div><div style="display:flex;align-items:center;gap:8px;min-width:0"><div onClick="{{ pk.openKeeper }}" style="flex:1;min-width:0;color:#8A4A1C;font-weight:500;cursor:pointer">{{ pk.keeper }}</div><div onClick="{{ pk.headPick }}" style="flex:none;height:32px;padding:0 12px;border-radius:999px;display:flex;align-items:center;font:500 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#2F4A36;box-shadow:inset 0 0 0 1px rgba(47,74,54,.4);cursor:pointer">Đổi</div></div>
                 <div style="color:rgba(58,42,28,.6)">Giỗ tổ</div><div style="color:#3A2A1C">{{ pk.gioTo }}</div>
                 <div style="color:rgba(58,42,28,.6)">Chạp họ</div><div style="color:#3A2A1C">{{ pk.chap }}</div>
               </div>
-              <div onClick="{{ pk.gioTap }}" style="margin-top:14px;min-height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer;background: {{ pk.gioBg }};color: {{ pk.gioFg }};box-shadow: {{ pk.gioBd }}">{{ pk.gioBtn }}</div>
+              <div onClick="{{ pk.gioTap }}" style="margin-top:14px;min-height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 12.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;background: {{ pk.gioBg }};color: {{ pk.gioFg }};box-shadow: {{ pk.gioBd }}">{{ pk.gioBtn }}</div>
             </div>
           </div>
         </sc-if>
-        <sc-if value="{{ pk.noThoV }}"><div style="margin-top:10px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65)">Chưa có thông tin nhà thờ họ.</div></sc-if>
+        <sc-if value="{{ pk.noThoV }}"><div style="margin-top:10px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65)">Chưa có thông tin nhà thờ họ.</div></sc-if>
 
-        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:22px">GIA HUẤN</div>
+        <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B;margin-top:22px">GIA HUẤN</div>
         <sc-if value="{{ pkEditing }}">
           <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
             <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:8px">
-              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Hoành phi (chữ Hán)</div><input value="{{ pk.hpHan }}" onChange="{{ pkOn.hpHan }}" placeholder="祖德流光" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
-              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Phiên âm · nghĩa</div><input value="{{ pk.hp }}" onChange="{{ pkOn.hp }}" placeholder="Tổ đức lưu quang" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Hoành phi (chữ Hán)</div><input value="{{ pk.hpHan }}" onChange="{{ pkOn.hpHan }}" placeholder="祖德流光" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></div>
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Phiên âm · nghĩa</div><input value="{{ pk.hp }}" onChange="{{ pkOn.hp }}" placeholder="Tổ đức lưu quang" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></div>
             </div>
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Câu đối · vế trên</div><input value="{{ pk.cd0 }}" onChange="{{ pkOn.cd0 }}" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px">Câu đối · vế dưới</div><input value="{{ pk.cd1 }}" onChange="{{ pkOn.cd1 }}" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></div>
-            <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-bottom:6px;margin:0 0 -6px">Lời dạy</div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Câu đối · vế trên</div><input value="{{ pk.cd0 }}" onChange="{{ pkOn.cd0 }}" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px">Câu đối · vế dưới</div><input value="{{ pk.cd1 }}" onChange="{{ pkOn.cd1 }}" style="width:100%;box-sizing:border-box;height:44px;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:0 12px;outline:0;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></div>
+            <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-bottom:6px;margin:0 0 -6px">Lời dạy</div>
           </div>
         </sc-if>
         <sc-if value="{{ pk.showHp }}">
           <div style="margin-top:12px;padding:16px 14px;border-radius:4px;background:#5A2A1E;box-shadow:inset 0 0 0 2px #5A2A1E,inset 0 0 0 3px #C9A04A;text-align:center">
-            <div style="font:700 24px/1.2 'Cormorant Garamond',serif;color:#E8C977;letter-spacing:.06em">{{ pk.hpHan }}</div>
-            <div style="font:500 11px 'Be Vietnam Pro',sans-serif;color:rgba(244,235,214,.8);margin-top:4px">{{ pk.hp }}</div>
+            <div style="font:700 24px/1.2 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#E8C977;letter-spacing:.06em">{{ pk.hpHan }}</div>
+            <div style="font:500 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(244,235,214,.8);margin-top:4px">{{ pk.hp }}</div>
           </div>
           <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:8px">
             <sc-for list="{{ pk.cd }}" as="c" hint-placeholder-count="2">
-              <div style="padding:12px;border-radius:4px;background:rgba(158,59,44,.08);box-shadow:inset 0 0 0 1px rgba(158,59,44,.25);font:italic 500 15px/1.45 'Cormorant Garamond',serif;color:#5A2A1E;text-align:center;text-wrap:pretty">{{ c }}</div>
+              <div style="padding:12px;border-radius:4px;background:rgba(158,59,44,.08);box-shadow:inset 0 0 0 1px rgba(158,59,44,.25);font:italic 500 15px/1.45 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#5A2A1E;text-align:center;text-wrap:pretty">{{ c }}</div>
             </sc-for>
           </div>
         </sc-if>
         <sc-if value="{{ pkView }}">
-          <sc-if value="{{ pk.hasGh }}"><div style="margin-top:12px;padding:12px 14px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);font:italic 500 16px/1.55 'Cormorant Garamond',serif;color:#3A2A1C;text-wrap:pretty">{{ pk.gh }}</div></sc-if>
-          <sc-if value="{{ pk.noGh }}"><div onClick="{{ pkEditTap }}" style="margin-top:10px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);cursor:pointer">Chưa có gia huấn. Bấm để ghi lời dạy của ông bà.</div></sc-if>
+          <sc-if value="{{ pk.hasGh }}"><div style="margin-top:12px;padding:12px 14px;border-radius:6px;background:rgba(251,246,234,.9);box-shadow:inset 0 0 0 1px rgba(90,62,43,.18);font:italic 500 16px/1.55 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#3A2A1C;text-wrap:pretty">{{ pk.gh }}</div></sc-if>
+          <sc-if value="{{ pk.noGh }}"><div onClick="{{ pkEditTap }}" style="margin-top:10px;border:1px dashed rgba(90,62,43,.3);border-radius:6px;padding:14px;font:400 12.5px/1.55 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);cursor:pointer">Chưa có gia huấn. Bấm để ghi lời dạy của ông bà.</div></sc-if>
         </sc-if>
-        <sc-if value="{{ pkEditing }}"><textarea value="{{ pk.gh }}" onChange="{{ pkOnGh }}" rows="4" placeholder="Lời dạy, gia quy của dòng họ…" style="margin-top:12px;width:100%;box-sizing:border-box;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:10px 12px;outline:0;resize:vertical;font:400 13px/1.6 'Be Vietnam Pro',sans-serif;color:#3A2A1C"></textarea></sc-if>
+        <sc-if value="{{ pkEditing }}"><textarea value="{{ pk.gh }}" onChange="{{ pkOnGh }}" rows="4" placeholder="Lời dạy, gia quy của dòng họ…" style="margin-top:12px;width:100%;box-sizing:border-box;border:1px solid rgba(90,62,43,.3);border-radius:6px;background:#FBF6EA;padding:10px 12px;outline:0;resize:vertical;font:400 13px/1.6 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C"></textarea></sc-if>
 
         <sc-if value="{{ pk.hasPeople }}">
-          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:#8A5A2B;margin-top:22px">NGƯỜI TIÊU BIỂU</div>
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:#8A5A2B;margin-top:22px">NGƯỜI TIÊU BIỂU</div>
           <div style="display:flex;flex-direction:column;margin-top:4px">
             <sc-for list="{{ pk.people }}" as="r" hint-placeholder-count="3">
               <div onClick="{{ r.pick }}" style="display:flex;align-items:center;gap:10px;min-height:56px;border-bottom:1px solid rgba(90,62,43,.1);cursor:pointer">
-                <div style="flex:1;min-width:0;padding:8px 0"><div style="font:600 17px 'Cormorant Garamond',serif;color:#2A3B2C">{{ r.name }}</div><div style="font:400 11px/1.45 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.62);margin-top:1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ r.sub }}</div></div>
-                <div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.5);flex:none">{{ r.gen }}</div>
+                <div style="flex:1;min-width:0;padding:8px 0"><div style="font:600 17px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">{{ r.name }}</div><div style="font:400 11px/1.45 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.62);margin-top:1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ r.sub }}</div></div>
+                <div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.5);flex:none">{{ r.gen }}</div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(58,42,28,.45)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none"><path d="M9 5l7 7-7 7"></path></svg>
               </div>
             </sc-for>
           </div>
         </sc-if>
-        <div style="font:400 11px/1.6 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.5);margin-top:22px;text-align:center">{{ pk.foot }}</div>
+        <div style="font:400 11px/1.6 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.5);margin-top:22px;text-align:center">{{ pk.foot }}</div>
       </div>
       <sc-if value="{{ hpOpen }}">
         <div onClick="{{ hpClose }}" style="position:absolute;inset:0;background:rgba(42,29,20,.32)"></div>
         <div style="position:absolute;left:0;right:0;bottom:0;max-height:78%;display:flex;flex-direction:column;border-radius:20px 20px 0 0;background:#F6EEDB;box-shadow:0 -18px 40px -16px rgba(30,23,18,.5)">
           <div style="flex:none;padding:10px 20px 12px;border-bottom:1px solid rgba(90,62,43,.14)">
             <div style="width:40px;height:4px;border-radius:2px;background:rgba(90,62,43,.25);margin:0 auto 12px"></div>
-            <div style="font:700 21px 'Cormorant Garamond',serif;color:#2A3B2C">Chọn tộc trưởng mới</div>
-            <div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.65);margin-top:3px;text-wrap:pretty">Theo lệ, tộc trưởng thường là con trai trưởng của chi trưởng. Chỉ hiện nam giới còn sống trong họ.</div>
+            <div style="font:700 21px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">Chọn tộc trưởng mới</div>
+            <div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.65);margin-top:3px;text-wrap:pretty">Theo lệ, tộc trưởng thường là con trai trưởng của chi trưởng. Chỉ hiện nam giới còn sống trong họ.</div>
           </div>
           <div style="flex:1;min-height:0;overflow-y:auto;padding:4px 20px 28px">
             <sc-for list="{{ hpList }}" as="c" hint-placeholder-count="5">
               <div onClick="{{ c.pick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;border-bottom:1px solid rgba(90,62,43,.1);cursor:pointer">
-                <div style="flex:1;min-width:0"><div style="font:600 17px 'Cormorant Garamond',serif;color:#2A3B2C">{{ c.name }}</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(58,42,28,.62);margin-top:1px">{{ c.sub }}</div></div>
-                <sc-if value="{{ c.on }}"><div style="flex:none;padding:3px 9px;border-radius:999px;background:#9E3B2C;font:500 10.5px 'Be Vietnam Pro',sans-serif;color:#F4EBD6">Hiện tại</div></sc-if>
+                <div style="flex:1;min-width:0"><div style="font:600 17px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">{{ c.name }}</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(58,42,28,.62);margin-top:1px">{{ c.sub }}</div></div>
+                <sc-if value="{{ c.on }}"><div style="flex:none;padding:3px 9px;border-radius:999px;background:#9E3B2C;font:500 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#F4EBD6">Hiện tại</div></sc-if>
               </div>
             </sc-for>
           </div>
@@ -569,11 +569,11 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
       <sc-if value="{{ hpConfirm }}">
         <div style="position:absolute;inset:0;background:rgba(42,29,20,.4);display:flex;align-items:center;justify-content:center;padding:24px">
           <div style="width:100%;max-width:340px;border-radius:18px;background:#F6EEDB;padding:20px;box-shadow:0 18px 40px -12px rgba(30,23,18,.6)">
-            <div style="font:700 21px/1.25 'Cormorant Garamond',serif;color:#2A3B2C">Chuyển tộc trưởng?</div>
-            <div style="font:400 13px/1.6 'Be Vietnam Pro',sans-serif;color:#3A2A1C;margin-top:8px;text-wrap:pretty">{{ hpMsg }}</div>
+            <div style="font:700 21px/1.25 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#2A3B2C">Chuyển tộc trưởng?</div>
+            <div style="font:400 13px/1.6 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;margin-top:8px;text-wrap:pretty">{{ hpMsg }}</div>
             <div style="display:flex;gap:8px;margin-top:18px">
-              <div onClick="{{ hpCancel }}" style="flex:1;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;color:#3A2A1C;box-shadow:inset 0 0 0 1px rgba(90,62,43,.3);cursor:pointer">Hủy</div>
-              <div onClick="{{ hpOk }}" style="flex:1;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;color:#F4EBD6;background:#9E3B2C;cursor:pointer">Xác nhận</div>
+              <div onClick="{{ hpCancel }}" style="flex:1;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#3A2A1C;box-shadow:inset 0 0 0 1px rgba(90,62,43,.3);cursor:pointer">Hủy</div>
+              <div onClick="{{ hpOk }}" style="flex:1;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#F4EBD6;background:#9E3B2C;cursor:pointer">Xác nhận</div>
             </div>
           </div>
         </div>
@@ -586,43 +586,43 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
         <div onClick="{{ cancelSetup }}" style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;color:var(--gp-ink,var(--gp-ink,#3A2A1C))"><path d="M15 5l-7 7 7 7"></path></svg>
         </div>
-        <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;color:var(--gp-title,#2A3B2C)">Tạo gia phả</div>
+        <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:var(--gp-title,#2A3B2C)">Tạo gia phả</div>
         <div style="width:44px;flex:none"></div>
       </div>
       <div ref="{{ sScRef }}" style="flex:1;min-height:0;overflow-y:auto;padding:20px 20px 40px;display:flex;flex-direction:column;gap:20px">
         <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:22px 16px;border-radius:18px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.16)">
           <div style="width:18px;height:20px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#C9A04A"></div>
-          <div style="font:600 26px/1.1 'Cormorant Garamond',serif;color:var(--gp-title,#2A3B2C);margin-top:4px">{{ sTitle }}</div>
-          <div style="font:400 12px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.6)">{{ sSub }}</div>
+          <div style="font:600 26px/1.1 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:var(--gp-title,#2A3B2C);margin-top:4px">{{ sTitle }}</div>
+          <div style="font:400 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.6)">{{ sSub }}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:14px">
-          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:var(--gp-label,#8A5A2B)">DÒNG HỌ</div>
-          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Tên dòng họ</div><input data-ek="name" value="{{ sName }}" onChange="{{ onSName }}" placeholder="VD: Họ Trần Văn" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ sE.name.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ sE.name.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.name.msg }}</div></sc-if></div>
-          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Quê gốc</div><input data-ek="home" value="{{ sHome }}" onChange="{{ onSHome }}" placeholder="VD: Hành Thiện, Nam Định" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ sE.home.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ sE.home.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.home.msg }}</div></sc-if></div>
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:var(--gp-label,#8A5A2B)">DÒNG HỌ</div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Tên dòng họ</div><input data-ek="name" value="{{ sName }}" onChange="{{ onSName }}" placeholder="VD: Họ Trần Văn" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ sE.name.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ sE.name.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.name.msg }}</div></sc-if></div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Quê gốc</div><input data-ek="home" value="{{ sHome }}" onChange="{{ onSHome }}" placeholder="VD: Hành Thiện, Nam Định" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ sE.home.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ sE.home.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.home.msg }}</div></sc-if></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:14px">
-          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:var(--gp-label,#8A5A2B)">THỦY TỔ · ĐỜI 1</div>
-          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Họ và tên</div><input data-ek="fn" value="{{ sFn }}" onChange="{{ onSFn }}" placeholder="VD: Trần Văn Khải" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ sE.fn.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ sE.fn.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.fn.msg }}</div></sc-if></div>
-          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Năm sinh</div><input data-ek="fb" value="{{ sFb }}" onChange="{{ onSFb }}" inputmode="numeric" placeholder="VD: 1820" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ sE.fb.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ sE.fb.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.fb.msg }}</div></sc-if></div>
-          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Trạng thái</div><div style="display:flex;gap:8px"><sc-for list="{{ sStates }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div></div>
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:var(--gp-label,#8A5A2B)">THỦY TỔ · ĐỜI 1</div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Họ và tên</div><input data-ek="fn" value="{{ sFn }}" onChange="{{ onSFn }}" placeholder="VD: Trần Văn Khải" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ sE.fn.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ sE.fn.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.fn.msg }}</div></sc-if></div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Năm sinh</div><input data-ek="fb" value="{{ sFb }}" onChange="{{ onSFb }}" inputmode="numeric" placeholder="VD: 1820" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ sE.fb.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ sE.fb.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.fb.msg }}</div></sc-if></div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Trạng thái</div><div style="display:flex;gap:8px"><sc-for list="{{ sStates }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div></div>
           <sc-if value="{{ sDead }}">
             <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:10px">
-              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Năm mất</div><input data-ek="fd" value="{{ sFd }}" onChange="{{ onSFd }}" inputmode="numeric" placeholder="VD: 1890" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ sE.fd.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ sE.fd.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.fd.msg }}</div></sc-if></div>
-              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Ngày giỗ (âm lịch)</div><input value="{{ sGio }}" onChange="{{ onSGio }}" placeholder="VD: 15 tháng Chạp" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"></div>
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Năm mất</div><input data-ek="fd" value="{{ sFd }}" onChange="{{ onSFd }}" inputmode="numeric" placeholder="VD: 1890" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ sE.fd.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ sE.fd.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ sE.fd.msg }}</div></sc-if></div>
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Ngày giỗ (âm lịch)</div><input value="{{ sGio }}" onChange="{{ onSGio }}" placeholder="VD: 15 tháng Chạp" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"></div>
             </div>
           </sc-if>
-          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Vợ thủy tổ (không bắt buộc)</div><input value="{{ sWife }}" onChange="{{ onSWife }}" placeholder="VD: Lê Thị Hiền" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"></div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Vợ thủy tổ (không bắt buộc)</div><input value="{{ sWife }}" onChange="{{ onSWife }}" placeholder="VD: Lê Thị Hiền" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"></div>
         </div>
         
         <div style="display:flex;flex-direction:column;gap:10px">
-          <div onClick="{{ doCreate }}" style="height:50px;border-radius:999px;background:var(--gp-pri,#2F4A36);color:var(--gp-pri-fg,#F4EBD6);display:flex;align-items:center;justify-content:center;font:500 14px 'Be Vietnam Pro',sans-serif;cursor:pointer">Tạo gia phả</div>
-          <div style="text-align:center;font:400 11.5px/1.5 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.55)">Sau khi tạo, bạn thêm con cháu từng đời bằng nút +</div>
+          <div onClick="{{ doCreate }}" style="height:50px;border-radius:999px;background:var(--gp-pri,#2F4A36);color:var(--gp-pri-fg,#F4EBD6);display:flex;align-items:center;justify-content:center;font:500 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer">Tạo gia phả</div>
+          <div style="text-align:center;font:400 11.5px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.55)">Sau khi tạo, bạn thêm con cháu từng đời bằng nút +</div>
         </div>
       </div>
     </div>
   </sc-if>
   <sc-if value="{{ hasToast }}">
-    <div style="position:absolute;left:16px;right:16px;top:58px;z-index:25;padding:12px 16px;border-radius:14px;background:var(--gp-pri,#2F4A36);color:var(--gp-pri-fg,#F4EBD6);font:500 13px 'Be Vietnam Pro',sans-serif;box-shadow:0 10px 24px -12px rgba(30,23,18,.6)">{{ toast }}</div>
+    <div style="position:absolute;left:16px;right:16px;top:58px;z-index:25;padding:12px 16px;border-radius:14px;background:var(--gp-pri,#2F4A36);color:var(--gp-pri-fg,#F4EBD6);font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;box-shadow:0 10px 24px -12px rgba(30,23,18,.6)">{{ toast }}</div>
   </sc-if>
   <sc-if value="{{ formOpen }}">
     <div data-screen-label="Thêm người vào gia phả" style="position:absolute;inset:0;z-index:20;background:var(--gp-paper,#F6EEDB);display:flex;flex-direction:column">
@@ -630,60 +630,60 @@ input::placeholder,textarea::placeholder{color:rgba(74,51,34,.62);opacity:1}
         <div onClick="{{ closeForm }}" style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gp-ink,#3A2A1C)" stroke-width="2" stroke-linecap="round" style="display:block"><path d="M6 6l12 12M18 6L6 18"></path></svg>
         </div>
-        <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;color:var(--gp-title,#2A3B2C)">Thêm người vào gia phả</div>
-        <div onClick="{{ saveForm }}" style="height:44px;padding:0 12px;display:flex;align-items:center;font:600 14px 'Be Vietnam Pro',sans-serif;color:var(--gp-pri,#2F4A36);cursor:pointer">Lưu</div>
+        <div style="flex:1;text-align:center;font:600 21px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:var(--gp-title,#2A3B2C)">Thêm người vào gia phả</div>
+        <div onClick="{{ saveForm }}" style="height:44px;padding:0 12px;display:flex;align-items:center;font:600 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-pri,#2F4A36);cursor:pointer">Lưu</div>
       </div>
       <div ref="{{ fScRef }}" style="flex:1;min-height:0;overflow-y:auto;padding:18px 20px 40px;display:flex;flex-direction:column;gap:18px">
         <div style="display:flex;flex-direction:column;gap:10px">
-          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:var(--gp-label,#8A5A2B)">QUAN HỆ</div>
-          <div style="display:flex;gap:8px"><sc-for list="{{ fRelKinds }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div>
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:var(--gp-label,#8A5A2B)">QUAN HỆ</div>
+          <div style="display:flex;gap:8px"><sc-for list="{{ fRelKinds }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div>
           <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.18)">
             <div style="width:12px;height:13px;flex:none;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#C9A04A"></div>
             <div style="flex:1;min-width:0">
-              <div style="font:700 17px 'Cormorant Garamond',serif;color:var(--gp-title,#2A3B2C)">{{ fRelName }}</div>
-              <div style="font:400 11px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.6);margin-top:1px">{{ fRelMeta }}</div>
+              <div style="font:700 17px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:var(--gp-title,#2A3B2C)">{{ fRelName }}</div>
+              <div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.6);margin-top:1px">{{ fRelMeta }}</div>
             </div>
-            <div onClick="{{ togglePicker }}" style="height:34px;padding:0 14px;border-radius:999px;border:1px solid rgba(var(--gp-pri-rgb,47,74,54),.45);display:flex;align-items:center;font:500 12px 'Be Vietnam Pro',sans-serif;color:var(--gp-pri,#2F4A36);cursor:pointer">{{ pickerLbl }}</div>
+            <div onClick="{{ togglePicker }}" style="height:34px;padding:0 14px;border-radius:999px;border:1px solid rgba(var(--gp-pri-rgb,47,74,54),.45);display:flex;align-items:center;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-pri,#2F4A36);cursor:pointer">{{ pickerLbl }}</div>
           </div>
           <sc-if value="{{ pickerOpen }}">
             <div style="max-height:240px;overflow-y:auto;border-radius:14px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.18)">
               <sc-for list="{{ fPeople }}" as="p" hint-placeholder-count="6">
                 <div onClick="{{ p.pick }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:0 14px;border-bottom:1px solid rgba(var(--gp-line-rgb,90,62,43),.08);cursor:pointer;background: {{ p.bg }}">
-                  <div style="font:600 15px 'Cormorant Garamond',serif;color: {{ p.fg }}">{{ p.name }}</div>
-                  <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.55);white-space:nowrap">{{ p.meta }}</div>
+                  <div style="font:600 15px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color: {{ p.fg }}">{{ p.name }}</div>
+                  <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.55);white-space:nowrap">{{ p.meta }}</div>
                 </div>
               </sc-for>
             </div>
           </sc-if>
-          <div data-ek="rel" style="font:italic 500 15px 'Cormorant Garamond',serif;color:#8A4A1C">{{ fPreview }}</div>
-          <sc-if value="{{ fE.rel.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.rel.msg }}</div></sc-if>
+          <div data-ek="rel" style="font:italic 500 15px 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:#8A4A1C">{{ fPreview }}</div>
+          <sc-if value="{{ fE.rel.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.rel.msg }}</div></sc-if>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:14px">
-          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;letter-spacing:.18em;color:var(--gp-label,#8A5A2B)">THÔNG TIN</div>
-          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Họ và tên</div><input data-ek="name" value="{{ fName }}" onChange="{{ onFName }}" placeholder="VD: Nguyễn Hữu Bảo" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ fE.name.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ fE.name.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.name.msg }}</div></sc-if></div>
+          <div style="font:600 10px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.18em;color:var(--gp-label,#8A5A2B)">THÔNG TIN</div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Họ và tên</div><input data-ek="name" value="{{ fName }}" onChange="{{ onFName }}" placeholder="VD: Nguyễn Hữu Bảo" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ fE.name.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ fE.name.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.name.msg }}</div></sc-if></div>
           <div>
-            <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Giới tính</div>
-            <div style="display:flex;gap:8px"><sc-for list="{{ fSexes }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div>
-            <sc-if value="{{ fSexLocked }}"><div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.55);margin-top:6px">Tự chọn theo người phối ngẫu</div></sc-if>
+            <div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Giới tính</div>
+            <div style="display:flex;gap:8px"><sc-for list="{{ fSexes }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div>
+            <sc-if value="{{ fSexLocked }}"><div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.55);margin-top:6px">Tự chọn theo người phối ngẫu</div></sc-if>
           </div>
-          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Năm sinh</div><input data-ek="b" value="{{ fB }}" onChange="{{ onFB }}" inputmode="numeric" placeholder="VD: 1998" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ fE.b.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ fE.b.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.b.msg }}</div></sc-if></div>
-          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Trạng thái</div><div style="display:flex;gap:8px"><sc-for list="{{ fStates }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div></div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Năm sinh</div><input data-ek="b" value="{{ fB }}" onChange="{{ onFB }}" inputmode="numeric" placeholder="VD: 1998" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ fE.b.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ fE.b.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.b.msg }}</div></sc-if></div>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Trạng thái</div><div style="display:flex;gap:8px"><sc-for list="{{ fStates }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;transition:all .18s ease;background: {{ o.bg }};color: {{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</div></sc-for></div></div>
           <sc-if value="{{ fAlive }}">
-            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Nơi sinh sống hiện tại</div><input data-ek="live" value="{{ fLive }}" onChange="{{ onFLive }}" placeholder="VD: Cầu Giấy, Hà Nội" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ fE.live.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ fE.live.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.live.msg }}</div></sc-if></div>
+            <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Nơi sinh sống hiện tại</div><input data-ek="live" value="{{ fLive }}" onChange="{{ onFLive }}" placeholder="VD: Cầu Giấy, Hà Nội" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ fE.live.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ fE.live.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.live.msg }}</div></sc-if></div>
           </sc-if>
           <sc-if value="{{ fDead }}">
             <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:10px">
-              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Năm mất</div><input data-ek="d" value="{{ fD }}" onChange="{{ onFD }}" inputmode="numeric" placeholder="VD: 2015" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ fE.d.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ fE.d.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.d.msg }}</div></sc-if></div>
-              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Ngày giỗ (âm lịch)</div><input value="{{ fGio }}" onChange="{{ onFGio }}" placeholder="VD: 15 tháng Chạp" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"></div>
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Năm mất</div><input data-ek="d" value="{{ fD }}" onChange="{{ onFD }}" inputmode="numeric" placeholder="VD: 2015" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1.5px solid {{ fE.d.bd }};outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"><sc-if value="{{ fE.d.msg }}"><div style="display:flex;align-items:center;gap:6px;margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-err,#9E3B2C)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9E3B2C" stroke-width="2.2" stroke-linecap="round" style="display:block;flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path></svg>{{ fE.d.msg }}</div></sc-if></div>
+              <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Ngày giỗ (âm lịch)</div><input value="{{ fGio }}" onChange="{{ onFGio }}" placeholder="VD: 15 tháng Chạp" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"></div>
             </div>
           </sc-if>
-          <sc-if value="{{ fDead }}"><div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Nơi an táng</div><input value="{{ fAn }}" onChange="{{ onFAn }}" placeholder="VD: Lăng mộ dòng họ, Hành Thiện" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"></div></sc-if>
-          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Ghi chú</div><textarea value="{{ fNote }}" onChange="{{ onFNote }}" placeholder="Công đức, sự tích, nơi an táng…" style="width:100%;box-sizing:border-box;min-height:84px;padding:12px 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.22);outline:0;resize:none;font:400 14px/1.5 'Be Vietnam Pro',sans-serif;color:var(--gp-ink,#3A2A1C)"></textarea></div>
+          <sc-if value="{{ fDead }}"><div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Nơi an táng</div><input value="{{ fAn }}" onChange="{{ onFAn }}" placeholder="VD: Lăng mộ dòng họ, Hành Thiện" style="width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.22);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"></div></sc-if>
+          <div><div style="font:400 11.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:rgba(var(--gp-ink-rgb,58,42,28),.65);margin-bottom:6px">Ghi chú</div><textarea value="{{ fNote }}" onChange="{{ onFNote }}" placeholder="Công đức, sự tích, nơi an táng…" style="width:100%;box-sizing:border-box;min-height:84px;padding:12px 14px;border-radius:12px;background:var(--gp-field,#FBF6EA);border:1px solid rgba(var(--gp-line-rgb,90,62,43),.22);outline:0;resize:none;font:400 14px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--gp-ink,#3A2A1C)"></textarea></div>
         </div>
 
         
-        <div onClick="{{ saveForm }}" style="height:50px;flex:none;border-radius:999px;background:var(--gp-pri,#2F4A36);color:var(--gp-pri-fg,#F4EBD6);display:flex;align-items:center;justify-content:center;font:500 14px 'Be Vietnam Pro',sans-serif;cursor:pointer">Thêm vào gia phả</div>
+        <div onClick="{{ saveForm }}" style="height:50px;flex:none;border-radius:999px;background:var(--gp-pri,#2F4A36);color:var(--gp-pri-fg,#F4EBD6);display:flex;align-items:center;justify-content:center;font:500 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer">Thêm vào gia phả</div>
       </div>
     </div>
   </sc-if>

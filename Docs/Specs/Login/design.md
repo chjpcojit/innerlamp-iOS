@@ -82,7 +82,7 @@ Entry points into Login:
 - No `ILLoginDTO`, mapper, or `LoginEndpoint` exists.
 
 This is intentional per the project's "never a guessed real implementation"
-rule (see `il-screen-builder`'s `references/data_layer_boundaries.md`). The
+rule (see `ui-builder`'s `references/data_layer_boundaries.md`). The
 stub means the submit button always reports success at runtime. Completing
 this is `tasks.md` Phase 3.
 

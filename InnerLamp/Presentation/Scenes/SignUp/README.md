@@ -1,7 +1,7 @@
 # Màn hình Đăng ký tài khoản (SignUp)
 
 Feature `SignUp` — Clean Architecture + Coordinator + MVVM, theo đúng khuôn mẫu `Onboarding`
-(xem `InnerLamp/Core/Base/README.md`). Tự sinh bởi skill `il-screen-builder`, đối chiếu lại với
+(xem `InnerLamp/Core/Base/README.md`). Tự sinh bởi skill `ui-builder`, đối chiếu lại với
 thiết kế thật trong `InnerLamp/Docs/design_handoff_innerlamp/design/InnerLamp Prototype.dc.html`
 (block `isSignup`) — bản đầu tiên (email + confirm password) đã bị thay hoàn toàn vì không khớp
 thiết kế: thiết kế dùng **số điện thoại + OTP**, không phải email/password thuần.
@@ -24,7 +24,7 @@ AppCoordinator
 
 `ILSignUpCoordinator` được `AppCoordinator` sở hữu vì đây là chuyển tiếp **cross-section**
 (Onboarding → Signup), theo đúng quy tắc trong
-`.claude/skills/il-screen-builder/references/coordinator_navigation_rules.md`.
+`.claude/skills/ui-builder/references/coordinator_navigation_rules.md`.
 
 ## Các file đã sinh / sửa
 
@@ -135,10 +135,10 @@ Mỗi thao tác UI gửi giá trị lên `*Subject` riêng của nó (không g�
 
 Chưa có Auth API thật (`Core/Networking/` mới có khung `NetworkService`/`Endpoint`, chưa có
 endpoint gửi OTP cụ thể), cũng chưa có SMS provider. Đây là local Repository call
-(`NetworkService`/Keychain/UserDefaults) — nằm ngoài phạm vi `il-screen-builder` implement thật
+(`NetworkService`/Keychain/UserDefaults) — nằm ngoài phạm vi `ui-builder` implement thật
 (xem `references/data_layer_boundaries.md`), nên hàm hiện chỉ là stub một dòng
 `print("TODO: implement sendVerificationCode — network/repository call, not built by
-il-screen-builder")`, không đọc/ghi Keychain, không tự simulate lỗi
+ui-builder")`, không đọc/ghi Keychain, không tự simulate lỗi
 `ILSignUpError.phoneAlreadyRegistered`.
 
 **TODO khi có backend thật**: thay thân hàm bằng
@@ -186,7 +186,7 @@ Combine `.sink`) xử lý 3 case của `ILSignUpNavEvent`:
 
 - `ILSignUpUseCaseImpl.sendVerificationCode`: stub `print("TODO: ...")` — chờ Auth API + SMS
   provider thật, không implement Keychain mock (đúng hard rule "never a guessed real
-  implementation" của `il-screen-builder`). **Hệ quả**: nút "Gửi mã xác thực" hiện đi thẳng vào
+  implementation" của `ui-builder`). **Hệ quả**: nút "Gửi mã xác thực" hiện đi thẳng vào
   màn OTP mà không có thao tác lưu/kiểm tra nào thật sự chạy phía sau; `ILSignUpError.
   phoneAlreadyRegistered` không còn được throw cho tới khi có implementation thật.
 - `ILCountryPickerCell`/`ILDharmaNameSuggestionField`/`ILPhoneField`: vài `CAShapeLayer` phụ (mũi
@@ -222,7 +222,7 @@ Combine `.sink`) xử lý 3 case của `ILSignUpNavEvent`:
   (`ILSignUpViewModelTests`). Field tuỳ chọn hoàn toàn nên không thêm `validateOrdinationPlace`.
   Giả định chưa xác nhận: nhãn UI/vị trí field/text hint (design handoff chưa có field này) — cần
   đối chiếu lại với designer. `sendVerificationCode` vẫn là stub — chưa gửi field này lên server
-  thật; nối vào request OTP khi làm data layer (`il-data-layer-builder`).
+  thật; nối vào request OTP khi làm data layer (`data-builder`).
 - Đối chiếu lại với `InnerLamp Prototype.dc.html` (block `isSignup`, `emailRaw`/`onEmail`/
   `emailBd`/`emailOk`) theo yêu cầu kiểm tra UI — phát hiện field **Email** (tuỳ chọn, để nhận
   biên nhận cúng dường) có trong thiết kế + `README.md` gốc của design handoff (dòng mô tả màn
@@ -235,7 +235,7 @@ Combine `.sink`) xử lý 3 case của `ILSignUpNavEvent`:
   + hiện lỗi `signup.error.emailInvalid`, KHÔNG chặn nút "Gửi mã xác thực" — khác với displayName/
   phone/password vốn chặn submit qua `hasValidationError`. Thêm 2 test (`ILSignUpViewModelTests`),
   cập nhật `MockILSignUpUseCase` theo chữ ký mới. Đồng bộ `Docs/Specs/SignUp/` (v1.5).
-- Đối chiếu lại với `references/data_layer_boundaries.md` sau khi skill `il-screen-builder` cập
+- Đối chiếu lại với `references/data_layer_boundaries.md` sau khi skill `ui-builder` cập
   nhật hard rule "`IL{{Feature}}Entity`/`IL{{Feature}}StateModel`/`IL{{Feature}}DTO` never merged"
   — 3 điểm được sửa: (1) tách `ILSignUpEntity` (pure business fields: `displayName`,
   `phoneNumber`, `password`) ra khỏi `Domain/Entities/ILSignUpModel.swift` cũ (file đó thực chất
@@ -249,7 +249,7 @@ Combine `.sink`) xử lý 3 case của `ILSignUpNavEvent`:
   bỏ, sẽ sinh lại đúng chuẩn `ILSignUpDTO`/`ILSignUpMapper` khi có Auth API thật.
 - **Rà soát lần 2, đúng theo yêu cầu**: `ILSignUpUseCaseImpl.sendVerificationCode` trước đó vẫn
   gọi thẳng `KeychainService` để mô phỏng lưu/kiểm tra "đã đăng ký" — đây chính là local
-  Repository call mà `il-screen-builder` **không bao giờ** được implement thật, dù mục đích ban
+  Repository call mà `ui-builder` **không bao giờ** được implement thật, dù mục đích ban
   đầu là để `ILLoginUseCase` đọc lại (mô phỏng "đăng ký xong đăng nhập lại" khi chưa có Auth API).
   Đã đưa về đúng dạng stub một dòng `print("TODO: ...")`, xoá `keychainService`/
   `userDefaultsService`/`PendingSignUp`/`StorageKeys` không còn dùng tới khỏi
@@ -259,7 +259,7 @@ Combine `.sink`) xử lý 3 case của `ILSignUpNavEvent`:
   không còn hoạt động cho tới khi có Auth API thật — đây là hệ quả bắt buộc của việc tuân thủ
   đúng hard rule, chưa xử lý tiếp vì nằm ngoài phạm vi feature Login.
 - Đối chiếu lại với `Docs/design_handoff_innerlamp/design/InnerLamp Prototype (standalone).html`
-  (block `isSignup`) theo yêu cầu cập nhật skill `il-screen-builder` — 2 lệch lớn so với thiết kế
+  (block `isSignup`) theo yêu cầu cập nhật skill `ui-builder` — 2 lệch lớn so với thiết kế
   được sửa: (1) field "Pháp danh" từng là `ILField` nhập tự do, đổi thành
   `ILDharmaNameSuggestionField` (giá trị gợi ý sẵn + nút xoay vòng, đúng thiết kế không có ô nhập
   tự do); (2) field "Số điện thoại" từng không có chọn mã vùng, đổi thành `ILPhoneField` +
@@ -273,3 +273,11 @@ Combine `.sink`) xử lý 3 case của `ILSignUpNavEvent`:
   `private lazy var` cấu hình trong closure khởi tạo, `setupViews()` chỉ `addSubview` + wire action
   target vào `*Subject`. Thêm `ILSignUpViewModelTests` (13 test, mock `ILSignUpUseCase` thủ công,
   drive qua `Input` publisher) — trước đó feature này chưa có test nào.
+
+## Changelog
+
+- 2026-10-10 — new design: `ILLogoView` (100px) above the title, Cormorant Garamond title (`signUpTitle`),
+  underlined Terms/Privacy links opening `ILSignUpLegalSheetViewController` (2 tabs, "Tôi đồng ý" ticks the
+  box). "Nơi xuất gia" is now `ILOrdinationPlaceFieldView`: inline picker with search over the public temple
+  catalog (`ILOrdinationPlaceUseCase`), empty state and "Thêm thông tin chùa" →
+  the pushed `AddTemple` screen (local only, see TD-SignUp-002 / AS-SignUp-002 / AS-AddTemple-001).

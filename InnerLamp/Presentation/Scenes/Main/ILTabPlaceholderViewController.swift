@@ -6,7 +6,7 @@
 import UIKit
 
 /// Chỗ giữ chỗ cho tab chưa có màn thật (Đạo tràng, Tôi). Thay bằng màn thật
-/// (`il-screen-builder`) rồi xoá file này khi không còn tab nào dùng.
+/// (`ui-builder`) rồi xoá file này khi không còn tab nào dùng.
 final class ILTabPlaceholderViewController: BaseViewController {
 
     private let navTab: ILBottomNavBar.Tab

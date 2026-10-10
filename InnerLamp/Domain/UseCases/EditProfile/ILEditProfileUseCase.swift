@@ -13,7 +13,7 @@ enum ILEditProfileValidationError: Error, Equatable {
 
 protocol ILEditProfileUseCase {
     /// Returns the profile being edited. Currently mock data because no profile API/storage
-    /// contract is confirmed — replace with an `ILEditProfileRepository` via il-data-layer-builder.
+    /// contract is confirmed — replace with an `ILEditProfileRepository` via data-builder.
     func getProfile() -> ILEditProfileEntity
 
     /// Pure client-side validation of the display name. Returns `nil` when valid.
@@ -29,7 +29,7 @@ final class ILEditProfileUseCaseImpl: ILEditProfileUseCase {
 
     func getProfile() -> ILEditProfileEntity {
         // TODO: no confirmed profile API — replace this mock (matches the prototype `edit` screen)
-        // with ILEditProfileRepository once the contract exists (use il-data-layer-builder).
+        // with ILEditProfileRepository once the contract exists (use data-builder).
         ILEditProfileEntity(
             displayName: "editProfile.mock.displayName".localized,
             phoneNumber: "editProfile.mock.phone".localized,
@@ -46,6 +46,6 @@ final class ILEditProfileUseCaseImpl: ILEditProfileUseCase {
     }
 
     func saveProfile(_ profile: ILEditProfileEntity) async throws {
-        print("TODO: implement saveProfile — network/repository call, not built by il-screen-builder")
+        print("TODO: implement saveProfile — network/repository call, not built by ui-builder")
     }
 }

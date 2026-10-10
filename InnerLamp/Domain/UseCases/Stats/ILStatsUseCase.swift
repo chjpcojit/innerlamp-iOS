@@ -16,7 +16,7 @@ final class ILStatsUseCaseImpl: ILStatsUseCase {
     func getStats() -> ILStatsEntity {
         // TODO: no confirmed stats API yet (handoff README: stats should be written local-first, then
         // synced) — replace the sample data below with an ILStatsRepository once the contract exists
-        // (use il-data-layer-builder).
+        // (use data-builder).
         ILStatsEntity(
             streakDays: 42,
             nextMilestone: ILStatsMilestoneEntity(title: "stats.mock.milestone.title".localized, targetDays: 48),

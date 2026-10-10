@@ -50,6 +50,16 @@ final class ILSplashUseCaseTests: XCTestCase {
         XCTAssertTrue(sut.hasSession())
     }
 
+    func test_hasSession_removesLegacyPendingSignUpCredentials() throws {
+        let legacyKey = "signup_pending_credentials"
+        try keychain.save(key: legacyKey, value: #"{"displayName":"A","phoneNumber":"0900000000","password":"secret"}"#)
+        XCTAssertTrue(keychain.exists(key: legacyKey))
+
+        _ = sut.hasSession()
+
+        XCTAssertFalse(keychain.exists(key: legacyKey))
+    }
+
     func test_hasSession_noToken_returnsFalse() {
         XCTAssertFalse(sut.hasSession())
         XCTAssertFalse(sut.hasSession())
@@ -58,6 +68,7 @@ final class ILSplashUseCaseTests: XCTestCase {
     private func clearSession() {
         try? keychain.delete(key: KeychainAuthTokenProviding.accessTokenKey)
         try? keychain.delete(key: KeychainAuthTokenProviding.refreshTokenKey)
+        try? keychain.delete(key: "signup_pending_credentials")
     }
 }
 

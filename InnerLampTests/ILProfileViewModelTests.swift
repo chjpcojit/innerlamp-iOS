@@ -18,8 +18,10 @@ final class ILProfileViewModelTests: XCTestCase {
     private var statsTappedSubject: PassthroughSubject<Void, Never>!
     private var awardsTappedSubject: PassthroughSubject<Void, Never>!
     private var offeringTappedSubject: PassthroughSubject<Void, Never>!
-    private var premiumTappedSubject: PassthroughSubject<Void, Never>!
+    private var donateTappedSubject: PassthroughSubject<Void, Never>!
     private var reminderTappedSubject: PassthroughSubject<Void, Never>!
+    private var meritBookTappedSubject: PassthroughSubject<Void, Never>!
+    private var createFamilyTreeTappedSubject: PassthroughSubject<Void, Never>!
     private var settingsTappedSubject: PassthroughSubject<Void, Never>!
     private var notificationsTappedSubject: PassthroughSubject<Void, Never>!
     private var familyTreeTappedSubject: PassthroughSubject<Void, Never>!
@@ -36,8 +38,10 @@ final class ILProfileViewModelTests: XCTestCase {
         statsTappedSubject = PassthroughSubject<Void, Never>()
         awardsTappedSubject = PassthroughSubject<Void, Never>()
         offeringTappedSubject = PassthroughSubject<Void, Never>()
-        premiumTappedSubject = PassthroughSubject<Void, Never>()
+        donateTappedSubject = PassthroughSubject<Void, Never>()
         reminderTappedSubject = PassthroughSubject<Void, Never>()
+        meritBookTappedSubject = PassthroughSubject<Void, Never>()
+        createFamilyTreeTappedSubject = PassthroughSubject<Void, Never>()
         settingsTappedSubject = PassthroughSubject<Void, Never>()
         notificationsTappedSubject = PassthroughSubject<Void, Never>()
         familyTreeTappedSubject = PassthroughSubject<Void, Never>()
@@ -51,8 +55,10 @@ final class ILProfileViewModelTests: XCTestCase {
         statsTappedSubject = nil
         awardsTappedSubject = nil
         offeringTappedSubject = nil
-        premiumTappedSubject = nil
+        donateTappedSubject = nil
         reminderTappedSubject = nil
+        meritBookTappedSubject = nil
+        createFamilyTreeTappedSubject = nil
         settingsTappedSubject = nil
         notificationsTappedSubject = nil
         familyTreeTappedSubject = nil
@@ -69,11 +75,13 @@ final class ILProfileViewModelTests: XCTestCase {
             statsTapped: statsTappedSubject.eraseToAnyPublisher(),
             awardsTapped: awardsTappedSubject.eraseToAnyPublisher(),
             offeringTapped: offeringTappedSubject.eraseToAnyPublisher(),
-            premiumTapped: premiumTappedSubject.eraseToAnyPublisher(),
+            donateTapped: donateTappedSubject.eraseToAnyPublisher(),
             reminderTapped: reminderTappedSubject.eraseToAnyPublisher(),
+            meritBookTapped: meritBookTappedSubject.eraseToAnyPublisher(),
             settingsTapped: settingsTappedSubject.eraseToAnyPublisher(),
             notificationsTapped: notificationsTappedSubject.eraseToAnyPublisher(),
             familyTreeTapped: familyTreeTappedSubject.eraseToAnyPublisher(),
+            createFamilyTreeTapped: createFamilyTreeTappedSubject.eraseToAnyPublisher(),
             communityTapped: communityTappedSubject.eraseToAnyPublisher()
         )
     }
@@ -119,7 +127,6 @@ final class ILProfileViewModelTests: XCTestCase {
         XCTAssertEqual(state?.badges.map(\.id), ["b1"])
         XCTAssertEqual(state?.badges.first?.category, .mala)
         XCTAssertEqual(state?.meritSummary, String(format: "profile.merit.summary".localized, 7, 3))
-        XCTAssertEqual(state?.showsPremiumUpsell, true)
         XCTAssertEqual(state?.reminderValue, "05:30 · " + String(format: "profile.menu.reminder.daysPerWeek".localized, 6))
         XCTAssertEqual(state?.communityValue, "Từ Quang")
     }
@@ -140,15 +147,18 @@ final class ILProfileViewModelTests: XCTestCase {
         XCTAssertEqual(latest()?.communityValue, "profile.menu.community.none".localized)
     }
 
-    func test_viewDidLoad_withPaidPlan_hidesPremiumUpsell() {
-        mockUseCase.profile.plan = .yearly
-        sut = ILProfileViewModel(useCase: mockUseCase)
+    func test_viewDidLoad_readsVersionAndBuildFromBundle() {
+        let bundle = Bundle(for: ILProfileViewModelTests.self)
+        sut = ILProfileViewModel(useCase: mockUseCase, bundle: bundle)
         let output = sut.transform(input: makeInput())
         let latest = captureLatestState(output)
 
         viewDidLoadSubject.send(())
 
-        XCTAssertEqual(latest()?.showsPremiumUpsell, false)
+        let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "-"
+        let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "-"
+        XCTAssertEqual(latest()?.versionText, String(format: "profile.footer.version".localized, version))
+        XCTAssertEqual(latest()?.buildText, String(format: "profile.footer.build".localized, build))
     }
 
     // MARK: - Navigation
@@ -188,13 +198,31 @@ final class ILProfileViewModelTests: XCTestCase {
         XCTAssertEqual(events(), [.openOffering])
     }
 
-    func test_premiumTapped_firesOpenPaywallEvent() {
+    func test_donateTapped_firesOpenDonateEvent() {
         _ = sut.transform(input: makeInput())
         let events = captureNavEvents()
 
-        premiumTappedSubject.send(())
+        donateTappedSubject.send(())
 
-        XCTAssertEqual(events(), [.openPaywall])
+        XCTAssertEqual(events(), [.openDonate])
+    }
+
+    func test_meritBookTapped_firesOpenMeritBookEvent() {
+        _ = sut.transform(input: makeInput())
+        let events = captureNavEvents()
+
+        meritBookTappedSubject.send(())
+
+        XCTAssertEqual(events(), [.openMeritBook])
+    }
+
+    func test_createFamilyTreeTapped_firesCreateFamilyTreeEvent() {
+        _ = sut.transform(input: makeInput())
+        let events = captureNavEvents()
+
+        createFamilyTreeTappedSubject.send(())
+
+        XCTAssertEqual(events(), [.createFamilyTree])
     }
 
     func test_reminderTapped_firesOpenReminderEvent() {

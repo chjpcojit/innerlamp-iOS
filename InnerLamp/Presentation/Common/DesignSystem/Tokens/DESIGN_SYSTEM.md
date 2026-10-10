@@ -74,12 +74,13 @@ Dùng khi component cần đổi màu theo tone ngữ nghĩa (`gold`, `green`, `
 
 Tất cả kiểu chữ và hàm tạo AttributedString được định nghĩa trong [`ILTypography.swift`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Tokens/ILTypography.swift).
 
-- **Lora** (Serif): Dùng cho tiêu đề màn (26–30px), câu kinh văn (15–21px, line-height 1.6–1.95), số đếm lớn.
+- **Cormorant Garamond** (Serif, weight 500; 600/700 cho cây gia phả): tiêu đề màn và thẻ (18 / 22 / 28 / 32px), số đếm lớn (68 / 84px), slogan nghiêng 20px.
+- **Literata** (Serif): chữ đọc — thân kinh văn / bài viết (16px, line-height ~1.8), mô tả 14px, dòng phụ nghiêng 13px.
 - **Be Vietnam Pro** (Sans-serif): Dùng cho toàn bộ UI body, nhãn nút, input, danh mục (weight 400, 500, 600).
 
 ```swift
 // Tiêu đề màn hình
-titleLabel.font = ILTypography.displayMedium // Lora 26pt
+titleLabel.font = ILTypography.displayMedium // Cormorant Garamond 28pt
 
 // Câu kinh văn có khoảng cách dòng thoáng
 scriptureLabel.attributedText = ILTypography.makeScriptureText(text: "Tâm an vạn sự an")
@@ -92,20 +93,25 @@ button.font = ILTypography.button // Be Vietnam Pro 13.5pt Medium
 rowTitle.font = ILTypography.rowTitle // Be Vietnam Pro 14pt Medium
 ```
 
+> **Chữ số thẳng hàng (lining numerals)**: Cormorant Garamond mặc định dùng chữ số kiểu cũ (old-style),
+> khiến "1" giống chữ "I". Design bật `lnum` ở mọi nơi, nên `ILTypography.cormorant(...)` luôn tạo font
+> với Number Case = Upper Case Numbers (CoreText → `lnum`). Không tạo `UIFont(name: "CormorantGaramond-…")`
+> trực tiếp ở màn hình/view.
+
 ### 3.1. Toàn bộ Preset
 
 | Preset | Font · Size · Weight | Dùng cho |
 |---|---|---|
-| `introDisplay` | Lora 40 Regular | Màn intro Splash/Onboarding |
-| `stepTitle` | Lora 32 Regular | Tiêu đề bước Onboarding |
-| `displayLarge` | Lora 30 Regular | Tiêu đề màn lớn |
-| `authTitle` | Lora 29 Regular | Tiêu đề màn xác thực (Đăng ký/OTP/Đăng nhập) |
-| `displayMedium` | Lora 26 Regular | Tiêu đề màn |
-| `scriptureTitle` | Lora 22 Regular | Tiêu đề kinh văn |
-| `scriptureBodyLarge` | Lora 20 Regular | Kinh văn cỡ lớn |
-| `scriptureBody` | Lora 18 Regular | Kinh văn tiêu chuẩn |
-| `scriptureBodySmall` | Lora 15 Regular | Kinh văn cỡ nhỏ |
-| `taglineItalic` | Lora 14 Regular (italic tại nơi gọi) | Phụ đề dưới wordmark/tiêu đề |
+| `introDisplay` | Cormorant 32 | Màn intro Splash/Onboarding |
+| `stepTitle` | Cormorant 32 | Tiêu đề bước Onboarding |
+| `displayLarge` | Cormorant 32 | Tiêu đề màn lớn |
+| `authTitle` | Cormorant 28 | Tiêu đề màn xác thực (Đăng ký/OTP/Đăng nhập) |
+| `displayMedium` | Cormorant 28 | Tiêu đề màn |
+| `scriptureTitle` | Cormorant 22 | Tiêu đề kinh văn |
+| `scriptureBodyLarge` | Literata 16 | Kinh văn cỡ lớn |
+| `scriptureBody` | Literata 16 | Kinh văn tiêu chuẩn |
+| `scriptureBodySmall` | Literata 16 | Kinh văn cỡ nhỏ |
+| `taglineItalic` | Literata Italic 13 | Phụ đề dưới wordmark/tiêu đề |
 | `introBody` | Be Vietnam Pro 15 Regular | Mô tả dài Onboarding |
 | `otpDigit` | Be Vietnam Pro 21 Medium | Chữ số ô nhập mã OTP |
 | `title1` | Be Vietnam Pro 18 SemiBold | Tiêu đề lớn trong màn |
@@ -154,8 +160,7 @@ rowTitle.font = ILTypography.rowTitle // Be Vietnam Pro 14pt Medium
 - Ô biểu tượng (`IconTile`): `44x44px`
 - Thanh điều hướng đáy (`ILBottomNavBar`): `110px` (gồm safe area)
 - Ô nhập số OTP (`otpDigitBoxHeight`): `58px`
-- Ảnh đèn Onboarding intro (`onboardingLampSize`): `114x160px` — `ILIcons.onboardingLamp`
-- Ảnh đèn header Đăng nhập (`loginLampSize`): `40x56px` — `ILIcons.onboardingLamp`
+- Logo (`ILLogoView(size:)`): vòng viền `size×1.5/32`, ngọn lửa rộng `size×0.31`, chân lửa cách đáy `size×0.22` — dùng ở Splash (96), Đăng nhập (56), Đăng ký (100)
 
 ### 4.4. Đổ bóng (`ILMetrics.Shadow`)
 
@@ -166,7 +171,8 @@ rowTitle.font = ILTypography.rowTitle // Be Vietnam Pro 14pt Medium
 | `shadowPrimaryButton` | `0 8px 24px rgba(34,30,25,.16)` | Nút primary |
 | `shadowGoldButton` | `0 8px 24px rgba(184,134,47,.24)` | Nút gold |
 | `shadowFloatingBar` | `0 6px 20px rgba(34,30,25,.07)` | Thanh phát nổi / card nổi |
-| `shadowLampLight` | `0 8px 20px rgba(34,30,25,.28)` | Nút đèn ở thanh đáy — nền sáng |
+| `shadowBottomNav` | `0 -8px 24px rgba(34,30,25,.04)` | Thanh đáy — nền sáng (hướng lên trên) |
+| `shadowLampLight` | `0 6px 16px rgba(184,134,47,.35)` | Nút đèn ở thanh đáy — nền sáng |
 | `shadowLampDark` | `0 0 28px rgba(217,150,60,.45)` | Nút đèn ở thanh đáy — nền tối |
 
 ```swift
@@ -220,7 +226,7 @@ nameField.onTextChanged = { text in
 ```
 
 ### 5.4. [`ILRow`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILRow.swift)
-Hàng danh sách chuẩn hiển thị bài kinh, phiên thiền, gồm ô icon 44px (glyph: `leaf`, `book`, `circle`, `dot`), tone màu (`gold`, `green`, `rose`, `ink`), tiêu đề, phụ đề và thông tin đuôi.
+Hàng danh sách chuẩn hiển thị bài kinh, phiên thiền, gồm ô icon 44px (glyph: `leaf` → `ILIcons.rowMed`, `book` → `rowBook`, `circle` → `rowLamp`, `dot` → `rowTalk`, giống `IL-Row` ở prototype; icon tô bằng màu `accentColor` của tone), tone màu (`gold`, `green`, `rose`, `ink`), tiêu đề, phụ đề và thông tin đuôi.
 
 ```swift
 let row = ILRow(
@@ -292,7 +298,7 @@ let stateView = ILStateView(
 ```
 
 ### 5.9. [`ILBottomNavBar`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/ILBottomNavBar.swift)
-Thanh điều hướng đáy 5 mục: **Trang chủ (`home`), Thư viện (`lib`), Đèn thiền trung tâm (`lamp`), Đạo tràng (`sangha`), Tôi (`me`)**, đi kèm quầng gradient đáy và hiệu ứng đổ bóng ngọn đèn.
+Thanh điều hướng đáy 5 mục: **Trang chủ (`home`), Thư viện (`lib`), Đèn thiền trung tâm (`lamp`), Đạo tràng (`sangha`), Tôi (`me`)**, icon đặc (`ILIcons.tab*`, tint theo tab đang chọn: `goldDeep` sáng / `goldBright` tối), nền `surface` + đường kẻ trên (sáng) hoặc gradient fade (tối), nút đèn gradient vàng ở chế độ sáng và vàng phẳng ở chế độ tối.
 
 ```swift
 let navBar = ILBottomNavBar(activeTab: .home)
@@ -375,7 +381,7 @@ private func render(state: ViewState<ILLibraryStateModel>) {
 
 ### 5.13. Bảng màu & kích thước "Gia phả"
 
-Cây gia phả là tranh minh họa nên dùng bảng màu cố định (không đổi theo dark mode): `ILColors.FamilyTree.*` (41 color set `ILTree*` trong `Assets.xcassets/Colors`, gồm các điểm dừng gradient huy hiệu/vòng vạch/nền tấm), preset chữ `ILTypography.tree*` (Lora thay cho Cormorant Garamond của prototype), và hình học canvas/sheet trong `ILMetrics.FamilyTree`.
+Cây gia phả là tranh minh họa nên dùng bảng màu cố định (không đổi theo dark mode): `ILColors.FamilyTree.*` (41 color set `ILTree*` trong `Assets.xcassets/Colors`, gồm các điểm dừng gradient huy hiệu/vòng vạch/nền tấm), preset chữ `ILTypography.tree*` (Cormorant Garamond 600/700 theo prototype), và hình học canvas/sheet trong `ILMetrics.FamilyTree`.
 
 ## 6. Quy Tắc Dành Cho AI & Lập Trình Viên
 
@@ -403,33 +409,52 @@ asset already exists.
 |---|---|---|
 | `context` | UI surface / screen the icon belongs to | `tab`, `onboarding` |
 | `subject` | What the icon depicts (lowercase `snake_case`) | `lamp`, `bell` |
-| `state` | Optional visual variant: `filled` (solid) vs `outline` (stroked) | `tab_lamp_filled` |
+| `state` | Optional visual variant: `filled` (solid) vs `outline` (stroked) | `tab_lamp_flame` |
 
 ### 7.2. Existing Icons
 
 | Token | Asset | Type | @1x size | Notes |
 |---|---|---|---|---|
-| `ILIcons.onboardingLamp` | `onboarding_lamp` | full-color illustration | 114×160 | Lamp + glow — Onboarding intro, Login header |
-| `ILIcons.tabLampFilled` | `tab_lamp_filled` | monochrome template (black) | 28×28 | Flame + lotus pedestal, solid — bottom-nav center lamp (normal) |
-| `ILIcons.tabLampOutline` | `tab_lamp_outline` | monochrome template (black) | 28×28 | Flame + lotus pedestal, stroked — bottom-nav center lamp (highlighted) |
+| `ILIcons.tabHome` | `tab_home` | template, vector (SVG) | 44×44 | Pagoda with arched door cut out — `ILBottomNavBar` "Trang chủ" |
+| `ILIcons.tabLib` | `tab_lib` | template, vector (SVG) | 44×44 | Two splayed books — `ILBottomNavBar` "Thư viện" |
+| `ILIcons.tabSangha` | `tab_sangha` | template, vector (SVG) | 44×44 | Temple with arched door — `ILBottomNavBar` "Chùa" |
+| `ILIcons.tabMe` | `tab_me` | template, vector (SVG) | 44×44 | Person bust — `ILBottomNavBar` "Tôi" |
+| `ILIcons.tabLampFlame` | `tab_lamp_flame` | template, vector (SVG) | 40×56 | Outer flame — `ILBottomNavBar` center lamp, drawn 17×24 |
+| `ILIcons.tabLampCore` | `tab_lamp_core` | template, vector (SVG) | 40×56 | Inner core, same frame as `tabLampFlame` — stacked on top with a different tint |
+| `ILIcons.homeEvent` | `home_event` | template, vector (SVG) | 44×44 | Four-point sparkle — Home "Sự kiện Phật giáo" header (tone `rose`) |
+| `ILIcons.homePhoto` | `home_photo` | template, vector (SVG) | 44×44 | Framed landscape — Home "Ảnh chùa đẹp" header (tone `rose`) |
+| `ILIcons.homeTemple` | `home_temple` | template, vector (SVG) | 44×44 | Pagoda — Home "Chùa Việt Nam" header (tone `gold`) |
+| `ILIcons.homeBuddha` | `home_buddha` | template, vector (SVG) | 44×44 | Seated Buddha + halo (28% alpha) — Home "Thư viện Phật & Bồ Tát" header (tone `gold`) |
+| `ILIcons.homeBeads` | `home_beads` | template, vector (SVG) | 44×44 | Prayer beads — Home "Tràng hạt · Niệm Phật" header (tone `rose`) |
+| `ILIcons.homeSchedule` | `home_schedule` | template, vector (SVG) | 44×44 | Clock (hands cut out) — Home "Thời khóa gợi ý" header (tone `green`) |
+| `ILIcons.homeArticle` | `home_article` | template, vector (SVG) | 44×44 | Document with lines — Home "Bài viết Phật pháp hay" header (tone `green`) |
+| `ILIcons.homeMo` | `home_mo` | template, vector (SVG) | 44×44 | Wooden-fish disc with slot — Home "Chuông mõ" card, 46×46 tile (tone `gold`) |
+| `ILIcons.rowMed` | `row_med` | template, vector (SVG) | 44×44 | Seated meditator — `ILRow.Glyph.leaf` |
+| `ILIcons.rowBook` | `row_book` | template, vector (SVG) | 44×44 | Two tilted books — `ILRow.Glyph.book` |
+| `ILIcons.rowLamp` | `row_lamp` | template, vector (SVG) | 44×44 | Oil lamp with flame — `ILRow.Glyph.circle` |
+| `ILIcons.rowTalk` | `row_talk` | template, vector (SVG) | 44×44 | Four sound bars — `ILRow.Glyph.dot` |
 
-Token naming: the asset name in `lowerCamelCase` (`tab_lamp_filled` → `tabLampFilled`).
+`ILSectionHeaderView(title:trailingText:icon:iconTone:)` draws a `home*` icon in a 22×22 tile
+(`ILMetrics.sectionIconSize`, radius `radiusSectionIcon`) filled with `iconTone.tintBackground` and
+tinted with `iconTone.accentColor`; omit `icon` for a plain header.
+
+Token naming: the asset name in `lowerCamelCase` (`tab_lamp_flame` → `tabLampFlame`).
 
 ### 7.3. Loading & Tinting
 
 The rendering mode is baked into the token, never set at the call site:
 
-- **Full-color** tokens (declared via `illustration(_:)`, e.g. `onboardingLamp`) use
+- **Full-color** tokens (declared via `illustration(_:)`, e.g. `bellChuong`) use
   `.alwaysOriginal` — render as-is, do **not** tint.
-- **Template** tokens (declared via `template(_:)`, e.g. `tabLampFilled` / `tabLampOutline`) use
+- **Template** tokens (declared via `template(_:)`, e.g. `tabHome` / `tabLampFlame`) use
   `.alwaysTemplate` — tint via `tintColor` with an `ILColors` constant so they follow the theme.
 
 ```swift
 // Full-color illustration — render as-is
-imageView.image = ILIcons.onboardingLamp
+imageView.image = ILIcons.bellChuong
 
 // Template icon — tintable
-imageView.image = ILIcons.tabLampFilled
+imageView.image = ILIcons.tabLampFlame
 imageView.tintColor = ILColors.lampFlameDark
 ```
 
@@ -437,8 +462,7 @@ imageView.tintColor = ILColors.lampFlameDark
 
 1. **Reuse first**: search `Assets.xcassets/Icons/` for a fitting icon before adding a new one.
 2. **No code-drawn duplicates**: prefer the asset over a hand-drawn `CAShapeLayer`/`UIBezierPath`
-   when the same icon already exists as an asset. (The four non-lamp tab icons in `ILBottomNavBar`
-   are still code-drawn via `ILTabIconView` — migrate them to assets if assets are ever provided.)
+   when the same icon already exists as an asset.
 3. **Always via token**: adding an icon = add the `.imageset` **and** one constant in `ILIcons`
    (`template(_:)` or `illustration(_:)`) + a row in §7.2. A missing asset `fatalError`s at
    launch in debug, so a typo is caught immediately.

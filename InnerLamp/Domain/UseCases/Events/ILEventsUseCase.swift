@@ -15,7 +15,7 @@ final class ILEventsUseCaseImpl: ILEventsUseCase {
 
     func getEvents() -> ILEventsEntity {
         // TODO: chưa có API sự kiện & khóa học được xác nhận — thay dữ liệu mẫu bên dưới bằng
-        // ILEventsRepository → networkService khi có contract (dùng il-data-layer-builder).
+        // ILEventsRepository → networkService khi có contract (dùng data-builder).
         ILEventsEntity(
             featured: ILEventsFeaturedEntity(
                 id: "event.khoatu.motngay",

@@ -52,4 +52,4 @@ design source: `Docs/InnerLamp project/IL-GiaPha.dc.html`. Spec:
 - 2026-10-03 — v2.0 design parity (Phases 2, 3, 5): `ILFamilyTreeHeaderView`, tree-palette chips/search field, paper background (`ILFamilyTreePaperView`), wrapping legend, DỨT NHÁNH marker, gradient medallion, halo labels, detail-sheet extras.
 - 2026-10-03 — "Tạo gia phả mới" now opens `FamilyTreeCreate` (`.createTree` nav event, `showCreatedTree(_:)`).
 - 2026-10-03 — empty state rebuilt from the "Gia phả · trống" prototype screen (`ILFamilyTreeEmptyView`, `createTapped`/`joinTapped` inputs).
-- 2026-10-03 — initial build from the "Gia Pha Mobile" design via il-screen-builder.
+- 2026-10-03 — initial build from the "Gia Pha Mobile" design via ui-builder.

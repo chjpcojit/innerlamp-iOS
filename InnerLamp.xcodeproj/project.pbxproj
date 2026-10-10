@@ -46,6 +46,7 @@
 				Core/Storage/README.md,
 				Domain/UseCases/Almanac/README.md,
 				Info.plist,
+				Presentation/Scenes/AddTemple/README.md,
 				Presentation/Scenes/Article/README.md,
 				Presentation/Scenes/Articles/README.md,
 				Presentation/Scenes/Bell/README.md,

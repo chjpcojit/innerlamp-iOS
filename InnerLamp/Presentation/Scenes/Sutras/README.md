@@ -30,12 +30,12 @@ Spec: `Docs/Specs/Sutras/`.
 ## Known gaps
 
 - "Có audio" badge follows `audio_url` (no sutra has audio yet); "downloaded" badge never shown (TD-Sutras-002).
-- No dedicated first-load skeleton: the footer spinner covers it.
+- First load (and any filter/search reload that empties the list) shows `ILSutrasSkeletonView` — card-shaped pulsing placeholders matching `ILSutrasCardView`; later pages use the footer spinner.
 - "Gửi yêu cầu bản kinh" link on the empty state not built (Empty-search screen not built).
 
 ## Changelog
 
-- 2026-10-03 — initial implementation (il-screen-builder)
+- 2026-10-03 — initial implementation (ui-builder)
 - 2026-10-07 — integrated `GET /v1/sutras` (paging, server filters)
 - 2026-10-07 — search field "×" clear button (`ILSearchInputView.showsClearButton`)
 - 2026-10-07 — server-side search (`q`) + `audio_url` badge; client-side search removed (TD-Sutras-003 resolved)

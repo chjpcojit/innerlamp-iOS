@@ -22,8 +22,8 @@ final class ILHomeBellCardView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let iconCircle = UIView()
-    private let iconInner = UIView()
+    private let iconTile = UIView()
+    private let iconView = UIImageView()
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let chevronLabel = UILabel()
@@ -45,16 +45,16 @@ final class ILHomeBellCardView: UIControl {
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
 
-        iconCircle.backgroundColor = ILColors.gold.withAlphaComponent(0.14)
-        iconCircle.layer.borderWidth = 1
-        iconCircle.layer.borderColor = ILColors.goldBorder.cgColor
-        iconCircle.translatesAutoresizingMaskIntoConstraints = false
+        iconTile.backgroundColor = ILColors.Tone.gold.tintBackground
+        iconTile.layer.cornerRadius = ILMetrics.radiusIconTileLarge
+        iconTile.isUserInteractionEnabled = false
+        iconTile.translatesAutoresizingMaskIntoConstraints = false
 
-        iconInner.backgroundColor = .clear
-        iconInner.layer.borderWidth = 1.5
-        iconInner.layer.borderColor = ILColors.gold.cgColor
-        iconInner.translatesAutoresizingMaskIntoConstraints = false
-        iconCircle.addSubview(iconInner)
+        iconView.image = ILIcons.homeMo
+        iconView.tintColor = ILColors.Tone.gold.accentColor
+        iconView.contentMode = .scaleAspectFit
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconTile.addSubview(iconView)
 
         titleLabel.font = ILTypography.scriptureBodySmall
         titleLabel.textColor = ILColors.ink
@@ -78,7 +78,7 @@ final class ILHomeBellCardView: UIControl {
         chevronLabel.setContentHuggingPriority(.required, for: .horizontal)
         chevronLabel.isUserInteractionEnabled = false
 
-        let contentStack = UIStackView(arrangedSubviews: [iconCircle, textStack, chevronLabel])
+        let contentStack = UIStackView(arrangedSubviews: [iconTile, textStack, chevronLabel])
         contentStack.axis = .horizontal
         contentStack.spacing = 14
         contentStack.alignment = .center
@@ -87,13 +87,13 @@ final class ILHomeBellCardView: UIControl {
         addSubview(contentStack)
 
         NSLayoutConstraint.activate([
-            iconCircle.widthAnchor.constraint(equalToConstant: 46),
-            iconCircle.heightAnchor.constraint(equalToConstant: 46),
+            iconTile.widthAnchor.constraint(equalToConstant: ILMetrics.iconTileLargeSize),
+            iconTile.heightAnchor.constraint(equalToConstant: ILMetrics.iconTileLargeSize),
 
-            iconInner.centerXAnchor.constraint(equalTo: iconCircle.centerXAnchor),
-            iconInner.centerYAnchor.constraint(equalTo: iconCircle.centerYAnchor),
-            iconInner.widthAnchor.constraint(equalToConstant: 16),
-            iconInner.heightAnchor.constraint(equalToConstant: 16),
+            iconView.leadingAnchor.constraint(equalTo: iconTile.leadingAnchor),
+            iconView.trailingAnchor.constraint(equalTo: iconTile.trailingAnchor),
+            iconView.topAnchor.constraint(equalTo: iconTile.topAnchor),
+            iconView.bottomAnchor.constraint(equalTo: iconTile.bottomAnchor),
 
             contentStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 18),
             contentStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -18),
@@ -109,16 +109,8 @@ final class ILHomeBellCardView: UIControl {
         }
     }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        iconCircle.layer.cornerRadius = 23
-        iconInner.layer.cornerRadius = 8
-    }
-
     private func applyColorAppearanceChange() {
         layer.borderColor = ILColors.border.cgColor
-        iconCircle.layer.borderColor = ILColors.goldBorder.cgColor
-        iconInner.layer.borderColor = ILColors.gold.cgColor
     }
 
     @objc private func handleTouchDown() {

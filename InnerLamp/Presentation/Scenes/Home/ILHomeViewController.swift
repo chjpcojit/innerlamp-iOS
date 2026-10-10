@@ -40,31 +40,31 @@ final class ILHomeViewController: BaseViewController {
     private let weekCalendarView = ILHomeWeekCalendarView()
     private let lunarHeroCard = ILHomeLunarHeroCardView()
 
-    private let eventsHeader = ILSectionHeaderView(title: "home.events.title".localized, trailingText: "home.events.viewAll".localized)
+    private let eventsHeader = ILSectionHeaderView(title: "home.events.title".localized, trailingText: "home.events.viewAll".localized, icon: ILIcons.homeEvent, iconTone: .rose)
     private let eventsCarousel = ILHomeEventsCarouselView()
 
-    private let photosHeader = ILSectionHeaderView(title: "home.photos.title".localized, trailingText: "home.photos.viewAll".localized)
+    private let photosHeader = ILSectionHeaderView(title: "home.photos.title".localized, trailingText: "home.photos.viewAll".localized, icon: ILIcons.homePhoto, iconTone: .rose)
     private let photosGrid = ILHomePhotoGridView()
 
-    private let templesHeader = ILSectionHeaderView(title: "home.temple.title".localized, trailingText: "home.temple.find".localized)
+    private let templesHeader = ILSectionHeaderView(title: "home.temple.title".localized, trailingText: "home.temple.find".localized, icon: ILIcons.homeTemple, iconTone: .gold)
     private let templesCarousel = ILHomeTempleCarouselView()
 
-    private let deitiesHeader = ILSectionHeaderView(title: "home.deity.title".localized, trailingText: "home.deity.viewAll".localized)
+    private let deitiesHeader = ILSectionHeaderView(title: "home.deity.title".localized, trailingText: "home.deity.viewAll".localized, icon: ILIcons.homeBuddha, iconTone: .gold)
     private let deitiesCarousel = ILHomeDeityCarouselView()
 
     private let todayCard = ILStatProgressCardView(title: "home.today.title".localized)
     private let streakCard = ILStatStreakCardView(title: "home.streak.title".localized, unitText: "home.streak.unit".localized)
     private let statsStack = UIStackView()
 
-    private let malaHeader = ILSectionHeaderView(title: "home.mala.title".localized, trailingText: "home.mala.fullscreen".localized)
+    private let malaHeader = ILSectionHeaderView(title: "home.mala.title".localized, trailingText: "home.mala.fullscreen".localized, icon: ILIcons.homeBeads, iconTone: .rose)
     private let malaCounter = ILMalaCounterView()
 
     private let bellCard = ILHomeBellCardView()
 
-    private let suggestedHeader = ILSectionHeaderView(title: "home.suggested.title".localized)
+    private let suggestedHeader = ILSectionHeaderView(title: "home.suggested.title".localized, icon: ILIcons.homeSchedule, iconTone: .green)
     private let suggestedStack = UIStackView()
 
-    private let articlesHeader = ILSectionHeaderView(title: "home.article.title".localized, trailingText: "home.article.library".localized)
+    private let articlesHeader = ILSectionHeaderView(title: "home.article.title".localized, trailingText: "home.article.library".localized, icon: ILIcons.homeArticle, iconTone: .green)
     private let articlesList = ILHomeArticleListView()
 
 

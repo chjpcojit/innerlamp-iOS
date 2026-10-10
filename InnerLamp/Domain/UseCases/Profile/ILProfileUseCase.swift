@@ -15,7 +15,7 @@ final class ILProfileUseCaseImpl: ILProfileUseCase {
 
     func getProfile() -> ILProfileEntity {
         // TODO: chưa có API hồ sơ / thống kê / dấu ấn được xác nhận — thay dữ liệu mẫu bên dưới bằng
-        // ILProfileRepository (ILUserRepository + network) khi có contract (dùng il-data-layer-builder).
+        // ILProfileRepository (ILUserRepository + network) khi có contract (dùng data-builder).
         ILProfileEntity(
             fullName: "profile.mock.fullName".localized,
             dharmaName: "profile.mock.dharmaName".localized,

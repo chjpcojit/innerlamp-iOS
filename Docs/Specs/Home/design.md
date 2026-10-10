@@ -81,9 +81,9 @@ quote (`home.lunar.verse.*`), session/streak statistics (hardcoded `12/20`,
 `42`, a fixed `[0.3, 0.5, …]` progress array), suggested sessions (3 fixed
 items), photos (loaded from `GET /v1/gallery/top` via `loadTopPhotos()` since v1.10; `ILHomeUseCaseImpl` takes an `ILPhotosRepository`), temples (8 fixed temples), articles (5 fixed
 articles), and events (2 months of sample events). Each block carries a
-`// TODO: … networkService` comment. The greeting name is read via
-`KeychainService` key `signup_pending_credentials` — a temporary arrangement
-until a real session service exists. Completing this is `tasks.md` Phase 3.
+`// TODO: … networkService` comment. The greeting name currently has no source
+(empty → "khách"); the temporary `signup_pending_credentials` Keychain read was
+removed because it held a plaintext password (TD-Home-002). Completing this is `tasks.md` Phase 3.
 
 ## Design reference
 

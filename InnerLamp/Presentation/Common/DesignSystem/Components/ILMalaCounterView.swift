@@ -5,8 +5,8 @@
 
 import UIKit
 
-/// Thẻ tràng hạt — vòng tròn có viền tiến trình theo `count`/`goal`, câu niệm + mô tả và mũi tên
-/// "›". Cả thẻ là một vùng chạm (`onTap`) dẫn tới màn Niệm Phật. Dữ liệu-hóa hoàn toàn nên dùng
+/// Thẻ tràng hạt — vòng 18 hạt nhỏ (sáng dần theo `count`/`goal`) kèm hạt mẹ và đuôi ở dưới, số
+/// đếm ở giữa, câu niệm + mô tả và mũi tên "›". Cả thẻ là một vùng chạm (`onTap`) dẫn tới màn Niệm Phật. Dữ liệu-hóa hoàn toàn nên dùng
 /// lại được, không riêng cho Trang chủ.
 public final class ILMalaCounterView: UIView {
 
@@ -37,8 +37,9 @@ public final class ILMalaCounterView: UIView {
 
     // MARK: - UI Elements
     private let beadControl = UIView()
-    private let trackLayer = CAShapeLayer()
-    private let progressLayer = CAShapeLayer()
+    private var beadLayers: [CALayer] = []
+    private let motherBeadLayer = CALayer()
+    private let tailLayer = CALayer()
     private let innerCircle = UIView()
     private let countLabel = UILabel()
     private let goalLabel = UILabel()
@@ -46,8 +47,17 @@ public final class ILMalaCounterView: UIView {
     private let helperLabel = UILabel()
     private let chevronLabel = UILabel()
 
-    private let ringDiameter: CGFloat = 92
-    private let ringLineWidth: CGFloat = 6
+    // Geometry of the bead ring (96×104 box in the design, ring centered at (48, 48)).
+    private let beadAreaSize = CGSize(width: 96, height: 104)
+    private let beadRingRadius: CGFloat = 40
+    private let beadCount = 18
+    private let beadSize: CGFloat = 9
+    private let beadRingWidth: CGFloat = 1
+    private let motherBeadSize: CGFloat = 12
+    private let motherBeadRingWidth: CGFloat = 2
+    private let motherBeadCenter = CGPoint(x: 48, y: 90)
+    private let tailRect = CGRect(x: 47, y: 94, width: 2, height: 8)
+    private let countCircleSize: CGFloat = 60
 
     // MARK: - Initializer
     public init(count: Int = 0, goal: Int = 108, goalText: String = "", mantraText: String = "", helperText: String = "") {
@@ -74,23 +84,22 @@ public final class ILMalaCounterView: UIView {
         beadControl.translatesAutoresizingMaskIntoConstraints = false
         beadControl.isUserInteractionEnabled = false
 
-        trackLayer.fillColor = UIColor.clear.cgColor
-        trackLayer.strokeColor = ILColors.gold.withAlphaComponent(0.16).cgColor
-        trackLayer.lineWidth = ringLineWidth
-        trackLayer.lineCap = .round
-        beadControl.layer.addSublayer(trackLayer)
+        beadLayers = (0..<beadCount).map { _ in
+            let bead = CALayer()
+            beadControl.layer.addSublayer(bead)
+            return bead
+        }
 
-        progressLayer.fillColor = UIColor.clear.cgColor
-        progressLayer.strokeColor = ILColors.gold.cgColor
-        progressLayer.lineWidth = ringLineWidth
-        progressLayer.lineCap = .round
-        beadControl.layer.addSublayer(progressLayer)
+        tailLayer.backgroundColor = ILColors.gold.withAlphaComponent(0.7).cgColor
+        tailLayer.cornerRadius = 1
+        beadControl.layer.addSublayer(tailLayer)
+
+        beadControl.layer.addSublayer(motherBeadLayer)
 
         innerCircle.isUserInteractionEnabled = false
-        innerCircle.backgroundColor = ILColors.canvasWarm
         innerCircle.translatesAutoresizingMaskIntoConstraints = false
 
-        countLabel.font = ILTypography.title1
+        countLabel.font = ILTypography.malaCardCount
         countLabel.textColor = ILColors.ink
         countLabel.textAlignment = .center
 
@@ -136,13 +145,13 @@ public final class ILMalaCounterView: UIView {
         addSubview(contentStack)
 
         NSLayoutConstraint.activate([
-            beadControl.widthAnchor.constraint(equalToConstant: ringDiameter),
-            beadControl.heightAnchor.constraint(equalToConstant: ringDiameter),
+            beadControl.widthAnchor.constraint(equalToConstant: beadAreaSize.width),
+            beadControl.heightAnchor.constraint(equalToConstant: beadAreaSize.height),
 
-            innerCircle.leadingAnchor.constraint(equalTo: beadControl.leadingAnchor, constant: ringLineWidth),
-            innerCircle.trailingAnchor.constraint(equalTo: beadControl.trailingAnchor, constant: -ringLineWidth),
-            innerCircle.topAnchor.constraint(equalTo: beadControl.topAnchor, constant: ringLineWidth),
-            innerCircle.bottomAnchor.constraint(equalTo: beadControl.bottomAnchor, constant: -ringLineWidth),
+            innerCircle.centerXAnchor.constraint(equalTo: beadControl.leadingAnchor, constant: beadAreaSize.width / 2),
+            innerCircle.centerYAnchor.constraint(equalTo: beadControl.topAnchor, constant: beadAreaSize.width / 2),
+            innerCircle.widthAnchor.constraint(equalToConstant: countCircleSize),
+            innerCircle.heightAnchor.constraint(equalToConstant: countCircleSize),
 
             countStack.centerXAnchor.constraint(equalTo: innerCircle.centerXAnchor),
             countStack.centerYAnchor.constraint(equalTo: innerCircle.centerYAnchor),
@@ -165,33 +174,57 @@ public final class ILMalaCounterView: UIView {
 
     public override func layoutSubviews() {
         super.layoutSubviews()
-        let rect = CGRect(x: 0, y: 0, width: ringDiameter, height: ringDiameter)
-        let center = CGPoint(x: ringDiameter / 2, y: ringDiameter / 2)
-        let radius = (ringDiameter - ringLineWidth) / 2
-        let circlePath = UIBezierPath(
-            arcCenter: center,
-            radius: radius,
-            startAngle: -.pi / 2,
-            endAngle: 1.5 * .pi,
-            clockwise: true
-        )
-        trackLayer.frame = rect
-        trackLayer.path = circlePath.cgPath
-        progressLayer.frame = rect
-        progressLayer.path = circlePath.cgPath
-        innerCircle.layer.cornerRadius = (ringDiameter - ringLineWidth * 2) / 2
+        layoutBeads()
+    }
+
+    /// Beads sit on a circle starting at the bottom and going clockwise (as in the design).
+    private func layoutBeads() {
+        let center = CGPoint(x: beadAreaSize.width / 2, y: beadAreaSize.width / 2)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        for (index, bead) in beadLayers.enumerated() {
+            let angle = CGFloat.pi / 2 + (CGFloat(index) + 0.5) * 2 * .pi / CGFloat(beadCount)
+            bead.position = CGPoint(
+                x: center.x + beadRingRadius * cos(angle),
+                y: center.y + beadRingRadius * sin(angle)
+            )
+        }
+        motherBeadLayer.position = motherBeadCenter
+        tailLayer.frame = tailRect
+        CATransaction.commit()
     }
 
     private func updateCount() {
         countLabel.text = "\(count)"
         let progress = goal > 0 ? min(1, max(0, Double(count) / Double(goal))) : 0
-        progressLayer.strokeEnd = CGFloat(progress)
+        let litCount = Int((progress * Double(beadCount)).rounded())
+
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        for (index, bead) in beadLayers.enumerated() {
+            let isLit = index < litCount
+            // A lit bead has a 1px ring outside its 9px body, so its layer is 2px larger.
+            let side = isLit ? beadSize + beadRingWidth * 2 : beadSize
+            bead.bounds = CGRect(x: 0, y: 0, width: side, height: side)
+            bead.cornerRadius = side / 2
+            bead.backgroundColor = (isLit ? ILColors.malaBeadLit : ILColors.malaBeadIdle).cgColor
+            bead.borderWidth = isLit ? beadRingWidth : 0
+            bead.borderColor = ILColors.malaBeadLitRing.cgColor
+        }
+        // Mother bead: 12px gold with a 2px ring in the card color.
+        let motherSide = motherBeadSize + motherBeadRingWidth * 2
+        motherBeadLayer.bounds = CGRect(x: 0, y: 0, width: motherSide, height: motherSide)
+        motherBeadLayer.cornerRadius = motherSide / 2
+        motherBeadLayer.backgroundColor = ILColors.gold.cgColor
+        motherBeadLayer.borderWidth = motherBeadRingWidth
+        motherBeadLayer.borderColor = ILColors.surface.cgColor
+        CATransaction.commit()
     }
 
     private func applyColorAppearanceChange() {
         layer.borderColor = ILColors.border.cgColor
-        trackLayer.strokeColor = ILColors.gold.withAlphaComponent(0.16).cgColor
-        progressLayer.strokeColor = ILColors.gold.cgColor
+        tailLayer.backgroundColor = ILColors.gold.withAlphaComponent(0.7).cgColor
+        updateCount()
     }
 
     @objc private func handleTap() {

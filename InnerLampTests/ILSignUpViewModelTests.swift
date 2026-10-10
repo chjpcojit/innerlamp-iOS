@@ -20,6 +20,9 @@ final class ILSignUpViewModelTests: XCTestCase {
     private var suggestDisplayNameTappedSubject: PassthroughSubject<Void, Never>!
     private var displayNameChangedSubject: PassthroughSubject<String, Never>!
     private var ordinationPlaceChangedSubject: PassthroughSubject<String, Never>!
+    private var ordinationPickerOpenedSubject: PassthroughSubject<Void, Never>!
+    private var addTempleTappedSubject: PassthroughSubject<String, Never>!
+    private var mockOrdinationPlaceUseCase: MockILOrdinationPlaceUseCase!
     private var countryChangedSubject: PassthroughSubject<ILCountry, Never>!
     private var phoneNumberChangedSubject: PassthroughSubject<String, Never>!
     private var emailChangedSubject: PassthroughSubject<String, Never>!
@@ -34,13 +37,16 @@ final class ILSignUpViewModelTests: XCTestCase {
         super.setUp()
         mockRepository = MockILSignUpRepository()
         useCase = ILSignUpUseCaseImpl(repository: mockRepository)
-        sut = ILSignUpViewModel(useCase: useCase)
+        mockOrdinationPlaceUseCase = MockILOrdinationPlaceUseCase()
+        sut = ILSignUpViewModel(useCase: useCase, ordinationPlaceUseCase: mockOrdinationPlaceUseCase)
         cancellables = []
 
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
         suggestDisplayNameTappedSubject = PassthroughSubject<Void, Never>()
         displayNameChangedSubject = PassthroughSubject<String, Never>()
         ordinationPlaceChangedSubject = PassthroughSubject<String, Never>()
+        ordinationPickerOpenedSubject = PassthroughSubject<Void, Never>()
+        addTempleTappedSubject = PassthroughSubject<String, Never>()
         countryChangedSubject = PassthroughSubject<ILCountry, Never>()
         phoneNumberChangedSubject = PassthroughSubject<String, Never>()
         emailChangedSubject = PassthroughSubject<String, Never>()
@@ -58,6 +64,9 @@ final class ILSignUpViewModelTests: XCTestCase {
         suggestDisplayNameTappedSubject = nil
         displayNameChangedSubject = nil
         ordinationPlaceChangedSubject = nil
+        ordinationPickerOpenedSubject = nil
+        addTempleTappedSubject = nil
+        mockOrdinationPlaceUseCase = nil
         countryChangedSubject = nil
         phoneNumberChangedSubject = nil
         emailChangedSubject = nil
@@ -79,6 +88,8 @@ final class ILSignUpViewModelTests: XCTestCase {
             suggestDisplayNameTapped: suggestDisplayNameTappedSubject.eraseToAnyPublisher(),
             displayNameChanged: displayNameChangedSubject.eraseToAnyPublisher(),
             ordinationPlaceChanged: ordinationPlaceChangedSubject.eraseToAnyPublisher(),
+            ordinationPickerOpened: ordinationPickerOpenedSubject.eraseToAnyPublisher(),
+            addTempleTapped: addTempleTappedSubject.eraseToAnyPublisher(),
             countryChanged: countryChangedSubject.eraseToAnyPublisher(),
             phoneNumberChanged: phoneNumberChangedSubject.eraseToAnyPublisher(),
             emailChanged: emailChangedSubject.eraseToAnyPublisher(),
@@ -254,6 +265,90 @@ final class ILSignUpViewModelTests: XCTestCase {
 
         XCTAssertEqual(receivedState?.ordinationPlace, "Chùa Hoa Nghiêm")
         XCTAssertFalse(receivedState!.hasValidationError)
+    }
+
+    func test_ordinationPickerOpened_loadsPlacesOnce() {
+        let places = [
+            ILOrdinationPlaceEntity(id: "t1", name: "Chùa Từ Quang", subtitle: "TP. Hồ Chí Minh"),
+            ILOrdinationPlaceEntity(id: "t2", name: "Chùa Trấn Quốc", subtitle: "Hà Nội")
+        ]
+        mockOrdinationPlaceUseCase.places = places
+        let output = makeOutput()
+        var receivedState: ILSignUpStateModel?
+        let loaded = expectation(description: "places loaded")
+        output.state
+            .sink {
+                guard case .success(let model) = $0 else { return }
+                receivedState = model
+                if model.ordinationPlaceOptions == places { loaded.fulfill() }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        ordinationPickerOpenedSubject.send(())
+        wait(for: [loaded], timeout: 1)
+        ordinationPickerOpenedSubject.send(())
+
+        XCTAssertEqual(receivedState?.isLoadingOrdinationPlaces, false)
+        XCTAssertEqual(mockOrdinationPlaceUseCase.loadCallCount, 1)
+    }
+
+    func test_addTempleTapped_emitsOpenAddTempleEventWithQueryAndLoadedPlaces() {
+        let places = [ILOrdinationPlaceEntity(id: "t1", name: "Chùa Từ Quang", subtitle: "TP. Hồ Chí Minh")]
+        mockOrdinationPlaceUseCase.places = places
+        let output = makeOutput()
+        let loaded = expectation(description: "places loaded")
+        output.state
+            .sink { if case .success(let model) = $0, model.ordinationPlaceOptions == places { loaded.fulfill() } }
+            .store(in: &cancellables)
+        var receivedEvent: ILSignUpNavEvent?
+        sut.navigationEventPublisher.sink { receivedEvent = $0 }.store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        ordinationPickerOpenedSubject.send(())
+        wait(for: [loaded], timeout: 1)
+        addTempleTappedSubject.send("Pháp Hoa")
+
+        XCTAssertEqual(receivedEvent, .openAddTemple(prefillName: "Pháp Hoa", existingPlaces: places))
+    }
+
+    func test_applyProposedPlace_selectsProposalAndPutsItFirst() {
+        let output = makeOutput()
+        var receivedState: ILSignUpStateModel?
+        output.state
+            .sink { if case .success(let model) = $0 { receivedState = model } }
+            .store(in: &cancellables)
+        viewDidLoadSubject.send(())
+
+        sut.applyProposedPlace(ILTempleProposalEntity(name: "Chùa Pháp Hoa", province: "Đà Nẵng", address: "12 Lê Lợi"))
+
+        XCTAssertEqual(receivedState?.ordinationPlace, "Chùa Pháp Hoa")
+        XCTAssertEqual(receivedState?.ordinationPlaceOptions.first?.name, "Chùa Pháp Hoa")
+        XCTAssertEqual(receivedState?.selectedOrdinationPlaceID, receivedState?.ordinationPlaceOptions.first?.id)
+
+        ordinationPlaceChangedSubject.send("")
+        XCTAssertNil(receivedState?.selectedOrdinationPlaceID)
+    }
+
+    func test_ordinationPlaceFilter_emptyQuery_showsNoneThenFirstSixPlaces() {
+        let options = (1...9).map { ILOrdinationPlaceEntity(id: "t\($0)", name: "Chùa \($0)", subtitle: "") }
+
+        let rows = ILOrdinationPlaceFilter.rows(options: options, query: "  ", noneName: "Chưa xuất gia", noneSubtitle: "Cư sĩ")
+
+        XCTAssertEqual(rows.count, 7)
+        XCTAssertTrue(rows[0].isNone)
+        XCTAssertEqual(rows[6].id, "t6")
+    }
+
+    func test_ordinationPlaceFilter_query_matchesNameAndAddressIgnoringDiacriticsAndCase() {
+        let options = [
+            ILOrdinationPlaceEntity(id: "t1", name: "Chùa Từ Quang", subtitle: "Đà Lạt, Lâm Đồng"),
+            ILOrdinationPlaceEntity(id: "t2", name: "Chùa Trấn Quốc", subtitle: "Hà Nội")
+        ]
+
+        XCTAssertEqual(ILOrdinationPlaceFilter.rows(options: options, query: "tu quang", noneName: "", noneSubtitle: "").map(\.id), ["t1"])
+        XCTAssertEqual(ILOrdinationPlaceFilter.rows(options: options, query: "DA LAT", noneName: "", noneSubtitle: "").map(\.id), ["t1"])
+        XCTAssertTrue(ILOrdinationPlaceFilter.rows(options: options, query: "xyz", noneName: "", noneSubtitle: "").isEmpty)
     }
 
     func test_submitTapped_withEmptyOrdinationPlace_stillSubmitsWithEmptyValue() {
@@ -591,5 +686,17 @@ nonisolated final class MockILSignUpRepository: ILSignUpRepository {
             throw error
         }
         return requestRegistrationOTPResult
+    }
+}
+
+// MARK: - Mock ILOrdinationPlaceUseCase
+
+nonisolated final class MockILOrdinationPlaceUseCase: ILOrdinationPlaceUseCase {
+    var places: [ILOrdinationPlaceEntity] = []
+    var loadCallCount = 0
+
+    func loadPlaces() async throws -> [ILOrdinationPlaceEntity] {
+        loadCallCount += 1
+        return places
     }
 }

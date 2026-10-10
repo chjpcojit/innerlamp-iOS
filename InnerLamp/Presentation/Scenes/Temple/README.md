@@ -80,4 +80,4 @@ Spec: `Docs/Specs/Temple/` (see `changelog.md` v2.5).
   `ILTempleEntity` removed (v2.2).
 - 2026-09-28 — redesigned to match the full design handoff with a static 9-temple catalog.
 - 2026-09-26 — initial implementation from design handoff prototype screen `temple`
-  (il-screen-builder).
+  (ui-builder).

@@ -9,10 +9,10 @@
 | Last updated | 2026-09-28 |
 | Status | draft — awaiting confirmation of open questions |
 | Owner / author | ngthanhducit@gmail.com |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 > **Infrastructure spec, not a feature-scene spec.** There is no screen, no Coordinator, and no
-> ViewModel here, so `il-screen-builder` does not apply to this layer itself. This document is the
+> ViewModel here, so `ui-builder` does not apply to this layer itself. This document is the
 > same kind of artifact as `Docs/Specs/Networking/SRS.md` (the existing REST transport spec) — it
 > defines a new `Core/GRPC` transport boundary that feature Repositories may choose to use instead
 > of, or alongside, `Core/Networking`.
@@ -26,7 +26,7 @@
 This document specifies the requirements for a new **gRPC client core** (`Core/GRPC`) that gives
 InnerLamp a second, reusable transport boundary for talking to backend services over gRPC —
 mirroring the role `Core/Networking` already plays for REST. It is written for the engineering team
-and drives `il-spec-writer`'s `requirements.md` / `design.md` / `tasks.md` for the `GRPC` scope
+and drives `spec-writer`'s `requirements.md` / `design.md` / `tasks.md` for the `GRPC` scope
 folder, and subsequently the actual `Core/GRPC` Swift implementation.
 
 ### 1.2 Scope
@@ -146,7 +146,7 @@ Appendix A).
 
 | Actor | Description | Characteristics / permissions |
 |---|---|---|
-| Feature developer | An InnerLamp engineer (or `il-data-layer-builder`) implementing a Repository that needs to call a gRPC service. | Consumes `Core/GRPC`'s public API; never touches generated stub internals directly outside the Data layer. |
+| Feature developer | An InnerLamp engineer (or `data-builder`) implementing a Repository that needs to call a gRPC service. | Consumes `Core/GRPC`'s public API; never touches generated stub internals directly outside the Data layer. |
 | End user (indirect) | The app's end user, indirectly affected via features built on top of this transport (e.g. faster real-time updates via streaming). | No direct interaction with this layer; it is purely infrastructure. |
 
 ### 2.4 Operating environment
@@ -434,20 +434,20 @@ are verified by build behavior and code review rather than a runtime test, since
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | User: shared channel | → il-spec-writer | TBD |
-| FR-002 | User: reuse Keychain token via metadata | → il-spec-writer | TBD |
-| FR-003 | User: standard TLS only | → il-spec-writer | TBD |
-| FR-004 | Derived from scope / REST parity | → il-spec-writer | TBD |
-| FR-005 | User: server-streaming required | → il-spec-writer | TBD |
-| FR-006 | User: no auto-reconnect | → il-spec-writer | TBD |
-| FR-007 | User: GRPCError mirroring NetworkError | → il-spec-writer | TBD |
-| FR-008 | User: 30s default deadline, retry deferred | → il-spec-writer | TBD |
-| FR-009 | User: extend APIConfig | → il-spec-writer | TBD |
-| FR-010 | User: mirror NetworkLogger via interceptor | → il-spec-writer | TBD |
-| FR-011 | User: SPM build plugin codegen | → il-spec-writer | TBD |
-| FR-012 | User: in-process test server | → il-spec-writer | TBD |
-| NFR-001 | User: 30s default deadline | → il-spec-writer | TBD |
-| NFR-002 | Derived from FR-001 (channel reuse) | → il-spec-writer | TBD |
+| FR-001 | User: shared channel | → spec-writer | TBD |
+| FR-002 | User: reuse Keychain token via metadata | → spec-writer | TBD |
+| FR-003 | User: standard TLS only | → spec-writer | TBD |
+| FR-004 | Derived from scope / REST parity | → spec-writer | TBD |
+| FR-005 | User: server-streaming required | → spec-writer | TBD |
+| FR-006 | User: no auto-reconnect | → spec-writer | TBD |
+| FR-007 | User: GRPCError mirroring NetworkError | → spec-writer | TBD |
+| FR-008 | User: 30s default deadline, retry deferred | → spec-writer | TBD |
+| FR-009 | User: extend APIConfig | → spec-writer | TBD |
+| FR-010 | User: mirror NetworkLogger via interceptor | → spec-writer | TBD |
+| FR-011 | User: SPM build plugin codegen | → spec-writer | TBD |
+| FR-012 | User: in-process test server | → spec-writer | TBD |
+| NFR-001 | User: 30s default deadline | → spec-writer | TBD |
+| NFR-002 | Derived from FR-001 (channel reuse) | → spec-writer | TBD |
 
 ---
 
@@ -465,7 +465,7 @@ are verified by build behavior and code review rather than a runtime test, since
 
 > ⚠️ Not confirmed: `grpc-swift v2`'s minimum supported OS/Swift version has not been checked
 > against InnerLamp's current deployment target (`IPHONEOS_DEPLOYMENT_TARGET = 26.5`) — should be
-> verified before or during `il-spec-writer`'s design phase, when the SPM dependency is actually
+> verified before or during `spec-writer`'s design phase, when the SPM dependency is actually
 > added.
 
 > ⚠️ Not confirmed: which feature will be the first real consumer of server-streaming (`FR-005`) —

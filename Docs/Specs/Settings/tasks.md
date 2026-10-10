@@ -1,8 +1,9 @@
 # Tasks — Settings
 
-Version: 1.0
-Last updated: 2026-09-27
-Status: in-progress (Phase 1–2 done; Phase 3–4 pending)
+Version: 1.1
+Last updated: 2026-10-10
+Status: in-progress (Phase 1–2 done; Phase 3–4 pending; Phase 6 added for
+support/legal rows)
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -58,7 +59,8 @@ Status: in-progress (Phase 1–2 done; Phase 3–4 pending)
 - [ ] Build the bell-sound picker and wire `.openBellSound`
 - [ ] Build the language & display screen and wire `.openDarkMode` / `.openLanguage`
 - [ ] Build the downloads screen and wire `.openDownloads`
-- [ ] Build the help/FAQ screen and wire `.openHelp`
+- [ ] Build the help/FAQ screen and wire `.openHelp` — tracked in
+      `Docs/Specs/Help/tasks.md`
 - [ ] Build the export-data flow and wire `.openExportData`
 - [ ] Build the offline-status screen and wire `.openOffline`
 - [ ] Update `InnerLamp/Presentation/Scenes/Settings/README.md` changelog
@@ -69,3 +71,19 @@ Status: in-progress (Phase 1–2 done; Phase 3–4 pending)
       status table, changelog)
 - [ ] `Docs/Knowledge/features/settings.md` (OKF concept) — hold off until the
       persistence (Phase 3) lands. See `Docs/Specs/OKF.md`.
+
+## Phase 6 — Support & legal rows (added v1.1, pending)
+
+- [ ] Create `ILSettingsSupportCardView` (three rows) + eyebrow
+      "HỖ TRỢ & PHÁP LÝ" (`settings.section.support`)
+- [ ] Add `openContact` / `openTerms` / `openPrivacy` to `ILSettingsNavEvent` and
+      `Input` publishers in `ILSettingsViewModel`
+- [ ] Wire `ILSettingsViewController` to the new card and Input subjects
+- [ ] Wire `ILSettingsCoordinator`: `.openHelp` / `.openContact` / `.openTerms` /
+      `.openPrivacy`, and the delegates of Help / ContactSupport / Legal
+- [ ] Update `ILSettingsViewModelTests` for the three new events
+- [ ] Update `InnerLamp/Presentation/Scenes/Settings/README.md`
+
+## Deferred (separate feature, not blocking Settings)
+
+- Help, ContactSupport, Legal screens — see their own `Docs/Specs/` folders.

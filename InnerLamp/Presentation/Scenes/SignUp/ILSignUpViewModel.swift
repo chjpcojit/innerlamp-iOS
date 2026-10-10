@@ -14,6 +14,9 @@ enum ILSignUpNavEvent: Equatable {
     /// Gửi mã OTP thành công — sang màn xác thực. Kèm timing của server để màn OTP khởi tạo
     /// countdown "Gửi lại" và câu hiển thị hạn mã bằng giá trị thật.
     case didRequestVerification(phoneNumber: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int)
+    /// "Không thấy chùa của bạn?" — mở màn "Thêm thông tin chùa", điền sẵn từ khoá đang tìm và
+    /// kèm danh bạ đã tải để chặn trùng.
+    case openAddTemple(prefillName: String, existingPlaces: [ILOrdinationPlaceEntity])
 }
 
 protocol ILSignUpViewModelProtocol: ViewModelType {
@@ -31,6 +34,10 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
         let suggestDisplayNameTapped: AnyPublisher<Void, Never>
         let displayNameChanged: AnyPublisher<String, Never>
         let ordinationPlaceChanged: AnyPublisher<String, Never>
+        /// Người dùng mở bộ chọn nơi xuất gia — tải danh sách chùa nếu chưa có.
+        let ordinationPickerOpened: AnyPublisher<Void, Never>
+        /// Từ khoá đang gõ trong bộ chọn khi bấm "Thêm thông tin chùa".
+        let addTempleTapped: AnyPublisher<String, Never>
         let countryChanged: AnyPublisher<ILCountry, Never>
         let phoneNumberChanged: AnyPublisher<String, Never>
         let emailChanged: AnyPublisher<String, Never>
@@ -60,11 +67,15 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
     private let stateSubject: CurrentValueSubject<ViewState<ILSignUpStateModel>, Never>
     private var currentState: ILSignUpStateModel
     private let useCase: ILSignUpUseCase
+    private let ordinationPlaceUseCase: ILOrdinationPlaceUseCase
+    private var hasLoadedOrdinationPlaces = false
+    private static let proposedIDPrefix = "proposed-"
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initializer
-    init(useCase: ILSignUpUseCase) {
+    init(useCase: ILSignUpUseCase, ordinationPlaceUseCase: ILOrdinationPlaceUseCase) {
         self.useCase = useCase
+        self.ordinationPlaceUseCase = ordinationPlaceUseCase
         let initialState = useCase.getInitialState()
         self.currentState = initialState
         self.stateSubject = CurrentValueSubject(.success(initialState))
@@ -86,6 +97,14 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
 
         input.ordinationPlaceChanged
             .sink { [weak self] text in self?.handleOrdinationPlaceChanged(text) }
+            .store(in: &cancellables)
+
+        input.ordinationPickerOpened
+            .sink { [weak self] _ in self?.handleOrdinationPickerOpened() }
+            .store(in: &cancellables)
+
+        input.addTempleTapped
+            .sink { [weak self] query in self?.handleAddTempleTapped(query) }
             .store(in: &cancellables)
 
         input.countryChanged
@@ -153,7 +172,50 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
 
     private func handleOrdinationPlaceChanged(_ text: String) {
         currentState.ordinationPlace = text
+        currentState.selectedOrdinationPlaceID = nil
         stateSubject.send(.success(currentState))
+    }
+
+    private func handleAddTempleTapped(_ query: String) {
+        navigationEventSubject.send(.openAddTemple(
+            prefillName: query,
+            existingPlaces: currentState.ordinationPlaceOptions
+        ))
+    }
+
+    /// Nhận chùa vừa đề xuất từ màn "Thêm thông tin chùa": đưa lên đầu danh sách (nhãn "Đang chờ
+    /// duyệt") và chọn luôn làm nơi xuất gia. Chưa có API gửi đề xuất (TD-SignUp-002).
+    func applyProposedPlace(_ proposal: ILTempleProposalEntity) {
+        let place = [proposal.address, proposal.province].filter { !$0.isEmpty }.joined(separator: ", ")
+        let pending = "signup.ordination.pending".localized
+        let entity = ILOrdinationPlaceEntity(
+            id: "\(Self.proposedIDPrefix)\(UUID().uuidString)",
+            name: proposal.name,
+            subtitle: place.isEmpty ? pending : "\(place) · \(pending)"
+        )
+        currentState.ordinationPlaceOptions.insert(entity, at: 0)
+        currentState.ordinationPlace = proposal.name
+        currentState.selectedOrdinationPlaceID = entity.id
+        stateSubject.send(.success(currentState))
+    }
+
+    /// Danh bạ chùa chỉ cần tải một lần; lỗi thì để trống — người dùng vẫn chọn "Chưa xuất gia"
+    /// hoặc thêm chùa, và lần mở sau sẽ thử tải lại.
+    private func handleOrdinationPickerOpened() {
+        guard !hasLoadedOrdinationPlaces, !currentState.isLoadingOrdinationPlaces else { return }
+        currentState.isLoadingOrdinationPlaces = true
+        stateSubject.send(.success(currentState))
+
+        Task { [weak self] in
+            guard let self else { return }
+            let loaded = try? await self.ordinationPlaceUseCase.loadPlaces()
+            self.hasLoadedOrdinationPlaces = loaded != nil
+            // Giữ các chùa người dùng vừa đề xuất trong lúc chờ tải xong.
+            let proposed = self.currentState.ordinationPlaceOptions.filter { $0.id.hasPrefix(Self.proposedIDPrefix) }
+            self.currentState.ordinationPlaceOptions = proposed + (loaded ?? [])
+            self.currentState.isLoadingOrdinationPlaces = false
+            self.stateSubject.send(.success(self.currentState))
+        }
     }
 
     private func handleCountryChanged(_ country: ILCountry) {

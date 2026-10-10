@@ -1,8 +1,9 @@
 # Design — Settings
 
-Version: 1.0
-Last updated: 2026-09-27
-Status: in-progress — full settings UI with mock data; destinations not built
+Version: 1.1
+Last updated: 2026-10-10
+Status: in-progress — full settings UI with mock data; destinations not built;
+support/legal rows specified, not yet built
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -25,6 +26,9 @@ network** and no persistence — toggles are in-memory.
 | Presentation / Coordinator | `Presentation/Scenes/Settings/ILSettingsCoordinator.swift` | `pushViewController`; `.goBack` → pop+finish; `.openProfile` → EditProfile; the rest TODO. No delegate. |
 | Presentation / ViewController | `Presentation/Scenes/Settings/ILSettingsViewController.swift` | `setupViews`/`setupConstraints`/`bindViewModel` per `BaseViewController`. |
 | Feature-scoped views | `Presentation/Scenes/Settings/Views/ILSettingsAccountCardView.swift`, `ILSettingsScheduleCardView.swift`, `ILSettingsDisplayCardView.swift`, `ILSettingsContentCardView.swift`, `ILSettingsPrivacyCardView.swift` | The five section-card views. |
+| Feature-scoped views (new, v1.1) | `Presentation/Scenes/Settings/Views/ILSettingsSupportCardView.swift` | "Hỗ trợ & pháp lý" card with three rows (Liên hệ hỗ trợ, Điều khoản sử dụng, Chính sách quyền riêng tư); built from the shared setting-row component. Not yet created. |
+| Presentation / ViewModel (change, v1.1) | `ILSettingsViewModel.swift` | Add `ILSettingsNavEvent` cases `openContact`, `openTerms`, `openPrivacy` and matching `Input` publishers. Not yet done. |
+| Presentation / Coordinator (change, v1.1) | `ILSettingsCoordinator.swift` | `.openHelp` → `showHelp()`; `.openContact` → `showContactSupport()`; `.openTerms` / `.openPrivacy` → `showLegal(_:)`; becomes the delegate of Help / ContactSupport / Legal for cross-links. Not yet done. |
 | Shared component | `DesignSystem/Components/ILSectionEyebrowView.swift` | Section eyebrow (new, shared). |
 
 ## Navigation flow
@@ -36,7 +40,12 @@ ILProfileCoordinator (tab "Tôi")
        (.goBack) → pop + finish()
        (.openProfile) → showEditProfile() (ILEditProfileCoordinator)
        (.openBellSound / .openDarkMode / .openLanguage / .openDownloads /
-        .openHelp / .openExportData / .openOffline) → TODO
+        .openExportData / .openOffline) → TODO
+       (.openHelp) → showHelp() (ILHelpCoordinator)                 [v1.1]
+       (.openContact) → showContactSupport() (ILContactSupportCoordinator) [v1.1]
+       (.openTerms / .openPrivacy) → showLegal(_:) (ILLegalCoordinator)    [v1.1]
+       Help / Legal footer → delegate → showContactSupport()
+       ContactSupport FAQ shortcut → delegate → pop to Help, else showHelp()
 ```
 
 ## Data flow

@@ -8,8 +8,8 @@
 | Version | 0.1 (draft) |
 | Last updated | 2026-09-27 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
-| Owner / author | il-ba (Business Analyst) |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Owner / author | ba-writer (Business Analyst) |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 ---
 
@@ -272,17 +272,17 @@ Public (`requiresAuth = false`). Only the Data-layer implementation is pending, 
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | Load state | → il-spec-writer | TBD |
-| FR-002 | Country picker | → il-spec-writer | TBD |
-| FR-003 | Field editing | → il-spec-writer | TBD |
-| FR-004 | Submit validation | → il-spec-writer | TBD |
-| FR-005 | Submit | → il-spec-writer | TBD |
-| FR-006 | Double-submit guard | → il-spec-writer | TBD |
-| FR-007 | Back to Onboarding | → il-spec-writer | TBD |
-| FR-008 | Create account | → il-spec-writer | TBD |
-| FR-009 | Forgot password | → il-spec-writer | TBD |
-| FR-010 | Guest preview | → il-spec-writer | TBD |
-| NFR-001 | Submit responsiveness | → il-spec-writer | TBD |
+| FR-001 | Load state | → spec-writer | TBD |
+| FR-002 | Country picker | → spec-writer | TBD |
+| FR-003 | Field editing | → spec-writer | TBD |
+| FR-004 | Submit validation | → spec-writer | TBD |
+| FR-005 | Submit | → spec-writer | TBD |
+| FR-006 | Double-submit guard | → spec-writer | TBD |
+| FR-007 | Back to Onboarding | → spec-writer | TBD |
+| FR-008 | Create account | → spec-writer | TBD |
+| FR-009 | Forgot password | → spec-writer | TBD |
+| FR-010 | Guest preview | → spec-writer | TBD |
+| NFR-001 | Submit responsiveness | → spec-writer | TBD |
 
 ---
 

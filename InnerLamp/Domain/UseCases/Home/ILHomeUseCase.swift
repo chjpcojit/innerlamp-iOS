@@ -53,7 +53,6 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
     // TODO: khi có API nội dung/thống kê thật, thay phần mock bên dưới bằng
     // networkService.request(endpoint: HomeDashboardEndpoint(...)) (xem Core/Networking/NetworkService.swift).
     // Temples + deities already come from the server (`loadTopTemples()` / `loadTopDeities()`).
-    private let keychainService: KeychainService
     private let buddhistEventUseCase: ILBuddhistEventUseCase
     private let sutraQuoteUseCase: ILSutraQuoteUseCase
     private let templeRepository: ILTempleRepository
@@ -61,20 +60,7 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
     private let articleRepository: ILArticleRepository
     private let photosRepository: ILPhotosRepository
 
-    /// Cùng key/struct với `ILSignUpUseCaseImpl`/`ILLoginUseCaseImpl` — dùng tạm để lấy pháp danh
-    /// đã đăng ký cho lời chào, tới khi có phiên đăng nhập thật (session/current-user service).
-    private enum StorageKeys {
-        static let pendingSignUp = "signup_pending_credentials"
-    }
-
-    private struct PendingSignUp: Codable {
-        let displayName: String
-        let phoneNumber: String
-        let password: String
-    }
-
     init(
-        keychainService: KeychainService,
         buddhistEventUseCase: ILBuddhistEventUseCase,
         sutraQuoteUseCase: ILSutraQuoteUseCase,
         templeRepository: ILTempleRepository,
@@ -82,7 +68,6 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
         articleRepository: ILArticleRepository,
         photosRepository: ILPhotosRepository
     ) {
-        self.keychainService = keychainService
         self.buddhistEventUseCase = buddhistEventUseCase
         self.sutraQuoteUseCase = sutraQuoteUseCase
         self.templeRepository = templeRepository
@@ -92,12 +77,10 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
     }
 
     func getInitialState() -> ILHomeEntity {
-        // Trả về tên thô (có thể rỗng) — fallback "khách" + format câu chào là việc của
-        // `ILHomeViewModel` khi map sang `ILHomeStateModel`, không phải của Entity.
-        let displayName = (try? keychainService.load(key: StorageKeys.pendingSignUp, type: PendingSignUp.self))?.displayName ?? ""
-
+        // Tên để trống — fallback "khách" + format câu chào là việc của `ILHomeViewModel`. Lời
+        // chào chưa có nguồn tên thật (TD-Home-002): nó từng đọc mật khẩu+tên từ một item Keychain
+        // tạm, nay đã bỏ vì lưu mật khẩu thô là không chấp nhận được.
         var entity = ILHomeEntity()
-        entity.displayName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
 
         let today = Date()
         entity.weekPages = Self.makeWeekPages(around: today)

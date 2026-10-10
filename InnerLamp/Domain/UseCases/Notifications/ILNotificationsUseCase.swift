@@ -19,7 +19,7 @@ final class ILNotificationsUseCaseImpl: ILNotificationsUseCase {
 
     func getUpcoming() -> ILNotificationUpcomingEntity? {
         // TODO: chưa có contract API thông báo / thời khóa — thay dữ liệu mẫu bằng
-        // ILNotificationsRepository (network + push payload) khi có contract (dùng il-data-layer-builder).
+        // ILNotificationsRepository (network + push payload) khi có contract (dùng data-builder).
         ILNotificationUpcomingEntity(
             eyebrow: "notifications.hero.eyebrow".localized,
             title: "notifications.hero.title".localized

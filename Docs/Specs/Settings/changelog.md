@@ -4,6 +4,20 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v1.1 (2026-10-10)
+
+- `requirements.md`: added the "Hỗ trợ & pháp lý" section (three rows) and its
+  navigation criteria; clarified that `.openHelp` opens the new Help screen; the
+  Help / Contact Support / Legal screens are out of scope here. One
+  ⚠️ Not confirmed: whether the footer legal line becomes tappable.
+- `design.md`: new `ILSettingsSupportCardView`, three new nav events, coordinator
+  wiring for Help / ContactSupport / Legal and the cross-link delegates;
+  navigation diagram updated. Data flow unchanged (no network).
+- `tasks.md`: new Phase 6 for the rows and wiring; Phase 4 help item points to the
+  Help spec. Nothing checked off — none of this is built.
+- Reason: Help, Contact Support and Legal specs (2026-10-10) need entry points
+  from Settings, matching the prototype's "HỖ TRỢ & PHÁP LÝ" section.
+
 ## v1.0 (initial)
 
 - Initial spec written retroactively from the already-implemented Settings

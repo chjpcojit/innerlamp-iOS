@@ -8,14 +8,14 @@ Scope folder: `InnerLamp/Core/GRPC/`
 > See `changelog.md` in this folder for the version history of this spec.
 
 > **Prospective spec** — written before any code exists. Generated from `Docs/Specs/GRPC/SRS.md`
-> (`il-ba`'s IEEE 29148 SRS), which is the authoritative source for every requirement and every
+> (`ba-writer`'s IEEE 29148 SRS), which is the authoritative source for every requirement and every
 > ⚠️ below. Nothing here resolves an ⚠️ that the SRS left open.
 
 > This is an infrastructure spec, not a feature-scene spec. There is no screen, no Coordinator, and
-> no ViewModel here — so `il-screen-builder` does not apply. It is the same kind of artifact as
+> no ViewModel here — so `ui-builder` does not apply. It is the same kind of artifact as
 > `Docs/Specs/Networking/`, the REST transport spec this layer is additive to. The consuming side
 > (a feature `Repository` calling `Core/GRPC` instead of, or alongside, `Core/Networking`) is
-> `il-data-layer-builder`'s job once a concrete `.proto` service exists — see Pending.
+> `data-builder`'s job once a concrete `.proto` service exists — see Pending.
 
 ## User Story
 

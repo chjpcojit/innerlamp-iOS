@@ -12,11 +12,13 @@ enum ILProfileNavEvent: Equatable {
     case openStats
     case openAwards
     case openOffering
-    case openPaywall
+    case openDonate
     case openReminder
+    case openMeritBook
     case openSettings
     case openNotifications
     case openFamilyTree
+    case createFamilyTree
     case openCommunity(id: String)
 }
 
@@ -35,11 +37,13 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
         let statsTapped: AnyPublisher<Void, Never>
         let awardsTapped: AnyPublisher<Void, Never>
         let offeringTapped: AnyPublisher<Void, Never>
-        let premiumTapped: AnyPublisher<Void, Never>
+        let donateTapped: AnyPublisher<Void, Never>
         let reminderTapped: AnyPublisher<Void, Never>
+        let meritBookTapped: AnyPublisher<Void, Never>
         let settingsTapped: AnyPublisher<Void, Never>
         let notificationsTapped: AnyPublisher<Void, Never>
         let familyTreeTapped: AnyPublisher<Void, Never>
+        let createFamilyTreeTapped: AnyPublisher<Void, Never>
         let communityTapped: AnyPublisher<Void, Never>
     }
 
@@ -64,14 +68,16 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
     private var profile: ILProfileEntity
     private var currentState: ILProfileStateModel
     private let useCase: ILProfileUseCase
+    private let bundle: Bundle
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initializer
-    init(useCase: ILProfileUseCase) {
+    init(useCase: ILProfileUseCase, bundle: Bundle = .main) {
         self.useCase = useCase
+        self.bundle = bundle
         let initialProfile = useCase.getProfile()
         self.profile = initialProfile
-        let initialState = ILProfileViewModel.makeStateModel(profile: initialProfile)
+        let initialState = ILProfileViewModel.makeStateModel(profile: initialProfile, bundle: bundle)
         self.currentState = initialState
         self.stateSubject = CurrentValueSubject(.success(initialState))
     }
@@ -98,12 +104,16 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
             .sink { [weak self] _ in self?.navigationEventSubject.send(.openOffering) }
             .store(in: &cancellables)
 
-        input.premiumTapped
-            .sink { [weak self] _ in self?.navigationEventSubject.send(.openPaywall) }
+        input.donateTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openDonate) }
             .store(in: &cancellables)
 
         input.reminderTapped
             .sink { [weak self] _ in self?.navigationEventSubject.send(.openReminder) }
+            .store(in: &cancellables)
+
+        input.meritBookTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openMeritBook) }
             .store(in: &cancellables)
 
         input.settingsTapped
@@ -118,6 +128,10 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
             .sink { [weak self] _ in self?.navigationEventSubject.send(.openFamilyTree) }
             .store(in: &cancellables)
 
+        input.createFamilyTreeTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.createFamilyTree) }
+            .store(in: &cancellables)
+
         input.communityTapped
             .sink { [weak self] _ in self?.handleCommunityTapped() }
             .store(in: &cancellables)
@@ -128,7 +142,7 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
     // MARK: - Actions
     private func handleViewDidLoad() {
         profile = useCase.getProfile()
-        currentState = ILProfileViewModel.makeStateModel(profile: profile)
+        currentState = ILProfileViewModel.makeStateModel(profile: profile, bundle: bundle)
         stateSubject.send(.success(currentState))
     }
 
@@ -140,7 +154,7 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
     // MARK: - Entity -> StateModel mapping
     /// Việc riêng của presentation (format số, ghép câu phụ, chuẩn hóa độ đậm) nên nằm ở đây,
     /// không phải trong Mapper dùng chung (xem `references/data_layer_boundaries.md`).
-    private static func makeStateModel(profile: ILProfileEntity) -> ILProfileStateModel {
+    private static func makeStateModel(profile: ILProfileEntity, bundle: Bundle) -> ILProfileStateModel {
         var model = ILProfileStateModel()
 
         model.header = ILProfileHeaderModel(
@@ -184,9 +198,13 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
             profile.offeringCount,
             profile.lanternCount
         )
-        model.showsPremiumUpsell = profile.plan == .free
         model.reminderValue = formatReminder(profile.reminder)
         model.communityValue = profile.community?.name ?? "profile.menu.community.none".localized
+
+        let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "-"
+        let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "-"
+        model.versionText = String(format: "profile.footer.version".localized, version)
+        model.buildText = String(format: "profile.footer.build".localized, build)
         return model
     }
 

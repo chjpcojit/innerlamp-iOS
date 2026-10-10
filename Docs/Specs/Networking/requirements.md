@@ -16,9 +16,9 @@ Scope folder: `InnerLamp/Core/Networking/`
 > Pending.
 
 > This is an infrastructure spec, not a feature-scene spec. There is no screen, no Coordinator,
-> and no ViewModel here — so `il-screen-builder` does not apply. The implementation work is
+> and no ViewModel here — so `ui-builder` does not apply. The implementation work is
 > `Core/`-layer Swift, and the consuming side (feature repositories) is
-> `il-data-layer-builder`'s job, not this spec's.
+> `data-builder`'s job, not this spec's.
 
 ## User Story
 

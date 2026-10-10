@@ -20,7 +20,7 @@ AppCoordinator
 
 `ILLoginCoordinator` được `AppCoordinator` sở hữu vì đây là chuyển tiếp **cross-section**
 (Onboarding/SignUp ↔ Login ↔ Home), theo đúng quy tắc trong
-`.claude/skills/il-screen-builder/references/coordinator_navigation_rules.md`.
+`.claude/skills/ui-builder/references/coordinator_navigation_rules.md`.
 
 ## Các file đã sinh / sửa
 
@@ -42,9 +42,8 @@ Component Design System mới (generic, không có nội dung riêng của Login
 | `ILDividerRow` | Hàng chia "hoặc" giữa CTA SMS và CTA tạo tài khoản — hai gạch ngang co giãn quanh nhãn giữa, chỉ phụ thuộc `text`, thay cho hàm private `makeDividerRow()` từng lặp nội bộ trong `ILLoginViewController`. |
 
 Không có component feature-scoped mới nào (mọi field/CTA của Login đều tái dùng
-`ILPhoneField`/`ILField`/`ILButton`/`ILCountryPickerViewController` sẵn có từ SignUp). Ảnh đèn
-header dùng token `ILIcons.onboardingLamp` (chung với Onboarding intro), kích thước
-`ILMetrics.loginLampSize`.
+`ILPhoneField`/`ILField`/`ILButton`/`ILCountryPickerViewController` sẵn có từ SignUp). Logo đầu màn
+dùng `ILLogoView(size: 56)` (design `IL-Logo`), tiêu đề `ILTypography.loginTitle` (Cormorant Garamond 32).
 
 Wiring: `DIContainer` (`makeLoginUseCase/ViewModel/Coordinator`) + `AppCoordinator`
 (`showLogin()` + conform `ILLoginCoordinatorDelegate`) — không đổi, đã nối sẵn từ trước.
@@ -100,9 +99,9 @@ Mỗi thao tác UI gửi giá trị lên `*Subject` riêng của nó (không g�
 ### 4. `ILLoginUseCaseImpl.login` làm gì (tạm thời)
 
 Chưa có Auth API thật (`Core/Networking/` mới có khung `NetworkService`/`Endpoint`, chưa có
-endpoint đăng nhập cụ thể). Đây là network call — nằm ngoài phạm vi `il-screen-builder` implement
+endpoint đăng nhập cụ thể). Đây là network call — nằm ngoài phạm vi `ui-builder` implement
 thật (xem `references/data_layer_boundaries.md`), nên hàm hiện chỉ là stub một dòng
-`print("TODO: implement login — network/repository call, not built by il-screen-builder")`,
+`print("TODO: implement login — network/repository call, not built by ui-builder")`,
 không đọc/ghi Keychain, không tự giả lập lỗi `ILLoginError.invalidCredentials`.
 
 **TODO khi có backend thật**: thay thân hàm bằng
@@ -151,7 +150,7 @@ Combine `.sink`) xử lý 4 case của `ILLoginNavEvent`:
 ## Việc còn để trống (TODO có chủ đích)
 
 - `ILLoginUseCaseImpl.login`: stub `print("TODO: ...")` — chờ Auth API thật, không implement
-  Keychain mock (đúng hard rule "never a guessed real implementation" của `il-screen-builder`).
+  Keychain mock (đúng hard rule "never a guessed real implementation" của `ui-builder`).
   **Hệ quả**: nút "Đăng nhập" hiện luôn thành công (không throw `ILLoginError.
   invalidCredentials`) cho tới khi có implementation thật.
 - `handleSmsCodeTapped()`: TODO cục bộ trong `ILLoginViewController`, không đi qua
@@ -160,7 +159,7 @@ Combine `.sink`) xử lý 4 case của `ILLoginNavEvent`:
 
 ## Changelog
 
-- Rà soát lại theo `.claude/skills/il-screen-builder/SKILL.md` sau khi feature này được viết
+- Rà soát lại theo `.claude/skills/ui-builder/SKILL.md` sau khi feature này được viết
   trước khi có skill (predate rule, giống `Onboarding`) — các điểm không khớp hard rule được sửa:
   1. `ILLoginStateModel` từng bị đặt nhầm ở `Domain/Entities/ILLoginModel.swift` (Presentation
      state model nằm trong Domain) — chuyển đúng vị trí
@@ -170,7 +169,7 @@ Combine `.sink`) xử lý 4 case của `ILLoginNavEvent`:
      StateModel bị đặt nhầm.
   3. `ILLoginUseCaseImpl.login` trước đó gọi thẳng `KeychainService`/`UserDefaultsService` để
      mô phỏng so khớp "đăng ký xong đăng nhập lại" — đây là local Repository call mà
-     `il-screen-builder` không bao giờ được implement thật (xem
+     `ui-builder` không bao giờ được implement thật (xem
      `references/data_layer_boundaries.md`). Đưa về đúng dạng stub một dòng
      `print("TODO: ...")`, bỏ `keychainService`/`userDefaultsService` khỏi
      `ILLoginUseCaseImpl.init` và khỏi `DIContainer.makeLoginUseCase()` (cùng thay đổi đã áp dụng

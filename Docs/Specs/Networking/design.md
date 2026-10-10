@@ -16,9 +16,9 @@ Scope folder: `InnerLamp/Core/Networking/`
 > exception is noted inline (the 401-refresh ⚠️).
 
 > This is an infrastructure spec, not a feature-scene spec. There is no Coordinator, no ViewModel,
-> no navigation flow, and no `DIContainer` factory to add. `il-screen-builder` does not apply. The
+> no navigation flow, and no `DIContainer` factory to add. `ui-builder` does not apply. The
 > consuming side — a feature's `Repository` calling `NetworkService` — is
-> `il-data-layer-builder`'s job and is out of scope here.
+> `data-builder`'s job and is out of scope here.
 
 ## Overview
 
@@ -234,7 +234,7 @@ Step 7 — Return
 - Trigger: Steps 4–6 done
 - Effect: return the decoded T to the Repository, or throw the NetworkError from
   Steps 1–5. The Repository maps NetworkError → IL<Feature>Error
-  (il-data-layer-builder's job, out of scope here)
+  (data-builder's job, out of scope here)
 ```
 
 ## Deliberately deferred (in this spec, not implemented)

@@ -57,6 +57,6 @@ final class ILMeditationSessionUseCaseImpl: ILMeditationSessionUseCase {
     }
 
     func recordSession(_ session: ILMeditationSessionEntity) async throws {
-        print("TODO: implement recordSession — practice-log repository call, not built by il-screen-builder")
+        print("TODO: implement recordSession — practice-log repository call, not built by ui-builder")
     }
 }

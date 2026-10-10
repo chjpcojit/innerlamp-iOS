@@ -43,4 +43,4 @@ Design source: screen "Hồ sơ thành viên" in `Docs/InnerLamp project/IL-GiaP
 
 ## Changelog
 
-- 2026-10-04 — initial build from the "Hồ sơ thành viên" prototype screen via il-screen-builder.
+- 2026-10-04 — initial build from the "Hồ sơ thành viên" prototype screen via ui-builder.

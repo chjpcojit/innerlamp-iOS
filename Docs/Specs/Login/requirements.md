@@ -80,7 +80,7 @@ app as a guest — so that I can reach the main app without re-registering.
 
 - The real `login` network call. `ILLoginUseCaseImpl.login` is currently
   `print("TODO: implement login — network/repository call, not built by
-  il-screen-builder")`, which means the submit button **always succeeds** at
+  ui-builder")`, which means the submit button **always succeeds** at
   runtime (it never throws `ILLoginError.invalidCredentials`). A Domain
   repository protocol `ILLoginRepository` exists, but there is no
   `Data/` implementation and the use case does not inject it yet.

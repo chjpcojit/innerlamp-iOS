@@ -8,8 +8,8 @@
 | Version | 0.1 (draft) |
 | Last updated | 2026-09-27 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
-| Owner / author | il-ba (Business Analyst) |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Owner / author | ba-writer (Business Analyst) |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 ---
 
@@ -236,14 +236,14 @@ No backend is called today.
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | Greeting + date | → il-spec-writer | TBD |
-| FR-002 | Section rendering | → il-spec-writer | TBD |
-| FR-003 | Bead increment | → il-spec-writer | TBD |
-| FR-004 | Bead reset | → il-spec-writer | TBD |
-| FR-005 | Navigation targets | → il-spec-writer | TBD |
-| FR-006 | Unbuilt destination no-op | → il-spec-writer | TBD |
-| NFR-001 | Load time | → il-spec-writer | TBD |
-| NFR-002 | Scroll smoothness | → il-spec-writer | TBD |
+| FR-001 | Greeting + date | → spec-writer | TBD |
+| FR-002 | Section rendering | → spec-writer | TBD |
+| FR-003 | Bead increment | → spec-writer | TBD |
+| FR-004 | Bead reset | → spec-writer | TBD |
+| FR-005 | Navigation targets | → spec-writer | TBD |
+| FR-006 | Unbuilt destination no-op | → spec-writer | TBD |
+| NFR-001 | Load time | → spec-writer | TBD |
+| NFR-002 | Scroll smoothness | → spec-writer | TBD |
 
 ---
 

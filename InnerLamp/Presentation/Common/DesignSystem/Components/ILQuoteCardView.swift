@@ -18,7 +18,7 @@ public final class ILQuoteCardView: UIControl {
         didSet {
             quoteLabel.attributedText = ILTypography.makeAttributedString(
                 text: quote,
-                font: ILTypography.lora(size: 20),
+                font: ILTypography.cormorant(size: 22),
                 color: ILColors.inkOnDark,
                 lineHeightMultiple: 1.5
             )
@@ -109,7 +109,7 @@ public final class ILQuoteCardView: UIControl {
     /// (`taglineItalic` là 14), nên derive trực tiếp từ `lora(size:)` giống cách
     /// `ILSplashViewController`/`ILOnboardingIntroStepView` tự tạo font nghiêng cục bộ.
     private var italicTranslationFont: UIFont {
-        let base = ILTypography.lora(size: 12.5)
+        let base = ILTypography.literata(size: 13, italic: true)
         guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
         return UIFont(descriptor: descriptor, size: 12.5)
     }

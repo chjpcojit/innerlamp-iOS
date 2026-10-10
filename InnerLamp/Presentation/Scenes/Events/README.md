@@ -35,4 +35,4 @@ prototype screen `events` (`Docs/design_handoff_innerlamp/`). No spec under `Doc
 
 ## Changelog
 
-- 2026-09-25 — initial implementation from design handoff prototype screen `events` (il-screen-builder). Added `ILTypography.dateTileDay`.
+- 2026-09-25 — initial implementation from design handoff prototype screen `events` (ui-builder). Added `ILTypography.dateTileDay`.

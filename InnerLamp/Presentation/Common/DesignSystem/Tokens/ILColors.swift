@@ -168,10 +168,24 @@ public enum ILColors {
     /// Chữ phụ trên nền `ink` đảo (vd. số ngày âm trong ô đang chọn) — alpha 0.60 của `canvas`
     public static let canvasOnInkSecondary = canvas.withAlphaComponent(0.60)
 
+    // MARK: - Mala counter card (Trang chủ)
+    /// Hạt đã niệm trên vòng tràng hạt nhỏ — `#D9963C` (`goldBright`)
+    public static let malaBeadLit = goldBright
+
+    /// Viền ngoài 1px của hạt đã niệm (alpha 0.25 của `gold`)
+    public static let malaBeadLitRing = gold.withAlphaComponent(0.25)
+
+    /// Hạt chưa niệm trên vòng tràng hạt nhỏ (alpha 0.12 của `ink`)
+    public static let malaBeadIdle = ink.withAlphaComponent(0.12)
+
     // MARK: - Bottom Nav Lamp
-    /// Ngọn lửa trên nút Đèn ở chế độ sáng (nền `ink`) — cố định `#E6A94E`, ấm hơn
-    /// `goldBright` để nổi rõ trên nền tối (theo `lampFlame` của `IL-BottomNav`).
+    /// Đầu sáng của gradient nền nút Đèn ở chế độ sáng (160°, `lampFlameLight` → `gold`) — cố định
+    /// `#E6A94E` (theo `lampBg` của `IL-BottomNav`).
     public static let lampFlameLight = asset("ILLampFlameLight")
+
+    /// Ngọn lửa ngoài trên nút Đèn ở chế độ sáng (nền gradient vàng) — cố định `#FFF8EC`
+    /// (theo `lampFlame` của `IL-BottomNav`).
+    public static let lampGlyphLight = asset("ILLampGlyphLight")
 
     /// Chân bấc ngọn đèn trên nút Đèn ở chế độ tối (nền `goldBright`) — cố định `#1A1611`,
     /// không đổi theo theme (theo `lampFlame` của `IL-BottomNav`).
@@ -386,6 +400,14 @@ public enum ILColors {
     public static let splashRing = asset("ILSplashRing")
     public static let splashRing2 = asset("ILSplashRing2")
     public static let splashRing3 = asset("ILSplashRing3")
+
+    // MARK: - Logo (IL-Logo)
+    /// Vòng ngoài của logo (`--il-logo-ring`): `gold` ở light, `goldBright` ở dark.
+    public static let logoRing = asset("ILLogoRing")
+    /// Thân ngọn lửa logo (`#E6A94E`) — cố định ở cả hai theme.
+    public static let logoFlame = asset("ILLogoFlame")
+    /// Lõi ngọn lửa logo (`#F3C673`) — cố định ở cả hai theme.
+    public static let logoFlameCore = asset("ILLogoFlameCore")
 
     /// Tia sáng quét hai bên vòng đèn (gold ở light, goldLight ở dark).
     public static let splashRay = asset("ILSplashRay")
@@ -603,6 +625,9 @@ public enum ILColors {
 
     /// Dimming layer behind the center error dialog (alpha 0.50 of `scrim`)
     public static let scrimDialog = scrim.withAlphaComponent(0.50)
+
+    /// Blurred pill laid over a cover photo (alpha 0.42 of `scrim`) — "Sửa hồ sơ" on the Profile cover
+    public static let coverPill = scrim.withAlphaComponent(0.42)
 
     /// Rose glyph ("!") on dark backgrounds (full-screen error)
     public static let roseOnDark = asset("ILRoseOnDark")

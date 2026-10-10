@@ -45,8 +45,8 @@ Tab 2 of `ILMainTabBarController` (owned by `ILMainTabCoordinator`; switching ta
 
 ## Changelog
 
-- 2026-09-20 — initial implementation from spec v1.0 (il-spec-writer + il-screen-builder)
-- 2026-09-27 — `.loading` now shows the shared `ILSkeletonLoadingView` (il-screen-builder)
+- 2026-09-20 — initial implementation from spec v1.0 (spec-writer + ui-builder)
+- 2026-09-27 — `.loading` now shows the shared `ILSkeletonLoadingView` (ui-builder)
 - 2026-09-28 — reworked to match the design handoff prototype (`isLib`): category chips replaced by
   a 2×2 quick-access tile grid; added the "Chư Phật & Bồ Tát" carousel (shared with Home); the sutra
   list section gained a "Kinh sách" view-all link; `openDeity` wired to `ILDeityCoordinator`.

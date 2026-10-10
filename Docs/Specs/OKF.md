@@ -1,8 +1,8 @@
 # OKF (Open Knowledge Format) — Discussion Summary & Adoption Plan
 
 > Status: Adopted. The bundle lives at `Docs/Knowledge/`, and the
-> convention is automated by the `il-okf-writer` skill
-> (`.claude/skills/il-okf-writer/`). Sections 1–3 record the original
+> convention is automated by the `okf-writer` skill
+> (`.claude/skills/okf-writer/`). Sections 1–3 record the original
 > discussion and remain accurate; sections 4–6 are updated below to
 > reflect what was actually built.
 
@@ -182,12 +182,12 @@ Docs/Knowledge/                    # Bundle root — nested under Docs/
 
 ## 6. Automation
 
-The convention is automated by the **`il-okf-writer`** skill
-(`.claude/skills/il-okf-writer/`), which enforces:
+The convention is automated by the **`okf-writer`** skill
+(`.claude/skills/okf-writer/`), which enforces:
 
 - **Post-implementation only** — a concept is written after the code is
   implemented and verified, never as a work order. Writing a design
-  *before* code is `il-spec-writer`'s job, under `Docs/Specs/<Feature>/`.
+  *before* code is `spec-writer`'s job, under `Docs/Specs/<Feature>/`.
 - **`resource:` paths are verified against the filesystem**, never guessed.
   A concept with no code yet omits `resource:` instead of inventing a path.
 - **`status: draft` stays until the flow is exercised end-to-end.** A
@@ -203,7 +203,7 @@ The convention is automated by the **`il-okf-writer`** skill
       Forgot Password, Home, Splash) and the `api/` concepts once real
       backend contracts exist.
 - [ ] Add a step to AGENTS.md §5 ("Process for AI Creating a New Feature")
-      instructing the AI to invoke `il-okf-writer` after a feature is
+      instructing the AI to invoke `okf-writer` after a feature is
       implemented and verified.
 - [ ] Decide whether `Docs/Knowledge/` concepts are reviewed as part of the
       normal PR review process (recommended) or on a separate cadence.

@@ -31,12 +31,25 @@ public enum ILIcons {
         asset(name, renderingMode: .alwaysOriginal)
     }
 
-    // MARK: - Bottom Nav (template, 28×28)
-    /// Center lamp of `ILBottomNavBar` — solid (normal state)
-    public static let tabLampFilled = template("tab_lamp_filled")
+    // MARK: - Bottom Nav (template, 44×44 vector — tinted by `ILBottomNavBar`)
+    /// Pagoda — "Trang chủ" tab
+    public static let tabHome = template("tab_home")
 
-    /// Center lamp of `ILBottomNavBar` — stroked (highlighted state)
-    public static let tabLampOutline = template("tab_lamp_outline")
+    /// Two splayed books — "Thư viện" tab
+    public static let tabLib = template("tab_lib")
+
+    /// Temple with arched door — "Chùa" tab
+    public static let tabSangha = template("tab_sangha")
+
+    /// Person bust — "Tôi" tab
+    public static let tabMe = template("tab_me")
+
+    /// Outer flame (40×56 viewBox) of the center lamp button
+    public static let tabLampFlame = template("tab_lamp_flame")
+
+    /// Inner core (40×56 viewBox, same frame as `tabLampFlame`) of the center lamp button — a
+    /// separate layer so it can take a different tint than the outer flame
+    public static let tabLampCore = template("tab_lamp_core")
 
     // MARK: - Glyphs (template, 12×12 vector — tint via `tintColor`)
     /// Down chevron of `ILMenuFieldView`
@@ -60,10 +73,70 @@ public enum ILIcons {
     /// Document with lines (22×22) — written-transcript talk tile in the Talks list
     public static let talkText = template("talk_text")
 
-    // MARK: - Illustrations (full-color)
-    /// Lamp + glow, 114×160 — Onboarding intro, Login header
-    public static let onboardingLamp = illustration("onboarding_lamp")
+    // MARK: - Home section icons (template, 44×44 vector — drawn inside a tinted tile)
+    /// Four-point sparkle — "Sự kiện Phật giáo" section header
+    public static let homeEvent = template("home_event")
 
+    /// Framed landscape photo — "Ảnh chùa đẹp" section header
+    public static let homePhoto = template("home_photo")
+
+    /// Pagoda — "Chùa Việt Nam" section header
+    public static let homeTemple = template("home_temple")
+
+    /// Seated Buddha with halo — "Thư viện Phật & Bồ Tát" section header
+    public static let homeBuddha = template("home_buddha")
+
+    /// Prayer beads — "Tràng hạt · Niệm Phật" section header
+    public static let homeBeads = template("home_beads")
+
+    /// Clock — "Thời khóa gợi ý" section header
+    public static let homeSchedule = template("home_schedule")
+
+    /// Document with lines — "Bài viết Phật pháp hay" section header
+    public static let homeArticle = template("home_article")
+
+    /// Wooden fish disc with slot — "Chuông mõ" card on the Home screen
+    public static let homeMo = template("home_mo")
+
+    // MARK: - List-row icons (template, 44×44 vector — fills the 44×44 tile of `ILRow`)
+    /// Seated meditator — `ILRow.Glyph.leaf` (meditation sessions)
+    public static let rowMed = template("row_med")
+
+    /// Two tilted books — `ILRow.Glyph.book` (sutras)
+    public static let rowBook = template("row_book")
+
+    /// Oil lamp with flame — `ILRow.Glyph.circle` (lamp offering)
+    public static let rowLamp = template("row_lamp")
+
+    /// Four sound bars — `ILRow.Glyph.dot` (talks)
+    public static let rowTalk = template("row_talk")
+
+    // MARK: - Profile menu / donate icons (template, 44×44 vector — `IL-Icon` glyphs of the prototype)
+    /// Family tree (three nodes joined by a branch) — "Gia phả dòng họ"
+    public static let rowTree = template("row_tree")
+
+    /// Plus sign — "Tạo gia phả mới"
+    public static let rowPlus = template("row_plus")
+
+    /// Mindfulness bell — "Chuông tỉnh thức"
+    public static let rowBell = template("row_bell")
+
+    /// Bell with a badge dot — "Thông báo"
+    public static let rowNotif = template("row_notif")
+
+    /// Journal book with two text lines — "Sổ công đức"
+    public static let rowJournal = template("row_journal")
+
+    /// Gear with a centre hole — "Cài đặt"
+    public static let rowGear = template("row_gear")
+
+    /// Temple with a roof and a door — "Chùa tu tập"
+    public static let rowTemple = template("row_temple")
+
+    /// Lotus — "Ủng hộ InnerLamp" card
+    public static let rowLotus = template("row_lotus")
+
+    // MARK: - Illustrations (full-color)
     /// Singing bowl photo, 200×200 — stage of the Chuông mõ screen (bell mode)
     public static let bellChuong = illustration("bell_chuong")
 

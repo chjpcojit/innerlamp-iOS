@@ -41,6 +41,13 @@ struct ILSignUpStateModel {
     /// chặn submit (rỗng = không gửi).
     var ordinationPlace: String = ""
 
+    /// Danh sách chùa cho bộ chọn nơi xuất gia — tải một lần khi người dùng mở bộ chọn lần đầu.
+    var ordinationPlaceOptions: [ILOrdinationPlaceEntity] = []
+    var isLoadingOrdinationPlaces: Bool = false
+    /// Id của chùa vừa được đề xuất và chọn từ màn "Thêm thông tin chùa" — để bộ chọn đánh dấu
+    /// dòng đó. `nil` khi người dùng chọn lại từ chính bộ chọn.
+    var selectedOrdinationPlaceID: String?
+
     /// Số quốc gia đang chọn cho mã vùng (`ccIdx`/`toggleCC` trong design handoff) — mặc định
     /// Việt Nam.
     var selectedCountry: ILCountry = .default

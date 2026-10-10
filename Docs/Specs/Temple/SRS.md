@@ -8,8 +8,8 @@
 | Version | 0.1 (draft) |
 | Last updated | 2026-09-24 |
 | Status | draft — awaiting confirmation of open questions |
-| Owner / author | il-ba (Business Analyst) |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Owner / author | ba-writer (Business Analyst) |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 ---
 
@@ -20,7 +20,7 @@
 This document is the Software Requirements Specification for the **Temple** feature of InnerLamp, an
 iOS application for Buddhist practice. It defines — for stakeholders, the PM, and engineering — *what*
 the feature must do, at business level, in IEEE 29148-2018 form, and it is the input that drives the
-downstream engineering spec (`il-spec-writer` → `requirements.md` / `design.md` / `tasks.md`).
+downstream engineering spec (`spec-writer` → `requirements.md` / `design.md` / `tasks.md`).
 
 ### 1.2 Scope
 
@@ -393,30 +393,30 @@ The backend REST API is **not yet built**; the client proposes the contract (moc
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | User request — top list | → il-spec-writer | TBD |
-| FR-002 | User request — pagination | → il-spec-writer | TBD |
-| FR-003 | Filter answer — place type | → il-spec-writer | TBD |
-| FR-004 | Filter answer — region | → il-spec-writer | TBD |
-| FR-005 | Filter answer — name | → il-spec-writer | TBD |
-| FR-006 | Silent-gap detection | → il-spec-writer | TBD |
-| FR-007 | Silent-gap detection | → il-spec-writer | TBD |
-| FR-008 | Silent-gap detection | → il-spec-writer | TBD |
-| FR-009 | Silent-gap detection | → il-spec-writer | TBD |
-| FR-010 | Edge-case detection | → il-spec-writer | TBD |
-| FR-011 | User request + list/detail answer | → il-spec-writer | TBD |
-| FR-012 | Image-handling answer | → il-spec-writer | TBD |
-| FR-013 | Prototype `Trang chùa` | → il-spec-writer | TBD |
-| FR-014 | Prototype hero | → il-spec-writer | TBD |
-| FR-015 | Prototype identity block | → il-spec-writer | TBD |
-| FR-016 | Prototype stats row | → il-spec-writer | TBD |
-| FR-017 | Prototype description | → il-spec-writer | TBD |
-| FR-018 | Prototype address row | → il-spec-writer | TBD |
-| FR-019 | Prototype sessions section | → il-spec-writer | TBD |
-| FR-020 | Prototype "Cúng dường" | → il-spec-writer | TBD |
-| FR-021 | Follow out-of-scope answer | → il-spec-writer | TBD |
-| NFR-001 | Non-functional (perf) | → il-spec-writer | TBD |
-| NFR-002 | Non-functional (smoothness) | → il-spec-writer | TBD |
-| NFR-003 | Non-functional (images) | → il-spec-writer | TBD |
+| FR-001 | User request — top list | → spec-writer | TBD |
+| FR-002 | User request — pagination | → spec-writer | TBD |
+| FR-003 | Filter answer — place type | → spec-writer | TBD |
+| FR-004 | Filter answer — region | → spec-writer | TBD |
+| FR-005 | Filter answer — name | → spec-writer | TBD |
+| FR-006 | Silent-gap detection | → spec-writer | TBD |
+| FR-007 | Silent-gap detection | → spec-writer | TBD |
+| FR-008 | Silent-gap detection | → spec-writer | TBD |
+| FR-009 | Silent-gap detection | → spec-writer | TBD |
+| FR-010 | Edge-case detection | → spec-writer | TBD |
+| FR-011 | User request + list/detail answer | → spec-writer | TBD |
+| FR-012 | Image-handling answer | → spec-writer | TBD |
+| FR-013 | Prototype `Trang chùa` | → spec-writer | TBD |
+| FR-014 | Prototype hero | → spec-writer | TBD |
+| FR-015 | Prototype identity block | → spec-writer | TBD |
+| FR-016 | Prototype stats row | → spec-writer | TBD |
+| FR-017 | Prototype description | → spec-writer | TBD |
+| FR-018 | Prototype address row | → spec-writer | TBD |
+| FR-019 | Prototype sessions section | → spec-writer | TBD |
+| FR-020 | Prototype "Cúng dường" | → spec-writer | TBD |
+| FR-021 | Follow out-of-scope answer | → spec-writer | TBD |
+| NFR-001 | Non-functional (perf) | → spec-writer | TBD |
+| NFR-002 | Non-functional (smoothness) | → spec-writer | TBD |
+| NFR-003 | Non-functional (images) | → spec-writer | TBD |
 
 ---
 

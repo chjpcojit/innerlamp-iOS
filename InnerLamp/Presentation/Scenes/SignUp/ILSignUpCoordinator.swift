@@ -19,7 +19,7 @@ protocol ILSignUpCoordinatorDelegate: AnyObject {
     )
 }
 
-final class ILSignUpCoordinator: Coordinator {
+final class ILSignUpCoordinator: Coordinator, ILAddTempleCoordinatorDelegate {
 
     let navigationController: UINavigationController
     var childCoordinators: [any Coordinator] = []
@@ -27,6 +27,7 @@ final class ILSignUpCoordinator: Coordinator {
     weak var delegate: ILSignUpCoordinatorDelegate?
 
     private let container: DIContainer
+    private var viewModel: ILSignUpViewModel?
     private var cancellables = Set<AnyCancellable>()
 
     init(
@@ -39,6 +40,7 @@ final class ILSignUpCoordinator: Coordinator {
 
     func start() {
         let viewModel = container.makeSignUpViewModel()
+        self.viewModel = viewModel
 
         viewModel.navigationEventPublisher
             .sink { [weak self] event in
@@ -59,11 +61,29 @@ final class ILSignUpCoordinator: Coordinator {
                         otpExpiresInSeconds: otpExpiresInSeconds,
                         resendAfterSeconds: resendAfterSeconds
                     )
+                case .openAddTemple(let prefillName, let existingPlaces):
+                    self.showAddTemple(prefillName: prefillName, existingPlaces: existingPlaces)
                 }
             }
             .store(in: &cancellables)
 
         let viewController = ILSignUpViewController(viewModel: viewModel)
         navigationController.pushViewController(viewController, animated: true)
+    }
+
+    private func showAddTemple(prefillName: String, existingPlaces: [ILOrdinationPlaceEntity]) {
+        let coordinator = container.makeAddTempleCoordinator(
+            navigationController: navigationController,
+            prefillName: prefillName,
+            existingPlaces: existingPlaces
+        )
+        coordinator.delegate = self
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    // MARK: - ILAddTempleCoordinatorDelegate
+    func addTempleDidSubmit(_ coordinator: ILAddTempleCoordinator, proposal: ILTempleProposalEntity) {
+        viewModel?.applyProposedPlace(proposal)
     }
 }

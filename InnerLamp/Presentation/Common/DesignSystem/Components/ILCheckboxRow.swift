@@ -16,10 +16,19 @@ public final class ILCheckboxRow: UIControl {
     }
 
     public var text: String = "" {
-        didSet { textLabel.text = text }
+        didSet { updateText() }
+    }
+
+    /// Các đoạn con của `text` hiển thị như link (gạch chân, màu `link`). Bấm vào link gọi
+    /// `onLinkTap(index)` thay vì đổi trạng thái checkbox.
+    public var linkTexts: [String] = [] {
+        didSet { updateText() }
     }
 
     public var onToggle: (() -> Void)?
+    public var onLinkTap: ((Int) -> Void)?
+
+    private var linkRanges: [NSRange] = []
 
     // MARK: - UI Elements
     private let boxView = UIView()
@@ -56,8 +65,8 @@ public final class ILCheckboxRow: UIControl {
         textLabel.font = ILTypography.subhead
         textLabel.textColor = ILColors.inkDim
         textLabel.numberOfLines = 0
-        textLabel.text = text
         textLabel.isUserInteractionEnabled = false
+        updateText()
 
         addSubview(boxView)
         addSubview(textLabel)
@@ -77,7 +86,7 @@ public final class ILCheckboxRow: UIControl {
             textLabel.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
 
-        addTarget(self, action: #selector(handleTap), for: .touchUpInside)
+        addTarget(self, action: #selector(handleTap(_:forEvent:)), for: .touchUpInside)
         updateAppearance()
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILCheckboxRow, _) in
             view.applyColorAppearanceChange()
@@ -102,7 +111,53 @@ public final class ILCheckboxRow: UIControl {
         updateAppearance()
     }
 
-    @objc private func handleTap() {
+    private func updateText() {
+        guard !linkTexts.isEmpty else {
+            linkRanges = []
+            textLabel.attributedText = nil
+            textLabel.text = text
+            return
+        }
+        let attributed = NSMutableAttributedString(string: text, attributes: [
+            .font: textLabel.font as Any,
+            .foregroundColor: textLabel.textColor as Any
+        ])
+        let nsText = text as NSString
+        linkRanges = linkTexts.map { nsText.range(of: $0) }
+        for range in linkRanges where range.location != NSNotFound {
+            attributed.addAttributes([
+                .foregroundColor: ILColors.link,
+                .underlineStyle: NSUnderlineStyle.single.rawValue
+            ], range: range)
+        }
+        textLabel.attributedText = attributed
+    }
+
+    /// Chỉ số link tại điểm chạm (toạ độ của `textLabel`), `nil` nếu chạm ra ngoài mọi link.
+    private func linkIndex(at point: CGPoint) -> Int? {
+        guard let attributed = textLabel.attributedText, textLabel.bounds.width > 0 else { return nil }
+        let storage = NSTextStorage(attributedString: attributed)
+        let layoutManager = NSLayoutManager()
+        let container = NSTextContainer(size: textLabel.bounds.size)
+        container.lineFragmentPadding = 0
+        container.lineBreakMode = textLabel.lineBreakMode
+        layoutManager.addTextContainer(container)
+        storage.addLayoutManager(layoutManager)
+
+        let index = layoutManager.characterIndex(
+            for: point,
+            in: container,
+            fractionOfDistanceBetweenInsertionPoints: nil
+        )
+        return linkRanges.firstIndex { $0.location != NSNotFound && NSLocationInRange(index, $0) }
+    }
+
+    @objc private func handleTap(_ sender: UIControl, forEvent event: UIEvent) {
+        if let touch = event.allTouches?.first,
+           let index = linkIndex(at: touch.location(in: textLabel)) {
+            onLinkTap?(index)
+            return
+        }
         onToggle?()
     }
 }

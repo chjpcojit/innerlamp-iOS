@@ -23,11 +23,11 @@ final class ILFamilyTreeUseCaseImpl: ILFamilyTreeUseCase {
 
     init() {}
 
-    // Out of scope for il-screen-builder: no confirmed API contract / Repository yet. The body is
+    // Out of scope for ui-builder: no confirmed API contract / Repository yet. The body is
     // the one-line TODO plus the only value that compiles without inventing data (no books, so
     // the screen shows its empty state).
     func loadTrees() async throws -> [ILFamilyTreeEntity] {
-        print("TODO: implement loadTrees — network/repository call, not built by il-screen-builder")
+        print("TODO: implement loadTrees — network/repository call, not built by ui-builder")
         return []
     }
 

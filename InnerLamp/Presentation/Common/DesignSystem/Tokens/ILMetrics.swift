@@ -83,6 +83,12 @@ public enum ILMetrics {
     /// Bo góc biểu tượng nhỏ (2px)
     public static let radiusGlyph: CGFloat = 2.0
 
+    /// Bo góc ô icon đầu section (7px — 30% của `sectionIconSize`, như `IL-Icon` trong prototype)
+    public static let radiusSectionIcon: CGFloat = 7.0
+
+    /// Bo góc ô icon lớn (14px — 30% của `iconTileLargeSize`, thẻ Chuông mõ ở Trang chủ)
+    public static let radiusIconTileLarge: CGFloat = 14.0
+
     /// Selectable option tile in a settings panel (10px — Reader font-size / background tiles)
     public static let radiusOptionTile: CGFloat = 10.0
 
@@ -104,18 +110,24 @@ public enum ILMetrics {
     
     /// Kích thước ô icon tile (44x44px)
     public static let iconTileSize: CGFloat = 44.0
+
+    /// Ô icon đầu hàng `ILSettingRow` (34x34px, `IL-Icon size="34"` trong `IL-SettingRow`)
+    public static let settingIconTileSize: CGFloat = 34.0
+
+    /// Bo góc ô icon của `ILSettingRow` (10px — 30% của `settingIconTileSize`)
+    public static let radiusSettingIconTile: CGFloat = 10.0
+
+    /// Ô icon đầu section (22x22px) — `ILSectionHeaderView` có icon
+    public static let sectionIconSize: CGFloat = 22.0
+
+    /// Ô icon lớn (46x46px) — thẻ Chuông mõ ở Trang chủ
+    public static let iconTileLargeSize: CGFloat = 46.0
     
     /// Chiều cao thanh điều hướng đáy bao gồm safe area (110px)
     public static let bottomNavHeight: CGFloat = 110.0
 
     /// Chiều cao 1 ô nhập số trong mã OTP (58px)
     public static let otpDigitBoxHeight: CGFloat = 58.0
-
-    /// Ảnh đèn `ILIcons.onboardingLamp` ở màn Onboarding intro — kích thước gốc @1x (114x160px)
-    public static let onboardingLampSize = CGSize(width: 114, height: 160)
-
-    /// Ảnh đèn `ILIcons.onboardingLamp` ở header màn Đăng nhập — cao 56px, giữ tỉ lệ ảnh gốc
-    public static let loginLampSize = CGSize(width: 40, height: 56)
 
     /// Blur strength (0...1) of a sticky detail-screen header once the content has scrolled fully under it
     /// ("just enough", not fully frosted). Used by `ILHeaderBlurView` — chi tiết chùa, Phật/Bồ Tát, bài viết, kinh sách.
@@ -177,8 +189,11 @@ public enum ILMetrics {
     /// `box-shadow` của tab đang chọn ở màn Thiền định trong design handoff.
     public static let shadowSegmentSelected = Shadow(color: UIColor(hex: "#221E19"), alpha: 0.08, x: 0, y: 1, blur: 3)
     
-    /// Đổ bóng nút đèn ở thanh đáy sáng (0 8px 20px rgba(34,30,25,.28))
-    public static let shadowLampLight = Shadow(color: UIColor(hex: "#221E19"), alpha: 0.28, x: 0, y: 8, blur: 20)
+    /// Upward shadow of the bottom nav bar in light mode (0 -8px 24px rgba(34,30,25,.04))
+    public static let shadowBottomNav = Shadow(color: UIColor(hex: "#221E19"), alpha: 0.04, x: 0, y: -8, blur: 24)
+
+    /// Đổ bóng nút đèn ở thanh đáy sáng (0 6px 16px rgba(184,134,47,.35))
+    public static let shadowLampLight = Shadow(color: UIColor(hex: "#B8862F"), alpha: 0.35, x: 0, y: 6, blur: 16)
     
     /// Đổ bóng nút đèn ở thanh đáy tối (0 0 28px rgba(217,150,60,.45))
     public static let shadowLampDark = Shadow(color: UIColor(hex: "#D9963C"), alpha: 0.45, x: 0, y: 0, blur: 28)

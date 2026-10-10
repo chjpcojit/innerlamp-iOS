@@ -1,7 +1,7 @@
 # Onboarding
 
 <!--
-Generated/maintained via il-screen-builder. This is a living status doc for this screen, not a
+Generated/maintained via ui-builder. This is a living status doc for this screen, not a
 one-time scaffold artifact — update it (don't recreate it) whenever this feature's files change:
 a stub gets a real implementation, a new action/nav event is added, tests are filled in, etc.
 Its job is so anyone (including future-you) can tell what's actually done here vs. still a
@@ -43,7 +43,7 @@ Nothing outstanding — this screen is fully implemented end to end.
 ## Changelog
 
 - 2026-09-12 — initial scaffold (closure-based ViewModel, unprefixed types)
-- 2026-09-14 — migrated to the current il-screen-builder conventions: `IL`-prefixed types
+- 2026-09-14 — migrated to the current ui-builder conventions: `IL`-prefixed types
   throughout (`ILOnboardingStateModel`, `ILOnboardingUseCase`, `ILOnboardingViewModel`,
   `ILOnboardingCoordinator`, `ILOnboardingIntroStepView`/`ILOnboardingChoiceStepView`/
   `ILOnboardingToggleListStepView`), ViewModel rewritten from closure-callback (`onState:`/

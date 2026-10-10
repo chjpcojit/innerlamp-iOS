@@ -12,13 +12,8 @@ import UIKit
 final class ILOnboardingIntroStepView: UIView {
 
     // MARK: - UI Elements
-    /// Ảnh minh họa đèn + quầng sáng (full-color, không tô màu).
-    private lazy var lampImageView: UIImageView = {
-        let imageView = UIImageView(image: ILIcons.onboardingLamp)
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.contentMode = .scaleAspectFit
-        return imageView
-    }()
+    /// `IL-Logo` 100px ở đầu step (design `step0`).
+    private let logoView = ILLogoView(size: 100)
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -58,8 +53,8 @@ final class ILOnboardingIntroStepView: UIView {
         stack.alignment = .leading
         stack.spacing = 0
         stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.addArrangedSubview(lampImageView)
-        stack.setCustomSpacing(22, after: lampImageView)
+        stack.addArrangedSubview(logoView)
+        stack.setCustomSpacing(22, after: logoView)
         stack.addArrangedSubview(titleLabel)
         stack.setCustomSpacing(12, after: titleLabel)
         stack.addArrangedSubview(subtitleItalicLabel)
@@ -83,9 +78,6 @@ final class ILOnboardingIntroStepView: UIView {
         addSubview(contentStack)
 
         NSLayoutConstraint.activate([
-            lampImageView.widthAnchor.constraint(equalToConstant: ILMetrics.onboardingLampSize.width),
-            lampImageView.heightAnchor.constraint(equalToConstant: ILMetrics.onboardingLampSize.height),
-
             contentStack.leadingAnchor.constraint(equalTo: leadingAnchor),
             contentStack.trailingAnchor.constraint(equalTo: trailingAnchor),
             contentStack.centerYAnchor.constraint(equalTo: centerYAnchor),

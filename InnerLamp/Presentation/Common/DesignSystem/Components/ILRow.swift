@@ -60,7 +60,7 @@ public final class ILRow: UIControl {
     
     // MARK: - UI Elements
     private let iconTile = UIView()
-    private let glyphView = UIView()
+    private let glyphView = UIImageView()
     
     private let titleLabel = UILabel()
     private let subLabel = UILabel()
@@ -101,16 +101,18 @@ public final class ILRow: UIControl {
         iconTile.layer.cornerRadius = ILMetrics.radiusIconTile
         iconTile.clipsToBounds = true
         
+        // The icon asset (44×44 viewBox) carries its own padding, so it fills the whole tile.
+        glyphView.contentMode = .scaleAspectFit
         glyphView.translatesAutoresizingMaskIntoConstraints = false
         iconTile.addSubview(glyphView)
-        
+
         NSLayoutConstraint.activate([
             iconTile.widthAnchor.constraint(equalToConstant: ILMetrics.iconTileSize),
             iconTile.heightAnchor.constraint(equalToConstant: ILMetrics.iconTileSize),
-            glyphView.centerXAnchor.constraint(equalTo: iconTile.centerXAnchor),
-            glyphView.centerYAnchor.constraint(equalTo: iconTile.centerYAnchor),
-            glyphView.widthAnchor.constraint(equalToConstant: 15),
-            glyphView.heightAnchor.constraint(equalToConstant: 15)
+            glyphView.leadingAnchor.constraint(equalTo: iconTile.leadingAnchor),
+            glyphView.trailingAnchor.constraint(equalTo: iconTile.trailingAnchor),
+            glyphView.topAnchor.constraint(equalTo: iconTile.topAnchor),
+            glyphView.bottomAnchor.constraint(equalTo: iconTile.bottomAnchor)
         ])
         
         titleLabel.font = ILTypography.rowTitle
@@ -183,34 +185,14 @@ public final class ILRow: UIControl {
         
         // Icon Tile & Glyph Appearance
         iconTile.backgroundColor = tone.tintBackground
-        let accent = tone.accentColor
-        
+        glyphView.tintColor = tone.accentColor
+
+        // Same glyph → icon mapping as `IL-Row` in the design (leaf→med, book→book, circle→lamp, dot→talk).
         switch glyph {
-        case .leaf:
-            glyphView.backgroundColor = accent
-            glyphView.layer.borderWidth = 0
-            glyphView.layer.cornerRadius = 7.5
-            glyphView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
-            
-        case .book:
-            glyphView.backgroundColor = .clear
-            glyphView.layer.borderWidth = 1.5
-            glyphView.layer.borderColor = accent.cgColor
-            glyphView.layer.cornerRadius = ILMetrics.radiusGlyph
-            glyphView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
-            
-        case .circle:
-            glyphView.backgroundColor = .clear
-            glyphView.layer.borderWidth = 1.5
-            glyphView.layer.borderColor = accent.cgColor
-            glyphView.layer.cornerRadius = 7.5
-            glyphView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
-            
-        case .dot:
-            glyphView.backgroundColor = accent
-            glyphView.layer.borderWidth = 0
-            glyphView.layer.cornerRadius = 7.5
-            glyphView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        case .leaf: glyphView.image = ILIcons.rowMed
+        case .book: glyphView.image = ILIcons.rowBook
+        case .circle: glyphView.image = ILIcons.rowLamp
+        case .dot: glyphView.image = ILIcons.rowTalk
         }
     }
     

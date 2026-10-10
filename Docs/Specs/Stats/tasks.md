@@ -6,7 +6,7 @@ Status: in-progress (Phases 1–2 done; Phase 3 pending — real data integratio
 
 > See `changelog.md` in this folder for the version history of this spec.
 
-> Note: this feature was scaffolded UI-first by `il-screen-builder` from the
+> Note: this feature was scaffolded UI-first by `ui-builder` from the
 > design handoff (`isStats` screen), with the data source stubbed to sample
 > data — matching the project's preferred workflow (see `Docs/Specs/OKF.md`).
 > Checked items below reflect what shipped; unchecked items are real pending

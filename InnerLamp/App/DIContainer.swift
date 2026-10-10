@@ -210,8 +210,34 @@ final class DIContainer {
         ILSignUpUseCaseImpl(repository: makeSignUpRepository())
     }
 
+    func makeOrdinationPlaceUseCase() -> ILOrdinationPlaceUseCase {
+        ILOrdinationPlaceUseCaseImpl(templeRepository: makeTempleRepository())
+    }
+
     func makeSignUpViewModel() -> ILSignUpViewModel {
-        ILSignUpViewModel(useCase: makeSignUpUseCase())
+        ILSignUpViewModel(useCase: makeSignUpUseCase(), ordinationPlaceUseCase: makeOrdinationPlaceUseCase())
+    }
+
+    // MARK: - AddTemple (màn "Thêm thông tin chùa")
+    func makeAddTempleUseCase() -> ILAddTempleUseCase {
+        ILAddTempleUseCaseImpl()
+    }
+
+    func makeAddTempleViewModel(prefillName: String, existingPlaces: [ILOrdinationPlaceEntity]) -> ILAddTempleViewModel {
+        ILAddTempleViewModel(useCase: makeAddTempleUseCase(), prefillName: prefillName, existingPlaces: existingPlaces)
+    }
+
+    func makeAddTempleCoordinator(
+        navigationController: UINavigationController,
+        prefillName: String,
+        existingPlaces: [ILOrdinationPlaceEntity]
+    ) -> ILAddTempleCoordinator {
+        ILAddTempleCoordinator(
+            navigationController: navigationController,
+            container: self,
+            prefillName: prefillName,
+            existingPlaces: existingPlaces
+        )
     }
 
     func makeSignUpCoordinator(navigationController: UINavigationController) -> ILSignUpCoordinator {
@@ -297,7 +323,6 @@ final class DIContainer {
     // MARK: - Home
     func makeHomeUseCase() -> ILHomeUseCase {
         ILHomeUseCaseImpl(
-            keychainService: keychainService,
             buddhistEventUseCase: makeBuddhistEventUseCase(),
             sutraQuoteUseCase: makeSutraQuoteUseCase(),
             templeRepository: makeTempleRepository(),

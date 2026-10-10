@@ -10,7 +10,7 @@
 <helmet><style>@keyframes ilspin{to{transform:rotate(360deg)}}</style></helmet>
 <div onClick="{{ tap }}" style="height:50px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:9px;box-sizing:border-box;padding:0 22px;transition:transform .12s ease,background .18s ease,box-shadow .18s ease;cursor: {{ cursor }};width: {{ width }};background: {{ bg }};color: {{ fg }};border:1px solid {{ bd }};box-shadow: {{ shadow }}" style-hover="{{ hoverStyle }}" style-active="{{ activeStyle }}">
   <div style="width:14px;height:14px;border-radius:50%;box-sizing:border-box;animation:ilspin .9s linear infinite;display: {{ spinnerShow }};border:2px solid {{ spinnerTrack }};border-top-color: {{ fg }}"></div>
-  <div style="font:500 13.5px 'Be Vietnam Pro',sans-serif;letter-spacing:.01em">{{ label }}</div>
+  <div style="font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.01em">{{ label }}</div>
 </div>
 
 </x-dc>

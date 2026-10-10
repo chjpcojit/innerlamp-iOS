@@ -153,5 +153,5 @@ Scope folder: `InnerLamp/Core/GRPC/`
   exists to prove it's needed (see `requirements.md` ⚠️ on `NFR-002`).
 - **Any concrete business `.proto` service / RPC** — out of scope for this spec entirely; the
   first real consumer feature is not yet identified (see `requirements.md` Pending). When one is,
-  it is `il-data-layer-builder`'s job, following the same pattern that feature already uses for
+  it is `data-builder`'s job, following the same pattern that feature already uses for
   `Core/Networking`-backed Repositories.

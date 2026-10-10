@@ -79,7 +79,7 @@ final class ILDeityHeroView: ILStretchyHeaderView {
         glowLayer.endPoint = CGPoint(x: 1, y: 1)
         backgroundView.layer.addSublayer(glowLayer)
 
-        watermarkLabel.font = ILTypography.lora(size: Layout.watermarkFontSize)
+        watermarkLabel.font = ILTypography.cormorant(size: Layout.watermarkFontSize)
         watermarkLabel.textColor = ILColors.heroInk.withAlphaComponent(0.07)
         watermarkLabel.textAlignment = .center
         watermarkLabel.adjustsFontSizeToFitWidth = true

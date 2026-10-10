@@ -10,7 +10,7 @@ updated: 2026-10-03
 files:
   - InnerLamp/Presentation/Scenes/Memorial/ILMemorialViewController.swift:86
   - InnerLamp/Presentation/Scenes/Memorial/ILMemorialCoordinator.swift:56
-source: User decision during the il-screen-builder run (parent flow: Memorial); the prototype shows it as the bottom-nav tab "Cây"
+source: User decision during the ui-builder run (parent flow: Memorial); the prototype shows it as the bottom-nav tab "Cây"
 owner: Product / BA
 ---
 

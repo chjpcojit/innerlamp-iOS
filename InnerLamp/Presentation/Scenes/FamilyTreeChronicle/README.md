@@ -45,4 +45,4 @@ Design source: screen "Phả ký dòng họ" in `Docs/InnerLamp project/IL-GiaPh
 
 ## Changelog
 
-- 2026-10-04 — Initial version, built from the "Phả ký dòng họ" prototype screen via il-screen-builder.
+- 2026-10-04 — Initial version, built from the "Phả ký dòng họ" prototype screen via ui-builder.

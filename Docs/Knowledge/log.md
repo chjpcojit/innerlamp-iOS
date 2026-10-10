@@ -1,5 +1,27 @@
 # Knowledge Bundle Update Log
 
+## 2026-10-10
+
+- `features/splash.md`: first-launch-only Onboarding confirmed by the user
+  (`AS-Splash-001` validated); removed the related ⚠️, kept the
+  quit-mid-Onboarding edge case under Pending work.
+
+- Updated `features/splash.md` for the new `.goToLogin` route: no session +
+  onboarding completed → Login (user decision), first-time users still see
+  Onboarding (`AS-Splash-001`). Expired-token behavior confirmed: refresh on
+  first 401, failed refresh → Login. New unit test written, not yet run (test
+  build blocked by the GRPC plugin), so the concept stays `draft`.
+
+- Updated `features/splash.md` after the pulsing-dots loading indicator was
+  removed from the Splash screen (`ILSplashLoadingIndicatorView` deleted).
+  Re-reading the code also showed the concept's routing section was stale: the
+  post-splash route is no longer hardcoded to Onboarding — it uses
+  `ILSplashUseCase.hasSession()` (Keychain access token, with fresh-install and
+  legacy-credential cleanup). Rewrote Summary, Architecture, Navigation, Data
+  flow and Pending work accordingly. Still `status: draft` — stored-session path
+  not exercised end-to-end. Token expiry is intentionally unchecked at launch:
+  the first 401 triggers an automatic refresh, a failed refresh routes to Login.
+
 ## 2026-09-28
 
 - Updated `features/temple.md` after the Temple screen ("Trang chùa") was

@@ -114,7 +114,7 @@ final class ILSanghaUseCaseImpl: ILSanghaUseCase {
     // MARK: - Mock content
     // TODO: chưa có API chùa tu tập / thông báo / khóa tu / pháp thoại / số Phật tử / buổi tu trực
     // tuyến / ngày lễ (xem Docs/Tech-Debt/Sangha/TD-Sangha-001-*.md) — thay bằng ILSanghaRepository
-    // → networkService khi có contract (dùng il-data-layer-builder).
+    // → networkService khi có contract (dùng data-builder).
 
     private static func mockTemples() -> [ILSanghaTempleEntity] {
         [

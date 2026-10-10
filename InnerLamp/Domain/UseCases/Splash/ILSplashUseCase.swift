@@ -27,6 +27,11 @@ final class ILSplashUseCaseImpl: ILSplashUseCase {
     /// "fresh install", whatever the Keychain still holds from a previous install.
     private static let hasLaunchedBeforeKey = "has_launched_before"
 
+    /// Item của bản dev cũ (mock đăng ký) từng lưu `{displayName, phoneNumber, password}` dạng thô
+    /// trong Keychain. Không còn code nào ghi nó, nhưng Keychain sống sót qua cập nhật và cài lại —
+    /// xoá ở mọi lần khởi động để mật khẩu không nằm lại trên máy.
+    private static let legacyPendingSignUpKey = "signup_pending_credentials"
+
     init(
         onboardingUseCase: ILOnboardingUseCase,
         keychainService: KeychainService,
@@ -46,8 +51,14 @@ final class ILSplashUseCaseImpl: ILSplashUseCase {
     }
 
     func hasSession() -> Bool {
+        purgeLegacyCredentials()
         discardKeychainSessionOnFreshInstall()
         return keychainService.exists(key: KeychainAuthTokenProviding.accessTokenKey)
+    }
+
+    /// Xoá không cần xác thực và không lỗi khi item không tồn tại, nên gọi mỗi lần là an toàn.
+    private func purgeLegacyCredentials() {
+        try? keychainService.delete(key: Self.legacyPendingSignUpKey)
     }
 
     private func discardKeychainSessionOnFreshInstall() {

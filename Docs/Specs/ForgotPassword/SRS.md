@@ -8,8 +8,8 @@
 | Version | 0.1 (draft) |
 | Last updated | 2026-09-27 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
-| Owner / author | il-ba (Business Analyst) |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Owner / author | ba-writer (Business Analyst) |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 ---
 
@@ -250,14 +250,14 @@ paths are `register/request-otp`, `register/verify-otp`, `resend-otp`, `login`, 
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | Load state | → il-spec-writer | TBD |
-| FR-002 | Country picker | → il-spec-writer | TBD |
-| FR-003 | Phone entry/validity | → il-spec-writer | TBD |
-| FR-004 | Submit reset | → il-spec-writer | TBD |
-| FR-005 | Double-submit guard | → il-spec-writer | TBD |
-| FR-006 | Back navigation | → il-spec-writer | TBD |
-| FR-007 | Method-specific contact | → il-spec-writer | TBD |
-| NFR-001 | Submit responsiveness | → il-spec-writer | TBD |
+| FR-001 | Load state | → spec-writer | TBD |
+| FR-002 | Country picker | → spec-writer | TBD |
+| FR-003 | Phone entry/validity | → spec-writer | TBD |
+| FR-004 | Submit reset | → spec-writer | TBD |
+| FR-005 | Double-submit guard | → spec-writer | TBD |
+| FR-006 | Back navigation | → spec-writer | TBD |
+| FR-007 | Method-specific contact | → spec-writer | TBD |
+| NFR-001 | Submit responsiveness | → spec-writer | TBD |
 
 ---
 

@@ -43,7 +43,7 @@ final class ILPlayerUseCaseImpl: ILPlayerUseCase {
     // README), replace the mock catalog below with `ILPlayerRepository` → `networkService`.
     // Likewise `togglePlayPause`/`rewind`/`forward` currently only mutate in-memory state; once
     // there is real audio they must drive the actual player (AVAudioPlayer / a shared audio
-    // service). This stays out of il-screen-builder scope — see `references/data_layer_boundaries.md`.
+    // service). This stays out of ui-builder scope — see `references/data_layer_boundaries.md`.
     init() {}
 
     func getInitialState(sutraID: String) -> ILPlayerEntity {

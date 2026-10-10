@@ -149,10 +149,10 @@ final class ILFamilyTreeChronicleUseCaseImpl: ILFamilyTreeChronicleUseCase {
         return updated
     }
 
-    // Out of scope for il-screen-builder: no confirmed API contract / Repository yet — see
+    // Out of scope for ui-builder: no confirmed API contract / Repository yet — see
     // TD-FamilyTreeChronicle-001. One-line TODO only; no fabricated response.
     func save(_ trees: [ILFamilyTreeEntity]) async throws {
-        print("TODO: implement save — network/repository call, not built by il-screen-builder")
+        print("TODO: implement save — network/repository call, not built by ui-builder")
     }
 
     // MARK: - Helpers

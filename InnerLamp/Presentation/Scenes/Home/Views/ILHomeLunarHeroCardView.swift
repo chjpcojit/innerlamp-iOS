@@ -164,7 +164,7 @@ final class ILHomeLunarHeroCardView: UIControl {
         guard let lastChanged = changedIndices.last else { return }
 
         let rise = lunarDayLabel.font.lineHeight * 0.4
-        let font = lunarDayLabel.font ?? ILTypography.lora(size: 52)
+        let font = lunarDayLabel.font ?? ILTypography.cormorant(size: 68)
         let newOffsets = digitOffsets(of: lunarDayText, font: font)
         let oldOffsets = digitOffsets(of: oldText, font: font)
 
@@ -366,11 +366,11 @@ final class ILHomeLunarHeroCardView: UIControl {
         eyebrowRow.spacing = 7
         eyebrowRow.alignment = .center
 
-        lunarDayLabel.font = ILTypography.lora(size: 52)
+        lunarDayLabel.font = ILTypography.cormorant(size: 68)
         lunarDayLabel.textColor = ILColors.heroInk
         lunarDayLabel.numberOfLines = 1
 
-        lunarMonthLabelView.font = ILTypography.lora(size: 17)
+        lunarMonthLabelView.font = ILTypography.cormorant(size: 18)
         lunarMonthLabelView.textColor = ILColors.heroInk2
         lunarMonthLabelView.numberOfLines = 1
 
@@ -435,7 +435,7 @@ final class ILHomeLunarHeroCardView: UIControl {
     /// Lora 12 nghiêng — không có preset sẵn khớp size này trong `ILTypography`, cùng cách
     /// `ILQuoteCardView`/`ILSplashViewController` tự derive font nghiêng cục bộ.
     private var verseSourceFont: UIFont {
-        let base = ILTypography.lora(size: 12)
+        let base = ILTypography.literata(size: 13, italic: true)
         guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
         return UIFont(descriptor: descriptor, size: 12)
     }
@@ -449,7 +449,7 @@ final class ILHomeLunarHeroCardView: UIControl {
             let label = UILabel()
             label.attributedText = ILTypography.makeAttributedString(
                 text: line,
-                font: ILTypography.lora(size: 18.5),
+                font: ILTypography.cormorant(size: 20, italic: true),
                 color: ILColors.heroInk,
                 lineHeightMultiple: 1.4,
                 alignment: .center

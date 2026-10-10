@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="position:relative;flex:none;width: {{ w }};height: {{ h }}">
+  <div style="position:absolute;left:50%;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(217,150,60,.5),rgba(217,150,60,.14) 45%,transparent 70%);width: {{ gS }};height: {{ gS }};bottom: {{ gB }};margin-left: {{ gM }};transform: {{ gT }};opacity: {{ gO }};transition: {{ gTr }}"></div>
+  <sc-if value="{{ ripple }}">
+    <div style="position:absolute;left:50%;transform:translateX(-50%);border-radius:50%;border:1px solid rgba(110,143,122,.45);width: {{ r1 }};height: {{ rh }};bottom:0"></div>
+    <div style="position:absolute;left:50%;transform:translateX(-50%);border-radius:50%;border:1px solid rgba(110,143,122,.25);width: {{ r2 }};height: {{ rh2 }};bottom: {{ rb2 }}"></div>
+  </sc-if>
+  <sc-for list="{{ parts }}" as="p" hint-placeholder-count="3">
+    <div style="position:absolute;left:50%;width: {{ p.w }};height: {{ p.h }};bottom: {{ p.b }};margin-left: {{ p.m }};border-radius: {{ p.r }};background: {{ p.bg }};transform: {{ p.t }};transform-origin:50% 100%"></div>
+  </sc-for>
+  <svg viewBox="0 0 40 56" style="position:absolute;left:50%;overflow:visible;transform-origin:50% 100%;width: {{ fw }};height: {{ fh }};bottom: {{ fb }};margin-left: {{ fm }};transform: {{ fT }};opacity: {{ fO }};filter: {{ fF }};transition: {{ fTr }}">
+    <path d="M23 1C25 11 36 19 36 34c0 12-8 20-16 20S4 47 4 37c0-9 6-14 9-21 2 7 5 10 8 11-2-9-2-17 2-26z" fill="#E6A94E"></path>
+    <path d="M21 30c2 5 5 8 5 12a6 6 0 0 1-12 0c0-3 2-5 3-8 1 2 2 3 3 3-1-2-1-4 1-7z" fill="#F3C673"></path>
+  </svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:160,&quot;height&quot;:180},&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;oil&quot;,&quot;lotus&quot;,&quot;float&quot;],&quot;default&quot;:&quot;oil&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:120,&quot;min&quot;:32,&quot;max&quot;:240,&quot;tsType&quot;:&quot;number&quot;},&quot;lit&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;ripple&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;anim&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props, W = Number(p.size) || 80, kind = p.kind || 'oil', lit = p.lit !== false, anim = !!p.anim;
+    const px = v => (v * W).toFixed(1) + 'px';
+    const part = (w, h, b, r, bg, t) => ({ w: px(w), h: px(h), b: px(b), m: px(-w / 2), r, bg, t: t || 'none' });
+    let parts, fb;
+    if (kind === 'lotus') {
+      parts = [part(.7, .12, .02, '50%', 'linear-gradient(180deg,#C98A82,#8E5650)'),
+        part(.656, .42, .08, '40% 40% 48% 48% / 16% 16% 50% 50%', 'linear-gradient(180deg,#E9B8B0,#A86A62)'),
+        part(.5, .07, .46, '50%', '#F4D2CB')];
+      fb = .48;
+    } else if (kind === 'float') {
+      const pg = 'linear-gradient(180deg,#F6D58E,#C98A35)';
+      parts = [part(.22, .22, .27, '50% 50% 50% 50% / 80% 80% 20% 20%', pg, 'rotate(-38deg)'),
+        part(.22, .22, .27, '50% 50% 50% 50% / 80% 80% 20% 20%', pg, 'rotate(38deg)'),
+        part(.92, .24, .1, '46% 46% 50% 50% / 34% 34% 66% 66%', 'linear-gradient(180deg,#F0C26A,#B5762A)'),
+        part(.22, .26, .28, '50% 50% 50% 50% / 80% 80% 20% 20%', pg)];
+      fb = .38;
+    } else {
+      parts = [part(.46, .07, 0, '999px', 'linear-gradient(180deg,#A87A34,#6A4618)'),
+        part(.12, .15, .06, '2px', 'linear-gradient(90deg,#8C6226,#B3843C,#7A5320)'),
+        part(.8, .27, .2, '0 0 50% 50% / 0 0 100% 100%', 'linear-gradient(180deg,#C99A4A,#7A5320)'),
+        part(.8, .08, .43, '50%', '#E3BC72')];
+      fb = .46;
+    }
+    const E = 'cubic-bezier(.2,.7,.2,1)';
+    return {
+      w: px(1), h: px(1.18), parts, ripple: kind === 'float' && !!p.ripple,
+      r1: px(1), rh: px(.12), r2: px(1.25), rh2: px(.16), rb2: px(-.02),
+      fw: px(.3), fh: px(.42), fb: px(fb), fm: px(-.15),
+      fT: lit ? 'scale(1)' : 'scale(.06)', fO: lit ? 1 : 0, fF: (lit ? 'brightness(1)' : 'brightness(2.2)') + ' drop-shadow(0 0 ' + (.3 * W * .15).toFixed(1) + 'px rgba(217,150,60,.8))',
+      fTr: anim ? 'transform 1.7s ' + E + ',filter 1.7s ' + E + ',opacity .35s ease' : 'none',
+      gS: px(1.15), gB: px(fb - .32), gM: px(-.575), gT: lit ? 'scale(1)' : 'scale(.2)', gO: lit ? 1 : 0,
+      gTr: anim ? 'transform 1.9s ' + E + ',opacity 1.9s ease' : 'none',
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -8,8 +8,8 @@
 | Version | 0.1 (draft) |
 | Last updated | 2026-09-27 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
-| Owner / author | il-ba (Business Analyst) |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Owner / author | ba-writer (Business Analyst) |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 ---
 
@@ -255,15 +255,15 @@ Both public (`requiresAuth = false`), speaking the standard `ApiResponse` envelo
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | Load state | → il-spec-writer | TBD |
-| FR-002 | Server-seeded timing | → il-spec-writer | TBD |
-| FR-003 | Verify success | → il-spec-writer | TBD |
-| FR-004 | Verify failure | → il-spec-writer | TBD |
-| FR-005 | Resend | → il-spec-writer | TBD |
-| FR-006 | Resend failure | → il-spec-writer | TBD |
-| FR-007 | Voice banner | → il-spec-writer | TBD |
-| FR-008 | Back | → il-spec-writer | TBD |
-| NFR-001 | Verify/resend responsiveness | → il-spec-writer | TBD |
+| FR-001 | Load state | → spec-writer | TBD |
+| FR-002 | Server-seeded timing | → spec-writer | TBD |
+| FR-003 | Verify success | → spec-writer | TBD |
+| FR-004 | Verify failure | → spec-writer | TBD |
+| FR-005 | Resend | → spec-writer | TBD |
+| FR-006 | Resend failure | → spec-writer | TBD |
+| FR-007 | Voice banner | → spec-writer | TBD |
+| FR-008 | Back | → spec-writer | TBD |
+| NFR-001 | Verify/resend responsiveness | → spec-writer | TBD |
 
 ---
 

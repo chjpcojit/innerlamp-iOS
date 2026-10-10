@@ -10,7 +10,7 @@ import Foundation
 /// Request and response are split on purpose: the shared `JSONDecoder` uses `.convertFromSnakeCase`
 /// but the `JSONEncoder` has no key strategy, so the two sides cannot share one type. The request
 /// declares explicit snake_case `CodingKeys`; the response declares none and relies on the decoder.
-/// See `.claude/skills/il-data-layer-builder/references/data_layer_architecture.md` §5.
+/// See `.claude/skills/data-builder/references/data_layer_architecture.md` §5.
 ///
 /// Contract: `Docs/Specs/API/openapi.yaml` v3.9 `LoginRequest` / `LoginResponse.data`
 /// (= `VerifyOTPData`) — `POST /v1/auth/login`.

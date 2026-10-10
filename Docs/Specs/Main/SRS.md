@@ -8,8 +8,8 @@
 | Version | 0.1 (draft) |
 | Last updated | 2026-09-27 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
-| Owner / author | il-ba (Business Analyst) |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Owner / author | ba-writer (Business Analyst) |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 ---
 
@@ -209,12 +209,12 @@ Tab content is rendered by each tab's coordinator in its own `BaseNavigationCont
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | Tab shell | → il-spec-writer | TBD |
-| FR-002 | Tab switching | → il-spec-writer | TBD |
-| FR-003 | Lamp action | → il-spec-writer | TBD |
-| FR-004 | Crossfade | → il-spec-writer | TBD |
-| FR-005 | Hide/show bottom bar | → il-spec-writer | TBD |
-| NFR-001 | Tab responsiveness | → il-spec-writer | TBD |
+| FR-001 | Tab shell | → spec-writer | TBD |
+| FR-002 | Tab switching | → spec-writer | TBD |
+| FR-003 | Lamp action | → spec-writer | TBD |
+| FR-004 | Crossfade | → spec-writer | TBD |
+| FR-005 | Hide/show bottom bar | → spec-writer | TBD |
+| NFR-001 | Tab responsiveness | → spec-writer | TBD |
 
 ---
 

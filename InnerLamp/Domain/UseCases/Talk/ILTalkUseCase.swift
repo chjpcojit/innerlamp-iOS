@@ -35,7 +35,7 @@ final class ILTalkUseCaseImpl: ILTalkUseCase {
     // catalog mẫu bên dưới bằng ILTalkRepository → networkService. Tương tự
     // `togglePlayPause`/`rewind`/`forward` hiện chỉ đổi trạng thái trong bộ nhớ; khi có audio thật
     // phải điều khiển trình phát thực (AVAudioPlayer / audio service dùng chung). Phần này nằm
-    // ngoài scope của il-screen-builder — xem `references/data_layer_boundaries.md`.
+    // ngoài scope của ui-builder — xem `references/data_layer_boundaries.md`.
     init() {}
 
     func getInitialState(talkID: String) -> ILTalkEntity {

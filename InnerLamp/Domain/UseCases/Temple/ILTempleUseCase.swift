@@ -28,6 +28,6 @@ final class ILTempleUseCaseImpl: ILTempleUseCase {
     }
 
     func toggleFollow(templeID: String) async throws {
-        print("TODO: implement toggleFollow — repository call, not built by il-screen-builder")
+        print("TODO: implement toggleFollow — repository call, not built by ui-builder")
     }
 }

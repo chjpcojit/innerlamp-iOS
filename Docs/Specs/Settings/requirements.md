@@ -1,9 +1,10 @@
 # Requirements — Settings
 
-Version: 1.0
-Last updated: 2026-09-27
+Version: 1.1
+Last updated: 2026-10-10
 Status: in-progress — full settings UI with mock data; toggles are in-memory
-only, and all sub-destinations (except Edit Profile) are not built
+only, and all sub-destinations (except Edit Profile) are not built; a new
+"Hỗ trợ & pháp lý" section is specified but not yet built
 Feature folder: `InnerLamp/Presentation/Scenes/Settings/`
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -38,10 +39,26 @@ personalize the app.
   navigation event.
 - WHEN the user taps the back control, THE SYSTEM SHALL close the Settings
   screen and return to Profile.
+- WHEN the Settings screen loads, THE SYSTEM SHALL show a "Hỗ trợ & pháp lý"
+  section with three rows — "Liên hệ hỗ trợ" (sub "Email, hotline, Zalo · gửi
+  yêu cầu"), "Điều khoản sử dụng", "Chính sách quyền riêng tư" — below
+  "Nội dung & trợ giúp". (added v1.1)
+- WHEN the user taps "Liên hệ hỗ trợ", THE SYSTEM SHALL open the Contact Support
+  screen; WHEN the user taps "Điều khoản sử dụng" or "Chính sách quyền riêng
+  tư", THE SYSTEM SHALL open the Legal screen on the matching document.
+  (added v1.1; screens specified in `Docs/Specs/ContactSupport/` and
+  `Docs/Specs/Legal/`)
+- WHEN the user taps "Trợ giúp & câu hỏi thường gặp", THE SYSTEM SHALL open the
+  Help screen (`Docs/Specs/Help/`). (clarified v1.1 — the event already existed)
+
+  > ⚠️ Not confirmed: whether the existing footer legal line ("settings.footer.
+  > legal") should become tappable or stay plain text once these rows exist —
+  > left as plain text.
 
 ## Out of scope (this feature boundary, not backend work)
 
 - The EditProfile screen (`.openProfile` is wired to `ILEditProfileCoordinator`).
+- The Help, Contact Support and Legal screens themselves (own specs).
 
 ## Pending (not yet implemented — see `tasks.md`)
 

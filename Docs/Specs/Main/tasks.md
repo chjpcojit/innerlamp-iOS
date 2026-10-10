@@ -39,4 +39,4 @@ Not applicable — no network call exists in this feature.
 - [ ] Delete `ILTabPlaceholderViewController` (now unused by any tab) — see the
       resolved open question in `requirements.md`.
 - [ ] `Docs/Knowledge/features/…` (OKF concepts) for Main's container role — a
-      separate `il-okf-writer` task; see `Docs/Specs/OKF.md`.
+      separate `okf-writer` task; see `Docs/Specs/OKF.md`.

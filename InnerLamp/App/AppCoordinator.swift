@@ -121,6 +121,10 @@ extension AppCoordinator: ILSplashCoordinatorDelegate {
         showOnboarding()
     }
 
+    func splashDidRequestLogin(_ coordinator: ILSplashCoordinator) {
+        showLogin()
+    }
+
     func splashDidRequestMain(_ coordinator: ILSplashCoordinator) {
         showMain()
     }

@@ -8,6 +8,7 @@ import Combine
 
 protocol ILSplashCoordinatorDelegate: AnyObject {
     func splashDidRequestOnboarding(_ coordinator: ILSplashCoordinator)
+    func splashDidRequestLogin(_ coordinator: ILSplashCoordinator)
     func splashDidRequestMain(_ coordinator: ILSplashCoordinator)
 }
 
@@ -38,6 +39,9 @@ final class ILSplashCoordinator: Coordinator {
                 switch event {
                 case .goToOnboarding:
                     self.delegate?.splashDidRequestOnboarding(self)
+                    self.finish()
+                case .goToLogin:
+                    self.delegate?.splashDidRequestLogin(self)
                     self.finish()
                 case .goToMain:
                     self.delegate?.splashDidRequestMain(self)

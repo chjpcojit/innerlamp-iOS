@@ -6,7 +6,7 @@
 import UIKit
 import Combine
 
-final class ILProfileViewController: BaseViewController {
+final class ILProfileViewController: BaseViewController, UIScrollViewDelegate {
 
     // MARK: - Properties
     private let viewModel: ILProfileViewModel
@@ -16,19 +16,20 @@ final class ILProfileViewController: BaseViewController {
     private let statsTappedSubject = PassthroughSubject<Void, Never>()
     private let awardsTappedSubject = PassthroughSubject<Void, Never>()
     private let offeringTappedSubject = PassthroughSubject<Void, Never>()
-    private let premiumTappedSubject = PassthroughSubject<Void, Never>()
+    private let donateTappedSubject = PassthroughSubject<Void, Never>()
     private let reminderTappedSubject = PassthroughSubject<Void, Never>()
+    private let meritBookTappedSubject = PassthroughSubject<Void, Never>()
     private let settingsTappedSubject = PassthroughSubject<Void, Never>()
     private let notificationsTappedSubject = PassthroughSubject<Void, Never>()
     private let familyTreeTappedSubject = PassthroughSubject<Void, Never>()
+    private let createFamilyTreeTappedSubject = PassthroughSubject<Void, Never>()
     private let communityTappedSubject = PassthroughSubject<Void, Never>()
 
-    private var lastHeaderHeight: CGFloat = 0
-
     // MARK: - UI Elements
-    // Pinned header: sits above the scroll view and blurs in as content scrolls under it.
-    private let headerContainer = ILStickyHeaderBand()
+    // Cover + avatar + name scroll with the content; the compact bar is pinned and fades in once the
+    // header has scrolled away.
     private lazy var headerView = ILProfileHeaderView()
+    private lazy var compactBar = ILProfileCompactBarView()
 
     private lazy var scrollView: UIScrollView = {
         let scroll = UIScrollView()
@@ -61,14 +62,15 @@ final class ILProfileViewController: BaseViewController {
         return card
     }()
 
-    private lazy var premiumCard: ILProfilePremiumCardView = {
-        let card = ILProfilePremiumCardView()
-        card.title = "profile.premium.title".localized
-        card.subtitle = "profile.premium.subtitle".localized
+    private lazy var donateCard: ILProfileDonateCardView = {
+        let card = ILProfileDonateCardView()
+        card.title = "profile.donate.title".localized
+        card.subtitle = "profile.donate.subtitle".localized
         return card
     }()
 
     private lazy var menuCard = ILProfileMenuCardView()
+    private lazy var versionFooter = ILProfileVersionFooterView()
 
     // MARK: - Initializer
     init(viewModel: ILProfileViewModel) {
@@ -86,28 +88,25 @@ final class ILProfileViewController: BaseViewController {
         navigationController?.setNavigationBarHidden(true, animated: animated)
     }
 
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        updateScrollInsetForHeader()
-    }
-
     // MARK: - Setup
     override func setupViews() {
         super.setupViews()
         view.backgroundColor = ILColors.canvas
 
+        scrollView.delegate = self
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
-        view.addSubview(headerContainer)
 
-        headerContainer.bind(to: scrollView)
+        compactBar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(compactBar)
+
         headerView.translatesAutoresizingMaskIntoConstraints = false
-        headerContainer.addSubview(headerView)
+        scrollView.addSubview(headerView)
 
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
 
-        [statsCard, heatmapCard, badgesHeader, badgesRow, meritCard, premiumCard, menuCard].forEach {
+        [statsCard, heatmapCard, badgesHeader, badgesRow, meritCard, donateCard, menuCard, versionFooter].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentStack.addArrangedSubview($0)
         }
@@ -116,18 +115,21 @@ final class ILProfileViewController: BaseViewController {
         contentStack.setCustomSpacing(ILMetrics.spaceMedium - 2, after: badgesHeader)
         contentStack.setCustomSpacing(ILMetrics.groupSpacing + 2, after: badgesRow)
         contentStack.setCustomSpacing(ILMetrics.spaceMedium, after: meritCard)
-        contentStack.setCustomSpacing(ILMetrics.spaceMedium, after: premiumCard)
+        contentStack.setCustomSpacing(ILMetrics.spaceMedium, after: donateCard)
+        contentStack.setCustomSpacing(ILMetrics.groupSpacing + 4, after: menuCard)
 
         headerView.onEditTapped = { [weak self] in self?.editProfileTappedSubject.send(()) }
         heatmapCard.onTap = { [weak self] in self?.statsTappedSubject.send(()) }
         badgesHeader.onTrailingTap = { [weak self] in self?.awardsTappedSubject.send(()) }
         badgesRow.onTap = { [weak self] in self?.awardsTappedSubject.send(()) }
         meritCard.onTap = { [weak self] in self?.offeringTappedSubject.send(()) }
-        premiumCard.onTap = { [weak self] in self?.premiumTappedSubject.send(()) }
+        donateCard.onTap = { [weak self] in self?.donateTappedSubject.send(()) }
         menuCard.onReminderTapped = { [weak self] in self?.reminderTappedSubject.send(()) }
+        menuCard.onMeritBookTapped = { [weak self] in self?.meritBookTappedSubject.send(()) }
         menuCard.onSettingsTapped = { [weak self] in self?.settingsTappedSubject.send(()) }
         menuCard.onNotificationsTapped = { [weak self] in self?.notificationsTappedSubject.send(()) }
         menuCard.onFamilyTreeTapped = { [weak self] in self?.familyTreeTappedSubject.send(()) }
+        menuCard.onCreateFamilyTreeTapped = { [weak self] in self?.createFamilyTreeTappedSubject.send(()) }
         menuCard.onCommunityTapped = { [weak self] in self?.communityTappedSubject.send(()) }
     }
 
@@ -135,21 +137,21 @@ final class ILProfileViewController: BaseViewController {
         super.setupConstraints()
 
         NSLayoutConstraint.activate([
-            headerContainer.topAnchor.constraint(equalTo: view.topAnchor),
-            headerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            headerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            compactBar.topAnchor.constraint(equalTo: view.topAnchor),
+            compactBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            compactBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
-            headerView.topAnchor.constraint(equalTo: headerContainer.topAnchor),
-            headerView.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor),
-            headerView.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor),
-            headerView.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor),
+            headerView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            headerView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            headerView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            headerView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
 
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentStack.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: ILMetrics.groupSpacing + 2),
             contentStack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: ILMetrics.screenHorizontal),
             contentStack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -ILMetrics.screenHorizontal),
             contentStack.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: -(ILMetrics.bottomNavHeight + ILMetrics.groupSpacing)),
@@ -166,11 +168,13 @@ final class ILProfileViewController: BaseViewController {
             statsTapped: statsTappedSubject.eraseToAnyPublisher(),
             awardsTapped: awardsTappedSubject.eraseToAnyPublisher(),
             offeringTapped: offeringTappedSubject.eraseToAnyPublisher(),
-            premiumTapped: premiumTappedSubject.eraseToAnyPublisher(),
+            donateTapped: donateTappedSubject.eraseToAnyPublisher(),
             reminderTapped: reminderTappedSubject.eraseToAnyPublisher(),
+            meritBookTapped: meritBookTappedSubject.eraseToAnyPublisher(),
             settingsTapped: settingsTappedSubject.eraseToAnyPublisher(),
             notificationsTapped: notificationsTappedSubject.eraseToAnyPublisher(),
             familyTreeTapped: familyTreeTappedSubject.eraseToAnyPublisher(),
+            createFamilyTreeTapped: createFamilyTreeTappedSubject.eraseToAnyPublisher(),
             communityTapped: communityTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
@@ -186,18 +190,11 @@ final class ILProfileViewController: BaseViewController {
         viewDidLoadSubject.send(())
     }
 
-    // MARK: - Pinned header
-    /// Content starts below the pinned header: reserve its height as top inset.
-    private func updateScrollInsetForHeader() {
-        let height = headerContainer.frame.height
-        guard height > 0, height != lastHeaderHeight else { return }
-        // The header height can still change after the first layout; keep content under the header
-        // whenever the user has not scrolled away from the top.
-        let wasAtTop = lastHeaderHeight == 0 || scrollView.contentOffset.y <= -lastHeaderHeight + 0.5
-        lastHeaderHeight = height
-        scrollView.contentInset.top = height
-        scrollView.verticalScrollIndicatorInsets.top = height
-        if wasAtTop { scrollView.contentOffset.y = -height }
+    // MARK: - UIScrollViewDelegate
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let offsetY = scrollView.contentOffset.y
+        headerView.update(contentOffsetY: offsetY)
+        compactBar.update(contentOffsetY: offsetY)
     }
 
     // MARK: - Render
@@ -215,6 +212,7 @@ final class ILProfileViewController: BaseViewController {
 
     private func updateUI(with model: ILProfileStateModel) {
         headerView.configure(with: model.header)
+        compactBar.configure(name: model.header.fullName)
 
         statsCard.configure(items: model.stats.map { .init(value: $0.value, caption: $0.caption) })
 
@@ -229,8 +227,8 @@ final class ILProfileViewController: BaseViewController {
         badgesRow.isHidden = !model.hasBadges
 
         meritCard.configure(summary: model.meritSummary)
-        premiumCard.isHidden = !model.showsPremiumUpsell
 
         menuCard.configure(reminderValue: model.reminderValue, communityValue: model.communityValue)
+        versionFooter.configure(versionText: model.versionText, buildText: model.buildText)
     }
 }

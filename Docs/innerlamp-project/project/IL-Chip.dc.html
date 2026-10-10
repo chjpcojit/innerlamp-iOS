@@ -9,8 +9,8 @@
 <x-dc>
 <div onClick="{{ tap }}" style="display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:999px;white-space:nowrap;transition:background .16s ease,border-color .16s ease,transform .12s ease;cursor: {{ cursor }};background: {{ bg }};border:1px solid {{ bd }}" style-hover="{{ hoverStyle }}" style-active="{{ activeStyle }}">
   <div style="width:7px;height:7px;border-radius:50%;display: {{ dotShow }};background: {{ dotColor }}"></div>
-  <div style="font:500 12px 'Be Vietnam Pro',sans-serif;color: {{ fg }}">{{ label }}</div>
-  <div style="font:500 11px 'Be Vietnam Pro',sans-serif;display: {{ countShow }};color: {{ countColor }}">{{ count }}</div>
+  <div style="font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color: {{ fg }}">{{ label }}</div>
+  <div style="font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;display: {{ countShow }};color: {{ countColor }}">{{ count }}</div>
 </div>
 
 </x-dc>

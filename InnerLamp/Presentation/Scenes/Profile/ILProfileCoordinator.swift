@@ -39,11 +39,14 @@ final class ILProfileCoordinator: Coordinator {
                 case .openOffering:
                     // TODO: điều hướng sang Cúng dường (`offer`) khi có coordinator.
                     break
-                case .openPaywall:
-                    // TODO: present màn gói Sen Vàng (`paywall`, modal) khi có coordinator.
+                case .openDonate:
+                    // TODO: present màn Ủng hộ InnerLamp (`paywall` trong prototype, modal) khi có coordinator.
                     break
                 case .openReminder:
                     // TODO: điều hướng sang Chuông tỉnh thức (`remind`) khi có coordinator.
+                    break
+                case .openMeritBook:
+                    // TODO: điều hướng sang Sổ công đức (`merit`) khi có coordinator.
                     break
                 case .openSettings:
                     self.showSettings()
@@ -51,6 +54,8 @@ final class ILProfileCoordinator: Coordinator {
                     self.showNotifications()
                 case .openFamilyTree:
                     self.showFamilyTree()
+                case .createFamilyTree:
+                    self.showFamilyTreeCreate()
                 case .openCommunity:
                     // TODO: điều hướng sang Trang chùa (`temple`) theo id khi có coordinator.
                     break
@@ -82,6 +87,12 @@ final class ILProfileCoordinator: Coordinator {
 
     private func showFamilyTree() {
         let coordinator = container.makeFamilyTreeCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    private func showFamilyTreeCreate() {
+        let coordinator = container.makeFamilyTreeCreateCoordinator(navigationController: navigationController)
         addChild(coordinator)
         coordinator.start()
     }

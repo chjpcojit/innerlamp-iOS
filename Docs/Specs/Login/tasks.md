@@ -8,7 +8,7 @@ Status: in-progress (Phase 1–3 done; Phase 3's manual on-device QA and Phase
 > See `changelog.md` in this folder for the version history of this spec.
 
 > Note: this feature was built retroactively and reconciled with
-> `il-screen-builder` rules (see the feature README changelog). Checked items
+> `ui-builder` rules (see the feature README changelog). Checked items
 > below reflect what shipped; unchecked items are real pending work.
 
 ## Phase 1 — UI (static layout, mock state)

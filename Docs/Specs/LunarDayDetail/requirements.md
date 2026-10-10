@@ -9,7 +9,7 @@ Feature folder: `InnerLamp/Presentation/Scenes/LunarDayDetail/`
 > See `changelog.md` in this folder for the version history of this spec.
 
 > This spec is written retroactively from the already-implemented LunarDayDetail
-> feature (built by `il-screen-builder` from the design handoff), as documentation
+> feature (built by `ui-builder` from the design handoff), as documentation
 > of what shipped — see `references/modes.md`.
 
 ## User Story
@@ -116,7 +116,7 @@ hours, clash ages, and travel directions — computed from the selected solar da
 - ~~Should this be a standalone scene or part of Home?~~ → Standalone leaf scene
   owned by `ILHomeCoordinator`, reached via
   `ILHomeNavEvent.openLunarDayDetail(date:)`. Resolved 2026-09-27 by the
-  `il-screen-builder` build.
+  `ui-builder` build.
 - ~~Which screen is "trang ngày âm" for the new calendar image?~~ → The
   LunarDayDetail ("Chi tiết ngày âm") hero, which already had a ⚠️ pending image
   slot and receives a solar `Date`. Resolved 2026-10-07 by interpreting the

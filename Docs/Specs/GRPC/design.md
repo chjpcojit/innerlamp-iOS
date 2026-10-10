@@ -13,8 +13,8 @@ Scope folder: `InnerLamp/Core/GRPC/`
 
 > This is an infrastructure spec, not a feature-scene spec. There is no Coordinator, no ViewModel,
 > no navigation flow, and no `DIContainer` *feature* factory to add — only a Core-level client
-> registration. `il-screen-builder` does not apply. The consuming side — a feature's `Repository`
-> calling `Core/GRPC` — is `il-data-layer-builder`'s job, and cannot start until a `.proto` contract
+> registration. `ui-builder` does not apply. The consuming side — a feature's `Repository`
+> calling `Core/GRPC` — is `data-builder`'s job, and cannot start until a `.proto` contract
 > exists (see `requirements.md` Pending).
 
 ## Overview
@@ -160,7 +160,7 @@ Step 6 — Return
 - Trigger: Steps 4-5 done
 - Effect: return the decoded response to the Repository, or throw the GRPCError from
   Steps 3-4. The Repository maps GRPCError → IL<Feature>Error
-  (il-data-layer-builder's job, out of scope here)
+  (data-builder's job, out of scope here)
 ```
 
 ## Step-by-step Flow — Server-streaming RPC, end to end

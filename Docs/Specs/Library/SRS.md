@@ -8,8 +8,8 @@
 | Version | 0.1 (draft) |
 | Last updated | 2026-09-27 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
-| Owner / author | il-ba (Business Analyst) |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Owner / author | ba-writer (Business Analyst) |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 ---
 
@@ -338,27 +338,27 @@ No backend is called today.
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | Layout | → il-spec-writer | TBD |
-| FR-002 | Preselect "Tất cả" | → il-spec-writer | TBD |
-| FR-003 | Pinned regions | → il-spec-writer | TBD |
-| FR-004 | Dark mode | → il-spec-writer | TBD |
-| FR-005 | Category selection | → il-spec-writer | TBD |
-| FR-006 | Reselect no-op | → il-spec-writer | TBD |
-| FR-007 | Empty state | → il-spec-writer | TBD |
-| FR-008 | Section title | → il-spec-writer | TBD |
-| FR-009 | Featured stability | → il-spec-writer | TBD |
-| FR-010 | Row display | → il-spec-writer | TBD |
-| FR-011 | Duration formatting | → il-spec-writer | TBD |
-| FR-012 | Row tap | → il-spec-writer | TBD |
-| FR-013 | Featured display | → il-spec-writer | TBD |
-| FR-014 | Featured tap | → il-spec-writer | TBD |
-| FR-015 | No featured item | → il-spec-writer | TBD |
-| FR-016 | Search tap | → il-spec-writer | TBD |
-| FR-017 | Bottom nav tabs | → il-spec-writer | TBD |
-| FR-018 | Crossfade | → il-spec-writer | TBD |
-| FR-019 | Localization | → il-spec-writer | TBD |
-| NFR-001 | Filter responsiveness | → il-spec-writer | TBD |
-| NFR-002 | Scroll smoothness | → il-spec-writer | TBD |
+| FR-001 | Layout | → spec-writer | TBD |
+| FR-002 | Preselect "Tất cả" | → spec-writer | TBD |
+| FR-003 | Pinned regions | → spec-writer | TBD |
+| FR-004 | Dark mode | → spec-writer | TBD |
+| FR-005 | Category selection | → spec-writer | TBD |
+| FR-006 | Reselect no-op | → spec-writer | TBD |
+| FR-007 | Empty state | → spec-writer | TBD |
+| FR-008 | Section title | → spec-writer | TBD |
+| FR-009 | Featured stability | → spec-writer | TBD |
+| FR-010 | Row display | → spec-writer | TBD |
+| FR-011 | Duration formatting | → spec-writer | TBD |
+| FR-012 | Row tap | → spec-writer | TBD |
+| FR-013 | Featured display | → spec-writer | TBD |
+| FR-014 | Featured tap | → spec-writer | TBD |
+| FR-015 | No featured item | → spec-writer | TBD |
+| FR-016 | Search tap | → spec-writer | TBD |
+| FR-017 | Bottom nav tabs | → spec-writer | TBD |
+| FR-018 | Crossfade | → spec-writer | TBD |
+| FR-019 | Localization | → spec-writer | TBD |
+| NFR-001 | Filter responsiveness | → spec-writer | TBD |
+| NFR-002 | Scroll smoothness | → spec-writer | TBD |
 
 ---
 

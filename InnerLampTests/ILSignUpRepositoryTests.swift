@@ -2,7 +2,7 @@
 //  ILSignUpRepositoryTests.swift
 //  InnerLampTests
 //
-//  Covers the Data-layer pieces `il-data-layer-builder` added for SignUp: the request DTO's
+//  Covers the Data-layer pieces `data-builder` added for SignUp: the request DTO's
 //  snake_case encoding, the response DTO's decoding under `.convertFromSnakeCase`, the
 //  Entity→DTO mapper, and the exhaustive `NetworkError` → `ILSignUpError` mapping.
 //

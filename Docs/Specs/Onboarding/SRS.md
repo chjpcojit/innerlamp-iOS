@@ -8,8 +8,8 @@
 | Version | 0.1 (draft) |
 | Last updated | 2026-09-27 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
-| Owner / author | il-ba (Business Analyst) |
-| Downstream handoff | `il-spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
+| Owner / author | ba-writer (Business Analyst) |
+| Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
 
 ---
 
@@ -246,16 +246,16 @@ button. Reuses `ILButton`, `ILTypography`/`ILColors`/`ILMetrics`.
 
 | Requirement ID | Source | Design | Test |
 |---|---|---|---|
-| FR-001 | First-launch routing | → il-spec-writer | TBD |
-| FR-002 | Intro step | → il-spec-writer | TBD |
-| FR-003 | Step advancement | → il-spec-writer | TBD |
-| FR-004 | Completion | → il-spec-writer | TBD |
-| FR-005 | Skip | → il-spec-writer | TBD |
-| FR-006 | Back navigation | → il-spec-writer | TBD |
-| FR-007 | Toggles | → il-spec-writer | TBD |
-| FR-008 | Swipe | → il-spec-writer | TBD |
-| FR-009 | Completion flag | → il-spec-writer | TBD |
-| NFR-001 | Transition smoothness | → il-spec-writer | TBD |
+| FR-001 | First-launch routing | → spec-writer | TBD |
+| FR-002 | Intro step | → spec-writer | TBD |
+| FR-003 | Step advancement | → spec-writer | TBD |
+| FR-004 | Completion | → spec-writer | TBD |
+| FR-005 | Skip | → spec-writer | TBD |
+| FR-006 | Back navigation | → spec-writer | TBD |
+| FR-007 | Toggles | → spec-writer | TBD |
+| FR-008 | Swipe | → spec-writer | TBD |
+| FR-009 | Completion flag | → spec-writer | TBD |
+| NFR-001 | Transition smoothness | → spec-writer | TBD |
 
 ---
 

@@ -19,7 +19,7 @@ nonisolated protocol AuthTokenProviding {
 /// The single place in the app that knows which Keychain key holds the access token.
 nonisolated final class KeychainAuthTokenProviding: AuthTokenProviding {
     /// Fixed Keychain key the access token is stored under — also used by the login repository
-    /// (`il-data-layer-builder`'s job) when it saves the token after a successful login.
+    /// (`data-builder`'s job) when it saves the token after a successful login.
     static let accessTokenKey = "access_token"
 
     /// Fixed Keychain key the refresh token is stored under. Shared by every flow that receives a

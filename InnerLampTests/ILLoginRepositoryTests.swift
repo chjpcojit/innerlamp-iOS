@@ -2,7 +2,7 @@
 //  ILLoginRepositoryTests.swift
 //  InnerLampTests
 //
-//  Covers the Data-layer pieces `il-data-layer-builder` added for Login: the request DTO's
+//  Covers the Data-layer pieces `data-builder` added for Login: the request DTO's
 //  snake_case encoding (including the nested `device` object), the response DTO's decoding under
 //  `.convertFromSnakeCase`, the Entity <-> DTO mapper, and the exhaustive `NetworkError` ->
 //  `ILLoginError` mapping.

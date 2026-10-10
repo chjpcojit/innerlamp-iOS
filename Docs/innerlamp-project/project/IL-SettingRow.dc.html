@@ -8,22 +8,25 @@
 <body>
 <x-dc>
 <div onClick="{{ tap }}" style="display:flex;align-items:center;gap:12px;padding:15px 16px;cursor: {{ cursor }};border-bottom:1px solid {{ divider }}">
+  <sc-if value="{{ hasIcon }}">
+    <dc-import name="IL-Icon" icon="{{ icon }}" size="34" tone="me" hint-size="34px,34px"></dc-import>
+  </sc-if>
   <div style="flex:1;min-width:0">
-    <div style="font:400 13.5px 'Be Vietnam Pro',sans-serif;color: {{ titleColor }}">{{ title }}</div>
-    <div style="font:400 11px 'Be Vietnam Pro',sans-serif;margin-top:2px;color: {{ subColor }}">{{ sub }}</div>
+    <div style="font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color: {{ titleColor }}">{{ title }}</div>
+    <div style="font:400 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;margin-top:2px;color: {{ subColor }}">{{ sub }}</div>
   </div>
-  <div style="font:400 12.5px 'Be Vietnam Pro',sans-serif;white-space:nowrap;color: {{ subColor }}">{{ value }}</div>
+  <div style="font:400 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;white-space:nowrap;color: {{ subColor }}">{{ value }}</div>
   <sc-if value="{{ isSwitch }}">
     <div style="width:44px;height:26px;border-radius:999px;padding:3px;box-sizing:border-box;flex:none;transition:background .2s;background: {{ track }}">
       <div style="width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s;transform: {{ knob }}"></div>
     </div>
   </sc-if>
   <sc-if value="{{ isChevron }}">
-    <div style="font:400 18px 'Be Vietnam Pro',sans-serif;color: {{ chevColor }}">›</div>
+    <div style="font:400 18px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color: {{ chevColor }}">›</div>
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:362,&quot;height&quot;:60},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Chuông tỉnh thức&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sub&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;05:30 · 12:00 · 21:30&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;value&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;switch&quot;,&quot;value&quot;,&quot;chevron&quot;],&quot;default&quot;:&quot;switch&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;on&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;last&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onTap&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:362,&quot;height&quot;:60},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Chuông tỉnh thức&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sub&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;05:30 · 12:00 · 21:30&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;value&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;switch&quot;,&quot;value&quot;,&quot;chevron&quot;],&quot;default&quot;:&quot;switch&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;on&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;last&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;icon&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onTap&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
 class Component extends DCLogic {
   renderVals() {
     const p = this.props, dark = !!p.dark, kind = p.kind || 'chevron';
@@ -37,7 +40,7 @@ class Component extends DCLogic {
       track: p.on ? '#B8862F' : dark ? 'rgba(242,235,221,.18)' : 'var(--il-ink-16)',
       knob: p.on ? 'translateX(18px)' : 'translateX(0)',
       cursor: p.onTap ? 'pointer' : 'default',
-      tap: p.onTap,
+      tap: p.onTap, hasIcon: !!p.icon, icon: p.icon,
     };
   }
 }

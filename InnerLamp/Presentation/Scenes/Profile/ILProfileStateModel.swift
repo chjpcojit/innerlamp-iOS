@@ -43,10 +43,11 @@ struct ILProfileStateModel: Equatable {
     var badgesLinkText: String = ""
     var badges: [ILProfileBadgeModel] = []
     var meritSummary: String = ""
-    /// Chỉ gói Free mới thấy thẻ mời nâng cấp Sen Vàng.
-    var showsPremiumUpsell: Bool = false
     var reminderValue: String = ""
     var communityValue: String = ""
+    /// Chân trang: "InnerLamp · Phiên bản 1.4.2" / "Bản dựng 218" (đọc từ bundle).
+    var versionText: String = ""
+    var buildText: String = ""
 
     var hasBadges: Bool { !badges.isEmpty }
 
