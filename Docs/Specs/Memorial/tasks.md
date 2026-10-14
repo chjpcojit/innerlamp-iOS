@@ -1,6 +1,6 @@
 # Tasks — Memorial
 
-Version: 3.1
+Version: 3.2
 Last updated: 2026-10-14
 Status: in-progress — Phase 1–5 built (build-verified, tests not run) except the items left `[ ]`; Phase 6 (product spec v2.1 drift) and Phase 7 (remove local reminders and the Reminders-app option) not started; Phase 8 (push + time zone) blocked on the contract and the Firebase project; Phase 9 (portrait) blocked on the backend photo route
 
@@ -51,7 +51,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 
 - [x] `InnerLamp/Presentation/Scenes/Memorial/README.md` created
 - [ ] Refresh that README — it still says "no server sync" and "DTO N/A" (stale since v1.3); describe server-sent reminders and list the v3.0 drift
-- [ ] Close `Docs/Assumptions/Memorial/AS-Memorial-001…006` as superseded by the product spec (status `Invalidated`/`Validated` + Outcome citing the product IDs; `AS-Memorial-002` → `Invalidated` by ADR-0002 / FR-MEM-008 / FR-MEM-009 removed), and point the `@ai: assumption` markers in code at the product IDs or remove them with the code they mark. Deleting the files needs an explicit user decision: `AGENTS.md` §10.3 says entries are never deleted
+- [x] `Docs/Assumptions/Memorial/AS-Memorial-001…006` deleted (product spec supersedes them; anh Đức chose deletion over `Invalidated`, 2026-10-14); `@ai: assumption` markers in code now cite the product IDs
 - [ ] Update `Docs/Tech-Debt/Memorial/TD-Memorial-001` → `Won't Fix` (local scheduling dropped, ADR-0002) once Phase 7 removes the stubs; open a new entry only if push ships with a known shortcut
 - [ ] `Docs/Knowledge/features/memorial.md` (OKF) — after Phase 6–8 are verified end to end (`Docs/Specs/OKF.md`)
 
@@ -63,7 +63,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 - [ ] Strict date of death (BR-MEM-03, BR-MEM-04, criterion 19): strict `lunarToSolar` variant (day 30 in a 29-day month → `nil`, missing leap month → `nil`); use case `validate` rejects it, a date after today and a year < 1900 before any network call; `dateError` on the form with the four §3.1.1 messages
 - [ ] Year menu 1900 → current year (BR-MEM-03, criterion 15); update `test_yearOptions_…NinetySixYears`
 - [ ] Name ≤ 100 / note ≤ 1000 checked locally with the §3.1.1 field errors (FR-MEM-012, FR-MEM-013, criterion 18)
-- [ ] Delete confirmation action sheet with the §3.1.1 copy before `DELETE` (BR-MEM-12, FR-MEM-005, criterion 24); remove the `AS-Memorial-004` `@ai` marker; tests for confirm / cancel
+- [ ] Delete confirmation action sheet with the §3.1.1 copy before `DELETE` (BR-MEM-12, FR-MEM-005, criterion 24); remove the BR-MEM-12 drift comment; tests for confirm / cancel
 - [ ] Empty state without the "Lấy từ gia phả" card (FR-MEM-002, criterion 8): remove `treeCard` / `onFamilyTreeTap` from `ILMemorialEmptyView` and the `memorial.empty.fromTree.*` keys
 - [ ] No "Xem gia phả" button under a non-empty list (FR-MEM-002, criterion 8): remove the button, the `.openFamilyTree` route and its strings from the memorial list
 - [ ] Guest (FR-MEM-001, criterion 2): no token → `.signInRequired`, no server call, no offline-copy read; 401 on load → sign-in prompt instead of the empty state
@@ -76,7 +76,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 
 ## Phase 7 — Remove local reminders and the Reminders-app option (ADR-0002, FR-MEM-009 removed)
 
-- [ ] Delete `scheduleReminders(for:)` / `cancelReminder(forEntryID:)` and their calls in `ILMemorialUseCaseImpl` (`loadItems`, `save`, `delete`) and the `AS-Memorial-002` `@ai` marker; update `ILMemorialUseCaseTests`
+- [ ] Delete `scheduleReminders(for:)` / `cancelReminder(forEntryID:)` and their calls in `ILMemorialUseCaseImpl` (`loadItems`, `save`, `delete`) and the FR-MEM-008 "to be removed" comment; update `ILMemorialUseCaseTests`
 - [ ] Remove `syncToReminders` from `ILMemorialEntity`, `makeNewEntry`, `ILMemorialMapper`, `ILMemorialLocalDataSource`, `ILMemorialMO` (new model version, shared with Phase 6), and its tests
 - [ ] Stop sending `add_to_os_reminder` (drop it from `ILMemorialRequestDTO`; ignore it in `ILMemorialDTO`) — must ship before the backend removes the field (criterion 35); mapper test asserts neither `add_to_os_reminder` nor `reminder.timezone` is encoded
 - [ ] Remove the "Thêm vào Lời nhắc (Reminders)" row (`syncRow`, `onSyncToggled`) from `ILMemorialReminderCardView`, `syncToggled` input and the Reminders-app saved message from `ILMemorialEditViewModel`, `syncOn` from `ILMemorialEditStateModel`, the "có trong Lời nhắc" suffix from `ILMemorialFormatter` (criteria 6, 20, 27)

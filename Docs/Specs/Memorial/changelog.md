@@ -3,6 +3,12 @@
 Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in this folder. All three
 files share one changelog since they change together as one spec unit. Newest version first.
 
+## v3.2 (2026-10-14)
+
+- Step 4 of the docs rewrite: `Docs/Assumptions/Memorial/AS-Memorial-001…006` deleted (product spec v2.1 supersedes them). `AGENTS.md` §10.3 says entries are never deleted; anh Đức decided to delete them for this feature on 2026-10-14. Code `@ai` markers, the scene `README.md` and `TD-Memorial-001` now cite the product IDs instead.
+- `requirements.md` criterion 28: nearest-choice rule taken from product FR-MEM-007 @ v2.1; the `⚠️ Not confirmed (product)` marker is resolved.
+- `tasks.md`: the "close AS-Memorial" task is done.
+
 ## v3.1 (2026-10-14)
 
 - `requirements.md`: criterion 8 also removes the "Xem gia phả" button under a non-empty list (product owner, 2026-10-14: not kept for now); out-of-scope line updated; question moved to resolved.

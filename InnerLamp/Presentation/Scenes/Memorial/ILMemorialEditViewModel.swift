@@ -199,7 +199,8 @@ final class ILMemorialEditViewModel: ILMemorialEditViewModelProtocol {
         }
     }
 
-    // @ai: assumption — see Docs/Assumptions/Memorial/AS-Memorial-004-delete-without-confirmation.md
+    // EN: Drift: product BR-MEM-12 requires a confirmation before delete — Docs/Specs/Memorial/tasks.md Phase 6.
+    // VI: Lệch: product BR-MEM-12 yêu cầu hỏi xác nhận trước khi xoá — Docs/Specs/Memorial/tasks.md Phase 6.
     private func handleDelete() {
         guard !isNew, !currentState.isSaving else { return }
         let entry = draft

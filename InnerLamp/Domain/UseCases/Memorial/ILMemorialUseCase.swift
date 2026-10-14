@@ -92,7 +92,8 @@ final class ILMemorialUseCaseImpl: ILMemorialUseCase {
         case .lunar:
             let lunarToday = ILLunarCalendar.solarToLunar(date: today, calendar: calendar)
             for lunarYear in [lunarToday.year - 1, lunarToday.year, lunarToday.year + 1] {
-                // @ai: assumption — see Docs/Assumptions/Memorial/AS-Memorial-003-leap-month-skipped.md
+                // EN: Product BR-MEM-05: the anniversary is always in the regular (non-leap) lunar month.
+                // VI: Product BR-MEM-05: ngày giỗ luôn rơi vào tháng âm thường (không nhuận).
                 // Leap lunar months are skipped: only the regular month counts.
                 guard let solar = ILLunarCalendar.lunarToSolar(day: entry.day, month: entry.month, year: lunarYear),
                       let date = calendar.date(from: DateComponents(year: solar.year, month: solar.month, day: solar.day))
@@ -124,7 +125,8 @@ final class ILMemorialUseCaseImpl: ILMemorialUseCase {
 
     // MARK: - Reminders (stubbed)
 
-    // @ai: assumption — see Docs/Assumptions/Memorial/AS-Memorial-002-reminder-mechanism.md
+    // EN: To be removed: the server sends reminders (product FR-MEM-008) — Docs/Specs/Memorial/tasks.md Phase 7.
+    // VI: Sẽ xoá: server gửi lời nhắc (product FR-MEM-008) — Docs/Specs/Memorial/tasks.md Phase 7.
     private func scheduleReminders(for entries: [ILMemorialEntity]) {
         print("TODO: schedule local notifications for \(entries.count) memorial entries — mechanism not confirmed, see Docs/Specs/Memorial/")
     }
