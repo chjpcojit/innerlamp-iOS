@@ -1,13 +1,13 @@
 # Tasks — Memorial
 
-Version: 2.0
+Version: 3.0
 Last updated: 2026-10-14
-Status: in-progress — Phase 1–5 built (build-verified, tests not run) except the items left `[ ]`; Phase 6 (product spec v1.0 drift) and Phase 7 (reminders) not started; Phase 8 (portrait) blocked on the backend photo route
+Status: in-progress — Phase 1–5 built (build-verified, tests not run) except the items left `[ ]`; Phase 6 (product spec v2.1 drift) and Phase 7 (remove local reminders and the Reminders-app option) not started; Phase 8 (push + time zone) blocked on the contract and the Firebase project; Phase 9 (portrait) blocked on the backend photo route
 
 > See `changelog.md` in this folder for the version history of this spec.
 
 Every item traces to a row of `design.md` "Layers & components" or a step of its Step-by-step Flow.
-`[x]` only where the code was read and does what the product spec v1.0 now requires.
+`[x]` only where the code was read and does what the product spec v2.1 now requires.
 
 ## Phase 1 — UI
 
@@ -25,12 +25,14 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 - [x] `ILMemorialFormatter` (days label, eyebrow, ordinal label, stored date, solar line, reminder line)
 - [x] `ILMemorialStateModel`, `ILMemorialEditStateModel` (no UIKit)
 - [x] `ILMemorialViewModel` + `ILMemorialEditViewModel` (`Input -> Output`, nav events, empty-name error cleared on typing, preview recomputed on every change, lead/time fixed choices of BR-MEM-11)
+- [x] Me-tab sign-out deletes the memorial offline copy (`ILSessionDataCleanerImpl` includes `ILMemorialMO`, called from `ILProfileUseCase.logout`)
 - [x] `ILMemorialCoordinator` (pop + toast hand-off), `DIContainer.makeMemorial…`, `ILHomeCoordinator.showMemorial()` (Home v1.7)
 - [x] Unit tests written and build-verified, not run (XCTest needs a device): `ILMemorialUseCaseTests`, `ILMemorialViewModelTests`, `ILMemorialEditViewModelTests`
 
 ## Phase 3 — Localization
 
 - [x] `memorial.*` keys in `vi.json` for all v1.3 copy (no hardcoded text)
+- [ ] Align copy with product §3.1.1 (book-full text, could not save, connection needed, offline line, no copy, no longer in book) and remove the keys of Phase 7
 
 ## Phase 4 — API integration
 
@@ -40,50 +42,64 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 - [x] Server-first `ILMemorialRepositoryImpl` with the Core Data offline cache (`replaceAll`, `upsert`, `delete`); DELETE 404 = success
 - [x] Mapper and repository tests (success, offline, 401, 409, 400, 404) — written, build-verified, not run
 - [x] Solar day menu limited per month (Feb 29) so the server never sees 31 April
-- [x] Offline save/delete refused with "Không có kết nối mạng. Vui lòng thử lại." (FR-MEM-010)
-- [x] 100-entry limit message on 409 `MEMORIAL_LIMIT_REACHED` (BR-MEM-02)
+- [x] Offline save/delete refused with a message (FR-MEM-010) — text changes to §3.1.1 in Phase 6
+- [x] 100-entry limit message on 409 `MEMORIAL_LIMIT_REACHED` (BR-MEM-02) — text changes to §3.1.1 in Phase 3
 - [x] Network logging records method, path, status and timing only — no names or notes (NFR-MEM-02, verified in `NetworkService`)
 - [ ] Manual test against the backend (`make run`, `:8080`) on a physical device
 
 ## Phase 5 — Documentation
 
 - [x] `InnerLamp/Presentation/Scenes/Memorial/README.md` created
-- [ ] Refresh that README — it still says "no server sync" and "DTO N/A" (stale since v1.3); list the v2.0 drift
-- [ ] Close `Docs/Assumptions/Memorial/AS-Memorial-001…006` as superseded by product spec v1.0 (status `Invalidated`/`Validated` + Outcome citing the product IDs, and the `@ai: assumption` markers in code pointing at the product IDs) — separate step after this spec is reviewed, see `changelog.md` v2.0. Deleting the files needs an explicit user decision: `AGENTS.md` §10.3 says entries are never deleted
-- [ ] `Docs/Knowledge/features/memorial.md` (OKF) — after Phase 6–7 are verified end to end (`Docs/Specs/OKF.md`)
+- [ ] Refresh that README — it still says "no server sync" and "DTO N/A" (stale since v1.3); describe server-sent reminders and list the v3.0 drift
+- [ ] Close `Docs/Assumptions/Memorial/AS-Memorial-001…006` as superseded by the product spec (status `Invalidated`/`Validated` + Outcome citing the product IDs; `AS-Memorial-002` → `Invalidated` by ADR-0002 / FR-MEM-008 / FR-MEM-009 removed), and point the `@ai: assumption` markers in code at the product IDs or remove them with the code they mark. Deleting the files needs an explicit user decision: `AGENTS.md` §10.3 says entries are never deleted
+- [ ] Update `Docs/Tech-Debt/Memorial/TD-Memorial-001` → `Won't Fix` (local scheduling dropped, ADR-0002) once Phase 7 removes the stubs; open a new entry only if push ships with a known shortcut
+- [ ] `Docs/Knowledge/features/memorial.md` (OKF) — after Phase 6–8 are verified end to end (`Docs/Specs/OKF.md`)
 
-## Phase 6 — Product spec v1.0 alignment (drift)
+## Phase 6 — Product spec v2.1 alignment (drift)
 
-- [ ] **Product vectors** (criterion 34, NFR-MEM-03, BR-MEM-03…10): add `Scripts/sync-product-vectors.sh` (copies `../innerlamp-be/docs/product/memorial/rules/*.json` into `InnerLampTests/ProductVectors/memorial/`, records commit sha + hashes in `SOURCE`; the copy is never hand-edited) and `ILMemorialProductVectorTests` running **every case** of `rules/next-anniversary.json`, `rules/anniversary-ordinal.json` and `rules/death-date-conversion.json`; add the JSON files to the test target's resources
+- [ ] **Product vectors** (criterion 41, NFR-MEM-03, BR-MEM-03…10): add `Scripts/sync-product-vectors.sh` (copies `../innerlamp-be/docs/product/memorial/rules/{next-anniversary,anniversary-ordinal,death-date-conversion}.json` into `InnerLampTests/ProductVectors/memorial/`, records commit sha + hashes in `SOURCE`; the copy is never hand-edited) and `ILMemorialProductVectorTests` running **every case** of the three files; add the JSON files to the test target's resources (`reminder-moment.json` is backend-only)
 - [ ] Ordinal: `nextAnniversary` returns the raw ordinal (keep `0`); `ILMemorialFormatter.ordinalText` shows no label for `≤ 0` (BR-MEM-09, vector "died today")
-- [ ] Leap month (BR-MEM-04, criteria 5, 13): `isLeapMonth` on the entity + Core Data (new model version); leap switch in the form for "Âm lịch"; mapper sends `death_leap_month` when the year is unknown and recovers it from `solarToLunar` when known; leap marker in stored date line / highlight / preview — copy ⚠️ product
-- [ ] Strict date of death (BR-MEM-03, BR-MEM-04, criterion 19): strict `lunarToSolar` variant (day 30 in a 29-day month → `nil`, missing leap month → `nil`); use case `validate` rejects it, a date after today and a year < 1900 before any network call; `dateError` on the form — copy ⚠️ product
+- [ ] Leap month (BR-MEM-04, criteria 6, 13): `isLeapMonth` on the entity + Core Data (new model version, together with Phase 7's attribute removal and `ownerAccountID`); "Tháng nhuận" switch in the form for "Âm lịch"; mapper sends `death_leap_month` when the year is unknown and recovers it from `solarToLunar` when known; "10/6 nhuận" in stored date line / highlight / preview
+- [ ] Strict date of death (BR-MEM-03, BR-MEM-04, criterion 19): strict `lunarToSolar` variant (day 30 in a 29-day month → `nil`, missing leap month → `nil`); use case `validate` rejects it, a date after today and a year < 1900 before any network call; `dateError` on the form with the four §3.1.1 messages
 - [ ] Year menu 1900 → current year (BR-MEM-03, criterion 15); update `test_yearOptions_…NinetySixYears`
-- [ ] Name ≤ 100 / note ≤ 1000 checked locally with field errors (FR-MEM-012, FR-MEM-013, criterion 18) — copy ⚠️ product
-- [ ] Delete confirmation action sheet before `DELETE` (BR-MEM-12, FR-MEM-005, criterion 24); remove the `AS-Memorial-004` `@ai` marker; tests for confirm / cancel
-- [ ] Guest (FR-MEM-001, criterion 2): no token → `.signInRequired`, no server call, no cache read; 401 on load → sign-in prompt instead of the empty state
-- [ ] Sign-out (BR-MEM-01, NFR-MEM-02, criterion 3): `ILMemorialRepository.clearCache()` + `ILMemorialLocalDataSource.deleteAll()` called from the logout flow (and `cancelAll()` of Phase 7 once built); cache served offline only for the signed-in account
-- [ ] Offline, never loaded (FR-MEM-010, criterion 32): "cannot load offline" state instead of the empty state — copy ⚠️ product
-- [ ] Load failure state with retry for non-offline errors (criterion 11) — blocked on ⚠️ product (5xx: cache or error?)
-- [ ] Not-found on save (FR-MEM-004, criterion 23): alert, close the form, reload the list
-- [ ] Send `reminder.timezone` = device time zone (BR-MEM-11, criterion 27); mapper test
-- [ ] Reminder values outside the BR-MEM-11 choices coming from the server — blocked on ⚠️ product (criterion 26)
-- [ ] Measure NFR-MEM-01 (100 entries, 4G, ≤ 2 s) on device (criterion 36)
+- [ ] Name ≤ 100 / note ≤ 1000 checked locally with the §3.1.1 field errors (FR-MEM-012, FR-MEM-013, criterion 18)
+- [ ] Delete confirmation action sheet with the §3.1.1 copy before `DELETE` (BR-MEM-12, FR-MEM-005, criterion 24); remove the `AS-Memorial-004` `@ai` marker; tests for confirm / cancel
+- [ ] Empty state without the "Lấy từ gia phả" card (FR-MEM-002, criterion 8): remove `treeCard` / `onFamilyTreeTap` from `ILMemorialEmptyView` and the `memorial.empty.fromTree.*` keys
+- [ ] Guest (FR-MEM-001, criterion 2): no token → `.signInRequired`, no server call, no offline-copy read; 401 on load → sign-in prompt instead of the empty state
+- [ ] Offline copy per account (FR-MEM-010, BR-MEM-01, criteria 3, 39): `ownerAccountID` on `ILMemorialMO`, `fetchAll(ownerAccountID:)`; run the session cleanup (memorial copy included) from `AppCoordinator.handleSessionExpired` too; tests: another account offline sees nothing
+- [ ] Offline copy on server failure (FR-MEM-010, criteria 36–37): fall back on offline / timeout / 5xx / any non-401 failure; offline-copy line "Đang hiện sổ giỗ đã tải lần trước. Không kết nối được máy chủ."; no copy → "Chưa tải được sổ giỗ. Vui lòng kết nối mạng và thử lại." with retry instead of the empty state; repository tests for 5xx with and without a copy
+- [ ] Write errors (FR-MEM-010, FR-MEM-003, criterion 38): offline → "Cần kết nối mạng để thay đổi sổ giỗ."; 5xx → "Chưa lưu được. Vui lòng thử lại."
+- [ ] Entry deleted elsewhere (FR-MEM-004, FR-MEM-005, criteria 23, 26): 404 on PUT and on DELETE → remove from the offline copy, `.removed("Mục này không còn trong sổ giỗ.")`, pop, reload; tests for both
+- [ ] Nearest reminder choice (FR-MEM-007, criterion 28): `ILMemorialReminder.nearestChoice` for server values outside BR-MEM-11; Back keeps the stored value, Save sends the shown choice — tie-break blocked on ⚠️ product
+- [ ] Measure NFR-MEM-01 (100 entries, 4G, ≤ 2 s) on device (criterion 43)
 
-## Phase 7 — Reminders (FR-MEM-008, FR-MEM-009, BR-MEM-11) — `TD-Memorial-001`
+## Phase 7 — Remove local reminders and the Reminders-app option (ADR-0002, FR-MEM-009 removed)
 
-- [ ] `ILMemorialReminderScheduling` protocol (Domain) + `ILMemorialNotificationScheduler` (`UNUserNotificationCenter`, identifiers `memorial.<id>`, one request per entry at the BR-MEM-11 moment before the next anniversary, device local time); replace the TODO stubs in `ILMemorialUseCaseImpl` (Step L-5, S-5, D-4)
-- [ ] Ask notification permission before the first schedule (criterion 29); denied branch blocked on ⚠️ product
-- [ ] `replaceAll` on every list load (server or cache) and after save; `cancel` on delete and reminder off; `cancelAll` on sign-out (criteria 3, 25, 28)
-- [ ] Unit tests of the reminder moment for each lead × time against `next-anniversary.json` dates, with a mock scheduler
-- [ ] `ILMemorialOSRemindersWriter` (EventKit) + `NSRemindersFullAccessUsageDescription` in Info.plist (FR-MEM-009, criterion 30) — blocked on ⚠️ product (edit/delete/duplicates/denied)
-- [ ] Manual QA on device: a reminder fires; a reminder set on another device fires here after opening the book (FR-MEM-008 scenarios)
-- [ ] Close `TD-Memorial-001`
+- [ ] Delete `scheduleReminders(for:)` / `cancelReminder(forEntryID:)` and their calls in `ILMemorialUseCaseImpl` (`loadItems`, `save`, `delete`) and the `AS-Memorial-002` `@ai` marker; update `ILMemorialUseCaseTests`
+- [ ] Remove `syncToReminders` from `ILMemorialEntity`, `makeNewEntry`, `ILMemorialMapper`, `ILMemorialLocalDataSource`, `ILMemorialMO` (new model version, shared with Phase 6), and its tests
+- [ ] Stop sending `add_to_os_reminder` (drop it from `ILMemorialRequestDTO`; ignore it in `ILMemorialDTO`) — must ship before the backend removes the field (criterion 35); mapper test asserts neither `add_to_os_reminder` nor `reminder.timezone` is encoded
+- [ ] Remove the "Thêm vào Lời nhắc (Reminders)" row (`syncRow`, `onSyncToggled`) from `ILMemorialReminderCardView`, `syncToggled` input and the Reminders-app saved message from `ILMemorialEditViewModel`, `syncOn` from `ILMemorialEditStateModel`, the "có trong Lời nhắc" suffix from `ILMemorialFormatter` (criteria 6, 20, 27)
+- [ ] Remove `memorial.edit.sync.*`, `memorial.reminder.inReminders`, `memorial.message.savedWithReminder` from `vi.json`
+- [ ] Update `ILMemorialEditViewModelTests` / formatter tests: save always reports "Đã lưu vào sổ giỗ."
 
-## Phase 8 — Portrait (FR-MEM-011) — later, blocked on the backend photo route
+## Phase 8 — Push and account time zone (FR-MEM-008, BR-MEM-11, ADR-0001) — blocked on ⚠️ contract and the Firebase project
+
+- [ ] App configuration: Push Notifications capability (`aps-environment`), `firebase-ios-sdk` (FirebaseMessaging) via SPM, `GoogleService-Info.plist` per environment, `FirebaseAppDelegateProxyEnabled = NO` — blocked on the Firebase project and APNs key (owner)
+- [ ] `ILPushService` in `Core/Push/` + `AppDelegate` hooks: Firebase start, `registerForRemoteNotifications`, APNs token → Messaging, `MessagingDelegate` token changes, foreground banner; no token or payload text in logs (criteria 30, 32, 42)
+- [ ] `ILNotificationPermission` protocol (Domain) + impl: status, request, settings URL; permission prompt after a save with reminder on or a load with any reminder on, once (criterion 31); tests with a mock
+- [ ] Push hint on the reminder card with "Mở Cài đặt" when denied (criterion 29); `showsPushHint` in `ILMemorialEditStateModel`; ViewModel tests for allowed / denied / not asked
+- [ ] `ILPushRegistrationRepository` + impl + endpoints: register after sign-in, at app start with a session and on token change (criterion 30) — blocked on ⚠️ contract
+- [ ] Sign-out: unregister (best effort, before revoke), FCM `deleteToken`, `removeAllDeliveredNotifications`; on session expiry `deleteToken` + delivered-notification removal (criterion 4) — unregister blocked on ⚠️ contract
+- [ ] `ILAccountTimeZoneRepository` + impl + endpoint and `ILAccountTimeZoneReporter` (sign-in, app active, `NSSystemTimeZoneDidChange`) (criterion 34) — blocked on ⚠️ contract
+- [ ] Deep link: `ILPushRoute` (`.memorialEntry(id)`), `AppCoordinator` → main tab Home → `ILHomeCoordinator.showMemorial(entryID:)` → `ILMemorialCoordinator.showEntry(id:)`; `MemorialGetEndpoint` + `ILMemorialRepository.load(id:)`; 404 → list + "Mục này không còn trong sổ giỗ."; no session → Login (criterion 33) — payload keys blocked on ⚠️ contract
+- [ ] Notification-list hand-off: a memorial item in `Docs/Specs/Notifications/` emits `.memorialEntry(id)` — tracked in that spec; this task only checks the route is used
+- [ ] Manual QA on device: push arrives with the relationship only (lock screen), opening it opens the entry, denied permission shows the hint and the list still has the reminder, signed-out device receives nothing
+
+## Phase 9 — Portrait (FR-MEM-011) — later, blocked on the backend photo route
 
 - [ ] Photo picker + HEIC → JPEG conversion, 5 MB check, upload/replace/remove against the backend photo routes once they are in `openapi.yaml`; show `photo_url` (`TD-Memorial-002`, backend `TD-001`)
 
 ## Deferred (separate feature, not blocking Memorial)
 
 - Family tree ("Gia phả") adding an entry to the book — `genealogy` product spec.
+- The notification list screen and the account-wide notification switch UI — `Docs/Specs/Notifications/` and a settings feature.
