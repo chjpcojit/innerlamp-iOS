@@ -11,7 +11,7 @@ enum ILLoginError: Error, LocalizedError, Equatable {
     case invalidPassword
     case invalidDevice
     /// `details.locked_until` from a 429 `LOGIN_LOCKED` — 5 consecutive failed attempts lock the
-    /// number for 15 minutes (`Docs/Specs/API/openapi.yaml` v3.9).
+    /// number for 15 minutes (innerlamp-be `docs/specs/api/openapi.yaml`).
     case loginLocked(lockedUntil: String?)
     case invalidInput
     case server

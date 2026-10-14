@@ -35,7 +35,7 @@ nonisolated struct RefreshTokenRequestDTO: Encodable {
     }
 }
 
-/// `data` of `POST /v1/auth/refresh` — `RefreshResponse.data` in `Docs/Specs/API/openapi.yaml`.
+/// `data` of `POST /v1/auth/refresh` — `RefreshEnvelope.data` in innerlamp-be `docs/specs/api/openapi.yaml`.
 nonisolated struct RefreshTokenResponseDTO: Decodable {
     let accessToken: String
     let refreshToken: String

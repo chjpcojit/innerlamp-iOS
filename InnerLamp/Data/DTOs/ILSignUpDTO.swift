@@ -12,8 +12,8 @@ import Foundation
 /// declares explicit snake_case `CodingKeys`; the response declares none and relies on the decoder.
 /// See `.claude/skills/data-builder/references/data_layer_architecture.md` §5.
 ///
-/// Contract: `Docs/Specs/API/openapi.yaml` v3.9 `RequestOTPRequest` /
-/// `RequestOTPData` — `POST /v1/auth/register/request-otp`.
+/// Contract: innerlamp-be `docs/specs/api/openapi.yaml` `RequestOtpRequest` /
+/// `OtpSentEnvelope` — `POST /v1/auth/register/request-otp`.
 nonisolated struct ILSignUpRequestOTPRequestDTO: Encodable {
     let fullName: String
     let dharmaName: String
