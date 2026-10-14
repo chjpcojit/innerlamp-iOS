@@ -1,6 +1,6 @@
 # Design — Memorial
 
-Version: 3.0
+Version: 3.1
 Last updated: 2026-10-14
 Status: in-progress — list, form, server CRUD and offline cache built (build-verified, tests not run); planned: remove the local-reminder stubs and the Reminders-app option, FCM push (registration, permission, deep link), account time zone, leap month, strict date checks, delete confirmation, guest / sign-out / offline / server-error cases, product vectors
 
@@ -74,7 +74,6 @@ ILHomeCoordinator
        guest / 401 on load          → .signInRequired   → sign-in prompt (planned)
        (Thêm người thân)            → .addEntry          → push ILMemorialEditViewController (add)
        (highlight card / row tap)   → .editEntry(entity) → push ILMemorialEditViewController (edit)
-       (Xem gia phả, non-empty list)→ .openFamilyTree    → child ILFamilyTreeCoordinator
        (form Lưu ok / Xóa confirmed)→ .saved / .deleted  → pop, list reloads + toast
        (form Lưu / Xóa → 404)       → .removed(message)  → pop, list reloads + message (planned)
        (Back)                       → .back              → finish() → Home

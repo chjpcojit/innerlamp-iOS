@@ -1,6 +1,6 @@
 # Tasks — Memorial
 
-Version: 3.0
+Version: 3.1
 Last updated: 2026-10-14
 Status: in-progress — Phase 1–5 built (build-verified, tests not run) except the items left `[ ]`; Phase 6 (product spec v2.1 drift) and Phase 7 (remove local reminders and the Reminders-app option) not started; Phase 8 (push + time zone) blocked on the contract and the Firebase project; Phase 9 (portrait) blocked on the backend photo route
 
@@ -65,6 +65,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 - [ ] Name ≤ 100 / note ≤ 1000 checked locally with the §3.1.1 field errors (FR-MEM-012, FR-MEM-013, criterion 18)
 - [ ] Delete confirmation action sheet with the §3.1.1 copy before `DELETE` (BR-MEM-12, FR-MEM-005, criterion 24); remove the `AS-Memorial-004` `@ai` marker; tests for confirm / cancel
 - [ ] Empty state without the "Lấy từ gia phả" card (FR-MEM-002, criterion 8): remove `treeCard` / `onFamilyTreeTap` from `ILMemorialEmptyView` and the `memorial.empty.fromTree.*` keys
+- [ ] No "Xem gia phả" button under a non-empty list (FR-MEM-002, criterion 8): remove the button, the `.openFamilyTree` route and its strings from the memorial list
 - [ ] Guest (FR-MEM-001, criterion 2): no token → `.signInRequired`, no server call, no offline-copy read; 401 on load → sign-in prompt instead of the empty state
 - [ ] Offline copy per account (FR-MEM-010, BR-MEM-01, criteria 3, 39): `ownerAccountID` on `ILMemorialMO`, `fetchAll(ownerAccountID:)`; run the session cleanup (memorial copy included) from `AppCoordinator.handleSessionExpired` too; tests: another account offline sees nothing
 - [ ] Offline copy on server failure (FR-MEM-010, criteria 36–37): fall back on offline / timeout / 5xx / any non-401 failure; offline-copy line "Đang hiện sổ giỗ đã tải lần trước. Không kết nối được máy chủ."; no copy → "Chưa tải được sổ giỗ. Vui lòng kết nối mạng và thử lại." with retry instead of the empty state; repository tests for 5xx with and without a copy

@@ -1,6 +1,6 @@
 # Requirements — Memorial
 
-Version: 3.0
+Version: 3.1
 Last updated: 2026-10-14
 Status: in-progress — list, form, server CRUD and offline read cache are built (build-verified, tests not run); product spec v2.1 alignment pending: remove the local-reminder stubs and the Reminders-app option, push via FCM, account time zone, leap month, year range, delete confirmation, offline / server-error / sign-out edge cases, product vectors (`tasks.md` Phase 6–8)
 Feature folder: `InnerLamp/Presentation/Scenes/Memorial/`
@@ -62,7 +62,7 @@ As a signed-in practitioner, I want to keep a book of my deceased relatives' dea
 5. WHEN the list loads, THE SYSTEM SHALL compute each entry's next anniversary, days left and ordinal per BR-MEM-05…09 (on-device "today", device time zone) and show the entries sorted by days left, soonest first, ties by name; the header subtitle shows "N người thân" (or "Chưa có ai" when empty). (FR-MEM-002, BR-MEM-05, BR-MEM-06, BR-MEM-07, BR-MEM-08)
 6. WHEN at least one entry exists, THE SYSTEM SHALL show a highlight card for the soonest entry with the eyebrow ("GIỖ HÔM NAY" / "GIỖ NGÀY MAI" / "GIỖ SẮP TỚI · CÒN N NGÀY"), portrait, name, "relationship · ordinal label" (label per BR-MEM-09), "Ngày giỗ" (the date of death as entered, a leap date as "10/6 nhuận"), "Nhằm" (the next solar date with weekday, e.g. "Thứ Hai, 23/11/2026") and "Nhắc nhở" (reminder summary or "Chưa bật"), then the section "THEO NGÀY GIỖ SẮP TỚI" listing every entry. (FR-MEM-002, BR-MEM-04, BR-MEM-09)
 7. WHEN a list row is rendered, THE SYSTEM SHALL show the portrait, name, "relationship · date of death as entered", the days-left label of BR-MEM-08 (emphasised when BR-MEM-08 says so) and a "Có nhắc" tag when the entry's reminder is on — whether or not this device allows notifications. (FR-MEM-002, FR-MEM-007, BR-MEM-08)
-8. WHEN the book is empty, THE SYSTEM SHALL show the empty state (`gioEmpty`: "Sổ giỗ còn trống", its explanation and steps) instead of the highlight card and list, with no "Lấy từ gia phả" option. (FR-MEM-002)
+8. WHEN the book is empty, THE SYSTEM SHALL show the empty state (`gioEmpty`: "Sổ giỗ còn trống", its explanation and steps) instead of the highlight card and list, with no "Lấy từ gia phả" option; WHEN the book is not empty, THE SYSTEM SHALL show no "Xem gia phả" button under the list. (FR-MEM-002)
 9. WHEN the user taps the sticky "Thêm người thân" button, THE SYSTEM SHALL open the form in add mode; WHEN the user taps the highlight card or a row, THE SYSTEM SHALL open the form in edit mode for that entry (the entity is handed over, no extra load). (platform)
 10. WHEN the user taps Back, THE SYSTEM SHALL return to Home. (platform)
 11. WHEN the form closes after a save or delete, THE SYSTEM SHALL reload the list and show a transient confirmation toast (about 3.6 s) with the form's message. (FR-MEM-003, FR-MEM-005)
@@ -160,7 +160,7 @@ product §3.1.1.
 - Firebase project, APNs key upload and environments — infrastructure (ADR-0001 follow-ups; the product owner registers the Firebase project).
 - The iOS Reminders app (FR-MEM-009 removed).
 - Home's week-strip link itself — `Docs/Specs/Home/` (v1.7).
-- The family-tree ("Gia phả") screens and creating entries from the tree — `genealogy` product spec; the "Xem gia phả" button under a non-empty list only navigates there.
+- The family-tree ("Gia phả") screens and creating entries from the tree — `genealogy` product spec; neither the empty state nor the list links to it for now (product owner, 2026-10-14).
 - Sharing a book, search, export, soft delete (product §1.2).
 
 ## Pending (not yet implemented — see `tasks.md`)
@@ -188,6 +188,8 @@ Criteria the shipped code does **not** meet yet (drift against product spec v2.1
 - Visual QA on device (dark mode, long names, empty state, Dynamic Type).
 
 ## Open questions (resolved)
+
+- ~~Keep the "Xem gia phả" button under a non-empty list (kept on 2026-10-05, not in product §3.1.1)?~~ → **No, removed for now** (anh Đức, 2026-10-14). Criterion 8. Resolved 2026-10-14.
 
 - ~~Account-wide notification switch: push only, or the notification list too?~~ → push only, on every device of the account; memorial reminders still go into the notification list; the device's own permission is separate (product owner, 2026-10-14; product FR-MEM-008 @ v2.1). No memorial screen changes. Resolved 2026-10-14.
 - ~~Reminder mechanism (local notifications, Reminders app) and its sub-questions (permission denied, another device's stale notification, Reminders-app item on edit/delete, duplicates, Reminders access denied)~~ → the server sends reminders to the notification list and as push (ADR-0001, ADR-0002, FR-MEM-008); the Reminders app is dropped (FR-MEM-009 removed); a device without push permission shows the §3.1.1 hint (criterion 29). Supersedes the v2.0 resolution of 2026-10-14 and `AS-Memorial-002`. Resolved 2026-10-14 by product spec v2.0.

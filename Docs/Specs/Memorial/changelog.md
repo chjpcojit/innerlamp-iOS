@@ -3,6 +3,12 @@
 Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in this folder. All three
 files share one changelog since they change together as one spec unit. Newest version first.
 
+## v3.1 (2026-10-14)
+
+- `requirements.md`: criterion 8 also removes the "Xem gia phả" button under a non-empty list (product owner, 2026-10-14: not kept for now); out-of-scope line updated; question moved to resolved.
+- `design.md`: `.openFamilyTree` route removed from the coordinator map.
+- `tasks.md`: new task to remove the button, the route and its strings.
+
 ## v3.0 (2026-10-14)
 
 Moves the spec to the cross-platform product spec innerlamp-be `docs/product/memorial/product.md` @ v2.1
