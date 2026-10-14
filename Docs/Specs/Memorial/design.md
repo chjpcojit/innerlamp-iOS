@@ -1,6 +1,6 @@
 # Design — Memorial
 
-Version: 3.1
+Version: 3.2
 Last updated: 2026-10-14
 Status: in-progress — list, form, server CRUD and offline cache built (build-verified, tests not run); planned: remove the local-reminder stubs and the Reminders-app option, FCM push (registration, permission, deep link), account time zone, leap month, strict date checks, delete confirmation, guest / sign-out / offline / server-error cases, product vectors
 

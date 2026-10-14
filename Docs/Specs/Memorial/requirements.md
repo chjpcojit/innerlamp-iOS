@@ -1,6 +1,6 @@
 # Requirements — Memorial
 
-Version: 3.1
+Version: 3.2
 Last updated: 2026-10-14
 Status: in-progress — list, form, server CRUD and offline read cache are built (build-verified, tests not run); product spec v2.1 alignment pending: remove the local-reminder stubs and the Reminders-app option, push via FCM, account time zone, leap month, year range, delete confirmation, offline / server-error / sign-out edge cases, product vectors (`tasks.md` Phase 6–8)
 Feature folder: `InnerLamp/Presentation/Scenes/Memorial/`
@@ -93,7 +93,7 @@ As a signed-in practitioner, I want to keep a book of my deceased relatives' dea
 27. WHEN the reminder switch "Nhắc trước ngày giỗ" is on, THE SYSTEM SHALL show exactly the BR-MEM-11 lead choices (Đúng ngày, Trước 1 / 3 / 7 ngày) and time choices (06:00, 07:00, 12:00, 19:00); WHEN it is off, THE SYSTEM SHALL hide them and save no reminder. There is no "Thêm vào Lời nhắc (Reminders)" option. (FR-MEM-007, BR-MEM-11)
 28. WHEN an entry from the server carries a lead or time outside the BR-MEM-11 choices, THE SYSTEM SHALL select the nearest choice in the form; going back without saving SHALL leave the stored value unchanged, and saving SHALL send the selected choice. (FR-MEM-007, BR-MEM-11)
 
-    > ⚠️ Not confirmed (product): which choice is "nearest" on a tie or outside the range — lead 2 (1 or 3), lead 5 (3 or 7), a time half-way between two choices (e.g. 09:30: 07:00 or 12:00), a time before 06:00 or after 19:00 (wrap round midnight or not) — and whether the list's "Nhắc nhở" summary shows the stored value or the nearest choice — blocks the mapping in `tasks.md` Phase 6 "Nearest reminder choice"; hand back to ba-writer in innerlamp-be.
+    Nearest choice per product FR-MEM-007 @ v2.1: closest lead, a tie going to the earlier reminder (2 → 3 days, 5 → 7 days); closest time, a tie going to the earlier time (09:30 → 07:00); before 06:00 → 06:00, after 19:00 → 19:00 (no wrap round midnight). The list's "Nhắc nhở" summary shows the same nearest choice.
 
 29. WHEN the reminder card is shown with the reminder on and this device has denied notifications for InnerLamp, THE SYSTEM SHALL show the hint "Bạn sẽ chỉ thấy lời nhắc trong mục Thông báo. Mở Cài đặt để bật thông báo đẩy." with a "Mở Cài đặt" button that opens InnerLamp's notification settings; the reminder setting itself is kept and saved as usual. (FR-MEM-008, FR-MEM-007)
 

@@ -17,8 +17,8 @@ EN: `scheduleReminders(for:)` and `cancelReminder(forEntryID:)` only print a TOD
 VI: `scheduleReminders(for:)` và `cancelReminder(forEntryID:)` chỉ in một dòng TODO. Người dùng có thể bật nhắc và lưu, nhưng không có thông báo nào được đặt lịch và không có gì được thêm vào Lời nhắc.
 
 ## Why it was taken on / Lý do chấp nhận nợ
-EN: The reminder mechanism is not confirmed (see `AS-Memorial-002`), and the codebase has no notification or EventKit infrastructure; the skill rules also forbid guessing an I/O implementation.
-VI: Cơ chế nhắc chưa được xác nhận (xem `AS-Memorial-002`), codebase chưa có hạ tầng thông báo hay EventKit; quy tắc của skill cũng cấm đoán mò phần triển khai I/O.
+EN: The reminder mechanism is not confirmed (product spec v2.0 has since moved reminders to the server, FR-MEM-008), and the codebase has no notification or EventKit infrastructure; the skill rules also forbid guessing an I/O implementation.
+VI: Cơ chế nhắc chưa được xác nhận (product spec v2.0 đã chuyển lời nhắc sang server, FR-MEM-008), codebase chưa có hạ tầng thông báo hay EventKit; quy tắc của skill cũng cấm đoán mò phần triển khai I/O.
 
 ## Impact / Ảnh hưởng
 EN: User-facing: the screen promises reminders ("Nhắc trước ngày giỗ", the saved-message mentions Lời nhắc) that never fire. Entries are stored with their reminder fields, so no data migration is needed later.

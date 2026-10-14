@@ -46,7 +46,8 @@ nonisolated enum ILMemorialMapper {
             deathDate: nil,
             deathDay: entry.day,
             deathMonth: entry.month,
-            // @ai: assumption — see Docs/Assumptions/Memorial/AS-Memorial-003-leap-month-skipped.md
+            // EN: Drift: product BR-MEM-04 keeps the leap marker — Docs/Specs/Memorial/tasks.md Phase 6.
+            // VI: Lệch: product BR-MEM-04 giữ cờ tháng nhuận — Docs/Specs/Memorial/tasks.md Phase 6.
             deathLeapMonth: false,
             note: note,
             reminder: reminder,

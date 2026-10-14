@@ -48,11 +48,11 @@ Form (`ILMemorialEditNavEvent`):
 ## Known gaps / not implemented yet
 
 - Reminders: `scheduleReminders` / `cancelReminder` are TODO stubs — mechanism not confirmed
-  (`TD-Memorial-001`, `AS-Memorial-002`). The reminder fields are stored, nothing is scheduled.
+  (`TD-Memorial-001`). The server sends reminders from product v2.0 (FR-MEM-008); the stubs are removed in `Docs/Specs/Memorial/tasks.md` Phase 7.
 - "Thêm vào Lời nhắc" (Reminders) sync: not built (`TD-Memorial-001`).
 - Portrait: placeholder avatar (initial letter) only; no picker/storage (`TD-Memorial-002`).
-- No server sync — no API contract (`AS-Memorial-001`).
-- Leap lunar months are skipped; delete has no confirmation (`AS-Memorial-003`, `AS-Memorial-004`).
+- Server sync and offline copy: see `Docs/Specs/Memorial/` (product BR-MEM-01, FR-MEM-010).
+- The leap-month marker is dropped and delete has no confirmation — drift from product BR-MEM-04 and BR-MEM-12 (`Docs/Specs/Memorial/tasks.md` Phase 6).
 - `ILLunarCalendar.solarToLunar` returns day 0 for 2054-05-07 (pre-existing); affects only that far-future date.
 - No UI test — not requested.
 
