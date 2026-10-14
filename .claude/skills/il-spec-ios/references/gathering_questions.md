@@ -18,6 +18,13 @@ phrasing rules that make questions easy for a non-technical stakeholder to answe
 - **Short.** A question the user can answer in one line or one tap beats a paragraph they have to
   parse.
 
+## Read the product spec before asking
+
+Read innerlamp-be `docs/product/<feature>/product.md` first (see `upstream_product_spec.md`). Do
+not ask again what it already answers (user story, business rules, scope, edge cases) — cite the
+ID. A product decision it is missing is not settled here: record `⚠️ Not confirmed (product)` and
+hand it back to `ba-writer`. The questions below are the iOS-specific remainder.
+
 ## Required question set (before generating a new spec)
 
 Ask these in order, one at a time or grouped in a single short form — whichever fits the
