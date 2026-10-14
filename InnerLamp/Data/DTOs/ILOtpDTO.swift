@@ -6,8 +6,8 @@
 import Foundation
 
 /// Wire format for the OTP feature's two calls — Data layer. Contract:
-/// `Docs/Specs/API/openapi.yaml` v3.9 (`VerifyOTPRequest` / `VerifyOTPData`,
-/// `ResendOTPRequest` / `ResendOTPData`).
+/// innerlamp-be `docs/specs/api/openapi.yaml` (`VerifyOtpRequest` / `AuthEnvelope`,
+/// `ResendOtpRequest` / `ResendOtpEnvelope`).
 ///
 /// Requests declare explicit snake_case `CodingKeys` (the shared `JSONEncoder` has no key
 /// strategy); responses declare none and rely on the decoder's `.convertFromSnakeCase`. One type

@@ -28,8 +28,8 @@ repos have their own layer-2 spec skills (`il-spec-be`, `il-spec-web`, `il-spec-
 same documents. Read `references/upstream_product_spec.md` once — it is the shared rulebook.
 
 **Contract source.** The contract is the backend's `openapi.yaml`, read from an innerlamp-be
-checkout (usually `../innerlamp-be`). `Docs/Specs/API/openapi.yaml` in this repo is a stale copy:
-never use it as a source and never update it.
+checkout (usually `../innerlamp-be`). This repo keeps no copy of it (the old `Docs/Specs/API/openapi.yaml`
+was removed on 2026-10-14); never add one back.
 
 This skill is modeled on the existing `Docs/Specs/SignUp/` files — read them first as the
 canonical worked example before generating a new spec, especially to see the exact tone/format

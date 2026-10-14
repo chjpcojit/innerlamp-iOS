@@ -7,7 +7,7 @@ tags: [api, auth]
 status: draft
 generated: { by: claude-code, at: 2026-09-27T14:54:58+07:00 }
 sources:
-  - path: Docs/Specs/API/openapi.yaml
+  - path: innerlamp-be/docs/specs/api/openapi.yaml
     kind: openapi
   - path: Docs/Specs/SignUp/design.md
     kind: spec

@@ -12,8 +12,8 @@ import Foundation
 /// declares explicit snake_case `CodingKeys`; the response declares none and relies on the decoder.
 /// See `.claude/skills/data-builder/references/data_layer_architecture.md` §5.
 ///
-/// Contract: `Docs/Specs/API/openapi.yaml` v3.9 `LoginRequest` / `LoginResponse.data`
-/// (= `VerifyOTPData`) — `POST /v1/auth/login`.
+/// Contract: innerlamp-be `docs/specs/api/openapi.yaml` `LoginRequest` / `AuthEnvelope.data`
+/// (= `AuthResult`) — `POST /v1/auth/login`.
 nonisolated struct ILLoginRequestDTO: Encodable {
     let phoneNumber: String
     let password: String
