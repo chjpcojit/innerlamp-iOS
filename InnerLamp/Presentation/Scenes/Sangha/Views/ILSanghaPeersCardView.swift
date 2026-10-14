@@ -8,7 +8,14 @@ import UIKit
 /// Thẻ số Phật tử cùng chùa: 3 vòng tròn chồng nhau (trang trí, không lộ danh tính) + câu mô tả.
 final class ILSanghaPeersCardView: UIView {
 
-    private let label = UILabel()
+    private lazy var label: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodySmall
+        label.textColor = ILColors.inkSecondary
+        label.numberOfLines = 0
+        return label
+    }()
+
     private var avatarCircles: [UIView] = []
 
     init() {
@@ -46,10 +53,6 @@ final class ILSanghaPeersCardView: UIView {
         }
         previous?.trailingAnchor.constraint(equalTo: avatars.trailingAnchor).isActive = true
         avatars.setContentHuggingPriority(.required, for: .horizontal)
-
-        label.font = ILTypography.bodySmall
-        label.textColor = ILColors.inkSecondary
-        label.numberOfLines = 0
 
         let row = UIStackView(arrangedSubviews: [avatars, label])
         row.axis = .horizontal

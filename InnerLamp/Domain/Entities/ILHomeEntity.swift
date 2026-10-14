@@ -103,14 +103,16 @@ enum ILHomeEventTone: Equatable {
     case rose
 }
 
-/// 1 sự kiện Phật giáo trong tháng — nội dung nghiệp vụ (chưa có API sự kiện chùa thật, xem
-/// TODO ở `ILHomeUseCaseImpl`).
+/// 1 sự kiện Phật giáo trong tháng — nội dung nghiệp vụ từ `GET /v1/calendar/events`
+/// (xem `ILHomeUseCaseImpl.loadBuddhistEventMonths`).
 struct ILHomeEventItemEntity: Equatable, Identifiable {
     let id: String
     let date: Date
     let title: String
     let lunarLabel: String
     let tone: ILHomeEventTone
+    /// Mã sự kiện trên server — mở màn Chi tiết ngày lễ cùng với `date`.
+    var eventCode: String = ""
 }
 
 /// 1 trang (tháng) trong carousel "Sự kiện Phật giáo".

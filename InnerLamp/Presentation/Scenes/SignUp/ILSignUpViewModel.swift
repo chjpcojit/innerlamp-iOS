@@ -6,6 +6,12 @@
 import Foundation
 import Combine
 
+/// Dòng người dùng vừa chọn trong bộ chọn nơi xuất gia. `id == nil` là "Chưa xuất gia".
+struct ILOrdinationPlaceSelection: Equatable {
+    let id: String?
+    let name: String
+}
+
 enum ILSignUpNavEvent: Equatable {
     /// Người dùng bấm nút back trên header — quay lại màn trước đó (Onboarding).
     case goBack
@@ -31,11 +37,16 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
     // MARK: - Input / Output
     struct Input {
         let viewDidLoad: AnyPublisher<Void, Never>
+        let fullNameChanged: AnyPublisher<String, Never>
         let suggestDisplayNameTapped: AnyPublisher<Void, Never>
         let displayNameChanged: AnyPublisher<String, Never>
-        let ordinationPlaceChanged: AnyPublisher<String, Never>
+        let ordinationPlaceChanged: AnyPublisher<ILOrdinationPlaceSelection, Never>
         /// Người dùng mở bộ chọn nơi xuất gia — tải danh sách chùa nếu chưa có.
         let ordinationPickerOpened: AnyPublisher<Void, Never>
+        /// Từ khoá tìm chùa (mỗi lần gõ) — ViewModel debounce rồi tìm bằng `?q=` của server.
+        let ordinationSearchChanged: AnyPublisher<String, Never>
+        /// Danh sách đã cuộn gần cuối — tải trang kế tiếp.
+        let ordinationLoadMoreRequested: AnyPublisher<Void, Never>
         /// Từ khoá đang gõ trong bộ chọn khi bấm "Thêm thông tin chùa".
         let addTempleTapped: AnyPublisher<String, Never>
         let countryChanged: AnyPublisher<ILCountry, Never>
@@ -69,7 +80,13 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
     private let useCase: ILSignUpUseCase
     private let ordinationPlaceUseCase: ILOrdinationPlaceUseCase
     private var hasLoadedOrdinationPlaces = false
+    /// Từ khoá (đã trim) mà `ordinationPlaceOptions` đang tương ứng; rỗng = không lọc.
+    private var ordinationQuery = ""
+    private var ordinationNextPage = 1
+    /// Tăng mỗi lần bắt đầu một lượt tải mới — phản hồi của lượt cũ (từ khoá đã đổi) bị bỏ.
+    private var ordinationRequestToken = 0
     private static let proposedIDPrefix = "proposed-"
+    private static let ordinationSearchDebounce: DispatchQueue.SchedulerTimeType.Stride = .milliseconds(300)
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initializer
@@ -87,6 +104,10 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
             .sink { [weak self] _ in self?.handleViewDidLoad() }
             .store(in: &cancellables)
 
+        input.fullNameChanged
+            .sink { [weak self] text in self?.handleFullNameChanged(text) }
+            .store(in: &cancellables)
+
         input.suggestDisplayNameTapped
             .sink { [weak self] _ in self?.handleSuggestDisplayName() }
             .store(in: &cancellables)
@@ -101,6 +122,17 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
 
         input.ordinationPickerOpened
             .sink { [weak self] _ in self?.handleOrdinationPickerOpened() }
+            .store(in: &cancellables)
+
+        input.ordinationSearchChanged
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .debounce(for: Self.ordinationSearchDebounce, scheduler: DispatchQueue.main)
+            .removeDuplicates()
+            .sink { [weak self] query in self?.handleOrdinationSearchChanged(query) }
+            .store(in: &cancellables)
+
+        input.ordinationLoadMoreRequested
+            .sink { [weak self] _ in self?.loadMoreOrdinationPlaces() }
             .store(in: &cancellables)
 
         input.addTempleTapped
@@ -164,15 +196,21 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
         stateSubject.send(.success(currentState))
     }
 
+    private func handleFullNameChanged(_ text: String) {
+        currentState.fullName = text
+        currentState.fullNameError = nil
+        stateSubject.send(.success(currentState))
+    }
+
     private func handleDisplayNameChanged(_ text: String) {
         currentState.displayName = text
         currentState.displayNameError = nil
         stateSubject.send(.success(currentState))
     }
 
-    private func handleOrdinationPlaceChanged(_ text: String) {
-        currentState.ordinationPlace = text
-        currentState.selectedOrdinationPlaceID = nil
+    private func handleOrdinationPlaceChanged(_ selection: ILOrdinationPlaceSelection) {
+        currentState.ordinationPlace = selection.name
+        currentState.selectedOrdinationPlaceID = selection.id
         stateSubject.send(.success(currentState))
     }
 
@@ -186,7 +224,7 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
     /// Nhận chùa vừa đề xuất từ màn "Thêm thông tin chùa": đưa lên đầu danh sách (nhãn "Đang chờ
     /// duyệt") và chọn luôn làm nơi xuất gia. Chưa có API gửi đề xuất (TD-SignUp-002).
     func applyProposedPlace(_ proposal: ILTempleProposalEntity) {
-        let place = [proposal.address, proposal.province].filter { !$0.isEmpty }.joined(separator: ", ")
+        let place = [proposal.address, proposal.ward, proposal.province].filter { !$0.isEmpty }.joined(separator: ", ")
         let pending = "signup.ordination.pending".localized
         let entity = ILOrdinationPlaceEntity(
             id: "\(Self.proposedIDPrefix)\(UUID().uuidString)",
@@ -199,23 +237,79 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
         stateSubject.send(.success(currentState))
     }
 
-    /// Danh bạ chùa chỉ cần tải một lần; lỗi thì để trống — người dùng vẫn chọn "Chưa xuất gia"
-    /// hoặc thêm chùa, và lần mở sau sẽ thử tải lại.
+    /// Trang đầu của danh bạ chỉ tải khi mở bộ chọn lần đầu; lỗi thì để trống — người dùng vẫn
+    /// chọn "Chưa xuất gia" hoặc thêm chùa, và lần mở sau sẽ thử tải lại.
     private func handleOrdinationPickerOpened() {
         guard !hasLoadedOrdinationPlaces, !currentState.isLoadingOrdinationPlaces else { return }
+        reloadOrdinationPlaces(query: ordinationQuery)
+    }
+
+    private func handleOrdinationSearchChanged(_ query: String) {
+        guard query != ordinationQuery else { return }
+        reloadOrdinationPlaces(query: query)
+    }
+
+    /// Bỏ kết quả cũ và tải lại từ trang 1 theo `query` (server tìm theo tên chùa).
+    private func reloadOrdinationPlaces(query: String) {
+        ordinationQuery = query
+        ordinationNextPage = 1
+        ordinationRequestToken += 1
+        let token = ordinationRequestToken
+
+        // Không để lại kết quả của từ khoá cũ trong lúc chờ; chùa vừa đề xuất luôn được giữ.
+        currentState.ordinationPlaceOptions = proposedOrdinationPlaces(matching: query)
+        currentState.hasMoreOrdinationPlaces = false
+        currentState.isLoadingMoreOrdinationPlaces = false
         currentState.isLoadingOrdinationPlaces = true
         stateSubject.send(.success(currentState))
 
         Task { [weak self] in
             guard let self else { return }
-            let loaded = try? await self.ordinationPlaceUseCase.loadPlaces()
-            self.hasLoadedOrdinationPlaces = loaded != nil
-            // Giữ các chùa người dùng vừa đề xuất trong lúc chờ tải xong.
-            let proposed = self.currentState.ordinationPlaceOptions.filter { $0.id.hasPrefix(Self.proposedIDPrefix) }
-            self.currentState.ordinationPlaceOptions = proposed + (loaded ?? [])
+            let result = try? await self.ordinationPlaceUseCase.loadPlaces(query: query, page: 1)
+            guard token == self.ordinationRequestToken else { return }
+            // Chỉ danh sách không lọc mới là "đã tải" — tìm kiếm lỗi không chặn lần mở sau.
+            if query.isEmpty { self.hasLoadedOrdinationPlaces = result != nil }
+            self.currentState.ordinationPlaceOptions += result?.items ?? []
+            self.currentState.hasMoreOrdinationPlaces = result?.hasMore ?? false
+            self.ordinationNextPage = (result?.page ?? 0) + 1
             self.currentState.isLoadingOrdinationPlaces = false
             self.stateSubject.send(.success(self.currentState))
         }
+    }
+
+    private func loadMoreOrdinationPlaces() {
+        guard currentState.hasMoreOrdinationPlaces,
+              !currentState.isLoadingOrdinationPlaces,
+              !currentState.isLoadingMoreOrdinationPlaces else { return }
+        currentState.isLoadingMoreOrdinationPlaces = true
+        stateSubject.send(.success(currentState))
+
+        let token = ordinationRequestToken
+        let query = ordinationQuery
+        let page = ordinationNextPage
+        Task { [weak self] in
+            guard let self else { return }
+            let result = try? await self.ordinationPlaceUseCase.loadPlaces(query: query, page: page)
+            guard token == self.ordinationRequestToken else { return }
+            if let result {
+                let known = Set(self.currentState.ordinationPlaceOptions.map(\.id))
+                self.currentState.ordinationPlaceOptions += result.items.filter { !known.contains($0.id) }
+                self.currentState.hasMoreOrdinationPlaces = result.hasMore
+                self.ordinationNextPage = result.page + 1
+            } else {
+                // Lỗi mạng giữa chừng: dừng ở đây, cuộn lại hoặc mở lại bộ chọn sẽ thử lại.
+                self.currentState.hasMoreOrdinationPlaces = true
+            }
+            self.currentState.isLoadingMoreOrdinationPlaces = false
+            self.stateSubject.send(.success(self.currentState))
+        }
+    }
+
+    /// Các chùa người dùng vừa đề xuất, giữ ở đầu danh sách khi không có từ khoá hoặc khi tên khớp.
+    private func proposedOrdinationPlaces(matching query: String) -> [ILOrdinationPlaceEntity] {
+        let proposed = currentState.ordinationPlaceOptions.filter { $0.id.hasPrefix(Self.proposedIDPrefix) }
+        guard !query.isEmpty else { return proposed }
+        return proposed.filter { $0.name.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
     }
 
     private func handleCountryChanged(_ country: ILCountry) {
@@ -262,6 +356,7 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
     private func handleSubmit() {
         guard !currentState.isSubmitting, currentState.didAcceptTerms else { return }
 
+        currentState.fullNameError = useCase.validateFullName(currentState.fullName)
         currentState.displayNameError = useCase.validateDisplayName(currentState.displayName)
         currentState.phoneNumberError = useCase.validatePhoneNumber(
             nationalDigits: currentState.nationalDigits,
@@ -279,8 +374,11 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
         currentState.isSubmitting = true
         stateSubject.send(.success(currentState))
 
+        let fullName = currentState.fullName.trimmingCharacters(in: .whitespacesAndNewlines)
         let displayName = currentState.displayName
-        let ordinationPlace = currentState.ordinationPlace.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Chùa còn chờ duyệt (`proposed-…`) chưa có id thật nên không gửi; server coi là chưa chọn.
+        let ordinationTempleID = currentState.selectedOrdinationPlaceID
+            .flatMap { $0.hasPrefix(Self.proposedIDPrefix) ? nil : $0 }
         let phoneE164 = currentState.phoneE164
         let email = currentState.email.trimmingCharacters(in: .whitespacesAndNewlines)
         let password = currentState.password
@@ -288,7 +386,7 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
         Task { [weak self] in
             guard let self else { return }
             do {
-                let otp = try await self.useCase.sendVerificationCode(displayName: displayName, ordinationPlace: ordinationPlace, phoneNumber: phoneE164, email: email, password: password)
+                let otp = try await self.useCase.sendVerificationCode(fullName: fullName, displayName: displayName, ordinationTempleID: ordinationTempleID, phoneNumber: phoneE164, email: email, password: password)
                 self.currentState.isSubmitting = false
                 self.stateSubject.send(.success(self.currentState))
                 self.navigationEventSubject.send(.didRequestVerification(

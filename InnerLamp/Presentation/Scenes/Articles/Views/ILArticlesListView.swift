@@ -23,12 +23,27 @@ final class ILArticlesListView: UIView {
     var onArticleTap: ((ILArticlesArticleModel) -> Void)?
 
     // MARK: - UI Elements
-    private let outerStack = UIStackView()
-    private let cardsStack = UIStackView()
-    private let footerView = ILLoadMoreFooterView(
-        loadingText: "articles.loadingMore".localized,
-        endText: "articles.end".localized
-    )
+    private lazy var outerStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+
+    private lazy var cardsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = ILMetrics.rowSpacing
+        return stack
+    }()
+
+    private lazy var footerView: ILLoadMoreFooterView = {
+        let view = ILLoadMoreFooterView(
+            loadingText: "articles.loadingMore".localized,
+            endText: "articles.end".localized
+        )
+        return view
+    }()
 
     // MARK: - Initializer
     init() {
@@ -44,11 +59,6 @@ final class ILArticlesListView: UIView {
     private func setupViews() {
         translatesAutoresizingMaskIntoConstraints = false
 
-        cardsStack.axis = .vertical
-        cardsStack.spacing = ILMetrics.rowSpacing
-
-        outerStack.axis = .vertical
-        outerStack.translatesAutoresizingMaskIntoConstraints = false
         outerStack.addArrangedSubview(cardsStack)
         outerStack.addArrangedSubview(footerView)
         addSubview(outerStack)

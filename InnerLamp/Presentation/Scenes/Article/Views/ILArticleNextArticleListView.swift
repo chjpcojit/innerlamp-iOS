@@ -17,7 +17,12 @@ final class ILArticleNextArticleListView: UIView {
     var onArticleTap: ((String) -> Void)?
 
     // MARK: - UI Elements
-    private let rowsStack = UIStackView()
+    private lazy var rowsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
     // MARK: - Initializer
     init() {
@@ -31,8 +36,6 @@ final class ILArticleNextArticleListView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        rowsStack.axis = .vertical
-        rowsStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(rowsStack)
 
         NSLayoutConstraint.activate([

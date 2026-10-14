@@ -48,6 +48,8 @@ struct ILProfileStateModel: Equatable {
     /// Chân trang: "InnerLamp · Phiên bản 1.4.2" / "Bản dựng 218" (đọc từ bundle).
     var versionText: String = ""
     var buildText: String = ""
+    /// `true` while "Đăng xuất" is running — the button is disabled so it cannot be fired twice.
+    var isLoggingOut = false
 
     var hasBadges: Bool { !badges.isEmpty }
 

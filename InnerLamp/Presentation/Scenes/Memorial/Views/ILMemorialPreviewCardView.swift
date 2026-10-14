@@ -10,8 +10,21 @@ import UIKit
 final class ILMemorialPreviewCardView: UIView {
 
     // MARK: - UI Elements
-    private let nextLabel = UILabel()
-    private let detailLabel = UILabel()
+    private lazy var nextLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodySmall
+        label.textColor = ILColors.ink
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var detailLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodySmall
+        label.textColor = ILColors.inkSecondary
+        label.numberOfLines = 0
+        return label
+    }()
 
     // MARK: - Initializer
     init() {
@@ -35,14 +48,6 @@ final class ILMemorialPreviewCardView: UIView {
     private func setupViews() {
         backgroundColor = ILColors.goldCallout
         layer.cornerRadius = ILMetrics.radiusInput
-
-        nextLabel.font = ILTypography.bodySmall
-        nextLabel.textColor = ILColors.ink
-        nextLabel.numberOfLines = 0
-
-        detailLabel.font = ILTypography.bodySmall
-        detailLabel.textColor = ILColors.inkSecondary
-        detailLabel.numberOfLines = 0
 
         let stack = UIStackView(arrangedSubviews: [nextLabel, detailLabel])
         stack.axis = .vertical

@@ -20,9 +20,27 @@ final class ILFamilyTreeCreateHeaderCardView: UIView {
 
     // MARK: - UI Elements
     private let sealLayer = CAShapeLayer()
-    private let sealView = UIView()
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
+    private lazy var sealView: UIView = {
+        let v = UIView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var titleLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.treeCreateTitle
+        v.textColor = Tree.heading
+        v.textAlignment = .center
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var subtitleLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.subhead
+        v.textColor = Tree.inkTertiary
+        v.textAlignment = .center
+        v.numberOfLines = 0
+        return v
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -51,16 +69,6 @@ final class ILFamilyTreeCreateHeaderCardView: UIView {
         sealLayer.fillColor = Tree.gold.cgColor
         sealView.layer.addSublayer(sealLayer)
 
-        titleLabel.font = ILTypography.treeCreateTitle
-        titleLabel.textColor = Tree.heading
-        titleLabel.textAlignment = .center
-        titleLabel.numberOfLines = 0
-
-        subtitleLabel.font = ILTypography.subhead
-        subtitleLabel.textColor = Tree.inkTertiary
-        subtitleLabel.textAlignment = .center
-        subtitleLabel.numberOfLines = 0
-
         let stack = UIStackView(arrangedSubviews: [sealView, titleLabel, subtitleLabel])
         stack.axis = .vertical
         stack.alignment = .fill
@@ -70,7 +78,6 @@ final class ILFamilyTreeCreateHeaderCardView: UIView {
         addSubview(stack)
 
         // The seal is centred in its own row; the stack stretches the row to full width.
-        sealView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             sealView.heightAnchor.constraint(equalToConstant: Layout.sealSize.height),
             stack.topAnchor.constraint(equalTo: topAnchor, constant: Layout.verticalPadding),

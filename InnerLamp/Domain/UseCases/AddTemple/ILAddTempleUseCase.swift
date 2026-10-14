@@ -9,29 +9,48 @@ import Foundation
 enum ILAddTempleError: Error, Equatable {
     case nameRequired
     case provinceRequired
+    case wardRequired
     /// Chùa đã có trong danh bạ — kèm tên chùa trùng để báo người dùng quay lại chọn.
     case duplicate(String)
 }
 
 /// Kiểm tra và chuẩn hoá đề xuất chùa mới. Chưa có API gửi đề xuất (xem TD-SignUp-002) nên use
-/// case này chỉ làm phần nghiệp vụ cục bộ: bắt buộc tên + tỉnh/thành, chặn trùng danh bạ.
+/// case này chỉ làm phần nghiệp vụ cục bộ: bắt buộc tên + tỉnh/thành + phường/xã (chọn từ
+/// metadata của server), chặn trùng danh bạ.
 protocol ILAddTempleUseCase {
+    func loadProvinces() async throws -> [ILProvinceEntity]
+    func loadWards(provinceCode: String) async throws -> [ILWardEntity]
     /// `nil` khi hợp lệ. `existing` là danh bạ chùa đã tải để chặn trùng (có thể rỗng).
-    func validate(name: String, province: String, existing: [ILOrdinationPlaceEntity]) -> ILAddTempleError?
-    func makeProposal(name: String, province: String, address: String) -> ILTempleProposalEntity
+    func validate(name: String, province: String, ward: String, existing: [ILOrdinationPlaceEntity]) -> ILAddTempleError?
+    func makeProposal(name: String, province: String, ward: String, address: String) -> ILTempleProposalEntity
 }
 
 final class ILAddTempleUseCaseImpl: ILAddTempleUseCase {
+
+    private let administrativeUnitRepository: ILAdministrativeUnitRepository
+
+    init(administrativeUnitRepository: ILAdministrativeUnitRepository) {
+        self.administrativeUnitRepository = administrativeUnitRepository
+    }
+
+    func loadProvinces() async throws -> [ILProvinceEntity] {
+        try await administrativeUnitRepository.loadProvinces()
+    }
+
+    func loadWards(provinceCode: String) async throws -> [ILWardEntity] {
+        try await administrativeUnitRepository.loadWards(provinceCode: provinceCode, query: nil)
+    }
 
     /// Tên bắt đầu bằng một trong các tiền tố này thì giữ nguyên, ngược lại tự thêm "Chùa ".
     private static let namePrefixes = ["chùa", "thiền viện", "tịnh xá", "niệm phật đường"]
     private static let defaultPrefix = "Chùa"
 
-    func validate(name: String, province: String, existing: [ILOrdinationPlaceEntity]) -> ILAddTempleError? {
+    func validate(name: String, province: String, ward: String, existing: [ILOrdinationPlaceEntity]) -> ILAddTempleError? {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedProvince = province.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return .nameRequired }
         guard !trimmedProvince.isEmpty else { return .provinceRequired }
+        guard !ward.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return .wardRequired }
 
         let needle = Self.coreName(trimmedName)
         let provinceNeedle = Self.normalize(trimmedProvince)
@@ -42,12 +61,13 @@ final class ILAddTempleUseCaseImpl: ILAddTempleUseCase {
         return nil
     }
 
-    func makeProposal(name: String, province: String, address: String) -> ILTempleProposalEntity {
+    func makeProposal(name: String, province: String, ward: String, address: String) -> ILTempleProposalEntity {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let hasPrefix = Self.namePrefixes.contains { trimmedName.lowercased().hasPrefix($0) }
         return ILTempleProposalEntity(
             name: hasPrefix ? trimmedName : "\(Self.defaultPrefix) \(trimmedName)",
             province: province.trimmingCharacters(in: .whitespacesAndNewlines),
+            ward: ward.trimmingCharacters(in: .whitespacesAndNewlines),
             address: address.trimmingCharacters(in: .whitespacesAndNewlines)
         )
     }

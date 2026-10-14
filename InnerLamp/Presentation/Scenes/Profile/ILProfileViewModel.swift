@@ -11,15 +11,16 @@ enum ILProfileNavEvent: Equatable {
     case editProfile
     case openStats
     case openAwards
-    case openOffering
+    case openMeritBook
     case openDonate
     case openReminder
-    case openMeritBook
     case openSettings
     case openNotifications
     case openFamilyTree
     case createFamilyTree
     case openCommunity(id: String)
+    /// Session cleared (tokens + local user) — the app must leave the main area for Login.
+    case loggedOut
 }
 
 protocol ILProfileViewModelProtocol: ViewModelType {
@@ -36,19 +37,22 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
         let editProfileTapped: AnyPublisher<Void, Never>
         let statsTapped: AnyPublisher<Void, Never>
         let awardsTapped: AnyPublisher<Void, Never>
-        let offeringTapped: AnyPublisher<Void, Never>
+        let meritTapped: AnyPublisher<Void, Never>
         let donateTapped: AnyPublisher<Void, Never>
         let reminderTapped: AnyPublisher<Void, Never>
-        let meritBookTapped: AnyPublisher<Void, Never>
         let settingsTapped: AnyPublisher<Void, Never>
         let notificationsTapped: AnyPublisher<Void, Never>
         let familyTreeTapped: AnyPublisher<Void, Never>
         let createFamilyTreeTapped: AnyPublisher<Void, Never>
         let communityTapped: AnyPublisher<Void, Never>
+        /// The user confirmed the "Đăng xuất?" popup (the popup itself belongs to the view).
+        let logoutConfirmed: AnyPublisher<Void, Never>
     }
 
     struct Output {
         let state: AnyPublisher<ViewState<ILProfileStateModel>, Never>
+        /// One-shot, already localized message when logging out failed and the user stays signed in.
+        let logoutError: AnyPublisher<String, Never>
     }
 
     // MARK: - Constants
@@ -64,12 +68,15 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
     }
 
     private let navigationEventSubject = PassthroughSubject<ILProfileNavEvent, Never>()
+    private let logoutErrorSubject = PassthroughSubject<String, Never>()
     private let stateSubject: CurrentValueSubject<ViewState<ILProfileStateModel>, Never>
     private var profile: ILProfileEntity
     private var currentState: ILProfileStateModel
     private let useCase: ILProfileUseCase
     private let bundle: Bundle
     private var cancellables = Set<AnyCancellable>()
+    private var accountTask: Task<Void, Never>?
+    private var logoutTask: Task<Void, Never>?
 
     // MARK: - Initializer
     init(useCase: ILProfileUseCase, bundle: Bundle = .main) {
@@ -100,8 +107,8 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
             .sink { [weak self] _ in self?.navigationEventSubject.send(.openAwards) }
             .store(in: &cancellables)
 
-        input.offeringTapped
-            .sink { [weak self] _ in self?.navigationEventSubject.send(.openOffering) }
+        input.meritTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openMeritBook) }
             .store(in: &cancellables)
 
         input.donateTapped
@@ -110,10 +117,6 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
 
         input.reminderTapped
             .sink { [weak self] _ in self?.navigationEventSubject.send(.openReminder) }
-            .store(in: &cancellables)
-
-        input.meritBookTapped
-            .sink { [weak self] _ in self?.navigationEventSubject.send(.openMeritBook) }
             .store(in: &cancellables)
 
         input.settingsTapped
@@ -136,13 +139,58 @@ final class ILProfileViewModel: ILProfileViewModelProtocol {
             .sink { [weak self] _ in self?.handleCommunityTapped() }
             .store(in: &cancellables)
 
-        return Output(state: stateSubject.eraseToAnyPublisher())
+        input.logoutConfirmed
+            .sink { [weak self] _ in self?.handleLogoutConfirmed() }
+            .store(in: &cancellables)
+
+        return Output(
+            state: stateSubject.eraseToAnyPublisher(),
+            logoutError: logoutErrorSubject.eraseToAnyPublisher()
+        )
     }
 
     // MARK: - Actions
     private func handleViewDidLoad() {
         profile = useCase.getProfile()
         currentState = ILProfileViewModel.makeStateModel(profile: profile, bundle: bundle)
+        stateSubject.send(.success(currentState))
+        refreshAccountFromServer()
+    }
+
+    /// Fills name / dharma name from `GET /v1/users/me`. On failure the placeholder stays — the
+    /// screen has no error/loading UI yet (see README "Known gaps").
+    private func refreshAccountFromServer() {
+        accountTask?.cancel()
+        accountTask = Task { [weak self, useCase] in
+            guard let loaded = try? await useCase.loadProfile(), !Task.isCancelled, let self else { return }
+            self.profile = loaded
+            let isLoggingOut = self.currentState.isLoggingOut
+            self.currentState = ILProfileViewModel.makeStateModel(profile: loaded, bundle: self.bundle)
+            self.currentState.isLoggingOut = isLoggingOut
+            self.stateSubject.send(.success(self.currentState))
+        }
+    }
+
+    private func handleLogoutConfirmed() {
+        // A second confirm while the first is still running would revoke / clear twice.
+        guard logoutTask == nil else { return }
+        accountTask?.cancel()
+        setLoggingOut(true)
+        logoutTask = Task { [weak self, useCase] in
+            do {
+                try await useCase.logout()
+                // Stays disabled: the app is about to replace this screen.
+                self?.navigationEventSubject.send(.loggedOut)
+            } catch {
+                self?.setLoggingOut(false)
+                self?.logoutErrorSubject.send("profile.logout.error".localized)
+            }
+            self?.logoutTask = nil
+        }
+    }
+
+    private func setLoggingOut(_ isLoggingOut: Bool) {
+        currentState.isLoggingOut = isLoggingOut
         stateSubject.send(.success(currentState))
     }
 

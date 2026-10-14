@@ -29,7 +29,12 @@ final class ILMeditationSetupViewController: BaseViewController {
         return view
     }()
 
-    private let scrollView = UIScrollView()
+    private lazy var scrollView: UIScrollView = {
+        let scroll = UIScrollView()
+        scroll.showsVerticalScrollIndicator = false
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        return scroll
+    }()
 
     private lazy var contentStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [
@@ -136,8 +141,6 @@ final class ILMeditationSetupViewController: BaseViewController {
         headerView.onClose = { [weak self] in self?.closeTappedSubject.send(()) }
         view.addSubview(headerView)
 
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
 
         contentStack.translatesAutoresizingMaskIntoConstraints = false

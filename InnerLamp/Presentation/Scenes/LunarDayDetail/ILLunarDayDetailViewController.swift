@@ -20,28 +20,111 @@ final class ILLunarDayDetailViewController: BaseViewController {
     private var isHeaderSolid = false
 
     // MARK: - UI Elements
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    private lazy var scrollView: UIScrollView = {
+        let view = UIScrollView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.showsVerticalScrollIndicator = false
+        view.alwaysBounceVertical = true
+        view.contentInsetAdjustmentBehavior = .never
+        return view
+    }()
+
+    private lazy var contentView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     /// Header sits over the hero: transparent at rest (`tintRestAlpha: 0`), frosted glass once scrolled.
-    private let headerContainer = ILStickyHeaderBand(tintRestAlpha: 0)
-    private let navBar = ILNavBar(showBack: true)
+    private lazy var headerContainer: ILStickyHeaderBand = {
+        ILStickyHeaderBand(tintRestAlpha: 0)
+    }()
 
-    private let heroView = ILLunarDayDetailHeroView()
-    private let infoCardView = ILLunarDayDetailInfoCardView()
-    private let almanacView = ILLunarDayDetailAlmanacView()
-    private let elementsTitleLabel = UILabel()
-    private let elementsView = ILLunarDayDetailElementsView()
-    private let verseCardView = ILLunarDayDetailVerseCardView()
+    private lazy var navBar: ILNavBar = {
+        let view = ILNavBar(showBack: true)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
-    private let goodHoursTitleLabel = UILabel()
-    private let goodHoursView = ILLunarDayDetailGoodHoursView()
+    private lazy var heroView: ILLunarDayDetailHeroView = {
+        let view = ILLunarDayDetailHeroView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
-    private let clashTitleLabel = UILabel()
-    private let clashView = ILLunarDayDetailClashView()
+    private lazy var infoCardView: ILLunarDayDetailInfoCardView = {
+        let view = ILLunarDayDetailInfoCardView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
-    private let directionsTitleLabel = UILabel()
-    private let directionsView = ILLunarDayDetailDirectionsView()
+    private lazy var almanacView: ILLunarDayDetailAlmanacView = {
+        let view = ILLunarDayDetailAlmanacView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var elementsTitleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = ILTypography.bodyMedium
+        label.textColor = ILColors.ink
+        return label
+    }()
+
+    private lazy var elementsView: ILLunarDayDetailElementsView = {
+        let view = ILLunarDayDetailElementsView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var verseCardView: ILLunarDayDetailVerseCardView = {
+        let view = ILLunarDayDetailVerseCardView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var goodHoursTitleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = ILTypography.bodyMedium
+        label.textColor = ILColors.ink
+        return label
+    }()
+
+    private lazy var goodHoursView: ILLunarDayDetailGoodHoursView = {
+        let view = ILLunarDayDetailGoodHoursView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var clashTitleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = ILTypography.bodyMedium
+        label.textColor = ILColors.ink
+        return label
+    }()
+
+    private lazy var clashView: ILLunarDayDetailClashView = {
+        let view = ILLunarDayDetailClashView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var directionsTitleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = ILTypography.bodyMedium
+        label.textColor = ILColors.ink
+        return label
+    }()
+
+    private lazy var directionsView: ILLunarDayDetailDirectionsView = {
+        let view = ILLunarDayDetailDirectionsView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILLunarDayDetailViewModel) {
@@ -79,14 +162,6 @@ final class ILLunarDayDetailViewController: BaseViewController {
         headerContainer.addSubview(navBar)
         headerContainer.bind(to: scrollView)
 
-        [goodHoursTitleLabel, clashTitleLabel, directionsTitleLabel, elementsTitleLabel].forEach {
-            $0.font = ILTypography.bodyMedium
-            $0.textColor = ILColors.ink
-        }
-
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = true
-        scrollView.contentInsetAdjustmentBehavior = .never
         scrollView.delegate = self
         scrollView.addSubview(contentView)
 
@@ -106,17 +181,6 @@ final class ILLunarDayDetailViewController: BaseViewController {
 
     override func setupConstraints() {
         super.setupConstraints()
-        [
-            scrollView, contentView, navBar,
-            heroView, infoCardView,
-            almanacView,
-            elementsTitleLabel, elementsView,
-            verseCardView,
-            goodHoursTitleLabel, goodHoursView,
-            clashTitleLabel, clashView,
-            directionsTitleLabel, directionsView
-        ].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
-
         let horizontal = ILMetrics.screenHorizontal
 
         NSLayoutConstraint.activate([

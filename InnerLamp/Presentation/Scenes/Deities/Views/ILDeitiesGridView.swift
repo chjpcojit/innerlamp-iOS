@@ -28,8 +28,21 @@ final class ILDeitiesGridView: UIView {
 
     // MARK: - UI Elements
     /// Exposed so the screen can inset it under the sticky header and bind `ILStickyHeaderBand` to it.
-    let scrollView = UIScrollView()
-    private let rowsStack = UIStackView()
+    private(set) lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsVerticalScrollIndicator = false
+        v.alwaysBounceVertical = true
+        v.contentInsetAdjustmentBehavior = .never
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var rowsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = Self.rowGap
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     // MARK: - Initializer
     init() {
@@ -43,15 +56,7 @@ final class ILDeitiesGridView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = true
-        scrollView.contentInsetAdjustmentBehavior = .never
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(scrollView)
-
-        rowsStack.axis = .vertical
-        rowsStack.spacing = Self.rowGap
-        rowsStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(rowsStack)
 
         let horizontal = ILMetrics.screenHorizontal

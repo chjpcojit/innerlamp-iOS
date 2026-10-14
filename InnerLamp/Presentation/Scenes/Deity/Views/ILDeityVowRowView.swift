@@ -17,8 +17,17 @@ final class ILDeityVowRowView: UIView {
     }
 
     // MARK: - UI Elements
-    private let numberLabel = UILabel()
-    private let textLabel = UILabel()
+    private lazy var numberLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.scriptureBodySmall
+        v.textColor = ILColors.link
+        return v
+    }()
+    private lazy var textLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        return v
+    }()
 
     // MARK: - Initializer
     init(model: ILDeityVowModel) {
@@ -44,11 +53,6 @@ final class ILDeityVowRowView: UIView {
         layer.cornerRadius = Layout.radius
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
-
-        numberLabel.font = ILTypography.scriptureBodySmall
-        numberLabel.textColor = ILColors.link
-
-        textLabel.numberOfLines = 0
 
         [numberLabel, textLabel].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false

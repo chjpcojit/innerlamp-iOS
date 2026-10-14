@@ -52,6 +52,7 @@
 				Presentation/Scenes/Bell/README.md,
 				Presentation/Scenes/Deities/README.md,
 				Presentation/Scenes/Deity/README.md,
+				Presentation/Scenes/Donate/README.md,
 				Presentation/Scenes/EditProfile/README.md,
 				Presentation/Scenes/Events/README.md,
 				Presentation/Scenes/FamilyTree/README.md,
@@ -59,11 +60,13 @@
 				Presentation/Scenes/FamilyTreeChronicle/README.md,
 				Presentation/Scenes/FamilyTreeCreate/README.md,
 				Presentation/Scenes/FamilyTreeMember/README.md,
+				Presentation/Scenes/FestivalDetail/README.md,
 				Presentation/Scenes/Festivals/README.md,
 				Presentation/Scenes/ForgotPassword/README.md,
 				Presentation/Scenes/Home/README.md,
 				Presentation/Scenes/Language/README.md,
 				Presentation/Scenes/Library/README.md,
+				Presentation/Scenes/LightLamp/README.md,
 				Presentation/Scenes/Login/README.md,
 				Presentation/Scenes/LunarCalendar/README.md,
 				Presentation/Scenes/LunarDayDetail/README.md,
@@ -72,6 +75,7 @@
 				Presentation/Scenes/MeditationSession/README.md,
 				Presentation/Scenes/MeditationSetup/README.md,
 				Presentation/Scenes/Memorial/README.md,
+				Presentation/Scenes/MeritBook/README.md,
 				Presentation/Scenes/Notifications/README.md,
 				Presentation/Scenes/Onboarding/README.md,
 				Presentation/Scenes/Otp/README.md,
@@ -92,6 +96,7 @@
 				Presentation/Scenes/Talks/README.md,
 				Presentation/Scenes/Temple/README.md,
 				Presentation/Scenes/TempleFinder/README.md,
+				Presentation/Scenes/Temples/README.md,
 			);
 			target = 3F39AA20305165770008341C /* InnerLamp */;
 		};

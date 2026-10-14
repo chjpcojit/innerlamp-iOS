@@ -8,6 +8,8 @@ import Combine
 
 enum ILFestivalsNavEvent: Equatable {
     case goBack
+    /// Chạm 1 ngày lễ có tên — mở màn Chi tiết ngày lễ của sự kiện `code` vào ngày dương `date`.
+    case openFestivalDetail(code: String, date: Date)
 }
 
 protocol ILFestivalsViewModelProtocol: ViewModelType {
@@ -22,6 +24,10 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
     struct Input {
         let viewDidLoad: AnyPublisher<Void, Never>
         let tabSelected: AnyPublisher<ILFestivalsTab, Never>
+        /// Cuộn gần cuối danh sách — tải năm kế tiếp.
+        let loadMoreTriggered: AnyPublisher<Void, Never>
+        /// `id` của `ILFestivalDayModel` được chạm (chỉ ngày lễ có tên).
+        let dayTapped: AnyPublisher<String, Never>
         let backTapped: AnyPublisher<Void, Never>
     }
 
@@ -39,6 +45,13 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
     private let useCase: ILFestivalsUseCase
     private var entity: ILFestivalsEntity = .empty
     private var selectedTab: ILFestivalsTab = .all
+    /// Năm cuối cùng đã tải (năm hiện tại sau lần tải đầu tiên); `nil` khi chưa tải gì.
+    private var lastLoadedYear: Int?
+    private var firstYear: Int?
+    /// Chặn tải trùng khi người dùng cuộn liên tục.
+    private var isLoading = false
+    /// Âm lịch của `ILLunarCalendar` chỉ chính xác tới năm 2200.
+    private static let maxYear = 2200
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initializer
@@ -57,6 +70,14 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
             .sink { [weak self] tab in self?.handleTabSelected(tab) }
             .store(in: &cancellables)
 
+        input.loadMoreTriggered
+            .sink { [weak self] _ in self?.handleLoadMore() }
+            .store(in: &cancellables)
+
+        input.dayTapped
+            .sink { [weak self] id in self?.handleDayTapped(id) }
+            .store(in: &cancellables)
+
         input.backTapped
             .sink { [weak self] _ in self?.navigationEventSubject.send(.goBack) }
             .store(in: &cancellables)
@@ -66,28 +87,65 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
 
     // MARK: - Actions
     private func handleViewDidLoad() {
+        guard !isLoading else { return }
+        isLoading = true
         stateSubject.send(.loading)
+        let today = Date()
+        let year = Calendar(identifier: .gregorian).component(.year, from: today)
         Task { [weak self] in
             guard let self else { return }
+            defer { self.isLoading = false }
             do {
-                let months = try await self.useCase.loadMonths(from: Date())
+                let months = try await self.useCase.loadMonths(year: year, today: today)
+                self.firstYear = year
+                self.lastLoadedYear = year
                 self.entity = ILFestivalsEntity(months: months)
-                self.stateSubject.send(.success(Self.makeStateModel(from: self.entity, tab: self.selectedTab)))
+                self.emitState()
             } catch {
                 self.stateSubject.send(.failure(error))
             }
         }
     }
 
+    /// Tải năm kế tiếp (1/1 → 31/12) và nối vào cuối danh sách. Lỗi ở đây không thay màn bằng
+    /// trạng thái lỗi — danh sách đã có vẫn giữ nguyên và lần cuộn kế tiếp sẽ thử lại.
+    private func handleLoadMore() {
+        guard !isLoading, let lastLoadedYear, lastLoadedYear < Self.maxYear else { return }
+        isLoading = true
+        let nextYear = lastLoadedYear + 1
+        Task { [weak self] in
+            guard let self else { return }
+            defer { self.isLoading = false }
+            guard let months = try? await self.useCase.loadMonths(year: nextYear, today: Date()) else { return }
+            self.lastLoadedYear = nextYear
+            self.entity = ILFestivalsEntity(months: self.entity.months + months)
+            self.emitState()
+        }
+    }
+
+    private func handleDayTapped(_ id: String) {
+        guard let day = entity.months.flatMap(\.days).first(where: { $0.id == id }),
+              let code = day.eventCode else { return }
+        navigationEventSubject.send(.openFestivalDetail(code: code, date: day.date))
+    }
+
     private func handleTabSelected(_ tab: ILFestivalsTab) {
         selectedTab = tab
-        stateSubject.send(.success(Self.makeStateModel(from: entity, tab: tab)))
+        emitState()
+    }
+
+    private func emitState() {
+        stateSubject.send(.success(Self.makeStateModel(
+            from: entity,
+            tab: selectedTab,
+            years: (firstYear ?? lastLoadedYear ?? 0)...(lastLoadedYear ?? 0)
+        )))
     }
 
     // MARK: - Entity -> StateModel mapping
     /// Việc riêng của presentation (format countdown/thứ ngày/phụ đề) nên nằm ở
     /// đây, không phải trong Mapper dùng chung (xem `references/data_layer_boundaries.md`).
-    private static func makeStateModel(from entity: ILFestivalsEntity, tab: ILFestivalsTab) -> ILFestivalsStateModel {
+    private static func makeStateModel(from entity: ILFestivalsEntity, tab: ILFestivalsTab, years: ClosedRange<Int>) -> ILFestivalsStateModel {
         var model = ILFestivalsStateModel()
         model.selectedTab = tab
         model.currentMonthId = currentMonthId()
@@ -105,7 +163,10 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
         }
 
         let total = model.months.reduce(0) { $0 + $1.days.count }
-        model.subtitle = String(format: "festivals.header.subtitleFormat".localized, total)
+        let yearsText = years.lowerBound == years.upperBound
+            ? "\(years.lowerBound)"
+            : "\(years.lowerBound)–\(years.upperBound)"
+        model.subtitle = String(format: "festivals.header.subtitleFormat".localized, yearsText, total)
 
         return model
     }
@@ -121,7 +182,6 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
         let solarDay = calendar.component(.day, from: day.date)
         let solarMonth = calendar.component(.month, from: day.date)
         let weekday = calendar.component(.weekday, from: day.date) // 1 = Chủ nhật ... 7 = Thứ Bảy
-        let lunar = ILLunarCalendar.solarToLunar(date: day.date, calendar: calendar)
 
         return ILFestivalDayModel(
             id: day.id,
@@ -136,7 +196,9 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
                 weekday: weekday,
                 solarDay: solarDay,
                 solarMonth: solarMonth,
-                lunar: lunar
+                lunarDay: day.lunarDay,
+                lunarMonth: day.lunarMonth,
+                isLeapMonth: day.isLeapMonth
             )
         )
     }
@@ -155,15 +217,17 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
         weekday: Int,
         solarDay: Int,
         solarMonth: Int,
-        lunar: ILLunarCalendar.LunarDate
+        lunarDay: Int,
+        lunarMonth: Int,
+        isLeapMonth: Bool
     ) -> String {
         let weekdayText = weekday == 1
             ? "festivals.weekday.sunday".localized
             : String(format: "festivals.weekday.format".localized, weekday)
         let solarText = String(format: "%02d-%02d", solarDay, solarMonth)
-        let lunarText = lunar.isLeapMonth
-            ? String(format: "festivals.item.lunarDateLeapFormat".localized, lunar.day, lunar.month)
-            : String(format: "festivals.item.lunarDateFormat".localized, lunar.day, lunar.month)
+        let lunarText = isLeapMonth
+            ? String(format: "festivals.item.lunarDateLeapFormat".localized, lunarDay, lunarMonth)
+            : String(format: "festivals.item.lunarDateFormat".localized, lunarDay, lunarMonth)
         return "\(weekdayText), \(solarText) · \(lunarText)"
     }
 

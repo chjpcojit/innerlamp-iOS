@@ -45,11 +45,20 @@ final class ILTalkHeroView: UIView {
         return label
     }()
 
-    private let avatarView = UIView()
+    // Avatar chữ cái giảng sư — nền `--il-feat-glow`, chữ `--il-hero-acc`.
+    private lazy var avatarView: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.featGlow
+        view.layer.cornerRadius = Layout.avatarSize / 2
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
     private lazy var avatarLetterLabel: UILabel = {
         let label = UILabel()
         label.font = ILTypography.scriptureDescription
         label.textAlignment = .center
+        label.textColor = ILColors.heroAccent
+        label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
 
@@ -75,6 +84,7 @@ final class ILTalkHeroView: UIView {
         stack.spacing = ILMetrics.rowSpacing
         stack.setCustomSpacing(16, after: titleLabel)
         stack.isUserInteractionEnabled = false
+        stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
     }()
 
@@ -128,12 +138,6 @@ final class ILTalkHeroView: UIView {
         glowLayer.cornerRadius = Layout.glowDiameter / 2
         layer.insertSublayer(glowLayer, above: gradientLayer)
 
-        // Avatar chữ cái giảng sư — nền `--il-feat-glow`, chữ `--il-hero-acc`.
-        avatarView.backgroundColor = ILColors.featGlow
-        avatarView.layer.cornerRadius = Layout.avatarSize / 2
-        avatarView.translatesAutoresizingMaskIntoConstraints = false
-        avatarLetterLabel.textColor = ILColors.heroAccent
-        avatarLetterLabel.translatesAutoresizingMaskIntoConstraints = false
         avatarView.addSubview(avatarLetterLabel)
         NSLayoutConstraint.activate([
             avatarView.widthAnchor.constraint(equalToConstant: Layout.avatarSize),
@@ -142,7 +146,6 @@ final class ILTalkHeroView: UIView {
             avatarLetterLabel.centerYAnchor.constraint(equalTo: avatarView.centerYAnchor)
         ])
 
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(contentStack)
 
         contentTopConstraint = contentStack.topAnchor.constraint(equalTo: topAnchor, constant: 62)

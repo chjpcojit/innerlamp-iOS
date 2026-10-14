@@ -22,7 +22,11 @@ final class ILFamilyTreeLegendView: UIView {
     }
 
     // MARK: - Properties
-    private let flow = ILChipFlowView(rowSpacing: Metrics.legendGap, itemSpacing: Metrics.legendGap)
+    private lazy var flow: ILChipFlowView = {
+        let view = ILChipFlowView(rowSpacing: Metrics.legendGap, itemSpacing: Metrics.legendGap)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     /// Shows or hides the "BẠN — Vị trí của bạn" item.
     var showsMe = false {
@@ -45,7 +49,6 @@ final class ILFamilyTreeLegendView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         rebuildItems()
-        flow.translatesAutoresizingMaskIntoConstraints = false
         addSubview(flow)
         NSLayoutConstraint.activate([
             flow.topAnchor.constraint(equalTo: topAnchor, constant: Metrics.legendTopSpacing),

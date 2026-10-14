@@ -13,6 +13,9 @@ enum ILSignUpError: Error, LocalizedError, Equatable {
     case otpResendTooSoon(retryAfterSeconds: Int?)
     case smsSendFailed
     case invalidInput
+    /// The picked ordination temple is unknown to the server (`INVALID_TEMPLE`) — e.g. removed
+    /// from the catalog since the list was loaded. The user must pick again.
+    case invalidTemple
     case server
     case networkUnavailable
     case timedOut
@@ -42,6 +45,8 @@ enum ILSignUpError: Error, LocalizedError, Equatable {
             return "signup.error.smsSendFailed".localized
         case .invalidInput:
             return "signup.error.invalidInput".localized
+        case .invalidTemple:
+            return "signup.error.invalidTemple".localized
         case .server:
             return "error.generic".localized
         case .networkUnavailable:
@@ -59,6 +64,8 @@ protocol ILSignUpUseCase {
     /// "Pháp danh hoặc tên gọi" chỉ chọn từ danh sách này, không có ô nhập tự do.
     var dharmaNameSuggestions: [String] { get }
 
+    /// Họ và tên bắt buộc — rỗng/chỉ khoảng trắng trả lỗi và chặn submit.
+    func validateFullName(_ value: String) -> String?
     /// Trả về message lỗi (`nil` nếu hợp lệ). Chạy mỗi lần bấm "Gửi mã xác thực", không chạy
     /// theo từng ký tự gõ.
     func validateDisplayName(_ value: String) -> String?
@@ -80,7 +87,7 @@ protocol ILSignUpUseCase {
     /// Throws an `ILSignUpError` case — `phoneAlreadyRegistered`/`emailTaken` when the phone or
     /// email already has an account, the 429 lock/cooldown/cap cases, `smsSendFailed`, the shared
     /// network/server cases.
-    func sendVerificationCode(displayName: String, ordinationPlace: String, phoneNumber: String, email: String, password: String) async throws -> ILSignUpOTPEntity
+    func sendVerificationCode(fullName: String, displayName: String, ordinationTempleID: String?, phoneNumber: String, email: String, password: String) async throws -> ILSignUpOTPEntity
 }
 
 final class ILSignUpUseCaseImpl: ILSignUpUseCase {
@@ -100,6 +107,12 @@ final class ILSignUpUseCaseImpl: ILSignUpUseCase {
         var state = ILSignUpStateModel.initial
         state.displayName = dharmaNameSuggestions[0]
         return state
+    }
+
+    func validateFullName(_ value: String) -> String? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "signup.error.fullNameRequired".localized }
+        return nil
     }
 
     func validateDisplayName(_ value: String) -> String? {
@@ -149,10 +162,11 @@ final class ILSignUpUseCaseImpl: ILSignUpUseCase {
         }
     }
 
-    func sendVerificationCode(displayName: String, ordinationPlace: String, phoneNumber: String, email: String, password: String) async throws -> ILSignUpOTPEntity {
+    func sendVerificationCode(fullName: String, displayName: String, ordinationTempleID: String?, phoneNumber: String, email: String, password: String) async throws -> ILSignUpOTPEntity {
         let entity = ILSignUpEntity(
+            fullName: fullName,
             displayName: displayName,
-            ordinationPlace: ordinationPlace,
+            ordinationTempleID: ordinationTempleID,
             phoneNumber: phoneNumber,
             email: email,
             password: password

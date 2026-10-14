@@ -25,9 +25,16 @@ final class ILDeitiesViewController: BaseViewController {
     private let retryTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
-    private let headerBand = ILStickyHeaderBand()
+    private lazy var headerBand: ILStickyHeaderBand = {
+        let v = ILStickyHeaderBand()
+        return v
+    }()
 
-    private lazy var headerView = ILNavBar(showBack: true)
+    private lazy var headerView: ILNavBar = {
+        let v = ILNavBar(showBack: true)
+        v.title = "deities.header.title".localized
+        return v
+    }()
 
     private lazy var chipsScrollView: UIScrollView = {
         let scroll = UIScrollView()
@@ -44,15 +51,39 @@ final class ILDeitiesViewController: BaseViewController {
         return stack
     }()
 
-    private let gridView = ILDeitiesGridView()
+    private lazy var gridView: ILDeitiesGridView = {
+        let v = ILDeitiesGridView()
+        return v
+    }()
 
     /// Full-area states under the header: loading skeleton, "Đang cập nhật" (no data) and load
     /// error (+ "Thử lại").
-    private let loadingView = ILDeitiesSkeletonView()
-    private let emptyStateView = ILStateView(kind: .empty)
-    private let errorStateView = ILStateView(kind: .error)
-    private lazy var retryButton = ILButton(title: "common.retry".localized, variant: .primary)
-    private let errorStack = UIStackView()
+    private lazy var loadingView: ILDeitiesSkeletonView = {
+        let v = ILDeitiesSkeletonView()
+        v.isHidden = true
+        return v
+    }()
+    private lazy var emptyStateView: ILStateView = {
+        let v = ILStateView(kind: .empty)
+        v.isHidden = true
+        return v
+    }()
+    private lazy var errorStateView: ILStateView = {
+        let v = ILStateView(kind: .error)
+        return v
+    }()
+    private lazy var retryButton: ILButton = {
+        let v = ILButton(title: "common.retry".localized, variant: .primary)
+        return v
+    }()
+    private lazy var errorStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.alignment = .fill
+        v.spacing = ILMetrics.groupSpacing
+        v.isHidden = true
+        return v
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILDeitiesViewModel) {
@@ -86,7 +117,6 @@ final class ILDeitiesViewController: BaseViewController {
         super.setupViews()
         view.backgroundColor = ILColors.canvas
 
-        headerView.title = "deities.header.title".localized
         headerView.onBack = { [weak self] in self?.backTappedSubject.send(()) }
 
         headerBand.bind(to: gridView.scrollView)
@@ -97,16 +127,9 @@ final class ILDeitiesViewController: BaseViewController {
 
         gridView.onItemTap = { [weak self] item in self?.deityTappedSubject.send(item.id) }
 
-        loadingView.isHidden = true
-        emptyStateView.isHidden = true
-
         retryButton.onTap = { [weak self] in self?.retryTappedSubject.send(()) }
-        errorStack.axis = .vertical
-        errorStack.alignment = .fill
-        errorStack.spacing = ILMetrics.groupSpacing
         errorStack.addArrangedSubview(errorStateView)
         errorStack.addArrangedSubview(retryButton)
-        errorStack.isHidden = true
 
         view.addSubview(gridView)
         view.addSubview(loadingView)

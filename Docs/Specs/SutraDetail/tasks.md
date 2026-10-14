@@ -1,8 +1,8 @@
 # Tasks — SutraDetail
 
-Version: 1.2
-Last updated: 2026-10-07
-Status: in-progress (Phase 1–3 done; Phase 4 pending)
+Version: 1.3
+Last updated: 2026-10-11
+Status: in-progress (Phase 1–3 and 6 implemented, build verified; unit tests not run; Phase 4 pending)
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -51,6 +51,21 @@ Status: in-progress (Phase 1–3 done; Phase 4 pending)
 - [ ] Run the unit tests (needs a device / simulator destination)
 - [ ] Reading progress (TD-SutraDetail-002) · Reader / Player integration (TD-SutraDetail-003)
 - [ ] Visual QA on device (hero, empty TOC, long license text, dark mode)
+
+## Phase 6 — Show all API fields (v1.4)
+
+- [x] Backend JSON sample for `deities[]`, `sections[]`, `titles`, `review_status` received (blocks DTO keys)
+- [x] `ILSutraDTO` / `ILSutraTranslationDTO`: add the new optional fields; `ILSutraMapper.toDetail` fills them
+- [x] `ILSutraDetailSutraEntity`: add the new business fields (`ILSutraDetailEntity.swift`)
+- [x] `ILSutraDetailStateModel`: `infoSections` (summary / info / translation & license / notice)
+- [x] `ILSutraDetailViewModel`: format rows, drop empty values
+- [x] `Views/ILSutraDetailInfoView` + ViewController: summary / info / license blocks, each hidden when empty;
+      tappable `source_url` / `license_url` (`.openLink`)
+- [x] Unit tests written: mapper (new fields, missing → empty), ViewModel (sections, order, link event)
+- [ ] Run the unit tests (needs a device / simulator destination)
+- [x] Build verification (`generic/platform=iOS`) — BUILD SUCCEEDED 2026-10-11
+- [ ] Update `InnerLamp/Presentation/Scenes/SutraDetail/README.md`; visual QA on device (long license note,
+      empty summary, dark mode)
 
 ## Phase 4 — Download destination (pending, separate scope)
 

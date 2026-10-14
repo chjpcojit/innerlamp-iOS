@@ -13,12 +13,59 @@ final class ILMemorialEmptyView: UIView {
     var onFamilyTreeTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let lampView = ILMemorialEmptyLampView()
-    private let titleLabel = UILabel()
-    private let messageLabel = UILabel()
-    private let stepsCard = UIView()
-    private let treeCard = UIControl()
-    private let treeSealView = UIView()
+    private lazy var lampView: ILMemorialEmptyLampView = {
+        let view = ILMemorialEmptyLampView()
+        return view
+    }()
+
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.emptyStateTitle
+        label.textColor = ILColors.ink
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.text = "memorial.empty.title".localized
+        return label
+    }()
+
+    private lazy var messageLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.attributedText = ILTypography.makeParagraph(
+            text: "memorial.empty.message".localized,
+            font: ILTypography.bodyCompact,
+            color: ILColors.inkTertiary,
+            cssLineHeight: 1.65,
+            alignment: .center
+        )
+        return label
+    }()
+
+    private lazy var stepsCard: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.surface
+        view.layer.cornerRadius = ILMetrics.radiusCardRegular
+        view.layer.borderWidth = 1
+        view.layer.borderColor = ILColors.border.cgColor
+        return view
+    }()
+
+    private lazy var treeCard: UIControl = {
+        let control = UIControl()
+        control.backgroundColor = ILColors.surface
+        control.layer.cornerRadius = ILMetrics.radiusCardRegular
+        control.layer.borderWidth = 1
+        control.layer.borderColor = ILColors.border.cgColor
+        return control
+    }()
+
+    private lazy var treeSealView: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.FamilyTree.seal
+        view.layer.cornerRadius = 10
+        view.isUserInteractionEnabled = false
+        return view
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -32,21 +79,6 @@ final class ILMemorialEmptyView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        titleLabel.font = ILTypography.emptyStateTitle
-        titleLabel.textColor = ILColors.ink
-        titleLabel.textAlignment = .center
-        titleLabel.numberOfLines = 0
-        titleLabel.text = "memorial.empty.title".localized
-
-        messageLabel.numberOfLines = 0
-        messageLabel.attributedText = ILTypography.makeParagraph(
-            text: "memorial.empty.message".localized,
-            font: ILTypography.bodyCompact,
-            color: ILColors.inkTertiary,
-            cssLineHeight: 1.65,
-            alignment: .center
-        )
-
         let header = UIStackView(arrangedSubviews: [lampView, titleLabel, messageLabel])
         header.axis = .vertical
         header.alignment = .center
@@ -76,15 +108,7 @@ final class ILMemorialEmptyView: UIView {
         }
     }
 
-    private func styleCard(_ card: UIView) {
-        card.backgroundColor = ILColors.surface
-        card.layer.cornerRadius = ILMetrics.radiusCardRegular
-        card.layer.borderWidth = 1
-        card.layer.borderColor = ILColors.border.cgColor
-    }
-
     private func setupStepsCard() {
-        styleCard(stepsCard)
         let steps = [
             ("memorial.empty.step1.title", "memorial.empty.step1.body"),
             ("memorial.empty.step2.title", "memorial.empty.step2.body"),
@@ -177,12 +201,6 @@ final class ILMemorialEmptyView: UIView {
     }
 
     private func setupTreeCard() {
-        styleCard(treeCard)
-
-        treeSealView.backgroundColor = ILColors.FamilyTree.seal
-        treeSealView.layer.cornerRadius = 10
-        treeSealView.isUserInteractionEnabled = false
-
         let sealLabel = UILabel()
         sealLabel.font = ILTypography.treeSealMedium
         sealLabel.textColor = ILColors.FamilyTree.cream
@@ -268,10 +286,29 @@ private final class ILMemorialEmptyLampView: UIView {
 
     // MARK: - UI Elements
     private let haloLayer = CAGradientLayer()
-    private let wickView = UIView()
-    private let baseView = UIView()
+    private lazy var wickView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = 2
+        return view
+    }()
+
+    private lazy var baseView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        view.layer.cornerRadius = 12
+        view.clipsToBounds = true
+        return view
+    }()
+
     private let baseGradient = CAGradientLayer()
-    private let flameView = ILFlameView(height: Layout.flameHeight, topColor: ILColors.goldLight)
+
+    private lazy var flameView: ILFlameView = {
+        let view = ILFlameView(height: Layout.flameHeight, topColor: ILColors.goldLight)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -293,16 +330,9 @@ private final class ILMemorialEmptyLampView: UIView {
         haloLayer.locations = [0, 0.62, 0.72]
         layer.addSublayer(haloLayer)
 
-        wickView.layer.cornerRadius = 2
-        baseView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
-        baseView.layer.cornerRadius = 12
         baseView.layer.insertSublayer(baseGradient, at: 0)
-        baseView.clipsToBounds = true
 
-        [wickView, baseView, flameView].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            addSubview($0)
-        }
+        [wickView, baseView, flameView].forEach { addSubview($0) }
 
         NSLayoutConstraint.activate([
             widthAnchor.constraint(equalToConstant: Layout.size),

@@ -17,12 +17,18 @@ final class ILMeditationHubGuidedSectionView: UIView {
     // MARK: - UI Elements
     /// Design `medhub` viết eyebrow inline (9.5px / letter-spacing .16em / `--il-ink-45`), khác
     /// `ILSectionEyebrowView` dùng chung (10px / .14em / .42) nên dùng nhãn riêng ở đây.
-    private let eyebrow: UILabel = {
+    private lazy var eyebrow: UILabel = {
         let label = UILabel()
         label.numberOfLines = 1
         return label
     }()
-    private let cardsStack = UIStackView()
+    private lazy var cardsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.alignment = .fill
+        stack.spacing = ILMetrics.rowSpacing
+        return stack
+    }()
 
     // MARK: - Initializer
     init() {
@@ -53,10 +59,6 @@ final class ILMeditationHubGuidedSectionView: UIView {
         contentStack.spacing = ILMetrics.rowSpacing
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(contentStack)
-
-        cardsStack.axis = .vertical
-        cardsStack.alignment = .fill
-        cardsStack.spacing = ILMetrics.rowSpacing
 
         NSLayoutConstraint.activate([
             contentStack.topAnchor.constraint(equalTo: topAnchor),
@@ -104,21 +106,71 @@ private final class GuidedCardView: UIView {
     var onSessionTap: (() -> Void)?
     var onDownloadTap: (() -> Void)?
 
-    private let openArea = UIControl()
-    private let methodLabel = UILabel()
-    private let nameLabel = UILabel()
-    private let metaLabel = UILabel()
-    private let summaryLabel = UILabel()
-    private let separator = UIView()
-    private let playButton = ILPlayPauseButton(
-        diameter: Layout.playButtonSize,
-        glyphColor: ILColors.canvas,
-        fillColor: ILColors.ink,
-        // Design: tam giác CSS 10×12, `margin-left:3px` trong vòng tròn căn giữa → lệch +1.5pt.
-        playGlyphSize: CGSize(width: 10, height: 12),
-        playGlyphOffsetX: 1.5
-    )
-    private lazy var downloadButton = DownloadPillButton()
+    private lazy var openArea: UIControl = {
+        let control = UIControl()
+        control.translatesAutoresizingMaskIntoConstraints = false
+        control.isAccessibilityElement = true
+        control.accessibilityTraits = .button
+        return control
+    }()
+
+    private lazy var methodLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var nameLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 2
+        return label
+    }()
+
+    private lazy var metaLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var summaryLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.label
+        label.numberOfLines = 0
+        // Mô tả nhường chỗ cho pill: co lại để xuống dòng thay vì ép pill "Tải về" hẹp đi. Pill tự
+        // khai báo `intrinsicContentSize` nên stack luôn biết kích thước thật của nó.
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return label
+    }()
+
+    private lazy var separator: UIView = {
+        let view = UIView()
+        return view
+    }()
+
+    private lazy var playButton: ILPlayPauseButton = {
+        let button = ILPlayPauseButton(
+            diameter: Layout.playButtonSize,
+            glyphColor: ILColors.canvas,
+            fillColor: ILColors.ink,
+            // Design: tam giác CSS 10×12, `margin-left:3px` trong vòng tròn căn giữa → lệch +1.5pt.
+            playGlyphSize: CGSize(width: 10, height: 12),
+            playGlyphOffsetX: 1.5
+        )
+        // Added with `addSubview` (not a stack view), so autoresizing must be turned off here —
+        // otherwise its zero-frame autoresizing constraints fight the 40pt size + edge anchors,
+        // Auto Layout drops constraints and the button and the text block collapse to zero width.
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isAccessibilityElement = false
+        return button
+    }()
+
+    private lazy var downloadButton: DownloadPillButton = {
+        let button = DownloadPillButton()
+        button.setContentHuggingPriority(.required, for: .horizontal)
+        button.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return button
+    }()
 
     init(model: ILMeditationHubGuidedModel) {
         super.init(frame: .zero)
@@ -158,11 +210,6 @@ private final class GuidedCardView: UIView {
         layer.cornerRadius = Layout.cornerRadius
         layer.borderWidth = 1
 
-        methodLabel.numberOfLines = 1
-        nameLabel.numberOfLines = 2
-        metaLabel.font = ILTypography.subhead
-        metaLabel.numberOfLines = 1
-
         let textStack = UIStackView(arrangedSubviews: [methodLabel, nameLabel, metaLabel])
         textStack.axis = .vertical
         // `.fill` pins every label to the stack width so the multi-line name wraps instead of
@@ -171,16 +218,8 @@ private final class GuidedCardView: UIView {
         textStack.spacing = 4
         textStack.translatesAutoresizingMaskIntoConstraints = false
 
-        openArea.translatesAutoresizingMaskIntoConstraints = false
-        openArea.isAccessibilityElement = true
-        openArea.accessibilityTraits = .button
         openArea.addTarget(self, action: #selector(handleSessionTap), for: .touchUpInside)
 
-        // Added with `addSubview` (not a stack view), so autoresizing must be turned off here —
-        // otherwise its zero-frame autoresizing constraints fight the 40pt size + edge anchors,
-        // Auto Layout drops constraints and the button and the text block collapse to zero width.
-        playButton.translatesAutoresizingMaskIntoConstraints = false
-        playButton.isAccessibilityElement = false
         playButton.onTap = { [weak self] in self?.onSessionTap?() }
 
         openArea.addSubview(textStack)
@@ -199,14 +238,6 @@ private final class GuidedCardView: UIView {
             playButton.bottomAnchor.constraint(lessThanOrEqualTo: openArea.bottomAnchor)
         ])
 
-        summaryLabel.font = ILTypography.label
-        summaryLabel.numberOfLines = 0
-        // Mô tả nhường chỗ cho pill: co lại để xuống dòng thay vì ép pill "Tải về" hẹp đi. Pill tự
-        // khai báo `intrinsicContentSize` nên stack luôn biết kích thước thật của nó.
-        summaryLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
-        downloadButton.setContentHuggingPriority(.required, for: .horizontal)
-        downloadButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         downloadButton.onTap = { [weak self] in self?.onDownloadTap?() }
 
         let footerStack = UIStackView(arrangedSubviews: [summaryLabel, downloadButton])
@@ -275,7 +306,12 @@ private final class DownloadPillButton: UIControl {
 
     var onTap: (() -> Void)?
 
-    private let titleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.labelMedium
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -303,8 +339,6 @@ private final class DownloadPillButton: UIControl {
         layer.cornerRadius = ILMetrics.radiusPill
         layer.borderWidth = 1
 
-        titleLabel.font = ILTypography.labelMedium
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
 
         NSLayoutConstraint.activate([

@@ -21,12 +21,49 @@ final class ILDeityMemorialDayCardView: UIView {
     var onFestivalsTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let tile = UIView()
-    private let dayLabel = UILabel()
-    private let monthLabel = UILabel()
-    private let eventLabel = UILabel()
-    private let countdownLabel = UILabel()
-    private let festivalsButton = UIButton(type: .system)
+    private lazy var tile: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.featGlow
+        v.layer.cornerRadius = Layout.tileRadius
+        return v
+    }()
+    private lazy var dayLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.scriptureBodyLarge
+        v.textColor = ILColors.link
+        v.textAlignment = .center
+        return v
+    }()
+    private lazy var monthLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.captionSmall
+        v.textAlignment = .center
+        v.adjustsFontSizeToFitWidth = true
+        v.minimumScaleFactor = 0.7
+        return v
+    }()
+    private lazy var eventLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodyMedium
+        v.textColor = ILColors.ink
+        v.numberOfLines = 2
+        return v
+    }()
+    private lazy var countdownLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.subhead
+        v.textColor = ILColors.inkTertiary
+        v.numberOfLines = 2
+        return v
+    }()
+    private lazy var festivalsButton: UIButton = {
+        let v = UIButton(type: .system)
+        v.titleLabel?.font = ILTypography.note
+        v.setTitleColor(ILColors.link, for: .normal)
+        v.setContentHuggingPriority(.required, for: .horizontal)
+        v.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return v
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -55,18 +92,6 @@ final class ILDeityMemorialDayCardView: UIView {
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
 
-        tile.backgroundColor = ILColors.featGlow
-        tile.layer.cornerRadius = Layout.tileRadius
-
-        dayLabel.font = ILTypography.scriptureBodyLarge
-        dayLabel.textColor = ILColors.link
-        dayLabel.textAlignment = .center
-
-        monthLabel.font = ILTypography.captionSmall
-        monthLabel.textAlignment = .center
-        monthLabel.adjustsFontSizeToFitWidth = true
-        monthLabel.minimumScaleFactor = 0.7
-
         let tileStack = UIStackView(arrangedSubviews: [dayLabel, monthLabel])
         tileStack.axis = .vertical
         tileStack.alignment = .center
@@ -74,23 +99,11 @@ final class ILDeityMemorialDayCardView: UIView {
         tileStack.translatesAutoresizingMaskIntoConstraints = false
         tile.addSubview(tileStack)
 
-        eventLabel.font = ILTypography.bodyMedium
-        eventLabel.textColor = ILColors.ink
-        eventLabel.numberOfLines = 2
-
-        countdownLabel.font = ILTypography.subhead
-        countdownLabel.textColor = ILColors.inkTertiary
-        countdownLabel.numberOfLines = 2
-
         let textStack = UIStackView(arrangedSubviews: [eventLabel, countdownLabel])
         textStack.axis = .vertical
         textStack.spacing = 3
 
-        festivalsButton.titleLabel?.font = ILTypography.note
-        festivalsButton.setTitleColor(ILColors.link, for: .normal)
         festivalsButton.addTarget(self, action: #selector(handleFestivalsTapped), for: .touchUpInside)
-        festivalsButton.setContentHuggingPriority(.required, for: .horizontal)
-        festivalsButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         let row = UIStackView(arrangedSubviews: [tile, textStack, festivalsButton])
         row.axis = .horizontal

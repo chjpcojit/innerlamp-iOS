@@ -21,12 +21,15 @@ final class ILFamilyTreeChronicleTimelineView: UIView {
         static let rowBottom: CGFloat = 16
     }
 
-    private let stack = UIStackView()
+    private lazy var stack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        stack.axis = .vertical
-        stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: topAnchor),

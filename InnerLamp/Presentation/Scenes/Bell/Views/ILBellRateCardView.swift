@@ -42,15 +42,62 @@ final class ILBellRateCardView: UIView {
     var onEverySelected: ((Int) -> Void)?
 
     // MARK: - UI Elements
-    private let rateLabel = UILabel()
-    private let rateValueLabel = UILabel()
-    private let slowerButton = ILBellStepperButton(symbol: "−")
-    private let fasterButton = ILBellStepperButton(symbol: "+")
+    private lazy var rateLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.medInkSecondary
+        return label
+    }()
 
-    private let divider = UIView()
-    private let everyRow = UIStackView()
-    private let everyPromptLabel = UILabel()
-    private let everyChipsStack = UIStackView()
+    private lazy var rateValueLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bellRateValue
+        label.textColor = ILColors.medInk
+        return label
+    }()
+
+    private lazy var slowerButton: ILBellStepperButton = {
+        let button = ILBellStepperButton(symbol: "−")
+        return button
+    }()
+
+    private lazy var fasterButton: ILBellStepperButton = {
+        let button = ILBellStepperButton(symbol: "+")
+        return button
+    }()
+
+    private lazy var divider: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.medTrack
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var everyRow: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.alignment = .center
+        stack.spacing = ILMetrics.spaceSmall
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+
+    private lazy var everyPromptLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.medInkSecondary
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        return label
+    }()
+
+    private lazy var everyChipsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.alignment = .center
+        stack.spacing = 6
+        return stack
+    }()
+
     private var everyChips: [ILBellChipView] = []
 
     // MARK: - Initializer
@@ -70,12 +117,6 @@ final class ILBellRateCardView: UIView {
         layer.borderWidth = 1
         layer.borderColor = ILColors.medTrack.cgColor
 
-        rateLabel.font = ILTypography.subhead
-        rateLabel.textColor = ILColors.medInkSecondary
-
-        rateValueLabel.font = ILTypography.bellRateValue
-        rateValueLabel.textColor = ILColors.medInk
-
         let textStack = UIStackView(arrangedSubviews: [rateLabel, rateValueLabel])
         textStack.axis = .vertical
         textStack.spacing = 3
@@ -90,23 +131,8 @@ final class ILBellRateCardView: UIView {
         topRow.spacing = ILMetrics.spaceMedium
         topRow.translatesAutoresizingMaskIntoConstraints = false
 
-        divider.backgroundColor = ILColors.medTrack
-        divider.translatesAutoresizingMaskIntoConstraints = false
-
-        everyPromptLabel.font = ILTypography.subhead
-        everyPromptLabel.textColor = ILColors.medInkSecondary
-        everyPromptLabel.setContentHuggingPriority(.required, for: .horizontal)
-
-        everyChipsStack.axis = .horizontal
-        everyChipsStack.alignment = .center
-        everyChipsStack.spacing = 6
-
-        everyRow.axis = .horizontal
-        everyRow.alignment = .center
-        everyRow.spacing = ILMetrics.spaceSmall
         everyRow.addArrangedSubview(everyPromptLabel)
         everyRow.addArrangedSubview(everyChipsStack)
-        everyRow.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(topRow)
         addSubview(divider)
@@ -165,7 +191,14 @@ private final class ILBellStepperButton: UIControl {
 
     var onTap: (() -> Void)?
 
-    private let symbolLabel = UILabel()
+    private lazy var symbolLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.statValue
+        label.textColor = ILColors.medInk
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
     init(symbol: String) {
         super.init(frame: .zero)
@@ -173,11 +206,7 @@ private final class ILBellStepperButton: UIControl {
         layer.borderWidth = 1
         layer.borderColor = ILColors.medBorder.cgColor
 
-        symbolLabel.font = ILTypography.statValue
-        symbolLabel.textColor = ILColors.medInk
         symbolLabel.text = symbol
-        symbolLabel.textAlignment = .center
-        symbolLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(symbolLabel)
 
         NSLayoutConstraint.activate([

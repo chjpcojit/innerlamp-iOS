@@ -35,14 +35,47 @@ final class ILTempleHeroView: ILStretchyHeaderView {
     /// filled edge to edge. `imageHeight` is 0 when the temple has no photo, so the hero is unchanged then.
     private var contentTopConstraint: NSLayoutConstraint?
 
-    private let rankChipLabel = ILTempleHeroChipLabel(textColor: ILColors.templeHeaderInk)
-    private let sectChipLabel = ILTempleHeroChipLabel(textColor: ILColors.templeHeaderSub)
-    private let chipsRow = UIStackView()
+    private lazy var rankChipLabel = ILTempleHeroChipLabel(textColor: ILColors.templeHeaderInk)
+    private lazy var sectChipLabel = ILTempleHeroChipLabel(textColor: ILColors.templeHeaderSub)
+    private lazy var chipsRow: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = 6
+        v.alignment = .center
+        v.isUserInteractionEnabled = false
+        return v
+    }()
 
-    private let titleLabel = UILabel()
-    private let aliasLabel = UILabel()
-    private let placeLabel = UILabel()
-    private let contentStack = UIStackView()
+    private lazy var titleLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.talkTitle
+        v.textColor = ILColors.templeHeaderInk
+        v.numberOfLines = 2
+        return v
+    }()
+    private lazy var aliasLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.heroSubtitleItalic
+        v.textColor = ILColors.templeHeaderSub
+        v.numberOfLines = 1
+        return v
+    }()
+    private lazy var placeLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.note
+        v.textColor = ILColors.templeHeaderSub
+        v.numberOfLines = 1
+        return v
+    }()
+    private lazy var contentStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = 6
+        v.alignment = .leading
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -100,35 +133,14 @@ final class ILTempleHeroView: ILStretchyHeaderView {
         // giãn (không có intrinsic size) bên trong sẽ khiến UIStackView báo intrinsicContentSize
         // mơ hồ và tự co cả `chipsRow` về 0 width (lỗi UIStackView kinh điển khi lồng stack chứa
         // spacer bên trong 1 stack không `.fill`).
-        chipsRow.axis = .horizontal
-        chipsRow.spacing = 6
-        chipsRow.alignment = .center
-        chipsRow.isUserInteractionEnabled = false
         chipsRow.addArrangedSubview(rankChipLabel)
         chipsRow.addArrangedSubview(sectChipLabel)
 
-        titleLabel.font = ILTypography.talkTitle
-        titleLabel.textColor = ILColors.templeHeaderInk
-        titleLabel.numberOfLines = 2
-
-        aliasLabel.font = ILTypography.heroSubtitleItalic
-        aliasLabel.textColor = ILColors.templeHeaderSub
-        aliasLabel.numberOfLines = 1
-
-        placeLabel.font = ILTypography.note
-        placeLabel.textColor = ILColors.templeHeaderSub
-        placeLabel.numberOfLines = 1
-
-        contentStack.axis = .vertical
-        contentStack.spacing = 6
-        contentStack.alignment = .leading
         contentStack.addArrangedSubview(chipsRow)
         contentStack.setCustomSpacing(14, after: chipsRow)
         contentStack.addArrangedSubview(titleLabel)
         contentStack.addArrangedSubview(aliasLabel)
         contentStack.addArrangedSubview(placeLabel)
-        contentStack.isUserInteractionEnabled = false
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
 
         contentView.addSubview(contentStack)
 

@@ -34,10 +34,28 @@ final class ILSutrasListView: UIView {
 
     // MARK: - UI Elements
     /// Exposed so the screen can inset it under the sticky header and bind `ILStickyHeaderBand` to it.
-    let scrollView = UIScrollView()
-    private let countLabel = UILabel()
-    private let cardsStack = UIStackView()
-    private let footerView = ILLoadMoreFooterView(
+    lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsVerticalScrollIndicator = false
+        v.alwaysBounceVertical = true
+        v.contentInsetAdjustmentBehavior = .never
+        v.keyboardDismissMode = .onDrag
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var countLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.inkSubtle
+        return label
+    }()
+    private lazy var cardsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = ILMetrics.rowSpacing
+        return stack
+    }()
+    private lazy var footerView = ILLoadMoreFooterView(
         loadingText: "sutras.loadingMore".localized,
         endText: "sutras.end".localized
     )
@@ -54,19 +72,8 @@ final class ILSutrasListView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = true
-        scrollView.contentInsetAdjustmentBehavior = .never
-        scrollView.keyboardDismissMode = .onDrag
         scrollView.delegate = self
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(scrollView)
-
-        countLabel.font = ILTypography.subhead
-        countLabel.textColor = ILColors.inkSubtle
-
-        cardsStack.axis = .vertical
-        cardsStack.spacing = ILMetrics.rowSpacing
 
         let content = UIStackView(arrangedSubviews: [countLabel, cardsStack, footerView])
         content.axis = .vertical

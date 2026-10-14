@@ -20,7 +20,8 @@ nonisolated extension ILCatalogError {
         case .apiError(let code, _, _, _) where code == "INVALID_PAGE":
             return .invalidPage
         case .apiError(let code, _, _, _) where code == "TEMPLE_NOT_FOUND" || code == "DEITY_NOT_FOUND"
-            || code == "ARTICLE_NOT_FOUND" || code == "SUTRA_NOT_FOUND":
+            || code == "ARTICLE_NOT_FOUND" || code == "SUTRA_NOT_FOUND"
+            || code == "ADMINISTRATIVE_UNIT_NOT_FOUND":
             return .notFound
         case .noInternetConnection, .timeout:
             return .offline

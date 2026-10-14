@@ -177,7 +177,7 @@ final class ILTempleFinderViewModel: ILTempleFinderViewModelProtocol {
                 let loaded = try await useCase.loadTemples()
                 guard !Task.isCancelled else { return }
                 temples = loaded
-                myTemple = useCase.loadMyTemple()
+                myTemple = await useCase.loadMyTemple()
                 hasLoaded = true
                 publish()
             } catch {

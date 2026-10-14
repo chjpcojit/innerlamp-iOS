@@ -45,7 +45,7 @@ struct ILFestivalMonthModel: Equatable, Identifiable {
 /// `ViewController` chỉ đọc để render. Không UIKit, không business logic.
 struct ILFestivalsStateModel: Equatable {
     var selectedTab: ILFestivalsTab = .all
-    /// "3 năm · N ngày".
+    /// "2026 · N ngày" (hoặc "2026–2027 · N ngày" khi đã tải thêm năm).
     var subtitle: String = ""
     /// `id` ("yyyy-MM") của tháng hiện tại — màn cuộn tới tháng này lần đầu mở.
     var currentMonthId: String = ""

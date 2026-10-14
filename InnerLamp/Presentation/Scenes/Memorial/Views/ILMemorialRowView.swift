@@ -13,11 +13,40 @@ final class ILMemorialRowView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let avatarView = ILAvatarView(initials: "", tone: .gold, size: 46)
-    private let nameLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private let daysLabel = UILabel()
-    private let tagLabel = UILabel()
+    private lazy var avatarView: ILAvatarView = {
+        let view = ILAvatarView(initials: "", tone: .gold, size: 46)
+        return view
+    }()
+
+    private lazy var nameLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodyMedium
+        label.textColor = ILColors.ink
+        return label
+    }()
+
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.inkSubtle
+        return label
+    }()
+
+    private lazy var daysLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subheadMedium
+        label.textAlignment = .right
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return label
+    }()
+
+    private lazy var tagLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.label
+        label.textColor = ILColors.inkMuted
+        label.textAlignment = .right
+        return label
+    }()
 
     // MARK: - Initializer
     init(model: ILMemorialRowModel) {
@@ -49,23 +78,9 @@ final class ILMemorialRowView: UIControl {
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
 
-        nameLabel.font = ILTypography.bodyMedium
-        nameLabel.textColor = ILColors.ink
-
-        subtitleLabel.font = ILTypography.subhead
-        subtitleLabel.textColor = ILColors.inkSubtle
-
         let textStack = UIStackView(arrangedSubviews: [nameLabel, subtitleLabel])
         textStack.axis = .vertical
         textStack.spacing = 2
-
-        daysLabel.font = ILTypography.subheadMedium
-        daysLabel.textAlignment = .right
-        daysLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        tagLabel.font = ILTypography.label
-        tagLabel.textColor = ILColors.inkMuted
-        tagLabel.textAlignment = .right
 
         let trailingStack = UIStackView(arrangedSubviews: [daysLabel, tagLabel])
         trailingStack.axis = .vertical

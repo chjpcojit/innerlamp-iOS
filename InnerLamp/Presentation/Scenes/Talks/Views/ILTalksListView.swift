@@ -21,8 +21,21 @@ final class ILTalksListView: UIView {
 
     // MARK: - UI Elements
     /// Exposed so the screen can inset it under the sticky header and bind `ILStickyHeaderBand` to it.
-    let scrollView = UIScrollView()
-    private let cardsStack = UIStackView()
+    private(set) lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsVerticalScrollIndicator = false
+        v.alwaysBounceVertical = true
+        v.contentInsetAdjustmentBehavior = .never
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var cardsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = ILMetrics.rowSpacing
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     // MARK: - Initializer
     init() {
@@ -36,15 +49,7 @@ final class ILTalksListView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = true
-        scrollView.contentInsetAdjustmentBehavior = .never
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(scrollView)
-
-        cardsStack.axis = .vertical
-        cardsStack.spacing = ILMetrics.rowSpacing
-        cardsStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(cardsStack)
 
         let horizontal = ILMetrics.screenHorizontal

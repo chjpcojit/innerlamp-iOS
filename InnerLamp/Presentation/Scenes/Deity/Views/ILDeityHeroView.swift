@@ -28,16 +28,59 @@ final class ILDeityHeroView: ILStretchyHeaderView {
     private let glowLayer = CAGradientLayer()
     private let overlayLayer = CAGradientLayer()
 
-    private let watermarkLabel = UILabel()
+    private lazy var watermarkLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.cormorant(size: Layout.watermarkFontSize)
+        v.textColor = ILColors.heroInk.withAlphaComponent(0.07)
+        v.textAlignment = .center
+        v.adjustsFontSizeToFitWidth = true
+        v.minimumScaleFactor = 0.4
+        v.isAccessibilityElement = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let kindChip = UIView()
-    private let kindLabel = UILabel()
-    private let realmChip = UIView()
-    private let realmLabel = UILabel()
+    private lazy var kindChip: UIView = {
+        let v = UIView()
+        return v
+    }()
+    private lazy var kindLabel: UILabel = {
+        let v = UILabel()
+        return v
+    }()
+    private lazy var realmChip: UIView = {
+        let v = UIView()
+        v.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return v
+    }()
+    private lazy var realmLabel: UILabel = {
+        let v = UILabel()
+        v.lineBreakMode = .byTruncatingTail
+        v.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return v
+    }()
 
-    private let nameLabel = UILabel()
-    private let sanskritLabel = UILabel()
-    private let contentStack = UIStackView()
+    private lazy var nameLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var sanskritLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.heroSubtitleItalic
+        v.textColor = ILColors.heroInk.withAlphaComponent(0.8)
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var contentStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.alignment = .fill
+        v.spacing = 0
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -79,13 +122,6 @@ final class ILDeityHeroView: ILStretchyHeaderView {
         glowLayer.endPoint = CGPoint(x: 1, y: 1)
         backgroundView.layer.addSublayer(glowLayer)
 
-        watermarkLabel.font = ILTypography.cormorant(size: Layout.watermarkFontSize)
-        watermarkLabel.textColor = ILColors.heroInk.withAlphaComponent(0.07)
-        watermarkLabel.textAlignment = .center
-        watermarkLabel.adjustsFontSizeToFitWidth = true
-        watermarkLabel.minimumScaleFactor = 0.4
-        watermarkLabel.isAccessibilityElement = false
-        watermarkLabel.translatesAutoresizingMaskIntoConstraints = false
         backgroundView.addSubview(watermarkLabel)
 
         // Ảnh phủ lên quầng sáng + chữ chìm (placeholder), nhưng nằm dưới lớp phủ gradient.
@@ -106,26 +142,12 @@ final class ILDeityHeroView: ILStretchyHeaderView {
 
         configureChip(kindChip, label: kindLabel, textColor: ILColors.heroAccent)
         configureChip(realmChip, label: realmLabel, textColor: ILColors.heroInk)
-        realmLabel.lineBreakMode = .byTruncatingTail
-        realmChip.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        realmLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let chipsRow = UIStackView(arrangedSubviews: [kindChip, realmChip, UIView()])
         chipsRow.axis = .horizontal
         chipsRow.spacing = 6
         chipsRow.alignment = .center
 
-        nameLabel.numberOfLines = 0
-
-        sanskritLabel.font = ILTypography.heroSubtitleItalic
-        sanskritLabel.textColor = ILColors.heroInk.withAlphaComponent(0.8)
-        sanskritLabel.numberOfLines = 0
-
-        contentStack.axis = .vertical
-        contentStack.alignment = .fill
-        contentStack.spacing = 0
-        contentStack.isUserInteractionEnabled = false
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(chipsRow)
         contentStack.setCustomSpacing(12, after: chipsRow)
         contentStack.addArrangedSubview(nameLabel)

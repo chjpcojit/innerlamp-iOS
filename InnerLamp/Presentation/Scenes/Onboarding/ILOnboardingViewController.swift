@@ -52,7 +52,10 @@ final class ILOnboardingViewController: BaseViewController {
     }()
 
     /// `IL-Logo` 32px ở thanh trên (design `isOnb`), kèm wordmark bên cạnh.
-    private let logoIcon = ILLogoView(size: 32)
+    private lazy var logoIcon: ILLogoView = {
+        let view = ILLogoView(size: 32)
+        return view
+    }()
 
     private lazy var logoLabel: UILabel = {
         let label = UILabel()

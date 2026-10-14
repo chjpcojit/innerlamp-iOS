@@ -17,10 +17,35 @@ final class ILLanguageOptionRowView: UIControl {
     }
 
     // MARK: - UI Elements
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private let radioRing = UIView()
-    private let radioDot = UIView()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodySmallMedium
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.caption
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var radioRing: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 10
+        view.layer.borderWidth = 1.5
+        view.isUserInteractionEnabled = false
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var radioDot: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 4.5
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     // MARK: - Initializer
     init() {
@@ -37,24 +62,12 @@ final class ILLanguageOptionRowView: UIControl {
         layer.cornerRadius = ILMetrics.radiusCardSmall
         layer.borderWidth = 1
 
-        titleLabel.font = ILTypography.bodySmallMedium
-        titleLabel.numberOfLines = 1
-        subtitleLabel.font = ILTypography.caption
-        subtitleLabel.numberOfLines = 1
-
         let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
         textStack.axis = .vertical
         textStack.spacing = 3
         textStack.isUserInteractionEnabled = false
         textStack.translatesAutoresizingMaskIntoConstraints = false
 
-        radioRing.layer.cornerRadius = 10
-        radioRing.layer.borderWidth = 1.5
-        radioRing.isUserInteractionEnabled = false
-        radioRing.translatesAutoresizingMaskIntoConstraints = false
-
-        radioDot.layer.cornerRadius = 4.5
-        radioDot.translatesAutoresizingMaskIntoConstraints = false
         radioRing.addSubview(radioDot)
 
         addSubview(textStack)

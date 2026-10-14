@@ -42,43 +42,122 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
         return view
     }()
 
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    private lazy var scrollView: UIScrollView = {
+        let view = UIScrollView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.keyboardDismissMode = .interactive
+        view.showsVerticalScrollIndicator = false
+        return view
+    }()
+
+    private lazy var contentView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     /// `IL-Logo` 56px ở đầu màn (design `isLogin`).
-    private let lampIcon = ILLogoView(size: 56)
+    private lazy var lampIcon: ILLogoView = {
+        let view = ILLogoView(size: 56)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = ILTypography.loginTitle
+        label.textColor = ILColors.ink
+        label.numberOfLines = 0
+        label.text = "login.title".localized
+        return label
+    }()
 
-    private let phoneField = ILPhoneField(
-        label: "login.field.phone.label".localized,
-        placeholder: "login.field.phone.placeholder".localized
-    )
-    private let passwordField = ILField(
-        placeholder: "login.field.password.placeholder".localized,
-        trailingText: "login.forgot".localized
-    )
-    private let fieldsStack: UIStackView
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = ILTypography.bodyLarge
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        label.text = "login.subtitle".localized
+        return label
+    }()
 
-    private let loginButton = ILButton(
-        title: "login.cta.login".localized,
-        variant: .primary,
-        loadingTitle: "login.cta.loggingIn".localized
-    )
-    private let smsCodeButton = ILButton(title: "login.cta.smsCode".localized, variant: .ghost)
+    private lazy var phoneField: ILPhoneField = {
+        let field = ILPhoneField(
+            label: "login.field.phone.label".localized,
+            placeholder: "login.field.phone.placeholder".localized
+        )
+        field.innerTextField.returnKeyType = .next
+        return field
+    }()
+
+    private lazy var passwordField: ILField = {
+        let field = ILField(
+            placeholder: "login.field.password.placeholder".localized,
+            trailingText: "login.forgot".localized
+        )
+        field.innerTextField.isSecureTextEntry = true
+        field.innerTextField.returnKeyType = .done
+        return field
+    }()
+
+    private lazy var fieldsStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [phoneField, passwordField])
+        stack.axis = .vertical
+        stack.spacing = ILMetrics.rowSpacing
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+
+    private lazy var loginButton: ILButton = {
+        let button = ILButton(
+            title: "login.cta.login".localized,
+            variant: .primary,
+            loadingTitle: "login.cta.loggingIn".localized
+        )
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private lazy var smsCodeButton: ILButton = {
+        let button = ILButton(title: "login.cta.smsCode".localized, variant: .ghost)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
 
     // Ghim đáy màn hình, cuộn riêng phần trên — khớp `flex:1` (đẩy khối này xuống đáy) trong
     // design handoff (`isLogin`), cùng pattern `footerContainer` với màn Đăng ký.
-    private let footerContainer = UIView()
-    private let dividerRow = ILDividerRow(text: "login.divider.or".localized)
-    private let createAccountButton = ILButton(title: "login.cta.createAccount".localized, variant: .goldOutline)
-    private let guestPreviewButton = UIButton(type: .system)
+    private lazy var footerContainer: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var dividerRow: ILDividerRow = {
+        let row = ILDividerRow(text: "login.divider.or".localized)
+        row.translatesAutoresizingMaskIntoConstraints = false
+        return row
+    }()
+
+    private lazy var createAccountButton: ILButton = {
+        let button = ILButton(title: "login.cta.createAccount".localized, variant: .goldOutline)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private lazy var guestPreviewButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle("login.guestPreview".localized, for: .normal)
+        button.titleLabel?.font = ILTypography.note
+        button.setTitleColor(ILColors.inkSubtle, for: .normal)
+        return button
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILLoginViewModel) {
         self.viewModel = viewModel
-        self.fieldsStack = UIStackView(arrangedSubviews: [phoneField, passwordField])
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -125,25 +204,10 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
         }
         view.addSubview(headerView)
 
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.keyboardDismissMode = .interactive
-        scrollView.showsVerticalScrollIndicator = false
         view.addSubview(scrollView)
 
-        contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
 
-        titleLabel.font = ILTypography.loginTitle
-        titleLabel.textColor = ILColors.ink
-        titleLabel.numberOfLines = 0
-        titleLabel.text = "login.title".localized
-
-        subtitleLabel.font = ILTypography.bodyLarge
-        subtitleLabel.textColor = ILColors.inkTertiary
-        subtitleLabel.numberOfLines = 0
-        subtitleLabel.text = "login.subtitle".localized
-
-        phoneField.innerTextField.returnKeyType = .next
         phoneField.onCountryTap = { [weak self] in
             self?.handleCountryTap()
         }
@@ -154,8 +218,6 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
             self?.passwordField.innerTextField.becomeFirstResponder()
         }
 
-        passwordField.innerTextField.isSecureTextEntry = true
-        passwordField.innerTextField.returnKeyType = .done
         passwordField.onTextChanged = { [weak self] text in
             self?.passwordChangedSubject.send(text)
         }
@@ -166,38 +228,22 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
             self?.handleSubmitTapped()
         }
 
-        fieldsStack.axis = .vertical
-        fieldsStack.spacing = ILMetrics.rowSpacing
-        fieldsStack.translatesAutoresizingMaskIntoConstraints = false
-
-        loginButton.translatesAutoresizingMaskIntoConstraints = false
         loginButton.onTap = { [weak self] in
             self?.handleSubmitTapped()
         }
 
-        smsCodeButton.translatesAutoresizingMaskIntoConstraints = false
         smsCodeButton.onTap = { [weak self] in
             self?.handleSmsCodeTapped()
         }
 
         [lampIcon, titleLabel, subtitleLabel, fieldsStack, loginButton, smsCodeButton].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
         }
 
-        footerContainer.translatesAutoresizingMaskIntoConstraints = false
-
-        dividerRow.translatesAutoresizingMaskIntoConstraints = false
-
-        createAccountButton.translatesAutoresizingMaskIntoConstraints = false
         createAccountButton.onTap = { [weak self] in
             self?.signupTappedSubject.send(())
         }
 
-        guestPreviewButton.translatesAutoresizingMaskIntoConstraints = false
-        guestPreviewButton.setTitle("login.guestPreview".localized, for: .normal)
-        guestPreviewButton.titleLabel?.font = ILTypography.note
-        guestPreviewButton.setTitleColor(ILColors.inkSubtle, for: .normal)
         guestPreviewButton.addTarget(self, action: #selector(handleGuestPreviewTapped), for: .touchUpInside)
 
         [dividerRow, createAccountButton, guestPreviewButton].forEach {

@@ -18,7 +18,10 @@ final class ILAddTempleViewModel: ViewModelType {
     struct Input {
         let viewDidLoad: AnyPublisher<Void, Never>
         let nameChanged: AnyPublisher<String, Never>
-        let provinceChanged: AnyPublisher<String, Never>
+        let provincePickerOpened: AnyPublisher<Void, Never>
+        let provinceSelected: AnyPublisher<String, Never>
+        let wardPickerOpened: AnyPublisher<Void, Never>
+        let wardSelected: AnyPublisher<String, Never>
         let addressChanged: AnyPublisher<String, Never>
         let submitTapped: AnyPublisher<Void, Never>
         let cancelTapped: AnyPublisher<Void, Never>
@@ -41,6 +44,8 @@ final class ILAddTempleViewModel: ViewModelType {
     private var currentState: ILAddTempleStateModel
     private let useCase: ILAddTempleUseCase
     private let existingPlaces: [ILOrdinationPlaceEntity]
+    /// Tỉnh đã tải — cần `code` của tỉnh đang chọn để gọi API phường/xã.
+    private var provinces: [ILProvinceEntity] = []
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initializer
@@ -59,6 +64,7 @@ final class ILAddTempleViewModel: ViewModelType {
             .sink { [weak self] _ in
                 guard let self else { return }
                 stateSubject.send(.success(currentState))
+                loadProvinces()
             }
             .store(in: &cancellables)
 
@@ -66,8 +72,20 @@ final class ILAddTempleViewModel: ViewModelType {
             .sink { [weak self] text in self?.update { $0.name = text } }
             .store(in: &cancellables)
 
-        input.provinceChanged
-            .sink { [weak self] text in self?.update { $0.province = text } }
+        input.provincePickerOpened
+            .sink { [weak self] _ in self?.loadProvincesIfNeeded() }
+            .store(in: &cancellables)
+
+        input.provinceSelected
+            .sink { [weak self] province in self?.selectProvince(province) }
+            .store(in: &cancellables)
+
+        input.wardPickerOpened
+            .sink { [weak self] _ in self?.loadWardsIfNeeded() }
+            .store(in: &cancellables)
+
+        input.wardSelected
+            .sink { [weak self] ward in self?.update { $0.ward = ward } }
             .store(in: &cancellables)
 
         input.addressChanged
@@ -94,16 +112,87 @@ final class ILAddTempleViewModel: ViewModelType {
         stateSubject.send(.success(currentState))
     }
 
+    // MARK: - Metadata
+    private func loadProvincesIfNeeded() {
+        guard currentState.provinceOptions.isEmpty, !currentState.isLoadingProvinces else { return }
+        loadProvinces()
+    }
+
+    private func loadProvinces() {
+        currentState.isLoadingProvinces = true
+        stateSubject.send(.success(currentState))
+
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                provinces = try await useCase.loadProvinces()
+                currentState.provinceOptions = provinces.map(\.name)
+            } catch {
+                currentState.errorMessage = error.localizedDescription
+            }
+            currentState.isLoadingProvinces = false
+            stateSubject.send(.success(currentState))
+        }
+    }
+
+    /// Đổi tỉnh thì xoá phường/xã đã chọn (không còn thuộc tỉnh mới) rồi tải lại danh sách.
+    private func selectProvince(_ province: String) {
+        guard province != currentState.province else { return }
+        currentState.wardOptions = []
+        update {
+            $0.province = province
+            $0.ward = ""
+        }
+        loadWards()
+    }
+
+    private func loadWardsIfNeeded() {
+        guard !currentState.province.isEmpty,
+              currentState.wardOptions.isEmpty,
+              !currentState.isLoadingWards else { return }
+        loadWards()
+    }
+
+    private func loadWards() {
+        let province = currentState.province
+        guard let provinceCode = provinces.first(where: { $0.name == province })?.code else { return }
+        currentState.isLoadingWards = true
+        stateSubject.send(.success(currentState))
+
+        Task { [weak self] in
+            guard let self else { return }
+            let result: Result<[ILWardEntity], Error>
+            do {
+                result = .success(try await useCase.loadWards(provinceCode: provinceCode))
+            } catch {
+                result = .failure(error)
+            }
+            // Người dùng đã đổi sang tỉnh khác trong lúc chờ — bỏ kết quả cũ.
+            guard currentState.province == province else { return }
+            switch result {
+            case .success(let wards):
+                currentState.wardOptions = wards.map(\.fullName)
+            case .failure(let error):
+                currentState.errorMessage = error.localizedDescription
+            }
+            currentState.isLoadingWards = false
+            stateSubject.send(.success(currentState))
+        }
+    }
+
+    // MARK: - Submit
     private func handleSubmit() {
         let error = useCase.validate(
             name: currentState.name,
             province: currentState.province,
+            ward: currentState.ward,
             existing: existingPlaces
         )
         guard let error else {
             let proposal = useCase.makeProposal(
                 name: currentState.name,
                 province: currentState.province,
+                ward: currentState.ward,
                 address: currentState.address
             )
             navigationEventSubject.send(.submitted(proposal))
@@ -117,6 +206,9 @@ final class ILAddTempleViewModel: ViewModelType {
         case .provinceRequired:
             currentState.errorMessage = "addTemple.error.province".localized
             currentState.errorField = .province
+        case .wardRequired:
+            currentState.errorMessage = "addTemple.error.ward".localized
+            currentState.errorField = .ward
         case .duplicate(let name):
             currentState.errorMessage = String(format: "addTemple.error.duplicate".localized, name)
             currentState.errorField = .name

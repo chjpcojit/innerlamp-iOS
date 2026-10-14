@@ -9,7 +9,14 @@ import UIKit
 /// nút nổi trên ảnh (mũi tên trước/sau).
 final class ILPhotoViewerIconButton: UIControl {
 
-    private let iconView = UIImageView()
+    private lazy var iconView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.tintColor = ILColors.inkOnDark
+        imageView.contentMode = .scaleAspectFit
+        imageView.isUserInteractionEnabled = false
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
     private let diameter: CGFloat
 
     var icon: UIImage? {
@@ -24,10 +31,6 @@ final class ILPhotoViewerIconButton: UIControl {
         self.accessibilityLabel = accessibilityLabel
 
         iconView.image = icon
-        iconView.tintColor = ILColors.inkOnDark
-        iconView.contentMode = .scaleAspectFit
-        iconView.isUserInteractionEnabled = false
-        iconView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(iconView)
 
         if backdrop {

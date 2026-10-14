@@ -6,7 +6,7 @@ feature: Splash
 level: Medium
 status: Validated
 created: 2026-10-10
-updated: 2026-10-10
+updated: 2026-10-11
 files:
   - InnerLamp/Presentation/Scenes/Splash/ILSplashViewModel.swift:80
 source: Docs/Specs/Splash/requirements.md (FR-004, user said "no token or failed refresh → Login")
@@ -30,5 +30,5 @@ EN: Ask Product / BA to confirm the first-time-user behavior. Verify on a device
 VI: Hỏi Product / BA xác nhận hành vi user mới. Kiểm tra trên máy thật: xong Onboarding, đăng xuất, mở lại → Login; cài lại → Onboarding.
 
 ## Outcome / Kết luận
-EN: Validated 2026-10-10 by the user: the first launch after install shows Onboarding, later launches do not; losing the session sends the user to Login. Remaining edge case: Onboarding is keyed on the completed flag, so a user who kills the app before finishing Onboarding sees it again on the next launch.
-VI: Đã xác nhận 2026-10-10 bởi user: lần đầu mở sau khi cài thấy Onboarding, các lần sau không thấy; mất session thì về Đăng nhập. Trường hợp biên còn lại: Onboarding dựa trên cờ "đã hoàn thành", nên user thoát app giữa chừng sẽ thấy lại Onboarding ở lần mở sau.
+EN: Update 2026-10-11 (user): a tokenless launch after Onboarding now goes to SignUp, not Login (a failed session refresh still goes to Login). Validated 2026-10-10 by the user: the first launch after install shows Onboarding, later launches do not; losing the session sends the user to Login. Remaining edge case: Onboarding is keyed on the completed flag, so a user who kills the app before finishing Onboarding sees it again on the next launch.
+VI: Cập nhật 2026-10-11 (user): mở app không có token sau khi đã Onboarding giờ vào Đăng ký, không vào Đăng nhập (refresh session thất bại vẫn về Đăng nhập). Đã xác nhận 2026-10-10 bởi user: lần đầu mở sau khi cài thấy Onboarding, các lần sau không thấy; mất session thì về Đăng nhập. Trường hợp biên còn lại: Onboarding dựa trên cờ "đã hoàn thành", nên user thoát app giữa chừng sẽ thấy lại Onboarding ở lần mở sau.

@@ -21,8 +21,20 @@ final class ILTalkMeditateCardView: UIControl {
     // MARK: - UI Elements
     private let gradientLayer = CAGradientLayer()
 
-    private let flameRing = UIView()
-    private let flame = ILFlameView(height: 14, topColor: ILColors.goldBright)
+    // Vòng tròn viền vàng chứa ngọn đèn.
+    private lazy var flameRing: UIView = {
+        let v = UIView()
+        v.layer.cornerRadius = 19
+        v.layer.borderWidth = 1
+        v.layer.borderColor = ILColors.goldBright.withAlphaComponent(0.5).cgColor
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var flame: ILFlameView = {
+        let v = ILFlameView(height: 14, topColor: ILColors.goldBright)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -81,12 +93,6 @@ final class ILTalkMeditateCardView: UIControl {
         gradientLayer.endPoint = CGPoint(x: 1, y: 1)
         layer.insertSublayer(gradientLayer, at: 0)
 
-        // Vòng tròn viền vàng chứa ngọn đèn.
-        flameRing.layer.cornerRadius = 19
-        flameRing.layer.borderWidth = 1
-        flameRing.layer.borderColor = ILColors.goldBright.withAlphaComponent(0.5).cgColor
-        flameRing.translatesAutoresizingMaskIntoConstraints = false
-        flame.translatesAutoresizingMaskIntoConstraints = false
         flameRing.addSubview(flame)
         NSLayoutConstraint.activate([
             flameRing.widthAnchor.constraint(equalToConstant: 38),

@@ -41,11 +41,40 @@ final class ILStatsReminderCardView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let iconTile = UIView()
+    private lazy var iconTile: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.goldDayTint
+        view.layer.cornerRadius = Layout.iconSize / 2
+        view.isUserInteractionEnabled = false
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
     private let bellLayer = CAShapeLayer()
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private let chevronLabel = UILabel()
+
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.sectionTitle
+        label.textColor = ILColors.ink
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.label
+        label.textColor = ILColors.inkTertiary
+        return label
+    }()
+
+    private lazy var chevronLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.chevron
+        label.textColor = ILColors.inkFaint
+        label.text = "›"
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        return label
+    }()
 
     // MARK: - Initializer
     init() {
@@ -74,32 +103,15 @@ final class ILStatsReminderCardView: UIControl {
         layer.borderWidth = 1
         layer.borderColor = ILColors.goldRingBorder.cgColor
 
-        iconTile.backgroundColor = ILColors.goldDayTint
-        iconTile.layer.cornerRadius = Layout.iconSize / 2
-        iconTile.isUserInteractionEnabled = false
-        iconTile.translatesAutoresizingMaskIntoConstraints = false
-
         bellLayer.fillColor = nil
         bellLayer.strokeColor = ILColors.gold.cgColor
         bellLayer.lineWidth = Layout.bellLineWidth
         iconTile.layer.addSublayer(bellLayer)
 
-        titleLabel.font = ILTypography.sectionTitle
-        titleLabel.textColor = ILColors.ink
-        titleLabel.numberOfLines = 0
-
-        subtitleLabel.font = ILTypography.label
-        subtitleLabel.textColor = ILColors.inkTertiary
-
         let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
         textStack.axis = .vertical
         textStack.spacing = Layout.subtitleTopSpacing
         textStack.isUserInteractionEnabled = false
-
-        chevronLabel.font = ILTypography.chevron
-        chevronLabel.textColor = ILColors.inkFaint
-        chevronLabel.text = "›"
-        chevronLabel.setContentHuggingPriority(.required, for: .horizontal)
 
         let row = UIStackView(arrangedSubviews: [iconTile, textStack, chevronLabel])
         row.axis = .horizontal

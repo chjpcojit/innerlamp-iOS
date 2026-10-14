@@ -19,11 +19,32 @@ final class ILReaderControlsView: UIView {
     private static let seekButtonDiameter: CGFloat = 44
 
     // MARK: - UI Elements
-    private let topBorder = UIView()
-    private let positionLabel = UILabel()
-    private let durationLabel = UILabel()
-    private let trackView = UIView()
-    private let fillView = UIView()
+    private lazy var topBorder: UIView = {
+        let v = UIView()
+        return v
+    }()
+    private lazy var positionLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.caption
+        return v
+    }()
+    private lazy var durationLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.caption
+        return v
+    }()
+    private lazy var trackView: UIView = {
+        let v = UIView()
+        v.layer.cornerRadius = 1.5
+        return v
+    }()
+    private lazy var fillView: UIView = {
+        let v = UIView()
+        v.layer.cornerRadius = 1.5
+        v.backgroundColor = ILColors.gold
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     private var fillWidthConstraint: NSLayoutConstraint?
     private lazy var progressRow: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [positionLabel, trackView, durationLabel])
@@ -32,18 +53,37 @@ final class ILReaderControlsView: UIView {
         stack.alignment = .center
         return stack
     }()
-    private let seekBackButton = ILReaderRoundButton(diameter: ILReaderControlsView.seekButtonDiameter)
-    private let seekForwardButton = ILReaderRoundButton(diameter: ILReaderControlsView.seekButtonDiameter)
-    private let playPauseButton = ILPlayPauseButton(
-        diameter: ILReaderControlsView.playButtonDiameter,
-        glyphColor: ILColors.inkOnGold,
-        fillColor: ILColors.goldBright,
-        glyphScale: 1.1,
-        playGlyphSize: CGSize(width: 15, height: 18),
-        playGlyphOffsetX: 2
-    )
-    private let speedLabel = UILabel()
-    private let speedRow = UIStackView()
+    private lazy var seekBackButton: ILReaderRoundButton = {
+        let v = ILReaderRoundButton(diameter: ILReaderControlsView.seekButtonDiameter)
+        return v
+    }()
+    private lazy var seekForwardButton: ILReaderRoundButton = {
+        let v = ILReaderRoundButton(diameter: ILReaderControlsView.seekButtonDiameter)
+        return v
+    }()
+    private lazy var playPauseButton: ILPlayPauseButton = {
+        let v = ILPlayPauseButton(
+            diameter: ILReaderControlsView.playButtonDiameter,
+            glyphColor: ILColors.inkOnGold,
+            fillColor: ILColors.goldBright,
+            glyphScale: 1.1,
+            playGlyphSize: CGSize(width: 15, height: 18),
+            playGlyphOffsetX: 2
+        )
+        return v
+    }()
+    private lazy var speedLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        return v
+    }()
+    private lazy var speedRow: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = 6
+        v.alignment = .center
+        return v
+    }()
     private var speedChips: [ILReaderSpeedChip] = []
 
     // MARK: - Initializer
@@ -58,14 +98,6 @@ final class ILReaderControlsView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        positionLabel.font = ILTypography.caption
-        durationLabel.font = ILTypography.caption
-        speedLabel.font = ILTypography.label
-
-        trackView.layer.cornerRadius = 1.5
-        fillView.layer.cornerRadius = 1.5
-        fillView.backgroundColor = ILColors.gold
-        fillView.translatesAutoresizingMaskIntoConstraints = false
         trackView.addSubview(fillView)
 
         seekBackButton.onTap = { [weak self] in self?.onSeekBackTap?() }
@@ -77,9 +109,6 @@ final class ILReaderControlsView: UIView {
         transportRow.spacing = 22
         transportRow.alignment = .center
 
-        speedRow.axis = .horizontal
-        speedRow.spacing = 6
-        speedRow.alignment = .center
         speedRow.addArrangedSubview(speedLabel)
         speedRow.setCustomSpacing(10, after: speedLabel)
 
@@ -174,14 +203,17 @@ final class ILReaderControlsView: UIView {
 private final class ILReaderRoundButton: UIControl {
 
     var onTap: (() -> Void)?
-    private let titleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.labelMedium
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     init(diameter: CGFloat) {
         super.init(frame: .zero)
         layer.cornerRadius = diameter / 2
         layer.borderWidth = 1
-        titleLabel.font = ILTypography.labelMedium
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
         NSLayoutConstraint.activate([
             widthAnchor.constraint(equalToConstant: diameter),
@@ -213,14 +245,17 @@ private final class ILReaderRoundButton: UIControl {
 private final class ILReaderSpeedChip: UIControl {
 
     var onTap: (() -> Void)?
-    private let titleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.labelMedium
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     init() {
         super.init(frame: .zero)
         layer.cornerRadius = 15
         layer.borderWidth = 1
-        titleLabel.font = ILTypography.labelMedium
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 5),

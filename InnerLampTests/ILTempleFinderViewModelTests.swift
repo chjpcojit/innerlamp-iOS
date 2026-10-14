@@ -296,6 +296,6 @@ final class MockILTempleFinderUseCase: ILTempleFinderUseCase {
         return try result.get()
     }
 
-    func loadMyTemple() -> (id: String, name: String)? { myTemple }
+    func loadMyTemple() async -> (id: String, name: String)? { myTemple }
     func selectMyTemple(_ temple: ILTempleSummaryEntity) { selected = temple }
 }

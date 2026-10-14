@@ -9,14 +9,21 @@ import UIKit
 /// `ILSanghaCardView` đảm nhiệm.
 final class ILSanghaAnnouncementRowView: UIView {
 
-    private let timeLabel = UILabel()
-    private let textLabel = UILabel()
+    private lazy var timeLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.caption
+        label.textColor = ILColors.inkMuted
+        return label
+    }()
+
+    private lazy var textLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        return label
+    }()
 
     init() {
         super.init(frame: .zero)
-        timeLabel.font = ILTypography.caption
-        timeLabel.textColor = ILColors.inkMuted
-        textLabel.numberOfLines = 0
 
         let stack = UIStackView(arrangedSubviews: [timeLabel, textLabel])
         stack.axis = .vertical

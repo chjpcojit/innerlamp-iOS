@@ -17,14 +17,63 @@ final class ILTalksCardView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let tileView = UIView()
-    private let iconView = UIImageView()
-    private let eyebrowLabel = UILabel()
-    private let titleLabel = UILabel()
-    private let metaLabel = UILabel()
-    private let progressBar = UIProgressView(progressViewStyle: .bar)
-    private let progressLabel = UILabel()
-    private let progressRow = UIStackView()
+    private lazy var tileView: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.Tone.rose.tintBackground
+        v.layer.cornerRadius = ILMetrics.radiusInput
+        v.isUserInteractionEnabled = false
+        return v
+    }()
+    private lazy var iconView: UIImageView = {
+        let v = UIImageView()
+        v.tintColor = ILColors.Tone.rose.textColor
+        v.contentMode = .center
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var eyebrowLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.captionSmall
+        v.textColor = ILColors.link
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var titleLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.serifCardTitle
+        v.textColor = ILColors.ink
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var metaLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.subhead
+        v.textColor = ILColors.inkTertiary
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var progressBar: UIProgressView = {
+        let v = UIProgressView(progressViewStyle: .bar)
+        v.progressTintColor = ILColors.goldDeep
+        v.trackTintColor = ILColors.border
+        v.layer.cornerRadius = Self.progressHeight / 2
+        v.clipsToBounds = true
+        return v
+    }()
+    private lazy var progressLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.captionMedium
+        v.textColor = ILColors.goldDeep
+        v.setContentHuggingPriority(.required, for: .horizontal)
+        return v
+    }()
+    private lazy var progressRow: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.alignment = .center
+        v.spacing = ILMetrics.spaceSmall
+        return v
+    }()
 
     // MARK: - Initializer
     init() {
@@ -58,36 +107,8 @@ final class ILTalksCardView: UIControl {
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
 
-        tileView.backgroundColor = ILColors.Tone.rose.tintBackground
-        tileView.layer.cornerRadius = ILMetrics.radiusInput
-        tileView.isUserInteractionEnabled = false
-        iconView.tintColor = ILColors.Tone.rose.textColor
-        iconView.contentMode = .center
-        iconView.translatesAutoresizingMaskIntoConstraints = false
         tileView.addSubview(iconView)
 
-        eyebrowLabel.font = ILTypography.captionSmall
-        eyebrowLabel.textColor = ILColors.link
-        eyebrowLabel.numberOfLines = 0
-
-        titleLabel.font = ILTypography.serifCardTitle
-        titleLabel.textColor = ILColors.ink
-        titleLabel.numberOfLines = 0
-
-        metaLabel.font = ILTypography.subhead
-        metaLabel.textColor = ILColors.inkTertiary
-        metaLabel.numberOfLines = 0
-
-        progressBar.progressTintColor = ILColors.goldDeep
-        progressBar.trackTintColor = ILColors.border
-        progressBar.layer.cornerRadius = Self.progressHeight / 2
-        progressBar.clipsToBounds = true
-        progressLabel.font = ILTypography.captionMedium
-        progressLabel.textColor = ILColors.goldDeep
-        progressLabel.setContentHuggingPriority(.required, for: .horizontal)
-        progressRow.axis = .horizontal
-        progressRow.alignment = .center
-        progressRow.spacing = ILMetrics.spaceSmall
         progressRow.addArrangedSubview(progressBar)
         progressRow.addArrangedSubview(progressLabel)
 

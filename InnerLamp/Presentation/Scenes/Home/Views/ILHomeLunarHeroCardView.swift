@@ -93,23 +93,92 @@ final class ILHomeLunarHeroCardView: UIControl {
     private let glowLayer = CAGradientLayer()
 
     /// Ảnh của ngày; nền trong suốt để gradient phía sau làm placeholder.
-    private let imageView: ILRemoteImageView = {
-        let view = ILRemoteImageView(frame: .zero)
-        view.backgroundColor = .clear
-        return view
+    private lazy var imageView: ILRemoteImageView = {
+        let v = ILRemoteImageView(frame: .zero)
+        v.backgroundColor = .clear
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.isUserInteractionEnabled = false
+        // A bitmap's intrinsic size must never size the card — the image only fills what the card is.
+        v.setContentHuggingPriority(.fittingSizeLevel, for: .vertical)
+        v.setContentCompressionResistancePriority(.fittingSizeLevel, for: .vertical)
+        v.setContentHuggingPriority(.fittingSizeLevel, for: .horizontal)
+        v.setContentCompressionResistancePriority(.fittingSizeLevel, for: .horizontal)
+        return v
     }()
-    private let scrimView = UIView()
+    private lazy var scrimView: UIView = {
+        let v = UIView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.isUserInteractionEnabled = false
+        v.alpha = 0
+        return v
+    }()
     private let scrimLayer = CAGradientLayer()
-    private let creditLabel = UILabel()
+    private lazy var creditLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.caption
+        v.textColor = ILColors.heroSub
+        v.textAlignment = .center
+        v.numberOfLines = 0
+        v.text = " "
+        return v
+    }()
 
-    private let solarLabelView = UILabel()
-    private let eyebrowDot = UIView()
-    private let eyebrowLabel = UILabel()
-    private let lunarDayLabel = UILabel()
-    private let lunarMonthLabelView = UILabel()
-    private let lunarYearLabelView = UILabel()
-    private let verseStack = UIStackView()
-    private let verseSourceLabel = UILabel()
+    private lazy var solarLabelView: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmallMedium
+        v.textColor = ILColors.heroInk
+        v.numberOfLines = 1
+        return v
+    }()
+    private lazy var eyebrowDot: UIView = {
+        let v = UIView()
+        v.layer.cornerRadius = 7
+        v.layer.borderWidth = 1
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var eyebrowLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 1
+        return v
+    }()
+    private lazy var lunarDayLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.cormorant(size: 68)
+        v.textColor = ILColors.heroInk
+        v.numberOfLines = 1
+        return v
+    }()
+    private lazy var lunarMonthLabelView: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.cormorant(size: 18)
+        v.textColor = ILColors.heroInk2
+        v.numberOfLines = 1
+        return v
+    }()
+    private lazy var lunarYearLabelView: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmall
+        v.textColor = ILColors.heroSub
+        v.numberOfLines = 1
+        return v
+    }()
+    private lazy var verseStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = 4
+        v.alignment = .center
+        v.isUserInteractionEnabled = false
+        return v
+    }()
+    private lazy var verseSourceLabel: UILabel = {
+        let v = UILabel()
+        v.font = verseSourceFont
+        v.textColor = ILColors.heroSub
+        v.textAlignment = .center
+        v.numberOfLines = 1
+        return v
+    }()
 
     // MARK: - Initializer
     init() {
@@ -310,16 +379,6 @@ final class ILHomeLunarHeroCardView: UIControl {
 
         applyGradients()
 
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.isUserInteractionEnabled = false
-        // A bitmap's intrinsic size must never size the card — the image only fills what the card is.
-        imageView.setContentHuggingPriority(.fittingSizeLevel, for: .vertical)
-        imageView.setContentCompressionResistancePriority(.fittingSizeLevel, for: .vertical)
-        imageView.setContentHuggingPriority(.fittingSizeLevel, for: .horizontal)
-        imageView.setContentCompressionResistancePriority(.fittingSizeLevel, for: .horizontal)
-        scrimView.translatesAutoresizingMaskIntoConstraints = false
-        scrimView.isUserInteractionEnabled = false
-        scrimView.alpha = 0
         scrimLayer.startPoint = CGPoint(x: 0.5, y: 0)
         scrimLayer.endPoint = CGPoint(x: 0.5, y: 1)
         scrimView.layer.addSublayer(scrimLayer)
@@ -340,53 +399,16 @@ final class ILHomeLunarHeroCardView: UIControl {
             scrimView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
 
-        creditLabel.font = ILTypography.caption
-        creditLabel.textColor = ILColors.heroSub
-        creditLabel.textAlignment = .center
-        creditLabel.numberOfLines = 0
-        creditLabel.text = " "
-
-        solarLabelView.font = ILTypography.bodySmallMedium
-        solarLabelView.textColor = ILColors.heroInk
-        solarLabelView.numberOfLines = 1
-
-        eyebrowDot.layer.cornerRadius = 7
-        eyebrowDot.layer.borderWidth = 1
-        eyebrowDot.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             eyebrowDot.widthAnchor.constraint(equalToConstant: 14),
             eyebrowDot.heightAnchor.constraint(equalToConstant: 14)
         ])
         applyEyebrowDot()
 
-        eyebrowLabel.numberOfLines = 1
-
         let eyebrowRow = UIStackView(arrangedSubviews: [eyebrowDot, eyebrowLabel])
         eyebrowRow.axis = .horizontal
         eyebrowRow.spacing = 7
         eyebrowRow.alignment = .center
-
-        lunarDayLabel.font = ILTypography.cormorant(size: 68)
-        lunarDayLabel.textColor = ILColors.heroInk
-        lunarDayLabel.numberOfLines = 1
-
-        lunarMonthLabelView.font = ILTypography.cormorant(size: 18)
-        lunarMonthLabelView.textColor = ILColors.heroInk2
-        lunarMonthLabelView.numberOfLines = 1
-
-        lunarYearLabelView.font = ILTypography.bodySmall
-        lunarYearLabelView.textColor = ILColors.heroSub
-        lunarYearLabelView.numberOfLines = 1
-
-        verseStack.axis = .vertical
-        verseStack.spacing = 4
-        verseStack.alignment = .center
-        verseStack.isUserInteractionEnabled = false
-
-        verseSourceLabel.font = verseSourceFont
-        verseSourceLabel.textColor = ILColors.heroSub
-        verseSourceLabel.textAlignment = .center
-        verseSourceLabel.numberOfLines = 1
 
         let topStack = UIStackView(arrangedSubviews: [solarLabelView, eyebrowRow, lunarDayLabel, lunarMonthLabelView, lunarYearLabelView])
         topStack.axis = .vertical

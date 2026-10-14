@@ -1,6 +1,6 @@
 # Tasks — Splash
 
-Version: 1.5
+Version: 1.6
 Last updated: 2026-10-10
 Status: done (new routing test written but not yet executed)
 
@@ -41,12 +41,13 @@ Status: done (new routing test written but not yet executed)
       `ILSplashCoordinatorDelegate`
 - [x] Unit tests: `InnerLampTests/ILSplashViewModelTests.swift` (4 tests) —
       initial state, no session → `.goToOnboarding`, no session + onboarding
-      completed → `.goToLogin`, stored session → `.goToMain` (written, not yet
+      completed → `.goToSignup`, stored session → `.goToMain` (written, not yet
       run: `xcodebuild test` is blocked by the GRPC plugin)
 - [x] Route in `handleSplashFinished()` by `useCase.hasSession()`
       (`.goToMain` / `.goToOnboarding`)
-- [x] Route users who completed onboarding but have no session to Login
-      (`.goToLogin`, `splashDidRequestLogin` → `showLogin()`)
+- [x] Route users who completed onboarding but have no session to SignUp as the
+      root screen, back button hidden (`.goToSignup`, `splashDidRequestSignup` →
+      `showSignUp(asRoot: true)`)
 - [x] Unit tests: `InnerLampTests/ILSplashUseCaseTests.swift` (4 tests) —
       fresh-install token wipe, session kept after first launch, legacy
       credential purge, no token → false (see `TD-Splash-001`)

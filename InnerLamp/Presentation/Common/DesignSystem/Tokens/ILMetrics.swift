@@ -25,9 +25,21 @@ public enum ILMetrics {
     /// Độ thụt trái của bình luận trả lời lồng (22px) ở màn Bài đăng đạo tràng (`indent: 22px`).
     public static let commentIndent: CGFloat = 22.0
     
+    /// EN: Tight gap between stacked text lines (4px).
+    /// VI: Khoảng cách rất nhỏ giữa các dòng chữ xếp chồng (4px).
+    public static let spaceTiny: CGFloat = 4.0
+
     /// Khoảng cách nhỏ (6–8px)
     public static let spaceSmall: CGFloat = 8.0
-    
+
+    /// EN: Compact gap, e.g. between a section eyebrow and its content (12px).
+    /// VI: Khoảng cách gọn, vd. giữa nhãn mục và nội dung của mục (12px).
+    public static let spaceCompact: CGFloat = 12.0
+
+    /// EN: Hairline thickness for dividers and borders (1px).
+    /// VI: Độ dày đường kẻ mảnh cho divider và viền (1px).
+    public static let hairline: CGFloat = 1.0
+
     /// Khoảng cách trung bình (12–16px)
     public static let spaceMedium: CGFloat = 14.0
     
@@ -222,6 +234,9 @@ public enum ILMetrics {
     /// Center error dialog (0 22px 54px rgba(20,16,12,.34))
     public static let shadowAlertDialog = Shadow(color: ILColors.scrim, alpha: 0.34, x: 0, y: 22, blur: 54)
 
+    /// Confirm dialog (0 12px 40px rgba(0,0,0,.25))
+    public static let shadowAlertConfirm = Shadow(color: ILColors.scrim, alpha: 0.25, x: 0, y: 12, blur: 40)
+
     /// Sizes & spacing shared by the error popups in `Components/Alert/`.
     public enum Alert {
         /// Horizontal inset of toast / banner / snackbar from the screen edges
@@ -266,6 +281,14 @@ public enum ILMetrics {
 
         /// Compact pill on the banner (vertical, horizontal padding)
         public static let bannerButtonPadding = UIEdgeInsets(top: 8, left: 15, bottom: 8, right: 15)
+        /// Max width of the confirm dialog card
+        public static let confirmMaxWidth: CGFloat = 280
+        /// Min margin between the confirm dialog card and the screen edges
+        public static let confirmMargin: CGFloat = 44
+        /// Corner radius of the confirm dialog card
+        public static let confirmRadius: CGFloat = 16
+        /// Height of the cancel / confirm cells on the confirm dialog
+        public static let confirmButtonHeight: CGFloat = 46
         /// Pill height on the dialog
         public static let dialogButtonHeight: CGFloat = 44
         /// Pill height on the full-screen error
@@ -473,5 +496,32 @@ public enum ILMetrics {
         /// Room kept around the outermost people (crown of leaves above, name label below) when centring the tree
         public static let peopleSpanPaddingTop: CGFloat = 60
         public static let peopleSpanPaddingBottom: CGFloat = 50
+    }
+
+    // MARK: - Lamp (LightLamp)
+    public enum Lamp {
+        /// Lamp artwork is `size` wide and `size × artHeightRatio` tall
+        public static let artHeightRatio: CGFloat = 1.18
+        /// Hero stage height while the form is shown / after the lamp is lit
+        public static let stageHeightForm: CGFloat = 200
+        public static let stageHeightLit: CGFloat = 320
+        public static let heroArtSize: CGFloat = 100
+        public static let litArtScale: CGFloat = 1.35
+        /// Distance between the hero lamp and the stage's trailing / top edge in the form layout
+        public static let heroArtTrailing: CGFloat = 24
+        public static let heroArtTop: CGFloat = 44
+        public static let litArtTop: CGFloat = 74
+        public static let stageTextTop: CGFloat = 22
+        /// Space kept free on the right of the stage text for the lamp
+        public static let stageTextTrailing: CGFloat = 140
+        public static let kindPickerArtSize: CGFloat = 48
+        public static let kindCardRadius: CGFloat = 18
+        public static let cardHeight: CGFloat = 208
+        public static let cardArtSize: CGFloat = 64
+        public static let cardArtAreaHeight: CGFloat = 96
+        public static let cardMinWidth: CGFloat = 150
+        public static let gridSpacing: CGFloat = 10
+        public static let ignitedDuration: TimeInterval = 1.7
+        public static let stageResizeDuration: TimeInterval = 0.95
     }
 }

@@ -42,7 +42,13 @@ final class ILPostCommentListView: UIView {
         return stack
     }()
 
-    private let rowsStack = UIStackView()
+    private lazy var rowsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = ILMetrics.rowSpacing + 2
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
     // MARK: - Initializer
     init() {
@@ -57,10 +63,6 @@ final class ILPostCommentListView: UIView {
     // MARK: - Setup
     private func setupViews() {
         headerRow.translatesAutoresizingMaskIntoConstraints = false
-
-        rowsStack.axis = .vertical
-        rowsStack.spacing = ILMetrics.rowSpacing + 2
-        rowsStack.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(headerRow)
         addSubview(rowsStack)

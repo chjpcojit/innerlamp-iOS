@@ -40,47 +40,151 @@ final class ILDeityViewController: BaseViewController {
     private var isBiographyExpanded = false
 
     // MARK: - UI Elements
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsVerticalScrollIndicator = false
+        v.alwaysBounceVertical = true
+        v.contentInsetAdjustmentBehavior = .never
+        return v
+    }()
+    private lazy var contentView: UIView = {
+        let v = UIView()
+        return v
+    }()
 
     /// Dải header dán cố định — trong suốt trên hero, chuyển nền `canvas` khi cuộn qua hero.
     /// Blur only: the canvas tint is state-driven (`updateHeaderAppearance`), so the band's own tint stays off.
-    private let headerBand = ILStickyHeaderBand(tintRestAlpha: 0, tintGlassAlpha: 0)
-    private let navBar = ILNavBar(showBack: true)
+    private lazy var headerBand: ILStickyHeaderBand = {
+        let v = ILStickyHeaderBand(tintRestAlpha: 0, tintGlassAlpha: 0)
+        v.backgroundColor = ILColors.canvas.withAlphaComponent(0)
+        return v
+    }()
+    private lazy var navBar: ILNavBar = {
+        let v = ILNavBar(showBack: true)
+        v.usesTransparentButtons = true
+        return v
+    }()
 
-    private let heroView = ILDeityHeroView()
-    private let bodyStack = UIStackView()
+    private lazy var heroView: ILDeityHeroView = {
+        let v = ILDeityHeroView()
+        return v
+    }()
+    private lazy var bodyStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.alignment = .fill
+        return v
+    }()
 
-    private let memorialDayCard = ILDeityMemorialDayCardView()
-    private let roleLabel = UILabel()
+    private lazy var memorialDayCard: ILDeityMemorialDayCardView = {
+        let v = ILDeityMemorialDayCardView()
+        return v
+    }()
+    private lazy var roleLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        return v
+    }()
 
-    private let biographyEyebrow = ILSectionEyebrowView()
-    private let biographyLabel = UILabel()
-    private let biographyToggle = UIButton(type: .system)
+    private lazy var biographyEyebrow: ILSectionEyebrowView = {
+        let v = ILSectionEyebrowView()
+        return v
+    }()
+    private lazy var biographyLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        v.clipsToBounds = true
+        return v
+    }()
+    private lazy var biographyToggle: UIButton = {
+        let v = UIButton(type: .system)
+        styleLinkButton(v)
+        return v
+    }()
     private lazy var biographyCollapsedConstraint = biographyLabel.heightAnchor.constraint(
         lessThanOrEqualToConstant: Layout.collapsedBiographyHeight
     )
 
-    private let vowsHeaderRow = UIStackView()
-    private let vowsEyebrow = ILSectionEyebrowView()
-    private let vowsCountLabel = UILabel()
-    private let vowsStack = UIStackView()
-    private let vowsToggle = UIButton(type: .system)
+    private lazy var vowsHeaderRow: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.alignment = .lastBaseline
+        return v
+    }()
+    private lazy var vowsEyebrow: ILSectionEyebrowView = {
+        let v = ILSectionEyebrowView()
+        return v
+    }()
+    private lazy var vowsCountLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        v.textColor = ILColors.inkSubtle
+        v.setContentHuggingPriority(.required, for: .horizontal)
+        return v
+    }()
+    private lazy var vowsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = ILMetrics.spaceSmall
+        return v
+    }()
+    private lazy var vowsToggle: UIButton = {
+        let v = UIButton(type: .system)
+        styleLinkButton(v)
+        return v
+    }()
 
-    private let mantrasEyebrow = ILSectionEyebrowView()
-    private let mantrasStack = UIStackView()
+    private lazy var mantrasEyebrow: ILSectionEyebrowView = {
+        let v = ILSectionEyebrowView()
+        return v
+    }()
+    private lazy var mantrasStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = ILMetrics.rowSpacing
+        return v
+    }()
 
-    private let sutrasEyebrow = ILSectionEyebrowView()
-    private let sutrasStack = UIStackView()
+    private lazy var sutrasEyebrow: ILSectionEyebrowView = {
+        let v = ILSectionEyebrowView()
+        return v
+    }()
+    private lazy var sutrasStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = ILMetrics.rowSpacing
+        return v
+    }()
 
-    private let footnoteLabel = UILabel()
+    private lazy var footnoteLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        return v
+    }()
 
     /// Whole-screen loading / error states, shown instead of `scrollView` while the profile is
     /// not on screen yet.
-    private let loadingView = ILLoadingDotsView()
-    private let errorStateView = ILStateView(kind: .error)
-    private lazy var retryButton = ILButton(title: "common.retry".localized, variant: .primary)
-    private let errorStack = UIStackView()
+    private lazy var loadingView: ILLoadingDotsView = {
+        let v = ILLoadingDotsView()
+        v.isHidden = true
+        return v
+    }()
+    private lazy var errorStateView: ILStateView = {
+        let v = ILStateView(kind: .error)
+        return v
+    }()
+    private lazy var retryButton: ILButton = {
+        let v = ILButton(title: "common.retry".localized, variant: .primary)
+        return v
+    }()
+    private lazy var errorStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.alignment = .fill
+        v.spacing = ILMetrics.groupSpacing
+        v.isHidden = true
+        return v
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILDeityViewModel) {
@@ -116,47 +220,19 @@ final class ILDeityViewController: BaseViewController {
         view.backgroundColor = ILColors.canvas
 
         navBar.onBack = { [weak self] in self?.backTappedSubject.send(()) }
-        navBar.usesTransparentButtons = true
-        headerBand.backgroundColor = ILColors.canvas.withAlphaComponent(0)
 
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = true
-        scrollView.contentInsetAdjustmentBehavior = .never
         scrollView.delegate = self
         scrollView.addSubview(contentView)
 
         memorialDayCard.onFestivalsTap = { [weak self] in self?.festivalsTappedSubject.send(()) }
 
-        roleLabel.numberOfLines = 0
-
-        biographyLabel.numberOfLines = 0
-        biographyLabel.clipsToBounds = true
-        styleLinkButton(biographyToggle)
         biographyToggle.addTarget(self, action: #selector(handleBiographyToggle), for: .touchUpInside)
 
-        vowsCountLabel.font = ILTypography.label
-        vowsCountLabel.textColor = ILColors.inkSubtle
-        vowsCountLabel.setContentHuggingPriority(.required, for: .horizontal)
-        vowsHeaderRow.axis = .horizontal
-        vowsHeaderRow.alignment = .lastBaseline
         vowsHeaderRow.addArrangedSubview(vowsEyebrow)
         vowsHeaderRow.addArrangedSubview(vowsCountLabel)
 
-        vowsStack.axis = .vertical
-        vowsStack.spacing = ILMetrics.spaceSmall
-        styleLinkButton(vowsToggle)
         vowsToggle.addTarget(self, action: #selector(handleVowsToggle), for: .touchUpInside)
 
-        mantrasStack.axis = .vertical
-        mantrasStack.spacing = ILMetrics.rowSpacing
-
-        sutrasStack.axis = .vertical
-        sutrasStack.spacing = ILMetrics.rowSpacing
-
-        footnoteLabel.numberOfLines = 0
-
-        bodyStack.axis = .vertical
-        bodyStack.alignment = .fill
         [
             memorialDayCard, roleLabel,
             biographyEyebrow, biographyLabel, biographyToggle,
@@ -196,15 +272,9 @@ final class ILDeityViewController: BaseViewController {
     }
 
     private func setupStateViews() {
-        loadingView.isHidden = true
-
         retryButton.onTap = { [weak self] in self?.retryTappedSubject.send(()) }
-        errorStack.axis = .vertical
-        errorStack.alignment = .fill
-        errorStack.spacing = ILMetrics.groupSpacing
         errorStack.addArrangedSubview(errorStateView)
         errorStack.addArrangedSubview(retryButton)
-        errorStack.isHidden = true
     }
 
     override func setupConstraints() {

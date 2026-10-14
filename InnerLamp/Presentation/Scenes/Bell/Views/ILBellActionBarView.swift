@@ -30,10 +30,37 @@ final class ILBellActionBarView: UIView {
     var onRingBellTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let leftButton = UIButton(type: .system)
-    private let toggleButton = UIButton(type: .system)
-    private let toggleIconView = ILBellToggleIconView()
-    private let ringBellButton = UIButton(type: .system)
+    private lazy var leftButton: UIButton = {
+        let button = UIButton(type: .system)
+        configurePill(button, foreground: ILColors.medInk, stroke: ILColors.medBorder, fill: nil)
+        return button
+    }()
+
+    private lazy var toggleButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.backgroundColor = ILColors.goldBright
+        button.layer.cornerRadius = 32
+        ILMetrics.shadowGoldToggle.apply(to: button.layer)
+        return button
+    }()
+
+    private lazy var toggleIconView: ILBellToggleIconView = {
+        let view = ILBellToggleIconView()
+        view.isUserInteractionEnabled = false
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var ringBellButton: UIButton = {
+        let button = UIButton(type: .system)
+        configurePill(
+            button,
+            foreground: ILColors.link,
+            stroke: ILColors.medGoldTintBorder,
+            fill: ILColors.medGoldTint
+        )
+        return button
+    }()
 
     // MARK: - Initializer
     init() {
@@ -47,24 +74,12 @@ final class ILBellActionBarView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        configurePill(leftButton, foreground: ILColors.medInk, stroke: ILColors.medBorder, fill: nil)
         leftButton.addTarget(self, action: #selector(handleLeftTap), for: .touchUpInside)
 
-        toggleButton.backgroundColor = ILColors.goldBright
-        toggleButton.layer.cornerRadius = 32
-        ILMetrics.shadowGoldToggle.apply(to: toggleButton.layer)
         toggleButton.addTarget(self, action: #selector(handleToggleTap), for: .touchUpInside)
 
-        toggleIconView.isUserInteractionEnabled = false
-        toggleIconView.translatesAutoresizingMaskIntoConstraints = false
         toggleButton.addSubview(toggleIconView)
 
-        configurePill(
-            ringBellButton,
-            foreground: ILColors.link,
-            stroke: ILColors.medGoldTintBorder,
-            fill: ILColors.medGoldTint
-        )
         ringBellButton.addTarget(self, action: #selector(handleRingBellTap), for: .touchUpInside)
 
         let stack = UIStackView(arrangedSubviews: [leftButton, toggleButton, ringBellButton])

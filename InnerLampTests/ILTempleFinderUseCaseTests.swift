@@ -62,17 +62,18 @@ final class ILTempleFinderUseCaseTests: XCTestCase {
         }
     }
 
-    func test_loadMyTemple_returnsIDAndNameOfTheChosenTemple() {
+    func test_loadMyTemple_returnsIDAndNameOfTheChosenTemple() async {
         sanghaUseCase.myTempleID = "temple_1"
 
-        let mine = sut.loadMyTemple()
+        let mine = await sut.loadMyTemple()
 
         XCTAssertEqual(mine?.id, "temple_1")
         XCTAssertEqual(mine?.name, "Chùa Từ Quang")
     }
 
-    func test_loadMyTemple_withoutChosenTemple_returnsNil() {
-        XCTAssertNil(sut.loadMyTemple())
+    func test_loadMyTemple_withoutChosenTemple_returnsNil() async {
+        let mine = await sut.loadMyTemple()
+        XCTAssertNil(mine)
     }
 
     func test_selectMyTemple_forwardsToTheSanghaUseCase() {
@@ -86,10 +87,11 @@ final class ILTempleFinderUseCaseTests: XCTestCase {
         id: String,
         name: String = "Chùa Mẫu",
         address: String = "Quận 1, TP. Hồ Chí Minh",
-        region: ILTempleRegion = .south
+        region: ILTempleRegion = .south,
+        imageURL: String? = nil
     ) -> ILTempleSummaryEntity {
         ILTempleSummaryEntity(
-            id: id, name: name, type: .chua, region: region, thumbnailURL: nil, imageURL: nil,
+            id: id, name: name, type: .chua, region: region, thumbnailURL: nil, imageURL: imageURL,
             sect: "BẮC_TÔNG", heritageRank: .unranked, establishedYear: 1900,
             location: ILTempleLocationEntity(latitude: 10.78, longitude: 106.70, address: address)
         )

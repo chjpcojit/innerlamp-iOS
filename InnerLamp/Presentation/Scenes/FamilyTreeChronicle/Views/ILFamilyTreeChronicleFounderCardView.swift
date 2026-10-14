@@ -21,12 +21,38 @@ final class ILFamilyTreeChronicleFounderCardView: UIView {
     // MARK: - Properties
     var onTap: (() -> Void)?
 
-    private let tapControl = ILFamilyTreeChronicleTapControl()
+    private lazy var tapControl: ILFamilyTreeChronicleTapControl = {
+        let v = ILFamilyTreeChronicleTapControl()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     private let hexLayer = CAShapeLayer()
-    private let hexView = UIView()
-    private let captionLabel = UILabel()
-    private let nameLabel = UILabel()
-    private let yearsLabel = UILabel()
+    private lazy var hexView: UIView = {
+        let v = UIView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var captionLabel: UILabel = {
+        let v = UILabel()
+        v.text = "familyTree.role.founder".localized
+        v.font = ILTypography.caption
+        v.textColor = Tree.inkTertiary
+        return v
+    }()
+    private lazy var nameLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.treeMemorialTitle
+        v.textColor = Tree.heading
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var yearsLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.caption
+        v.textColor = Tree.inkSecondary
+        v.numberOfLines = 0
+        return v
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -58,15 +84,6 @@ final class ILFamilyTreeChronicleFounderCardView: UIView {
         hexLayer.fillColor = Tree.founderGold.cgColor
         hexView.layer.addSublayer(hexLayer)
 
-        captionLabel.text = "familyTree.role.founder".localized
-        captionLabel.font = ILTypography.caption
-        captionLabel.textColor = Tree.inkTertiary
-        nameLabel.font = ILTypography.treeMemorialTitle
-        nameLabel.textColor = Tree.heading
-        nameLabel.numberOfLines = 0
-        yearsLabel.font = ILTypography.caption
-        yearsLabel.textColor = Tree.inkSecondary
-        yearsLabel.numberOfLines = 0
 
         let textStack = UIStackView(arrangedSubviews: [captionLabel, nameLabel, yearsLabel])
         textStack.axis = .vertical
@@ -80,11 +97,8 @@ final class ILFamilyTreeChronicleFounderCardView: UIView {
         row.isUserInteractionEnabled = false
 
         tapControl.onTap = { [weak self] in self?.onTap?() }
-        [tapControl, row].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            addSubview($0)
-        }
-        hexView.translatesAutoresizingMaskIntoConstraints = false
+        row.translatesAutoresizingMaskIntoConstraints = false
+        [tapControl, row].forEach { addSubview($0) }
         NSLayoutConstraint.activate([
             hexView.widthAnchor.constraint(equalToConstant: Layout.hexSize.width),
             hexView.heightAnchor.constraint(equalToConstant: Layout.hexSize.height),

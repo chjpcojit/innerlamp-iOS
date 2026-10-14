@@ -37,9 +37,30 @@ final class ILHomeDeityCarouselView: UIView {
     var onDeityTap: ((ILHomeDeityModel) -> Void)?
 
     // MARK: - UI Elements
-    private let scrollView = UIScrollView()
-    private let cardsStack = UIStackView()
-    private let emptyLabel = UILabel()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsHorizontalScrollIndicator = false
+        v.decelerationRate = .fast
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var cardsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = Self.cardSpacing
+        v.alignment = .top
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var emptyLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.caption
+        v.textColor = ILColors.inkSubtle
+        v.numberOfLines = 0
+        v.isHidden = true
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     /// Only active while the placeholder is visible, so the carousel takes the label's height
     /// instead of collapsing to zero with no cards.
     private lazy var emptyLabelBottomConstraint = emptyLabel.bottomAnchor.constraint(equalTo: bottomAnchor)
@@ -56,24 +77,11 @@ final class ILHomeDeityCarouselView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        scrollView.showsHorizontalScrollIndicator = false
-        scrollView.decelerationRate = .fast
         scrollView.delegate = self
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-
-        cardsStack.axis = .horizontal
-        cardsStack.spacing = Self.cardSpacing
-        cardsStack.alignment = .top
-        cardsStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(cardsStack)
 
         addSubview(scrollView)
 
-        emptyLabel.font = ILTypography.caption
-        emptyLabel.textColor = ILColors.inkSubtle
-        emptyLabel.numberOfLines = 0
-        emptyLabel.isHidden = true
-        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(emptyLabel)
 
         NSLayoutConstraint.activate([
@@ -145,7 +153,19 @@ private final class ILHomeDeityCardView: UIControl {
     var onTap: (() -> Void)?
 
     private let deity: ILHomeDeityModel
-    private let imageArea = ILRemoteImageView(frame: .zero)
+    private lazy var imageArea: ILRemoteImageView = {
+        let v = ILRemoteImageView(frame: .zero)
+        // Ảnh thumbnail từ server (nền `tint` làm placeholder khi chưa có / lỗi) + badge loại.
+        v.backgroundColor = ILColors.tint
+        v.layer.cornerRadius = ILMetrics.radiusCardSmall
+        v.layer.borderWidth = 1
+        v.layer.borderColor = ILColors.border.cgColor
+        v.clipsToBounds = true
+        v.isUserInteractionEnabled = false
+        v.setImage(urlString: deity.thumbnailURL)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     init(deity: ILHomeDeityModel) {
         self.deity = deity
@@ -159,16 +179,6 @@ private final class ILHomeDeityCardView: UIControl {
 
     private func setupViews() {
         translatesAutoresizingMaskIntoConstraints = false
-
-        // Ảnh thumbnail từ server (nền `tint` làm placeholder khi chưa có / lỗi) + badge loại.
-        imageArea.backgroundColor = ILColors.tint
-        imageArea.layer.cornerRadius = ILMetrics.radiusCardSmall
-        imageArea.layer.borderWidth = 1
-        imageArea.layer.borderColor = ILColors.border.cgColor
-        imageArea.clipsToBounds = true
-        imageArea.isUserInteractionEnabled = false
-        imageArea.setImage(urlString: deity.thumbnailURL)
-        imageArea.translatesAutoresizingMaskIntoConstraints = false
 
         // Badge pill: nền scrim 60% + padding 3/8 (khớp `padding: 3px 8px` trong prototype).
         let kindBadge = UIView()

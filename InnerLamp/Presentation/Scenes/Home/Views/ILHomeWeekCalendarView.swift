@@ -43,14 +43,57 @@ final class ILHomeWeekCalendarView: UIView {
     var onSelectDay: ((ILHomeWeekDayModel) -> Void)?
 
     // MARK: - UI Elements
-    private let weekLabel = UILabel()
-    private let calendarLinkButton = UIButton(type: .system)
-    private let memorialLinkButton = UIButton(type: .system)
+    private lazy var weekLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmallMedium
+        v.textColor = ILColors.ink
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var calendarLinkButton: UIButton = {
+        let v = UIButton(type: .system)
+        v.titleLabel?.font = ILTypography.subhead
+        v.setTitleColor(ILColors.link, for: .normal)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var memorialLinkButton: UIButton = {
+        let v = UIButton(type: .system)
+        v.titleLabel?.font = ILTypography.subhead
+        v.setTitleColor(ILColors.link, for: .normal)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let weekdayRow = UIStackView()
-    private let scrollView = UIScrollView()
-    private let pageStack = UIStackView()
-    private let legendRow = UIStackView()
+    private lazy var weekdayRow: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.distribution = .fillEqually
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.isPagingEnabled = true
+        v.showsHorizontalScrollIndicator = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var pageStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.alignment = .fill
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var legendRow: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = 16
+        v.alignment = .center
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     /// Trang đang hiển thị (index vào `pages`) — dùng để đặt lại offset khi rebuild và để cập nhật
     /// nhãn tháng ở header.
@@ -71,19 +114,8 @@ final class ILHomeWeekCalendarView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        weekLabel.font = ILTypography.bodySmallMedium
-        weekLabel.textColor = ILColors.ink
-        weekLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        calendarLinkButton.titleLabel?.font = ILTypography.subhead
-        calendarLinkButton.setTitleColor(ILColors.link, for: .normal)
         calendarLinkButton.addTarget(self, action: #selector(handleCalendarLinkTap), for: .touchUpInside)
-        calendarLinkButton.translatesAutoresizingMaskIntoConstraints = false
-
-        memorialLinkButton.titleLabel?.font = ILTypography.subhead
-        memorialLinkButton.setTitleColor(ILColors.link, for: .normal)
         memorialLinkButton.addTarget(self, action: #selector(handleMemorialLinkTap), for: .touchUpInside)
-        memorialLinkButton.translatesAutoresizingMaskIntoConstraints = false
 
         let linksRow = UIStackView(arrangedSubviews: [memorialLinkButton, calendarLinkButton])
         linksRow.axis = .horizontal
@@ -96,24 +128,8 @@ final class ILHomeWeekCalendarView: UIView {
         headerRow.alignment = .lastBaseline
         headerRow.translatesAutoresizingMaskIntoConstraints = false
 
-        weekdayRow.axis = .horizontal
-        weekdayRow.distribution = .fillEqually
-        weekdayRow.translatesAutoresizingMaskIntoConstraints = false
-
-        scrollView.isPagingEnabled = true
-        scrollView.showsHorizontalScrollIndicator = false
         scrollView.delegate = self
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-
-        pageStack.axis = .horizontal
-        pageStack.alignment = .fill
-        pageStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(pageStack)
-
-        legendRow.axis = .horizontal
-        legendRow.spacing = 16
-        legendRow.alignment = .center
-        legendRow.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(headerRow)
         addSubview(weekdayRow)
@@ -336,10 +352,31 @@ private final class ILHomeWeekDayCellView: UIView {
 
     var onTap: (() -> Void)?
 
-    private let dayLabel = UILabel()
-    private let lunarLabel = UILabel()
-    private let dot = UIView()
-    private let control = UIControl()
+    private lazy var dayLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.beVietnamPro(size: 16, weight: .medium)
+        v.text = "\(day.solarDay)"
+        v.textAlignment = .center
+        return v
+    }()
+    private lazy var lunarLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.captionSmall
+        v.text = day.lunarText
+        v.textAlignment = .center
+        return v
+    }()
+    private lazy var dot: UIView = {
+        let v = UIView()
+        v.layer.cornerRadius = 2.5
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var control: UIControl = {
+        let v = UIControl()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     private let day: ILHomeWeekDayModel
 
@@ -359,17 +396,6 @@ private final class ILHomeWeekDayCellView: UIView {
         layer.cornerRadius = 16
         layer.borderWidth = 1
 
-        dayLabel.font = ILTypography.beVietnamPro(size: 16, weight: .medium)
-        dayLabel.text = "\(day.solarDay)"
-        dayLabel.textAlignment = .center
-
-        lunarLabel.font = ILTypography.captionSmall
-        lunarLabel.text = day.lunarText
-        lunarLabel.textAlignment = .center
-
-        dot.layer.cornerRadius = 2.5
-        dot.translatesAutoresizingMaskIntoConstraints = false
-
         let stack = UIStackView(arrangedSubviews: [dayLabel, lunarLabel, dot])
         stack.axis = .vertical
         stack.spacing = 3
@@ -378,7 +404,6 @@ private final class ILHomeWeekDayCellView: UIView {
         stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
 
-        control.translatesAutoresizingMaskIntoConstraints = false
         control.addTarget(self, action: #selector(handleTap), for: .touchUpInside)
         addSubview(control)
 

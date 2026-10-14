@@ -19,16 +19,23 @@ final class ILSutraDetailViewController: BaseViewController {
     private let chantTappedSubject = PassthroughSubject<Void, Never>()
     private let playTappedSubject = PassthroughSubject<Void, Never>()
     private let chapterTappedSubject = PassthroughSubject<Void, Never>()
+    private let linkTappedSubject = PassthroughSubject<URL, Never>()
 
 
     // MARK: - UI Elements
     /// Dải header ghim — nền `th-top` liền màu với đỉnh hero, không có đường kẻ; nội dung cuộn
     /// chui xuống dưới và mờ dần qua lớp kính.
-    private let headerBand = ILStickyHeaderBand(tintColor: ILColors.templeHeaderTop)
-    private let navBar = ILNavBar(showBack: true)
+    private lazy var headerBand = ILStickyHeaderBand(tintColor: ILColors.templeHeaderTop)
+    private lazy var navBar = ILNavBar(showBack: true)
 
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsVerticalScrollIndicator = false
+        v.alwaysBounceVertical = true
+        v.contentInsetAdjustmentBehavior = .never
+        return v
+    }()
+    private lazy var contentView = UIView()
 
     private lazy var heroView = ILSutraDetailHeroView()
 
@@ -65,13 +72,7 @@ final class ILSutraDetailViewController: BaseViewController {
         return label
     }()
 
-    private lazy var translatorLabel: UILabel = {
-        let label = UILabel()
-        label.font = ILTypography.label
-        label.textColor = ILColors.inkSubtle
-        label.numberOfLines = 0
-        return label
-    }()
+    private lazy var infoView = ILSutraDetailInfoView()
 
     private lazy var tocTitleLabel: UILabel = {
         let label = UILabel()
@@ -91,17 +92,18 @@ final class ILSutraDetailViewController: BaseViewController {
 
     private lazy var chapterListView = ILSutraDetailChapterListView()
 
-    /// Thân trang dưới hero: thẻ tiến trình (chỉ Kinh Pháp Cú) → mô tả → dịch giả → Mục lục.
+    /// Thân trang dưới hero: thẻ tiến trình → mô tả → các khối thông tin (giới thiệu, thông tin, bản dịch
+    /// & giấy phép, lưu ý) → Mục lục.
     private lazy var bodyStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [
-            progressCard, descriptionLabel, translatorLabel, tocHeaderRow, chapterListView
+            progressCard, descriptionLabel, infoView, tocHeaderRow, chapterListView
         ])
         stack.axis = .vertical
         stack.alignment = .fill
         stack.spacing = 0
         stack.setCustomSpacing(18, after: progressCard)
-        stack.setCustomSpacing(8, after: descriptionLabel)
-        stack.setCustomSpacing(24, after: translatorLabel)
+        stack.setCustomSpacing(20, after: descriptionLabel)
+        stack.setCustomSpacing(24, after: infoView)
         stack.setCustomSpacing(12, after: tocHeaderRow)
         return stack
     }()
@@ -165,14 +167,12 @@ final class ILSutraDetailViewController: BaseViewController {
         navBar.onBack = { [weak self] in self?.backTappedSubject.send(()) }
         navBar.onAction = { [weak self] in self?.downloadTappedSubject.send(()) }
 
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = true
-        scrollView.contentInsetAdjustmentBehavior = .never
         headerBand.bind(to: scrollView)
 
         chantButton.onTap = { [weak self] in self?.chantTappedSubject.send(()) }
         playButton.onTap = { [weak self] in self?.playTappedSubject.send(()) }
         chapterListView.onChapterTap = { [weak self] in self?.chapterTappedSubject.send(()) }
+        infoView.onLinkTap = { [weak self] url in self?.linkTappedSubject.send(url) }
 
         progressCard.addSubview(progressTitleLabel)
         progressCard.addSubview(progressPercentLabel)
@@ -227,7 +227,7 @@ final class ILSutraDetailViewController: BaseViewController {
             footerStack.topAnchor.constraint(equalTo: footerBar.topAnchor, constant: ILMetrics.spaceMedium),
             footerStack.leadingAnchor.constraint(equalTo: footerBar.leadingAnchor, constant: horizontal),
             footerStack.trailingAnchor.constraint(equalTo: footerBar.trailingAnchor, constant: -horizontal),
-            footerStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
+            footerStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -ILMetrics.spaceSmall),
 
             // Scroll view chạy dưới header để nội dung mờ xuyên qua kính; chiều cao header được
             // áp thành top content inset trong `viewDidLayoutSubviews`.
@@ -281,7 +281,8 @@ final class ILSutraDetailViewController: BaseViewController {
             downloadTapped: downloadTappedSubject.eraseToAnyPublisher(),
             chantTapped: chantTappedSubject.eraseToAnyPublisher(),
             playTapped: playTappedSubject.eraseToAnyPublisher(),
-            chapterTapped: chapterTappedSubject.eraseToAnyPublisher()
+            chapterTapped: chapterTappedSubject.eraseToAnyPublisher(),
+            linkTapped: linkTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
 
@@ -330,8 +331,8 @@ final class ILSutraDetailViewController: BaseViewController {
             cssLineHeight: 1.75
         )
 
-        translatorLabel.text = model.translatorText
-        translatorLabel.isHidden = model.translatorText.isEmpty
+        infoView.sections = model.infoSections
+        infoView.isHidden = model.infoSections.isEmpty
 
         tocTitleLabel.text = model.tocTitle
         tocCountLabel.text = model.tocCountText

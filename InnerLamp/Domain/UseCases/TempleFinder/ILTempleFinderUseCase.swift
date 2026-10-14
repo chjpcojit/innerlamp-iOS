@@ -10,8 +10,8 @@ import Foundation
 protocol ILTempleFinderUseCase {
     /// Mọi chùa của danh bạ, theo thứ tự server, đã loại trùng id.
     func loadTemples() async throws -> [ILTempleSummaryEntity]
-    /// Chùa tu tập hiện tại; `nil` khi chưa chọn.
-    func loadMyTemple() -> (id: String, name: String)?
+    /// Chùa tu tập hiện tại (đã chọn trong app hoặc theo hồ sơ); `nil` khi chưa có.
+    func loadMyTemple() async -> (id: String, name: String)?
     func selectMyTemple(_ temple: ILTempleSummaryEntity)
 }
 
@@ -42,8 +42,8 @@ final class ILTempleFinderUseCaseImpl: ILTempleFinderUseCase {
         return temples.filter { seen.insert($0.id).inserted }
     }
 
-    func loadMyTemple() -> (id: String, name: String)? {
-        sanghaUseCase.loadMyTemple().map { ($0.temple.id, $0.temple.name) }
+    func loadMyTemple() async -> (id: String, name: String)? {
+        await sanghaUseCase.loadMyTemple().map { ($0.temple.id, $0.temple.name) }
     }
 
     func selectMyTemple(_ temple: ILTempleSummaryEntity) {

@@ -21,10 +21,14 @@ final class ILMainTabBarController: BaseTabBarController, TransitionProviding {
     /// Thứ tự tab = thứ tự `viewControllers`. `.lamp` cố tình không có mặt ở đây.
     static let tabOrder: [ILBottomNavBar.Tab] = [.home, .lib, .sangha, .me]
 
-    /// Chạm nút Đèn giữa bar. Chưa có màn/luồng Đèn nên coordinator chưa gán.
+    /// Chạm nút Đèn giữa bar — `ILMainTabCoordinator` gán để mở màn Thắp đèn.
     var onLampTapped: (() -> Void)?
 
-    private let bottomNav = ILBottomNavBar(activeTab: .home)
+    private lazy var bottomNav: ILBottomNavBar = {
+        let bar = ILBottomNavBar(activeTab: .home)
+        bar.translatesAutoresizingMaskIntoConstraints = false
+        return bar
+    }()
 
     /// Bumped on every `setBottomNavHidden` call; lets a deferred show detect that it was superseded.
     private var requestToken = 0
@@ -42,7 +46,6 @@ final class ILMainTabBarController: BaseTabBarController, TransitionProviding {
         super.viewDidLoad()
         tabBar.isHidden = true
 
-        bottomNav.translatesAutoresizingMaskIntoConstraints = false
         bottomNav.onTabSelected = { [weak self] tab in self?.handleBottomNavTapped(tab) }
         view.addSubview(bottomNav)
 

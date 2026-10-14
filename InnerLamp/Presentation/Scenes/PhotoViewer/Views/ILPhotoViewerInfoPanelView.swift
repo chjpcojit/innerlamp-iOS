@@ -16,11 +16,43 @@ final class ILPhotoViewerInfoPanelView: UIView {
     var onAction: ((ILPhotoViewerAction) -> Void)?
 
     // MARK: - UI Elements
-    private let categoryLabel = UILabel()
-    private let titleLabel = UILabel()
-    private let placeLabel = UILabel()
-    private let toastLabel = UILabel()
-    private let actionsStack = UIStackView()
+    private lazy var categoryLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.eyebrow
+        label.textColor = ILColors.goldOnDark
+        return label
+    }()
+
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.scriptureTitle
+        label.textColor = ILColors.inkOnDark
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var placeLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.inkOnDarkSecondary
+        return label
+    }()
+
+    private lazy var toastLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.goldOnDark
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var actionsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.distribution = .fillEqually
+        stack.spacing = ILMetrics.spaceSmall
+        return stack
+    }()
 
     // MARK: - Initializer
     init() {
@@ -42,23 +74,6 @@ final class ILPhotoViewerInfoPanelView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        categoryLabel.font = ILTypography.eyebrow
-        categoryLabel.textColor = ILColors.goldOnDark
-
-        titleLabel.font = ILTypography.scriptureTitle
-        titleLabel.textColor = ILColors.inkOnDark
-        titleLabel.numberOfLines = 0
-
-        placeLabel.font = ILTypography.subhead
-        placeLabel.textColor = ILColors.inkOnDarkSecondary
-
-        toastLabel.font = ILTypography.subhead
-        toastLabel.textColor = ILColors.goldOnDark
-        toastLabel.textAlignment = .center
-
-        actionsStack.axis = .horizontal
-        actionsStack.distribution = .fillEqually
-        actionsStack.spacing = ILMetrics.spaceSmall
         for action in ILPhotoViewerAction.allCases {
             actionsStack.addArrangedSubview(makeActionButton(for: action))
         }

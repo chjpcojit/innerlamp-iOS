@@ -36,12 +36,64 @@ final class ILDharmaNameSuggestionField: UIView, UITextFieldDelegate {
     var innerTextField: UITextField { textField }
 
     // MARK: - UI Elements
-    private let labelView = UILabel()
-    private let inputContainer = UIView()
-    private let textField = UITextField()
-    private let suggestButton = UIControl()
-    private let ringView = UIView()
-    private let suggestLabel = UILabel()
+    private lazy var labelView: UILabel = {
+        let view = UILabel()
+        view.font = ILTypography.label
+        view.textColor = ILColors.inkSubtle
+        view.text = label
+        return view
+    }()
+
+    private lazy var inputContainer: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = ILColors.surface
+        view.layer.cornerRadius = ILMetrics.radiusInput
+        view.layer.borderWidth = 1
+        view.layer.borderColor = ILColors.ink.withAlphaComponent(0.12).cgColor
+        return view
+    }()
+
+    private lazy var textField: UITextField = {
+        let field = UITextField()
+        field.translatesAutoresizingMaskIntoConstraints = false
+        field.font = ILTypography.bodyLarge
+        field.textColor = ILColors.ink
+        // Hút hết khoảng trống còn lại trong hàng — chip gợi ý (hugging .required) nhờ đó luôn bị
+        // đẩy sát mép phải thay vì nằm sát ngay cạnh chữ khi tên ngắn.
+        field.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        field.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return field
+    }()
+
+    private lazy var suggestButton: UIControl = {
+        let control = UIControl()
+        control.backgroundColor = ILColors.gold.withAlphaComponent(0.14)
+        control.layer.cornerRadius = ILMetrics.radiusPill
+        control.layer.borderWidth = 1
+        control.layer.borderColor = ILColors.gold.withAlphaComponent(0.3).cgColor
+        control.translatesAutoresizingMaskIntoConstraints = false
+        control.setContentHuggingPriority(.required, for: .horizontal)
+        return control
+    }()
+
+    private lazy var ringView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = 6.5
+        view.layer.borderWidth = 1.5
+        view.layer.borderColor = ILColors.goldDeep.cgColor
+        return view
+    }()
+
+    private lazy var suggestLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subheadMedium
+        label.textColor = ILColors.goldDeep
+        label.text = suggestTitle
+        return label
+    }()
+
     private var rotationTurns: CGFloat = 0
 
     // MARK: - Initializer
@@ -60,35 +112,9 @@ final class ILDharmaNameSuggestionField: UIView, UITextFieldDelegate {
 
     // MARK: - Setup
     private func setupViews() {
-        labelView.font = ILTypography.label
-        labelView.textColor = ILColors.inkSubtle
-        labelView.text = label
-
-        inputContainer.translatesAutoresizingMaskIntoConstraints = false
-        inputContainer.backgroundColor = ILColors.surface
-        inputContainer.layer.cornerRadius = ILMetrics.radiusInput
-        inputContainer.layer.borderWidth = 1
-        inputContainer.layer.borderColor = ILColors.ink.withAlphaComponent(0.12).cgColor
-
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        textField.font = ILTypography.bodyLarge
-        textField.textColor = ILColors.ink
         textField.delegate = self
         textField.addTarget(self, action: #selector(textDidChange), for: .editingChanged)
-        // Hút hết khoảng trống còn lại trong hàng — chip gợi ý (hugging .required) nhờ đó luôn bị
-        // đẩy sát mép phải thay vì nằm sát ngay cạnh chữ khi tên ngắn.
-        textField.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         updatePlaceholder()
-
-        ringView.translatesAutoresizingMaskIntoConstraints = false
-        ringView.layer.cornerRadius = 6.5
-        ringView.layer.borderWidth = 1.5
-        ringView.layer.borderColor = ILColors.goldDeep.cgColor
-
-        suggestLabel.font = ILTypography.subheadMedium
-        suggestLabel.textColor = ILColors.goldDeep
-        suggestLabel.text = suggestTitle
 
         let suggestContent = UIStackView(arrangedSubviews: [ringView, suggestLabel])
         suggestContent.axis = .horizontal
@@ -97,12 +123,6 @@ final class ILDharmaNameSuggestionField: UIView, UITextFieldDelegate {
         suggestContent.isUserInteractionEnabled = false
         suggestContent.translatesAutoresizingMaskIntoConstraints = false
 
-        suggestButton.backgroundColor = ILColors.gold.withAlphaComponent(0.14)
-        suggestButton.layer.cornerRadius = ILMetrics.radiusPill
-        suggestButton.layer.borderWidth = 1
-        suggestButton.layer.borderColor = ILColors.gold.withAlphaComponent(0.3).cgColor
-        suggestButton.translatesAutoresizingMaskIntoConstraints = false
-        suggestButton.setContentHuggingPriority(.required, for: .horizontal)
         suggestButton.addTarget(self, action: #selector(handleSuggestTap), for: .touchUpInside)
         suggestButton.addSubview(suggestContent)
 

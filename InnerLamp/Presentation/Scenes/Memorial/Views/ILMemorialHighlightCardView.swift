@@ -15,14 +15,62 @@ final class ILMemorialHighlightCardView: UIControl {
 
     // MARK: - UI Elements
     private let gradientLayer = CAGradientLayer()
-    private let eyebrowLabel = UILabel()
-    private let avatarView = ILAvatarView(initials: "", tone: .gold, size: 64)
-    private let nameLabel = UILabel()
-    private let relationLabel = UILabel()
-    private let divider = UIView()
-    private let dateValueLabel = UILabel()
-    private let whenValueLabel = UILabel()
-    private let remindValueLabel = UILabel()
+    private lazy var eyebrowLabel: UILabel = {
+        let label = UILabel()
+        return label
+    }()
+
+    private lazy var avatarView: ILAvatarView = {
+        let view = ILAvatarView(initials: "", tone: .gold, size: 64)
+        return view
+    }()
+
+    private lazy var nameLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.serifCardTitle
+        label.textColor = ILColors.ink
+        label.numberOfLines = 2
+        return label
+    }()
+
+    private lazy var relationLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.featSub
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var divider: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.featBorder
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var dateValueLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.ink
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var whenValueLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.ink
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var remindValueLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.ink
+        label.numberOfLines = 0
+        return label
+    }()
 
     // MARK: - Initializer
     init() {
@@ -62,14 +110,6 @@ final class ILMemorialHighlightCardView: UIControl {
         gradientLayer.endPoint = CGPoint(x: 0.8, y: 1)
         layer.insertSublayer(gradientLayer, at: 0)
 
-        nameLabel.font = ILTypography.serifCardTitle
-        nameLabel.textColor = ILColors.ink
-        nameLabel.numberOfLines = 2
-
-        relationLabel.font = ILTypography.subhead
-        relationLabel.textColor = ILColors.featSub
-        relationLabel.numberOfLines = 0
-
         let nameStack = UIStackView(arrangedSubviews: [nameLabel, relationLabel])
         nameStack.axis = .vertical
         nameStack.spacing = 4
@@ -78,9 +118,6 @@ final class ILMemorialHighlightCardView: UIControl {
         headerRow.axis = .horizontal
         headerRow.alignment = .center
         headerRow.spacing = ILMetrics.spaceMedium
-
-        divider.backgroundColor = ILColors.featBorder
-        divider.translatesAutoresizingMaskIntoConstraints = false
 
         let detailStack = UIStackView(arrangedSubviews: [
             makeDetailRow(title: "memorial.highlight.date".localized, value: dateValueLabel),
@@ -124,10 +161,6 @@ final class ILMemorialHighlightCardView: UIControl {
         titleLabel.text = title
         titleLabel.setContentHuggingPriority(.required, for: .horizontal)
         titleLabel.widthAnchor.constraint(equalToConstant: Self.detailTitleWidth).isActive = true
-
-        value.font = ILTypography.subhead
-        value.textColor = ILColors.ink
-        value.numberOfLines = 0
 
         let row = UIStackView(arrangedSubviews: [titleLabel, value])
         row.axis = .horizontal

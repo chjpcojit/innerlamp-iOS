@@ -35,11 +35,26 @@ final class ILReaderViewController: BaseViewController {
     private let themeSelectedSubject = PassthroughSubject<Int, Never>()
 
     // MARK: - UI Elements
-    private let headerContainer = UIView()
-    private let headerBorder = UIView()
-    private lazy var headerView = ILNavBar(showBack: true)
-    private let autoScrollRow = ILReaderAutoScrollRowView()
-    private let settingsPanel = ILReaderSettingsPanelView()
+    private lazy var headerContainer: UIView = {
+        let v = UIView()
+        return v
+    }()
+    private lazy var headerBorder: UIView = {
+        let v = UIView()
+        return v
+    }()
+    private lazy var headerView: ILNavBar = {
+        let v = ILNavBar(showBack: true)
+        return v
+    }()
+    private lazy var autoScrollRow: ILReaderAutoScrollRowView = {
+        let v = ILReaderAutoScrollRowView()
+        return v
+    }()
+    private lazy var settingsPanel: ILReaderSettingsPanelView = {
+        let v = ILReaderSettingsPanelView()
+        return v
+    }()
     private lazy var headerStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [headerView, autoScrollRow, settingsPanel])
         stack.axis = .vertical
@@ -48,11 +63,38 @@ final class ILReaderViewController: BaseViewController {
         return stack
     }()
 
-    private let tableView = UITableView(frame: .zero, style: .plain)
-    private let legendFooter = UIView()
-    private let legendBellLabel = UILabel()
-    private let legendKnockLabel = UILabel()
-    private let controlsView = ILReaderControlsView()
+    private lazy var tableView: UITableView = {
+        let v = UITableView(frame: .zero, style: .plain)
+        v.backgroundColor = .clear
+        v.separatorStyle = .none
+        v.showsVerticalScrollIndicator = false
+        v.allowsSelection = false
+        v.rowHeight = UITableView.automaticDimension
+        v.estimatedRowHeight = Self.estimatedRowHeight
+        v.tableHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: ILMetrics.screenHorizontal))
+        v.register(ILReaderLineCell.self, forCellReuseIdentifier: ILReaderLineCell.reuseIdentifier)
+        v.register(ILReaderHeadingCell.self, forCellReuseIdentifier: ILReaderHeadingCell.reuseIdentifier)
+        return v
+    }()
+    private lazy var legendFooter: UIView = {
+        let v = UIView()
+        v.frame = CGRect(x: 0, y: 0, width: 0, height: 26 + 16)
+        return v
+    }()
+    private lazy var legendBellLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        return v
+    }()
+    private lazy var legendKnockLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        return v
+    }()
+    private lazy var controlsView: ILReaderControlsView = {
+        let v = ILReaderControlsView()
+        return v
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILReaderViewModel) {
@@ -102,16 +144,7 @@ final class ILReaderViewController: BaseViewController {
         controlsView.onSeekForwardTap = { [weak self] in self?.seekForwardTappedSubject.send(()) }
         controlsView.onSpeedSelect = { [weak self] speed in self?.speedSelectedSubject.send(speed) }
 
-        tableView.backgroundColor = .clear
-        tableView.separatorStyle = .none
-        tableView.showsVerticalScrollIndicator = false
-        tableView.allowsSelection = false
-        tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = Self.estimatedRowHeight
-        tableView.tableHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: ILMetrics.screenHorizontal))
         tableView.dataSource = self
-        tableView.register(ILReaderLineCell.self, forCellReuseIdentifier: ILReaderLineCell.reuseIdentifier)
-        tableView.register(ILReaderHeadingCell.self, forCellReuseIdentifier: ILReaderHeadingCell.reuseIdentifier)
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleContentTap))
         tap.cancelsTouchesInView = false
         tableView.addGestureRecognizer(tap)
@@ -125,8 +158,6 @@ final class ILReaderViewController: BaseViewController {
     }
 
     private func setupLegendFooter() {
-        legendBellLabel.font = ILTypography.label
-        legendKnockLabel.font = ILTypography.label
         let stack = UIStackView(arrangedSubviews: [legendBellLabel, legendKnockLabel])
         stack.axis = .horizontal
         stack.spacing = 14
@@ -136,7 +167,6 @@ final class ILReaderViewController: BaseViewController {
             stack.centerXAnchor.constraint(equalTo: legendFooter.centerXAnchor),
             stack.topAnchor.constraint(equalTo: legendFooter.topAnchor, constant: 26)
         ])
-        legendFooter.frame = CGRect(x: 0, y: 0, width: 0, height: 26 + 16)
         tableView.tableFooterView = legendFooter
     }
 

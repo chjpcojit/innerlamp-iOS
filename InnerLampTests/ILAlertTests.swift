@@ -40,6 +40,7 @@ final class ILAlertTests: XCTestCase {
         XCTAssertNil(ILAlert.banner(title: "t", message: nil, primary: action, secondary: nil).autoDismissDelay)
         XCTAssertNil(ILAlert.sheet(title: "t", message: "m", errorCode: nil, primary: action, secondary: nil).autoDismissDelay)
         XCTAssertNil(ILAlert.dialog(title: "t", message: "m", primary: action, secondary: nil).autoDismissDelay)
+        XCTAssertNil(ILAlert.confirm(title: "t", message: "m", cancel: action, confirm: action).autoDismissDelay)
         XCTAssertNil(ILAlert.fullScreen(title: "t", subtitle: nil, message: "m", errorCode: nil, primary: action, secondary: nil).autoDismissDelay)
     }
 
@@ -50,6 +51,7 @@ final class ILAlertTests: XCTestCase {
         XCTAssertTrue(ILAlert.snackbar(message: "m", action: nil).isOverlay)
         XCTAssertFalse(ILAlert.sheet(title: "t", message: "m", errorCode: "E1", primary: action, secondary: nil).isOverlay)
         XCTAssertFalse(ILAlert.dialog(title: "t", message: "m", primary: action, secondary: nil).isOverlay)
+        XCTAssertFalse(ILAlert.confirm(title: "t", message: "m", cancel: action, confirm: action).isOverlay)
         XCTAssertFalse(ILAlert.fullScreen(title: "t", subtitle: nil, message: "m", errorCode: nil, primary: action, secondary: nil).isOverlay)
     }
 
@@ -103,6 +105,15 @@ final class ILAlertTests: XCTestCase {
         sut.show(.dialog(title: "Session expired", message: "Log in again", primary: action, secondary: nil), from: hostViewController)
 
         XCTAssertTrue(hostViewController.presentedViewController is ILErrorDialogViewController)
+        XCTAssertEqual(hostViewController.presentedViewController?.modalPresentationStyle, .overFullScreen)
+    }
+
+    func test_show_confirm_presentsConfirmDialogOverHost() {
+        let sut = ILAlertPresenter()
+
+        sut.show(.confirm(title: "Đăng xuất?", message: "m", cancel: action, confirm: action), from: hostViewController)
+
+        XCTAssertTrue(hostViewController.presentedViewController is ILConfirmDialogViewController)
         XCTAssertEqual(hostViewController.presentedViewController?.modalPresentationStyle, .overFullScreen)
     }
 

@@ -4,6 +4,21 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v1.11 (2026-10-11) — "Sự kiện Phật giáo" carousel reads the calendar-events API
+
+- `requirements.md`: new EARS criterion — load the whole current year from
+  `GET /v1/calendar/events`, group by solar month, open on the current month,
+  empty carousel on failure.
+- `design.md`: new "API contract — calendar events" section (request, response,
+  mapping, what Home uses vs. reserves). `tasks.md`: new checked item + two open
+  ones. Headers re-synced to 1.11.
+- Code: `CalendarEventsEndpoint`, `ILCalendarEventsDTO`, `ILCalendarEventMapper`,
+  `ILCalendarEventsEntity`, `ILCalendarEventRepository(+Impl)`; `ILHomeUseCaseImpl`
+  swaps `ILBuddhistEventUseCase` for `ILCalendarEventRepository`. Festivals is
+  untouched (still local catalogue). Build for `generic/platform=iOS` passes;
+  tests written but not run (no simulator/device runner).
+- New: `AS-Home-003`, `TD-Home-003`.
+
 ## v1.10 (2026-10-07) — "Ảnh chùa đẹp" block reads the gallery API
 
 - `requirements.md`: new EARS criterion — the block loads `GET /v1/gallery/top`,

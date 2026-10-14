@@ -1,7 +1,7 @@
 # Design — SignUp
 
-Version: 1.13
-Last updated: 2026-09-23
+Version: 1.15
+Last updated: 2026-10-11
 Status: in-progress — UI + local logic + API integration done; the OTP-timing
 question is resolved and prose synced to the shipped call; manual real-backend
 test pending (`tasks.md` Phase 3)
@@ -20,13 +20,13 @@ parent feature coordinator.
 
 | Layer | File | Responsibility |
 |---|---|---|
-| Domain / Entity | `Domain/Entities/ILSignUpEntity.swift` | Pure business fields only: `displayName`, `phoneNumber`, `ordinationPlace` (optional, added v1.6), `email` (required as of v1.6 — for donation receipts), `password`. No UI-only state. |
-| Domain / UseCase | `Domain/UseCases/SignUp/ILSignUpUseCase.swift` | Validation rules (`validateDisplayName`/`validatePhoneNumber`/`validateEmail`/`validatePassword`, password minimum = 8 via `minimumPasswordLength`), dharma name suggestions, password strength scoring, `sendVerificationCode(displayName:ordinationPlace:phoneNumber:email:password:) async throws -> ILSignUpOTPEntity` — builds the `ILSignUpEntity` and delegates to the repository. Also owns `ILSignUpError`, the feature error type the repository maps `NetworkError` into. |
+| Domain / Entity | `Domain/Entities/ILSignUpEntity.swift` | Pure business fields only: `fullName` (required, v1.15), `displayName`, `phoneNumber`, `ordinationTempleID` (optional temple id, v1.14; was `ordinationPlace`), `email` (required as of v1.6 — for donation receipts), `password`. No UI-only state. |
+| Domain / UseCase | `Domain/UseCases/SignUp/ILSignUpUseCase.swift` | Validation rules (`validateFullName`/`validateDisplayName`/`validatePhoneNumber`/`validateEmail`/`validatePassword`, password minimum = 8 via `minimumPasswordLength`), dharma name suggestions, password strength scoring, `sendVerificationCode(fullName:displayName:ordinationTempleID:phoneNumber:email:password:) async throws -> ILSignUpOTPEntity` — builds the `ILSignUpEntity` and delegates to the repository. Also owns `ILSignUpError`, the feature error type the repository maps `NetworkError` into. |
 | Domain / Validation | `Domain/Validation/ILEmailValidator.swift` | Single source of truth for the email format regex (added v1.6) — used by `validateEmail` (submit-time) and `ILSignUpStateModel.isEmailFormatValid` (live feedback). Foundation only. |
 | Domain / Entity | `Domain/Entities/ILSignUpOTPEntity.swift` | Metadata returned by a successful `request-otp`: `message`, `expiresInSeconds`, `resendAfterSeconds`. Carried from SignUp to the OTP screen so its countdown and expiry copy use the server's real values — the response-shape ⚠️ is resolved in favour of passing the timing through (v1.13). |
 | Domain / Repository | `Domain/Repositories/ILSignUpRepository.swift` | Entity in / Entity out only: `requestRegistrationOTP(_ entity: ILSignUpEntity) async throws -> ILSignUpOTPEntity`. No DTO and no `NetworkError` may cross this line. |
 | Data / Repository | `Data/Repositories/ILSignUpRepositoryImpl.swift` | The only place a DTO may exist above `NetworkService`: maps Entity → request DTO via `ILSignUpMapper`, calls `NetworkService`, maps the response DTO back, and converts `NetworkError` → `ILSignUpError`. Injected into `ILSignUpUseCaseImpl`. |
-| Data / DTO | `Data/DTOs/ILSignUpDTO.swift` | `ILSignUpRequestOTPRequestDTO: Encodable` with explicit snake_case `CodingKeys` (`dharma_name`, `ordination_place`, `phone_number`, `email`, `password`) + `ILSignUpRequestOTPResponseDTO: Decodable` (`message`, `expiresInSeconds`, `resendAfterSeconds`) — no `CodingKeys` on the response, the shared decoder's `.convertFromSnakeCase` handles it. One type per wire shape. |
+| Data / DTO | `Data/DTOs/ILSignUpDTO.swift` | `ILSignUpRequestOTPRequestDTO: Encodable` with explicit snake_case `CodingKeys` (`full_name`, `dharma_name`, `ordination_temple_id` — omitted when `nil`, `phone_number`, `email`, `password`) + `ILSignUpRequestOTPResponseDTO: Decodable` (`message`, `expiresInSeconds`, `resendAfterSeconds`) — no `CodingKeys` on the response, the shared decoder's `.convertFromSnakeCase` handles it. One type per wire shape. |
 | Data / Mapper | `Data/DTOs/Mappers/ILSignUpMapper.swift` | `enum ILSignUpMapper` — static field-for-field `toDTO` / `toDomain`. Never touches `ILSignUpStateModel`. |
 | Data / Endpoint | `Data/DataSources/Remote/RequestRegistrationOTPEndpoint.swift` | `POST /v1/auth/register/request-otp`, `requiresAuth = false` (public — no token regardless of Keychain state), JSON body from the request DTO. Unprefixed `<Action>Endpoint` types live under `Data/DataSources/Remote/`, per `data-builder`'s placement rule (not `Core/Networking/`). |
 | Presentation / State | `Presentation/Scenes/SignUp/ILSignUpStateModel.swift` | UI-only state: field errors (incl. `emailError`, `ordinationPlace` value), password strength, submitting flag, derived display values (`phoneE164`, `phoneHint`). No UIKit import. |
@@ -59,15 +59,16 @@ AppCoordinator
 1. `ILSignUpViewController.handleSubmitTapped()` → `submitTappedSubject`.
 2. `ILSignUpViewModel.handleSubmit()`:
    - Guard `!isSubmitting && didAcceptTerms`.
-   - Validate `displayName` / `phoneNumber` / `email` / `password`
+   - Validate `fullName` / `displayName` / `phoneNumber` / `email` / `password`
      synchronously via `useCase.validateXxx` (country-aware phone
-     validation; email required + format; password ≥ 8). `ordinationPlace`
-     is never validated.
+     validation; email required + format; password ≥ 8). The ordination
+     place is never validated.
    - On validation error → emit state with per-field errors, stop.
    - On valid → `isSubmitting = true`, emit loading state, spawn `Task`
-     calling `useCase.sendVerificationCode(displayName:ordinationPlace:phoneNumber:email:password:)`
-     with `currentState.phoneE164` (grouped, dial-code-prefixed) and the
-     trimmed `ordinationPlace`/`email`.
+     calling `useCase.sendVerificationCode(fullName:displayName:ordinationTempleID:phoneNumber:email:password:)`
+     with `currentState.phoneE164` (grouped, dial-code-prefixed), the
+     trimmed `email` and `selectedOrdinationPlaceID` (`nil` for "Chưa
+     xuất gia" or a pending `proposed-…` temple).
    - Success → emit
      `.didRequestVerification(phoneNumber:otpExpiresInSeconds:resendAfterSeconds:)`
      using the `ILSignUpOTPEntity` the repository returned.
@@ -101,7 +102,30 @@ point) and matching `Docs/Specs/API/openapi.yaml`
   over the live state in `ILSignUpViewController.updateUI`, and is
   cleared when the user edits the field.
 
-## Ordination place field (optional, added v1.6)
+## Ordination place picker (v1.14 — supersedes the v1.6 notes below)
+
+Source: `GET /v1/temples/options` (public, page size 100, `?page=N`,
+optional `?q=` — name only, contains, accent/case-insensitive). The
+temple catalog `GET /v1/temples` is **not** used here any more.
+
+| Layer | Piece |
+|---|---|
+| Data / Remote | `TempleOptionsEndpoint(page:query:)` — leaves a blank `q` out (server answers `400 INVALID_FILTER` to `?q=`), trims and caps `q` at 100 chars |
+| Data / DTO | `ILTempleOptionDTO` (`id`, `name`, `province`, `provinceCode?`) inside the shared `ILCatalogPageDTO` |
+| Data / Repo | `ILTempleOptionRepositoryImpl` — network only, no Core Data cache (no cache headers, result depends on `q`); errors → `ILCatalogError` |
+| Domain | `ILTempleOptionEntity`, `ILTempleOptionRepository`, `ILOrdinationPlaceUseCase.loadPlaces(query:page:)` (province becomes the row subtitle, duplicate ids dropped) |
+| Presentation | `ILSignUpViewModel`: debounce 300 ms + `removeDuplicates` on the keyword, request token so a stale response is dropped, `loadMore` guarded against in-flight requests; `ILOrdinationPlaceFieldView`: no local filtering, appends only the new rows, loads more near the end of the scroll, resets the search to `""` when the panel closes |
+
+Data flow on submit: the picked row's server id → `selectedOrdinationPlaceID`
+→ `ILSignUpEntity.ordinationTempleID` → `ordination_temple_id`. The
+temporary `proposed-…` id of a temple proposed through AddTemple is never
+sent (see TD-SignUp-002).
+
+Known limitations: AddTemple's duplicate check only sees the pages loaded
+so far (TD-SignUp-003); the login / verify-otp response is still decoded
+through `ordination_place` (TD-SignUp-004).
+
+## Ordination place field (optional, added v1.6 — historical)
 
 New optional free-text field "Nơi xuất gia" placed right after the
 dharma name. Maps to `ordination_place` (nullable) in
@@ -153,7 +177,7 @@ resend**:
 
 | Route | Caller | Request | Success data | Confirmed failures |
 |---|---|---|---|---|
-| `POST /v1/auth/register/request-otp` | SignUp (this feature) | `dharma_name`, `ordination_place` (optional), `phone_number` (grouped display string; normalized to E.164 server-side), `email`, `password` | `message`, `expires_in_seconds` (90), `resend_after_seconds` (60) | `400` VALIDATION_ERROR / INVALID_EMAIL / INVALID_PHONE / INVALID_PASSWORD, `409` PHONE_TAKEN / EMAIL_TAKEN, `413` PAYLOAD_TOO_LARGE, `429` OTP_LOCKED / OTP_RESEND_TOO_SOON / OTP_SEND_LIMITED, `500` SMS_SEND_FAILED / INTERNAL_ERROR |
+| `POST /v1/auth/register/request-otp` | SignUp (this feature) | `full_name` (v1.15, ⚠️ unconfirmed by backend), `dharma_name`, `ordination_temple_id` (optional; id from `GET /v1/temples/options`), `phone_number` (grouped display string; normalized to E.164 server-side), `email`, `password` | `message`, `expires_in_seconds` (90), `resend_after_seconds` (60) | `400` VALIDATION_ERROR / INVALID_EMAIL / INVALID_PHONE / INVALID_PASSWORD / INVALID_DHARMA_NAME (→ `invalidInput`) / INVALID_TEMPLE (→ `invalidTemple`, "pick again"), `409` PHONE_TAKEN / EMAIL_TAKEN, `413` PAYLOAD_TOO_LARGE, `429` OTP_LOCKED / OTP_RESEND_TOO_SOON / OTP_SEND_LIMITED, `500` SMS_SEND_FAILED / INTERNAL_ERROR |
 | `POST /v1/auth/register/verify-otp` | OTP feature (out of SignUp's scope) | `phone_number`, `otp_code` | `access_token`, `refresh_token`, `user` | `400` OTP_INVALID / OTP_EXPIRED / PENDING_REGISTRATION_EXPIRED, `409` PHONE_TAKEN / EMAIL_TAKEN, `413`, `429` OTP_LOCKED, `500` INTERNAL_ERROR |
 | `POST /v1/auth/resend-otp` | OTP feature (out of SignUp's scope) | `phone_number`, `purpose` (`"register"`) | `message`, `expires_in_seconds`, `resend_after_seconds`, `resend_remaining` | `400` OTP_INVALID / PENDING_REGISTRATION_EXPIRED / UNSUPPORTED_OTP_PURPOSE, `413`, `429` OTP_LOCKED / OTP_RESEND_TOO_SOON / OTP_SEND_LIMITED, `500` SMS_SEND_FAILED / INTERNAL_ERROR |
 
@@ -175,13 +199,13 @@ returning the first session's tokens (AC1/AC2/AC3/AC7).
 ```
 Step 1 — Submit SignUp form (this feature)
 - Trigger: user taps "Gửi mã xác thực", local validation passes
-- Pre-condition: displayName/phoneNumber/email/password pass
+- Pre-condition: fullName/displayName/phoneNumber/email/password pass
   useCase.validateXxx (client-side only; submit is also ignored while a
   request is already in flight)
 - API: POST /v1/auth/register/request-otp
   Body (snake_case, explicit CodingKeys on the request DTO):
-  dharma_name (= displayName), ordination_place (optional; empty string
-  when the user left it blank), phone_number (grouped display string, e.g.
+  full_name (= trimmed fullName), dharma_name (= displayName), ordination_temple_id (optional; omitted
+  when no temple is picked), phone_number (grouped display string, e.g.
   "+84 912 345 678"), email, password (min 8). requiresAuth = false.
   Confirmed: the server checks phone/email uniqueness as part of handling
   this same call (no separate "check exists" call) and persists only to

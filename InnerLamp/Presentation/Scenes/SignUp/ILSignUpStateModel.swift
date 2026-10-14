@@ -32,20 +32,29 @@ enum ILPasswordStrength: Equatable {
 /// Plain state model cho màn Đăng ký tài khoản — không UIKit, không business logic.
 /// `ViewController` chỉ đọc field lỗi/trạng thái để hiển thị UI, không tự validate.
 struct ILSignUpStateModel {
+    /// Họ và tên thật — bắt buộc, nhập tự do (khác `displayName` là pháp danh/tên gọi).
+    var fullName: String = ""
     var displayName: String = ""
     /// Vị trí hiện tại trong `ILSignUpUseCase.dharmaNameSuggestions` — field "Pháp danh" trong
     /// design handoff không có ô nhập tự do, chỉ có giá trị gợi ý + nút xoay vòng (`rollName`).
     var displayNameSuggestionIndex: Int = 0
 
-    /// Tuỳ chọn — nơi xuất gia/thọ giới (`ordination_place`). Nhập tự do, không validate, không
-    /// chặn submit (rỗng = không gửi).
+    /// Tên chùa đang chọn làm nơi xuất gia — tuỳ chọn, không validate, không chặn submit (rỗng =
+    /// "Chưa xuất gia"). Chỉ để hiển thị; thứ được gửi lên server là `selectedOrdinationPlaceID`.
     var ordinationPlace: String = ""
 
-    /// Danh sách chùa cho bộ chọn nơi xuất gia — tải một lần khi người dùng mở bộ chọn lần đầu.
+    /// Các chùa đã tải cho bộ chọn nơi xuất gia — từng trang 100 chùa từ server, đã lọc theo từ
+    /// khoá tìm kiếm hiện tại (rỗng = toàn bộ danh bạ).
     var ordinationPlaceOptions: [ILOrdinationPlaceEntity] = []
+    /// Đang tải trang đầu (mở bộ chọn lần đầu hoặc vừa đổi từ khoá).
     var isLoadingOrdinationPlaces: Bool = false
-    /// Id của chùa vừa được đề xuất và chọn từ màn "Thêm thông tin chùa" — để bộ chọn đánh dấu
-    /// dòng đó. `nil` khi người dùng chọn lại từ chính bộ chọn.
+    /// Đang tải trang kế tiếp khi cuộn xuống cuối danh sách.
+    var isLoadingMoreOrdinationPlaces: Bool = false
+    /// Server còn trang kế tiếp cho từ khoá hiện tại.
+    var hasMoreOrdinationPlaces: Bool = false
+    /// Id của chùa đang chọn — id server của chùa trong danh bạ, hoặc id tạm `proposed-…` của chùa
+    /// vừa đề xuất từ màn "Thêm thông tin chùa" (chưa có id thật nên không gửi lên server). `nil`
+    /// khi chọn "Chưa xuất gia".
     var selectedOrdinationPlaceID: String?
 
     /// Số quốc gia đang chọn cho mã vùng (`ccIdx`/`toggleCC` trong design handoff) — mặc định
@@ -59,6 +68,7 @@ struct ILSignUpStateModel {
     var email: String = ""
     var password: String = ""
 
+    var fullNameError: String?
     var displayNameError: String?
     var phoneNumberError: String?
     var emailError: String?
@@ -78,7 +88,7 @@ struct ILSignUpStateModel {
     var isSubmitting: Bool = false
 
     var hasValidationError: Bool {
-        displayNameError != nil || phoneNumberError != nil || emailError != nil || passwordError != nil
+        fullNameError != nil || displayNameError != nil || phoneNumberError != nil || emailError != nil || passwordError != nil
     }
 
     /// Chỉ giữ chữ số, bỏ số 0 đầu (khớp `nationalDigits()` trong design handoff — người dùng có

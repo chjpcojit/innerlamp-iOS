@@ -22,11 +22,47 @@ final class ILHomeBellCardView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let iconTile = UIView()
-    private let iconView = UIImageView()
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private let chevronLabel = UILabel()
+    private lazy var iconTile: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.Tone.gold.tintBackground
+        v.layer.cornerRadius = ILMetrics.radiusIconTileLarge
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var iconView: UIImageView = {
+        let v = UIImageView()
+        v.image = ILIcons.homeMo
+        v.tintColor = ILColors.Tone.gold.accentColor
+        v.contentMode = .scaleAspectFit
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var titleLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.scriptureBodySmall
+        v.textColor = ILColors.ink
+        v.text = title
+        v.numberOfLines = 1
+        return v
+    }()
+    private lazy var subtitleLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmall
+        v.textColor = ILColors.inkTertiary
+        v.text = subtitle
+        v.numberOfLines = 2
+        return v
+    }()
+    private lazy var chevronLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.chevron
+        v.textColor = ILColors.inkFaint
+        v.text = "›"
+        v.setContentHuggingPriority(.required, for: .horizontal)
+        v.isUserInteractionEnabled = false
+        return v
+    }()
 
     // MARK: - Initializer
     init() {
@@ -45,38 +81,13 @@ final class ILHomeBellCardView: UIControl {
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
 
-        iconTile.backgroundColor = ILColors.Tone.gold.tintBackground
-        iconTile.layer.cornerRadius = ILMetrics.radiusIconTileLarge
-        iconTile.isUserInteractionEnabled = false
-        iconTile.translatesAutoresizingMaskIntoConstraints = false
-
-        iconView.image = ILIcons.homeMo
-        iconView.tintColor = ILColors.Tone.gold.accentColor
-        iconView.contentMode = .scaleAspectFit
-        iconView.translatesAutoresizingMaskIntoConstraints = false
         iconTile.addSubview(iconView)
-
-        titleLabel.font = ILTypography.scriptureBodySmall
-        titleLabel.textColor = ILColors.ink
-        titleLabel.text = title
-        titleLabel.numberOfLines = 1
-
-        subtitleLabel.font = ILTypography.bodySmall
-        subtitleLabel.textColor = ILColors.inkTertiary
-        subtitleLabel.text = subtitle
-        subtitleLabel.numberOfLines = 2
 
         let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
         textStack.axis = .vertical
         textStack.spacing = 3
         textStack.alignment = .leading
         textStack.isUserInteractionEnabled = false
-
-        chevronLabel.font = ILTypography.chevron
-        chevronLabel.textColor = ILColors.inkFaint
-        chevronLabel.text = "›"
-        chevronLabel.setContentHuggingPriority(.required, for: .horizontal)
-        chevronLabel.isUserInteractionEnabled = false
 
         let contentStack = UIStackView(arrangedSubviews: [iconTile, textStack, chevronLabel])
         contentStack.axis = .horizontal

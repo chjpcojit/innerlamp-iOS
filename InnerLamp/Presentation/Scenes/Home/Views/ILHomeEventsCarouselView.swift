@@ -24,15 +24,39 @@ final class ILHomeEventsCarouselView: UIView {
 
     var onEventTap: ((ILHomeEventItemModel) -> Void)?
 
+    /// Chạm dòng "+N sự kiện khác" ở cuối thẻ tháng có hơn 3 sự kiện.
+    var onMoreTap: (() -> Void)?
+
     /// Bề rộng 1 thẻ theo khung hiện tại; dùng chung cho cả lúc dựng thẻ lẫn lúc tính snap.
     private var cardWidth: CGFloat { (bounds.width * Self.cardWidthRatio).rounded(.down) }
     /// Khoảng cách giữa 2 mép trái liên tiếp = bề rộng thẻ + spacing.
     private var pageStride: CGFloat { cardWidth + Self.cardSpacing }
 
     // MARK: - UI Elements
-    private let scrollView = UIScrollView()
-    private let cardsStack = UIStackView()
-    private let dotsStack = UIStackView()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsHorizontalScrollIndicator = false
+        v.decelerationRate = .fast
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var cardsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = Self.cardSpacing
+        v.alignment = .top
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var dotsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = 6
+        v.alignment = .center
+        v.distribution = .equalCentering
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     private var cardWidthConstraints: [NSLayoutConstraint] = []
     private var currentPage = 0
 
@@ -48,22 +72,8 @@ final class ILHomeEventsCarouselView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        scrollView.showsHorizontalScrollIndicator = false
-        scrollView.decelerationRate = .fast
         scrollView.delegate = self
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-
-        cardsStack.axis = .horizontal
-        cardsStack.spacing = Self.cardSpacing
-        cardsStack.alignment = .top
-        cardsStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(cardsStack)
-
-        dotsStack.axis = .horizontal
-        dotsStack.spacing = 6
-        dotsStack.alignment = .center
-        dotsStack.distribution = .equalCentering
-        dotsStack.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(scrollView)
         addSubview(dotsStack)
@@ -108,6 +118,7 @@ final class ILHomeEventsCarouselView: UIView {
         for month in months {
             let card = ILHomeEventMonthCardView(month: month)
             card.onEventTap = { [weak self] event in self?.onEventTap?(event) }
+            card.onMoreTap = { [weak self] in self?.onMoreTap?() }
             let widthConstraint = card.widthAnchor.constraint(equalToConstant: width)
             widthConstraint.isActive = true
             cardWidthConstraints.append(widthConstraint)
@@ -178,6 +189,7 @@ extension ILHomeEventsCarouselView: UIScrollViewDelegate {
 private final class ILHomeEventMonthCardView: UIView {
 
     var onEventTap: ((ILHomeEventItemModel) -> Void)?
+    var onMoreTap: (() -> Void)?
 
     private let month: ILHomeEventMonthModel
 
@@ -232,8 +244,14 @@ private final class ILHomeEventMonthCardView: UIView {
             eventsStack.addArrangedSubview(row)
         }
 
+        // Thẻ chỉ liệt kê 3 sự kiện đầu — phần còn lại gộp thành dòng "+N sự kiện khác" (prototype
+        // `hasMore`): vạch kẻ trên, chữ `link`, chạm mở màn Lịch lễ.
+        let hiddenCount = month.totalEventsCount - month.events.count
+        let moreRow: UIView? = hiddenCount > 0 ? makeMoreRow(hiddenCount: hiddenCount) : nil
+
         addSubview(headerRow)
         addSubview(eventsStack)
+        if let moreRow { addSubview(moreRow) }
 
         NSLayoutConstraint.activate([
             headerRow.topAnchor.constraint(equalTo: topAnchor, constant: 16),
@@ -243,8 +261,18 @@ private final class ILHomeEventMonthCardView: UIView {
             eventsStack.topAnchor.constraint(equalTo: headerRow.bottomAnchor, constant: 10),
             eventsStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             eventsStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            eventsStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -14)
+            eventsStack.bottomAnchor.constraint(
+                equalTo: moreRow?.topAnchor ?? bottomAnchor,
+                constant: moreRow == nil ? -14 : -8
+            )
         ])
+        if let moreRow {
+            NSLayoutConstraint.activate([
+                moreRow.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+                moreRow.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+                moreRow.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -14)
+            ])
+        }
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILHomeEventMonthCardView, _) in
             view.applyColorAppearanceChange()
         }
@@ -252,6 +280,51 @@ private final class ILHomeEventMonthCardView: UIView {
 
     private func applyColorAppearanceChange() {
         layer.borderColor = ILColors.border.cgColor
+    }
+
+    /// Dòng "+N sự kiện khác": vạch kẻ 1pt phía trên, đệm 10pt, chữ `bodySmallMedium` màu `link`.
+    private func makeMoreRow(hiddenCount: Int) -> UIView {
+        let container = UIView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+
+        let divider = UIView()
+        divider.backgroundColor = ILColors.border
+        divider.translatesAutoresizingMaskIntoConstraints = false
+
+        let label = UILabel()
+        label.font = ILTypography.bodySmallMedium
+        label.textColor = ILColors.link
+        label.text = String(format: "home.events.moreFormat".localized, hiddenCount)
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        let control = UIControl()
+        control.translatesAutoresizingMaskIntoConstraints = false
+        control.addTarget(self, action: #selector(handleMoreTap), for: .touchUpInside)
+
+        container.addSubview(divider)
+        container.addSubview(label)
+        container.addSubview(control)
+        NSLayoutConstraint.activate([
+            divider.topAnchor.constraint(equalTo: container.topAnchor),
+            divider.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            divider.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            divider.heightAnchor.constraint(equalToConstant: 1),
+
+            label.topAnchor.constraint(equalTo: divider.bottomAnchor, constant: 10),
+            label.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            label.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor),
+            label.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+
+            control.topAnchor.constraint(equalTo: container.topAnchor),
+            control.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            control.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            control.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+        return container
+    }
+
+    @objc private func handleMoreTap() {
+        onMoreTap?()
     }
 }
 

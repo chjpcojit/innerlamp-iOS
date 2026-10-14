@@ -18,48 +18,86 @@ final class ILHomeUseCaseTests: XCTestCase {
         return calendar
     }
 
-    private var template: ILBuddhistEventTemplateEntity {
-        ILBuddhistEventTemplateEntity(
-            id: "tet",
-            title: "Tết Nguyên Đán",
-            eventDescription: "",
-            lunarDay: 1,
-            lunarMonth: 1,
-            tradition: .universal,
-            category: .folk,
-            isLeapMonthEligible: false
+    private func event(_ code: String, name: String, groups: [String] = ["buddhist"]) -> ILCalendarEventEntity {
+        ILCalendarEventEntity(
+            code: code, name: name, shortDescription: "", longDescription: "", guidance: "",
+            imageURL: nil, groupCodes: groups, isPublicHoliday: false
         )
     }
 
-    // MARK: - Buddhist event months range
+    private func occurrence(_ code: String, _ year: Int, _ month: Int, _ day: Int, lunarDay: Int, lunarMonth: Int, leap: Bool = false) -> ILCalendarOccurrenceEntity {
+        ILCalendarOccurrenceEntity(
+            eventCode: code,
+            solarDate: calendar.date(from: DateComponents(year: year, month: month, day: day)) ?? Date(),
+            lunarDay: lunarDay, lunarMonth: lunarMonth, isLeapMonth: leap
+        )
+    }
 
-    func test_loadBuddhistEventMonths_spansFullCalendarYear() async throws {
-        let mock = MockILBuddhistEventUseCase()
-        mock.templates = [template]
-        let sut = ILHomeUseCaseImpl(buddhistEventUseCase: mock, sutraQuoteUseCase: MockILSutraQuoteUseCase(), templeRepository: MockILTempleRepository(), deityCatalogRepository: MockILDeityCatalogRepository(), articleRepository: MockILArticleRepository(), photosRepository: MockILPhotosRepository())
+    private func makeEventsSUT(_ repository: MockILCalendarEventRepository) -> ILHomeUseCaseImpl {
+        ILHomeUseCaseImpl(calendarEventRepository: repository, sutraQuoteUseCase: MockILSutraQuoteUseCase(), templeRepository: MockILTempleRepository(), deityCatalogRepository: MockILDeityCatalogRepository(), articleRepository: MockILArticleRepository(), photosRepository: MockILPhotosRepository())
+    }
 
-        let date = calendar.date(from: DateComponents(year: 2026, month: 9, day: 27))
-        let midYear = try XCTUnwrap(date)
+    // MARK: - Buddhist event months (server)
+
+    func test_loadBuddhistEventMonths_requestsTheYearOfTheGivenDate() async throws {
+        let repository = MockILCalendarEventRepository()
+        let sut = makeEventsSUT(repository)
+        let midYear = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 9, day: 27)))
 
         _ = try await sut.loadBuddhistEventMonths(around: midYear)
 
-        let yearInterval = calendar.dateInterval(of: .year, for: midYear)
-        XCTAssertEqual(mock.lastFrom, yearInterval?.start, "Range must start at Jan 1 of the current year")
-        XCTAssertEqual(mock.lastTo, yearInterval?.end, "Range must end at Jan 1 of the following year")
+        XCTAssertEqual(repository.requestedYears, [2026], "Whole calendar year, 1/1 → 31/12, in one call")
     }
 
-    func test_loadBuddhistEventMonths_returnsEmpty_whenNoTemplates() async throws {
-        let mock = MockILBuddhistEventUseCase()
-        mock.templates = []
-        let sut = ILHomeUseCaseImpl(buddhistEventUseCase: mock, sutraQuoteUseCase: MockILSutraQuoteUseCase(), templeRepository: MockILTempleRepository(), deityCatalogRepository: MockILDeityCatalogRepository(), articleRepository: MockILArticleRepository(), photosRepository: MockILPhotosRepository())
+    func test_loadBuddhistEventMonths_returnsEmpty_whenServerHasNoOccurrences() async throws {
+        let sut = makeEventsSUT(MockILCalendarEventRepository())
 
-        let date = calendar.date(from: DateComponents(year: 2026, month: 9, day: 27))
-        let midYear = try XCTUnwrap(date)
-
-        let months = try await sut.loadBuddhistEventMonths(around: midYear)
+        let months = try await sut.loadBuddhistEventMonths(around: Date())
 
         XCTAssertTrue(months.isEmpty)
-        XCTAssertNil(mock.lastFrom, "occurrences must not be called when templates are empty")
+    }
+
+    func test_loadBuddhistEventMonths_groupsByMonthInChronologicalOrder_withLunarLabelAndTone() async throws {
+        let repository = MockILCalendarEventRepository()
+        repository.result = .success(ILCalendarEventsEntity(
+            year: 2026,
+            groups: [],
+            events: [
+                event("phat-dan", name: "Phật Đản"),
+                event("ram", name: "Rằm", groups: ["buddhist", "folk"]),
+                event("tet-duong-lich", name: "Tết Dương lịch", groups: ["vietnam"])
+            ],
+            occurrences: [
+                occurrence("tet-duong-lich", 2026, 1, 1, lunarDay: 13, lunarMonth: 11),
+                occurrence("ram", 2026, 5, 1, lunarDay: 15, lunarMonth: 3),
+                occurrence("phat-dan", 2026, 5, 31, lunarDay: 15, lunarMonth: 4)
+            ]
+        ))
+        let sut = makeEventsSUT(repository)
+        let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 5, day: 10)))
+
+        let months = try await sut.loadBuddhistEventMonths(around: date)
+
+        XCTAssertEqual(months.map(\.id), ["2026-01", "2026-05"])
+        XCTAssertEqual(months[0].events.map(\.title), ["Tết Dương lịch"])
+        XCTAssertEqual(months[0].events.first?.tone, .rose)
+        XCTAssertEqual(months[1].events.map(\.title), ["Rằm", "Phật Đản"])
+        XCTAssertEqual(months[1].events.map(\.tone), [.gold, .gold])
+        XCTAssertEqual(months[1].events.first?.lunarLabel, "lunarCalendar.day.fullMoon".localized + " · " + ILLunarCalendar.lunarMonthLabel(3, isLeap: false))
+        XCTAssertEqual(Set(months[1].events.map(\.id)).count, 2, "Occurrences of the same event must keep distinct ids")
+    }
+
+    func test_loadBuddhistEventMonths_propagatesRepositoryFailure() async {
+        let repository = MockILCalendarEventRepository()
+        repository.result = .failure(ILCatalogError.offline)
+        let sut = makeEventsSUT(repository)
+
+        do {
+            _ = try await sut.loadBuddhistEventMonths(around: Date())
+            XCTFail("Expected the offline error to propagate")
+        } catch {
+            guard case .offline? = error as? ILCatalogError else { return XCTFail("Expected .offline, got \(error)") }
+        }
     }
 
     // MARK: - Deity carousel
@@ -285,7 +323,7 @@ final class ILHomeUseCaseTests: XCTestCase {
         photosRepository: ILPhotosRepository = MockILPhotosRepository()
     ) -> ILHomeUseCaseImpl {
         ILHomeUseCaseImpl(
-            buddhistEventUseCase: MockILBuddhistEventUseCase(),
+            calendarEventRepository: MockILCalendarEventRepository(),
             sutraQuoteUseCase: sutraQuoteUseCase,
             templeRepository: templeRepository,
             deityCatalogRepository: deityCatalogRepository,
@@ -365,27 +403,17 @@ private final class MockILSutraQuoteUseCase: ILSutraQuoteUseCase {
     func randomQuotes(count: Int) async throws -> [ILSutraQuoteEntity] { [] }
 }
 
-/// Records the range passed to `occurrences` so the test can assert it, while standing in for the
-/// real Buddhist-event use case.
-private final class MockILBuddhistEventUseCase: ILBuddhistEventUseCase {
+/// Stands in for the server event calendar; records the requested years.
+private final class MockILCalendarEventRepository: ILCalendarEventRepository {
 
-    var templates: [ILBuddhistEventTemplateEntity] = []
-    var lastFrom: Date?
-    var lastTo: Date?
+    var result: Result<ILCalendarEventsEntity, Error> = .success(
+        ILCalendarEventsEntity(year: 0, groups: [], events: [], occurrences: [])
+    )
+    private(set) var requestedYears: [Int] = []
 
-    func loadTemplates() async throws -> [ILBuddhistEventTemplateEntity] {
-        templates
-    }
-
-    func occurrences(
-        of templates: [ILBuddhistEventTemplateEntity],
-        from start: Date,
-        to end: Date,
-        calendar: Calendar
-    ) -> [ILBuddhistEventOccurrenceEntity] {
-        lastFrom = start
-        lastTo = end
-        return []
+    func loadEvents(year: Int) async throws -> ILCalendarEventsEntity {
+        requestedYears.append(year)
+        return try result.get()
     }
 }
 

@@ -18,7 +18,7 @@ final class ILTalkChaptersEmptyView: UIView {
     // MARK: - UI Elements
     private let dashedBorder = CAShapeLayer()
 
-    private let iconCircle: UIView = {
+    private lazy var iconCircle: UIView = {
         let view = UIView()
         view.backgroundColor = ILColors.gold.withAlphaComponent(0.12)
         view.layer.cornerRadius = 22
@@ -27,14 +27,14 @@ final class ILTalkChaptersEmptyView: UIView {
         return view
     }()
 
-    private let iconView: UIImageView = {
+    private lazy var iconView: UIImageView = {
         let imageView = UIImageView(image: ILIcons.linesEmpty)
         imageView.tintColor = ILColors.gold
         imageView.contentMode = .center
         return imageView
     }()
 
-    private let titleLabel: UILabel = {
+    private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.font = ILTypography.serifCardTitle
         label.textColor = ILColors.ink
@@ -43,7 +43,7 @@ final class ILTalkChaptersEmptyView: UIView {
         return label
     }()
 
-    private let subtitleLabel: UILabel = {
+    private lazy var subtitleLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 0
         return label

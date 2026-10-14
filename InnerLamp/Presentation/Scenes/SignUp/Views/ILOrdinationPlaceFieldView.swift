@@ -5,7 +5,7 @@
 
 import UIKit
 
-/// Lọc danh sách chùa cho bộ chọn nơi xuất gia — thuần dữ liệu để test được, không phụ thuộc UI.
+/// Dựng các hàng của bộ chọn nơi xuất gia — thuần dữ liệu để test được, không phụ thuộc UI.
 enum ILOrdinationPlaceFilter {
 
     /// Hàng của danh sách. `isNone` là lựa chọn "Chưa xuất gia" (cư sĩ tu tại gia).
@@ -17,24 +17,14 @@ enum ILOrdinationPlaceFilter {
     }
 
     static let noneRowID = "none"
-    /// Khi chưa gõ gì chỉ hiện từng ấy chùa đầu danh sách (`rows.slice(0, 6)` của design).
-    static let defaultVisibleCount = 6
 
-    /// Không gõ gì: "Chưa xuất gia" + vài chùa đầu. Có gõ: mọi chùa khớp tên/địa chỉ, không phân
-    /// biệt hoa thường và dấu.
+    /// Không gõ gì: "Chưa xuất gia" + toàn bộ chùa đã tải. Có gõ: đúng những chùa server trả về cho
+    /// từ khoá đó (server đã tìm theo tên, không lọc lại ở máy) và không có dòng "Chưa xuất gia".
     static func rows(options: [ILOrdinationPlaceEntity], query: String, noneName: String, noneSubtitle: String) -> [Row] {
-        let needle = normalize(query.trimmingCharacters(in: .whitespacesAndNewlines))
         let places = options.map { Row(id: $0.id, name: $0.name, subtitle: $0.subtitle, isNone: false) }
-        guard !needle.isEmpty else {
-            let none = Row(id: noneRowID, name: noneName, subtitle: noneSubtitle, isNone: true)
-            return [none] + places.prefix(defaultVisibleCount)
-        }
-        return places.filter { normalize($0.name + " " + $0.subtitle).contains(needle) }
-    }
-
-    static func normalize(_ text: String) -> String {
-        text.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "vi"))
-            .replacingOccurrences(of: "đ", with: "d")
+        guard query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return places }
+        let none = Row(id: noneRowID, name: noneName, subtitle: noneSubtitle, isNone: true)
+        return [none] + places
     }
 }
 
@@ -61,18 +51,38 @@ final class ILOrdinationPlaceFieldView: UIView {
     // MARK: - Properties
     /// Gọi khi khung chọn vừa mở — ViewController dùng để yêu cầu tải danh sách chùa.
     var onOpened: (() -> Void)?
-    /// Tên chùa được chọn; chuỗi rỗng khi chọn "Chưa xuất gia".
-    var onSelect: ((String) -> Void)?
+    /// Chùa được chọn: id server và tên; `(nil, "")` khi chọn "Chưa xuất gia".
+    var onSelect: ((String?, String) -> Void)?
+    /// Từ khoá tìm kiếm đổi (mỗi lần gõ, và `""` khi khung đóng lại) — ViewModel tìm bằng server.
+    var onSearchChanged: ((String) -> Void)?
+    /// Danh sách đã cuộn gần cuối và server còn trang kế tiếp.
+    var onLoadMore: (() -> Void)?
     /// Bấm "Thêm thông tin chùa" — kèm từ khoá đang gõ để điền sẵn tên.
     var onAddTapped: ((String) -> Void)?
 
+    /// Chùa đã tải, đúng thứ tự server. Khi chỉ có thêm chùa ở cuối (tải trang kế tiếp) thì chỉ chèn
+    /// hàng mới — không dựng lại cả danh sách.
     var options: [ILOrdinationPlaceEntity] = [] {
-        didSet { if options != oldValue { reloadRows() } }
+        didSet {
+            guard options != oldValue else { return }
+            if !appendRows(after: oldValue) {
+                reloadRows()
+                tableView.setContentOffset(.zero, animated: false)
+            }
+        }
     }
 
     var isLoading: Bool = false {
         didSet { if isLoading != oldValue { reloadRows() } }
     }
+
+    /// Đang tải trang kế tiếp — hiện vòng xoay ở cuối danh sách.
+    var isLoadingMore: Bool = false {
+        didSet { if isLoadingMore != oldValue { updateFooter() } }
+    }
+
+    /// Server còn trang kế tiếp cho từ khoá hiện tại.
+    var hasMore: Bool = false
 
     private(set) var isExpanded = false
     private var query = ""
@@ -81,21 +91,139 @@ final class ILOrdinationPlaceFieldView: UIView {
     private var rows: [ILOrdinationPlaceFilter.Row] = []
 
     // MARK: - UI Elements
-    private let headerCard = UIControl()
-    private let captionLabel = UILabel()
-    private let optionalLabel = UILabel()
-    private let valueLabel = UILabel()
-    private let chevronView = UIImageView(image: ILIcons.chevronDown)
+    private lazy var headerCard: UIControl = {
+        let control = UIControl()
+        control.translatesAutoresizingMaskIntoConstraints = false
+        control.backgroundColor = ILColors.surface
+        control.layer.cornerRadius = ILMetrics.radiusInput
+        control.layer.borderWidth = 1
+        return control
+    }()
 
-    private let panel = UIView()
-    private let searchIcon = UIView()
-    private let searchField = UITextField()
-    private let clearButton = UIButton(type: .system)
-    private let searchDivider = UIView()
-    private let tableView = UITableView()
-    private let emptyLabel = UILabel()
-    private let addDivider = UIView()
-    private let addRow = UIControl()
+    private lazy var captionLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.caption
+        label.textColor = ILColors.inkMuted
+        label.text = "signup.ordination.label".localized
+        return label
+    }()
+
+    private lazy var optionalLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.microCaption
+        label.textColor = ILColors.inkFaint
+        label.text = "signup.ordination.optional".localized
+        label.textAlignment = .right
+        return label
+    }()
+
+    private lazy var valueLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.fieldValue
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var chevronView: UIImageView = {
+        let view = UIImageView(image: ILIcons.chevronDown)
+        view.tintColor = ILColors.inkMuted
+        view.contentMode = .scaleAspectFit
+        view.setContentHuggingPriority(.required, for: .horizontal)
+        return view
+    }()
+
+    private lazy var panel: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = ILColors.surface
+        view.layer.cornerRadius = ILMetrics.radiusInput
+        view.layer.borderWidth = 1
+        view.clipsToBounds = true
+        view.isHidden = true
+        view.alpha = 0
+        return view
+    }()
+
+    /// Kính lúp: vòng tròn viền, cùng cách vẽ với `ILSearchInputView`.
+    private lazy var searchIcon: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 7
+        view.layer.borderWidth = 1.5
+        view.layer.borderColor = ILColors.inkMuted.cgColor
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var searchField: UITextField = {
+        let field = UITextField()
+        field.font = ILTypography.bodyLarge
+        field.textColor = ILColors.ink
+        field.tintColor = ILColors.gold
+        field.autocorrectionType = .no
+        field.returnKeyType = .search
+        field.attributedPlaceholder = NSAttributedString(
+            string: "signup.ordination.search".localized,
+            attributes: [.foregroundColor: ILColors.inkFaint]
+        )
+        return field
+    }()
+
+    private lazy var clearButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("signup.ordination.clear".localized, for: .normal)
+        button.setTitleColor(ILColors.link, for: .normal)
+        button.titleLabel?.font = ILTypography.chip
+        button.isHidden = true
+        button.setContentHuggingPriority(.required, for: .horizontal)
+        return button
+    }()
+
+    private lazy var searchDivider: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.ink.withAlphaComponent(0.07)
+        return view
+    }()
+
+    private lazy var tableView: UITableView = {
+        let table = UITableView()
+        table.backgroundColor = .clear
+        table.separatorStyle = .none
+        table.rowHeight = Metrics.rowHeight
+        table.keyboardDismissMode = .onDrag
+        return table
+    }()
+
+    private lazy var emptyLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodyCompact
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        label.isHidden = true
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    private lazy var emptyContainer: UIView = {
+        let view = UIView()
+        view.isHidden = true
+        return view
+    }()
+
+    private lazy var footerSpinner: UIActivityIndicatorView = {
+        let spinner = UIActivityIndicatorView(style: .medium)
+        spinner.color = ILColors.inkMuted
+        return spinner
+    }()
+
+    private lazy var addDivider: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.ink.withAlphaComponent(0.07)
+        return view
+    }()
+
+    private lazy var addRow: UIControl = {
+        UIControl()
+    }()
     private var tableHeightConstraint: NSLayoutConstraint!
 
     // MARK: - Initializer
@@ -139,7 +267,6 @@ final class ILOrdinationPlaceFieldView: UIView {
         setupPanel()
 
         [headerCard, panel].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
             addSubview($0)
         }
         // `panel` neo dưới `headerCard` nhưng không ràng buộc `bottomAnchor` của view: chiều cao
@@ -161,25 +288,7 @@ final class ILOrdinationPlaceFieldView: UIView {
     }
 
     private func setupHeaderCard() {
-        headerCard.backgroundColor = ILColors.surface
-        headerCard.layer.cornerRadius = ILMetrics.radiusInput
-        headerCard.layer.borderWidth = 1
         headerCard.addTarget(self, action: #selector(handleHeaderTapped), for: .touchUpInside)
-
-        captionLabel.font = ILTypography.caption
-        captionLabel.textColor = ILColors.inkMuted
-        captionLabel.text = "signup.ordination.label".localized
-        optionalLabel.font = ILTypography.microCaption
-        optionalLabel.textColor = ILColors.inkFaint
-        optionalLabel.text = "signup.ordination.optional".localized
-        optionalLabel.textAlignment = .right
-
-        valueLabel.font = ILTypography.fieldValue
-        valueLabel.numberOfLines = 1
-
-        chevronView.tintColor = ILColors.inkMuted
-        chevronView.contentMode = .scaleAspectFit
-        chevronView.setContentHuggingPriority(.required, for: .horizontal)
 
         let captionRow = UIStackView(arrangedSubviews: [captionLabel, optionalLabel])
         captionRow.axis = .horizontal
@@ -206,36 +315,9 @@ final class ILOrdinationPlaceFieldView: UIView {
     }
 
     private func setupPanel() {
-        panel.backgroundColor = ILColors.surface
-        panel.layer.cornerRadius = ILMetrics.radiusInput
-        panel.layer.borderWidth = 1
-        panel.clipsToBounds = true
-        panel.isHidden = true
-        panel.alpha = 0
-
-        // Kính lúp: vòng tròn viền, cùng cách vẽ với `ILSearchInputView`.
-        searchIcon.layer.cornerRadius = 7
-        searchIcon.layer.borderWidth = 1.5
-        searchIcon.layer.borderColor = ILColors.inkMuted.cgColor
-        searchIcon.translatesAutoresizingMaskIntoConstraints = false
-
-        searchField.font = ILTypography.bodyLarge
-        searchField.textColor = ILColors.ink
-        searchField.tintColor = ILColors.gold
-        searchField.autocorrectionType = .no
-        searchField.returnKeyType = .search
-        searchField.attributedPlaceholder = NSAttributedString(
-            string: "signup.ordination.search".localized,
-            attributes: [.foregroundColor: ILColors.inkFaint]
-        )
         searchField.addTarget(self, action: #selector(handleSearchChanged), for: .editingChanged)
 
-        clearButton.setTitle("signup.ordination.clear".localized, for: .normal)
-        clearButton.setTitleColor(ILColors.link, for: .normal)
-        clearButton.titleLabel?.font = ILTypography.chip
-        clearButton.isHidden = true
         clearButton.addTarget(self, action: #selector(handleClearTapped), for: .touchUpInside)
-        clearButton.setContentHuggingPriority(.required, for: .horizontal)
 
         let searchRow = UIStackView(arrangedSubviews: [searchIcon, searchField, clearButton])
         searchRow.axis = .horizontal
@@ -244,21 +326,11 @@ final class ILOrdinationPlaceFieldView: UIView {
         searchRow.isLayoutMarginsRelativeArrangement = true
         searchRow.layoutMargins = UIEdgeInsets(top: 0, left: 14, bottom: 0, right: 14)
 
-        tableView.backgroundColor = .clear
-        tableView.separatorStyle = .none
-        tableView.rowHeight = Metrics.rowHeight
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.keyboardDismissMode = .onDrag
         tableView.register(PlaceCell.self, forCellReuseIdentifier: PlaceCell.reuseID)
         tableHeightConstraint = tableView.heightAnchor.constraint(equalToConstant: 0)
 
-        emptyLabel.font = ILTypography.bodyCompact
-        emptyLabel.textColor = ILColors.inkTertiary
-        emptyLabel.numberOfLines = 0
-        emptyLabel.isHidden = true
-        let emptyContainer = UIView()
-        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
         emptyContainer.addSubview(emptyLabel)
         NSLayoutConstraint.activate([
             emptyLabel.topAnchor.constraint(equalTo: emptyContainer.topAnchor, constant: 14),
@@ -266,8 +338,6 @@ final class ILOrdinationPlaceFieldView: UIView {
             emptyLabel.leadingAnchor.constraint(equalTo: emptyContainer.leadingAnchor, constant: ILMetrics.spaceStandard),
             emptyLabel.trailingAnchor.constraint(equalTo: emptyContainer.trailingAnchor, constant: -ILMetrics.spaceStandard)
         ])
-        emptyContainer.isHidden = true
-        self.emptyContainer = emptyContainer
 
         let addTitle = UILabel()
         addTitle.font = ILTypography.sectionTitle
@@ -301,7 +371,6 @@ final class ILOrdinationPlaceFieldView: UIView {
         addRow.addTarget(self, action: #selector(handleAddTapped), for: .touchUpInside)
 
         [searchDivider, addDivider].forEach {
-            $0.backgroundColor = ILColors.ink.withAlphaComponent(0.07)
             $0.heightAnchor.constraint(equalToConstant: 1).isActive = true
         }
 
@@ -320,8 +389,6 @@ final class ILOrdinationPlaceFieldView: UIView {
             tableHeightConstraint
         ])
     }
-
-    private var emptyContainer: UIView!
 
     private func applyBorderColors() {
         let isOpen = isExpanded
@@ -347,10 +414,13 @@ final class ILOrdinationPlaceFieldView: UIView {
             panel.isHidden = false
         } else {
             searchField.resignFirstResponder()
+            let hadQuery = !query.isEmpty
             query = ""
             searchField.text = ""
             clearButton.isHidden = true
             reloadRows()
+            // Mở lại bộ chọn phải thấy toàn bộ danh bạ chứ không phải kết quả của từ khoá cũ.
+            if hadQuery { onSearchChanged?("") }
         }
         // Chỉ đổi alpha/xoay mũi tên — không đụng layout nên form phía dưới không nhúc nhích.
         UIView.animate(withDuration: 0.2, animations: {
@@ -368,7 +438,8 @@ final class ILOrdinationPlaceFieldView: UIView {
         selectedName = name
         updateValueLabel()
         setExpanded(false, notify: false)
-        onSelect?(id == ILOrdinationPlaceFilter.noneRowID ? "" : name)
+        let isNone = id == ILOrdinationPlaceFilter.noneRowID
+        onSelect?(isNone ? nil : id, isNone ? "" : name)
     }
 
     private func updateValueLabel() {
@@ -395,15 +466,39 @@ final class ILOrdinationPlaceFieldView: UIView {
         return max(Metrics.rowHeight * Metrics.minVisibleRows, min(Metrics.maxListHeight, room))
     }
 
-    private func reloadRows() {
-        rows = ILOrdinationPlaceFilter.rows(
+    private func makeRows() -> [ILOrdinationPlaceFilter.Row] {
+        ILOrdinationPlaceFilter.rows(
             options: options,
             query: query,
             noneName: "signup.ordination.none".localized,
             noneSubtitle: "signup.ordination.noneSubtitle".localized
         )
-        tableHeightConstraint.constant = min(CGFloat(rows.count) * Metrics.rowHeight, maxListHeight)
+    }
+
+    private func reloadRows() {
+        rows = makeRows()
         tableView.reloadData()
+        updateListChrome()
+    }
+
+    /// Chèn đúng các hàng mới khi `options` chỉ dài thêm ở cuối; `false` nếu không phải trường hợp
+    /// đó (đổi từ khoá, tải lại) để người gọi dựng lại toàn bộ.
+    private func appendRows(after previous: [ILOrdinationPlaceEntity]) -> Bool {
+        guard !previous.isEmpty, options.count > previous.count,
+              Array(options.prefix(previous.count)) == previous else { return false }
+        let previousCount = rows.count
+        rows = makeRows()
+        guard rows.count > previousCount else { return false }
+        tableView.insertRows(
+            at: (previousCount..<rows.count).map { IndexPath(row: $0, section: 0) },
+            with: .none
+        )
+        updateListChrome()
+        return true
+    }
+
+    private func updateListChrome() {
+        tableHeightConstraint.constant = min(CGFloat(rows.count) * Metrics.rowHeight, maxListHeight)
 
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         emptyContainer.isHidden = !rows.isEmpty
@@ -411,6 +506,17 @@ final class ILOrdinationPlaceFieldView: UIView {
         emptyLabel.text = isLoading
             ? "signup.ordination.loading".localized
             : String(format: "signup.ordination.empty".localized, trimmed)
+    }
+
+    private func updateFooter() {
+        if isLoadingMore {
+            footerSpinner.frame = CGRect(x: 0, y: 0, width: tableView.bounds.width, height: Metrics.rowHeight)
+            footerSpinner.startAnimating()
+            tableView.tableFooterView = footerSpinner
+        } else {
+            footerSpinner.stopAnimating()
+            tableView.tableFooterView = nil
+        }
     }
 
     // MARK: - Actions
@@ -422,6 +528,7 @@ final class ILOrdinationPlaceFieldView: UIView {
         query = searchField.text ?? ""
         clearButton.isHidden = query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         reloadRows()
+        onSearchChanged?(query)
     }
 
     @objc private func handleClearTapped() {
@@ -457,6 +564,13 @@ extension ILOrdinationPlaceFieldView: UITableViewDataSource, UITableViewDelegate
         let row = rows[indexPath.row]
         choose(id: row.id, name: row.name)
     }
+
+    /// Cuộn gần cuối thì xin trang kế tiếp (server còn trang, không có lượt tải nào đang chạy).
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard isExpanded, hasMore, !isLoading, !isLoadingMore else { return }
+        let remaining = scrollView.contentSize.height - scrollView.contentOffset.y - scrollView.bounds.height
+        if remaining < Metrics.rowHeight * 5 { onLoadMore?() }
+    }
 }
 
 // MARK: - Cell
@@ -464,35 +578,55 @@ private final class PlaceCell: UITableViewCell {
 
     static let reuseID = "ILOrdinationPlaceCell"
 
-    private let nameLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private let topSeparator = UIView()
-    private let radioRing = UIView()
-    private let radioDot = UIView()
+    private lazy var nameLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodyLarge
+        label.textColor = ILColors.ink
+        return label
+    }()
+
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.caption
+        label.textColor = ILColors.inkMuted
+        return label
+    }()
+
+    private lazy var topSeparator: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = ILColors.ink.withAlphaComponent(0.07)
+        return view
+    }()
+
+    private lazy var radioRing: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = 8
+        view.layer.borderWidth = 1.5
+        return view
+    }()
+
+    private lazy var radioDot: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = 3.5
+        return view
+    }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         selectionStyle = .none
         backgroundColor = .clear
 
-        nameLabel.font = ILTypography.bodyLarge
-        nameLabel.textColor = ILColors.ink
-        subtitleLabel.font = ILTypography.caption
-        subtitleLabel.textColor = ILColors.inkMuted
         let text = UIStackView(arrangedSubviews: [nameLabel, subtitleLabel])
         text.axis = .vertical
         text.spacing = 2
 
-        radioRing.layer.cornerRadius = 8
-        radioRing.layer.borderWidth = 1.5
-        radioDot.layer.cornerRadius = 3.5
-        radioDot.translatesAutoresizingMaskIntoConstraints = false
         radioRing.addSubview(radioDot)
 
-        topSeparator.backgroundColor = ILColors.ink.withAlphaComponent(0.07)
-
+        text.translatesAutoresizingMaskIntoConstraints = false
         [text, radioRing, topSeparator].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
         }
         NSLayoutConstraint.activate([

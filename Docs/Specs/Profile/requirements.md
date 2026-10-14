@@ -1,10 +1,9 @@
 # Requirements — Profile
 
-Version: 1.1
-Last updated: 2026-10-10
-Status: in-progress — v1.1 redesign (hero cover, donate card, 7-row menu, version
-footer) specced, code pending; mock data; no profile API; several destinations
-(awards/offering/donate/reminder/merit-book/community) are not built
+Version: 1.5
+Last updated: 2026-10-11
+Status: in-progress — v1.4 (logout button + confirm popup; no-rebuild re-render);
+mock stats; several destinations (awards/reminder/community) are not built
 Feature folder: `InnerLamp/Presentation/Scenes/Profile/`
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -27,11 +26,12 @@ manage my account and navigate to related screens.
 ## Acceptance Criteria (EARS notation)
 
 - WHEN the Profile tab loads, THE SYSTEM SHALL show, top to bottom: a hero
-  cover (250pt) with the "Sửa hồ sơ" pill on it, an avatar (84pt, initial)
+  cover (250pt), an avatar (84pt, initial)
   overlapping the cover's bottom edge beside the name and the "Pháp danh … ·
   Phật tử tại gia" subtitle, a 3-cell stats card (hours / streak / chant count),
   a 12-week journal heatmap (21 columns × 4 rows), a recent-badges row, a merit
-  card, an "Ủng hộ InnerLamp" card, a 7-row menu, and a footer with the app
+  card, an "Ủng hộ InnerLamp" card, a 7-row menu (Sửa hồ sơ, Gia phả dòng họ,
+  Tạo gia phả mới, Chuông tỉnh thức, Cài đặt, Thông báo, Chùa tu tập), and a footer with the app
   version and build number.
 - WHEN the user scrolls the content up, THE SYSTEM SHALL move the cover image at
   0.45× the scroll speed (parallax) and, once the content has scrolled past
@@ -39,15 +39,16 @@ manage my account and navigate to related screens.
   200pt).
 - WHEN the user pulls the content down beyond its top, THE SYSTEM SHALL stretch
   the cover image (height grows with the pull, image scales by 1 + pull / 500).
-- WHEN the user taps "Sửa hồ sơ", THE SYSTEM SHALL open the EditProfile screen.
+- WHEN the user taps the "Sửa hồ sơ" menu row, THE SYSTEM SHALL open the EditProfile screen.
 - WHEN the user taps the heatmap card, THE SYSTEM SHALL open the Stats screen.
 - WHEN the user taps the "Cài đặt" row, THE SYSTEM SHALL open the Settings
   screen.
 - WHEN the user taps the "Thông báo" row, THE SYSTEM SHALL open the
   Notifications screen.
 - WHEN the user taps the "Dấu ấn tu tập", "Công đức đã hồi hướng", "Ủng hộ
-  InnerLamp", "Chuông tỉnh thức", or "Sổ công đức" target, THE SYSTEM SHALL emit
-  the corresponding navigation event.
+  InnerLamp", or "Chuông tỉnh thức" target, THE SYSTEM SHALL emit
+  the corresponding navigation event; the "Công đức đã hồi hướng" card opens
+  the MeritBook ("Sổ công đức") screen.
 - THE SYSTEM SHALL show the "Ủng hộ InnerLamp" card regardless of the user's plan.
 - WHEN the user taps the "Gia phả dòng họ" row, THE SYSTEM SHALL open the
   FamilyTree screen.
@@ -57,6 +58,27 @@ manage my account and navigate to related screens.
   emit an open-community event carrying the community id.
 - THE SYSTEM SHALL render the footer version and build from the app bundle
   (`CFBundleShortVersionString` / `CFBundleVersion`), not from hardcoded text.
+- THE SYSTEM SHALL show a full-width "Đăng xuất" button (danger-coloured label,
+  52pt, card style) between the menu card and the version footer.
+- WHEN the user taps "Đăng xuất", THE SYSTEM SHALL show a confirmation popup
+  "Đăng xuất?" / "Bạn có chắc muốn đăng xuất khỏi InnerLamp?" with a "Hủy" cell
+  and a destructive "Đăng xuất" cell; a tap on the scrim SHALL behave as "Hủy".
+- WHEN the user taps "Hủy" or the scrim, THE SYSTEM SHALL close the popup and
+  keep the user signed in.
+- WHEN the user confirms, THE SYSTEM SHALL revoke the session on the server
+  (`POST /v1/auth/logout`), delete the stored access and refresh tokens, the
+  local user, birth profile, memorial cache, lit lamps and chosen temple, and then replace
+  the main area with the Login screen.
+- IF the revoke call fails (offline, timeout, 5xx), THEN THE SYSTEM SHALL still
+  clear the local session and go to Login.
+- IF the local session cannot be cleared (Keychain / local store error), THEN THE
+  SYSTEM SHALL stay on Profile, show an error toast ("Không thể đăng xuất. Vui
+  lòng thử lại.") and re-enable the button.
+- WHILE a logout is running, THE SYSTEM SHALL disable the "Đăng xuất" button so
+  it cannot be fired twice.
+- WHEN the view model emits the same or a partially changed state (e.g. after
+  `GET /v1/users/me` answers), THE SYSTEM SHALL repaint only the sections whose
+  data changed, without removing and re-creating unchanged cells/cards.
 
 ## Out of scope (this feature boundary, not backend work)
 
@@ -73,9 +95,10 @@ manage my account and navigate to related screens.
   > ⚠️ Not confirmed: the profile / stats / badges API contract(s) — no profile
   > endpoint in `Docs/Specs/API/openapi.yaml` v3.9. Blocks `tasks.md` Phase 3.
 
-- Six unimplemented destinations: `.openAwards`, `.openOffering`,
-  `.openDonate` (renamed from `.openPaywall`), `.openReminder`,
-  `.openMeritBook` (new) and `.openCommunity` are TODOs in the coordinator.
+- Four unimplemented destinations: `.openAwards`, `.openDonate` (renamed from
+  `.openPaywall`), `.openReminder` and `.openCommunity` are TODOs in the
+  coordinator. `.openMeritBook` (v1.3, formerly `.openOffering`) opens the
+  MeritBook screen (`Docs/Specs/MeritBook/`).
 
 - No avatar photo (initial only); the header role "Phật tử tại gia" is fixed
   copy; no "find a sangha" event when the user has no community.
@@ -107,4 +130,6 @@ manage my account and navigate to related screens.
   emits `.openDonate` (destination TODO). Resolved 2026-10-10 (user decision).
 - ~~Where do "Tạo gia phả mới" and "Sổ công đức" go?~~ → FamilyTreeCreate, and
   a TODO `.openMeritBook` event. Resolved 2026-10-10 (user decision).
+  **Superseded 2026-10-11:** the prototype dropped the "Sổ công đức" row, so the
+  row and `.openMeritBook` are removed.
 - ~~Footer version source?~~ → App bundle. Resolved 2026-10-10 (user decision).

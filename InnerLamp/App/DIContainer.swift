@@ -129,6 +129,16 @@ final class DIContainer {
         ILTempleRepositoryImpl(networkService: networkService, localDataSource: templeLocalDataSource)
     }
 
+    // MARK: - Temple options (server GET /v1/temples/options, network-only, searchable)
+    func makeTempleOptionRepository() -> ILTempleOptionRepository {
+        ILTempleOptionRepositoryImpl(networkService: networkService)
+    }
+
+    // MARK: - Administrative units (server /v1/administrative-units/new/*, province -> ward)
+    func makeAdministrativeUnitRepository() -> ILAdministrativeUnitRepository {
+        ILAdministrativeUnitRepositoryImpl(networkService: networkService)
+    }
+
     // MARK: - Article catalog (server /v1/articles*, network-only)
     func makeArticleRepository() -> ILArticleRepository {
         ILArticleRepositoryImpl(networkService: networkService)
@@ -151,6 +161,11 @@ final class DIContainer {
 
     func makeCalendarImageUseCase() -> ILCalendarImageUseCase {
         ILCalendarImageUseCaseImpl(repository: makeCalendarImageRepository())
+    }
+
+    // MARK: - CalendarEvent (server)
+    func makeCalendarEventRepository() -> ILCalendarEventRepository {
+        ILCalendarEventRepositoryImpl(networkService: networkService)
     }
 
     // MARK: - SutraQuote
@@ -211,7 +226,7 @@ final class DIContainer {
     }
 
     func makeOrdinationPlaceUseCase() -> ILOrdinationPlaceUseCase {
-        ILOrdinationPlaceUseCaseImpl(templeRepository: makeTempleRepository())
+        ILOrdinationPlaceUseCaseImpl(templeOptionRepository: makeTempleOptionRepository())
     }
 
     func makeSignUpViewModel() -> ILSignUpViewModel {
@@ -220,7 +235,7 @@ final class DIContainer {
 
     // MARK: - AddTemple (màn "Thêm thông tin chùa")
     func makeAddTempleUseCase() -> ILAddTempleUseCase {
-        ILAddTempleUseCaseImpl()
+        ILAddTempleUseCaseImpl(administrativeUnitRepository: makeAdministrativeUnitRepository())
     }
 
     func makeAddTempleViewModel(prefillName: String, existingPlaces: [ILOrdinationPlaceEntity]) -> ILAddTempleViewModel {
@@ -323,7 +338,7 @@ final class DIContainer {
     // MARK: - Home
     func makeHomeUseCase() -> ILHomeUseCase {
         ILHomeUseCaseImpl(
-            buddhistEventUseCase: makeBuddhistEventUseCase(),
+            calendarEventRepository: makeCalendarEventRepository(),
             sutraQuoteUseCase: makeSutraQuoteUseCase(),
             templeRepository: makeTempleRepository(),
             deityCatalogRepository: makeDeityCatalogRepository(),
@@ -377,6 +392,19 @@ final class DIContainer {
 
     func makeDeitiesCoordinator(navigationController: UINavigationController) -> ILDeitiesCoordinator {
         ILDeitiesCoordinator(navigationController: navigationController, container: self)
+    }
+
+    // MARK: - Temples (màn "Tất cả chùa")
+    func makeTemplesUseCase() -> ILTemplesUseCase {
+        ILTemplesUseCaseImpl(templeRepository: makeTempleRepository())
+    }
+
+    func makeTemplesViewModel() -> ILTemplesViewModel {
+        ILTemplesViewModel(useCase: makeTemplesUseCase())
+    }
+
+    func makeTemplesCoordinator(navigationController: UINavigationController) -> ILTemplesCoordinator {
+        ILTemplesCoordinator(navigationController: navigationController, container: self)
     }
 
     // MARK: - TempleFinder (màn "Chọn chùa tu tập")
@@ -655,7 +683,11 @@ final class DIContainer {
 
     // MARK: - Sangha
     func makeSanghaUseCase() -> ILSanghaUseCase {
-        ILSanghaUseCaseImpl(userDefaultsService: userDefaultsService)
+        ILSanghaUseCaseImpl(
+            userDefaultsService: userDefaultsService,
+            accountRepository: ILAccountProfileRepositoryImpl(networkService: networkService),
+            templeRepository: makeTempleRepository()
+        )
     }
 
     func makeSanghaViewModel() -> ILSanghaViewModel {
@@ -690,6 +722,48 @@ final class DIContainer {
 
     func makeEventsCoordinator(navigationController: UINavigationController) -> ILEventsCoordinator {
         ILEventsCoordinator(navigationController: navigationController, container: self)
+    }
+
+    // MARK: - LightLamp (Thắp đèn + Vườn đèn — local Core Data only, no API)
+    lazy var lampLocalDataSource: ILLampLocalDataSource = {
+        ILLampLocalDataSourceImpl(stack: coreDataStack)
+    }()
+
+    func makeLampRepository() -> ILLampRepository {
+        ILLampRepositoryImpl(localDataSource: lampLocalDataSource)
+    }
+
+    func makeLightLampUseCase() -> ILLightLampUseCase {
+        ILLightLampUseCaseImpl(repository: makeLampRepository())
+    }
+
+    func makeLightLampViewModel() -> ILLightLampViewModel {
+        ILLightLampViewModel(useCase: makeLightLampUseCase())
+    }
+
+    func makeLampGardenViewModel() -> ILLampGardenViewModel {
+        ILLampGardenViewModel(useCase: makeLightLampUseCase())
+    }
+
+    func makeLightLampCoordinator(navigationController: UINavigationController) -> ILLightLampCoordinator {
+        ILLightLampCoordinator(navigationController: navigationController, container: self)
+    }
+
+    // MARK: - Donate (Ủng hộ InnerLamp — mocked receiving account, no API)
+    func makeDonationAccountRepository() -> ILDonationAccountRepository {
+        ILMockDonationAccountRepository()
+    }
+
+    func makeDonateUseCase() -> ILDonateUseCase {
+        ILDonateUseCaseImpl(repository: makeDonationAccountRepository())
+    }
+
+    func makeDonateViewModel() -> ILDonateViewModel {
+        ILDonateViewModel(useCase: makeDonateUseCase())
+    }
+
+    func makeDonateCoordinator(navigationController: UINavigationController) -> ILDonateCoordinator {
+        ILDonateCoordinator(navigationController: navigationController, container: self)
     }
 
     // MARK: - Memorial (Sổ giỗ chạp — server `/v1/memorials` + Core Data offline cache)
@@ -829,7 +903,7 @@ final class DIContainer {
 
     // MARK: - Festivals
     func makeFestivalsUseCase() -> ILFestivalsUseCase {
-        ILFestivalsUseCaseImpl(buddhistEventUseCase: makeBuddhistEventUseCase())
+        ILFestivalsUseCaseImpl(calendarEventRepository: makeCalendarEventRepository())
     }
 
     func makeFestivalsViewModel() -> ILFestivalsViewModel {
@@ -838,6 +912,28 @@ final class DIContainer {
 
     func makeFestivalsCoordinator(navigationController: UINavigationController) -> ILFestivalsCoordinator {
         ILFestivalsCoordinator(navigationController: navigationController, container: self)
+    }
+
+    // MARK: - Festival detail
+    func makeFestivalDetailUseCase() -> ILFestivalDetailUseCase {
+        ILFestivalDetailUseCaseImpl(calendarEventRepository: makeCalendarEventRepository())
+    }
+
+    func makeFestivalDetailViewModel(eventCode: String, date: Date) -> ILFestivalDetailViewModel {
+        ILFestivalDetailViewModel(useCase: makeFestivalDetailUseCase(), eventCode: eventCode, date: date)
+    }
+
+    func makeFestivalDetailCoordinator(
+        navigationController: UINavigationController,
+        eventCode: String,
+        date: Date
+    ) -> ILFestivalDetailCoordinator {
+        ILFestivalDetailCoordinator(
+            navigationController: navigationController,
+            container: self,
+            eventCode: eventCode,
+            date: date
+        )
     }
 
     // MARK: - Temple
@@ -855,7 +951,17 @@ final class DIContainer {
 
     // MARK: - Profile
     func makeProfileUseCase() -> ILProfileUseCase {
-        ILProfileUseCaseImpl() // add real dependencies only alongside their real implementation
+        ILProfileUseCaseImpl(
+            accountRepository: ILAccountProfileRepositoryImpl(networkService: networkService),
+            logoutRepository: ILLogoutRepositoryImpl(networkService: networkService),
+            keychainService: keychainService,
+            sessionDataCleaner: ILSessionDataCleanerImpl(stack: coreDataStack),
+            userDefaultsService: userDefaultsService,
+            accountScopedDefaultsKeys: [
+                ILSanghaUseCaseImpl.myTempleKey,
+                ILSanghaUseCaseImpl.myTempleSnapshotKey
+            ]
+        )
     }
 
     func makeProfileViewModel() -> ILProfileViewModel {
@@ -916,6 +1022,26 @@ final class DIContainer {
 
     func makeNotificationsCoordinator(navigationController: UINavigationController) -> ILNotificationsCoordinator {
         ILNotificationsCoordinator(navigationController: navigationController, container: self)
+    }
+
+    // MARK: - MeritBook (sample data, in-memory — no donation API yet)
+    /// Shared instance so "Dừng hộ trì hằng tháng" survives leaving and re-entering the screen.
+    lazy var meritBookRepository: ILMeritBookRepository = ILMeritBookRepositoryImpl()
+
+    func makeMeritBookRepository() -> ILMeritBookRepository {
+        meritBookRepository
+    }
+
+    func makeMeritBookUseCase() -> ILMeritBookUseCase {
+        ILMeritBookUseCaseImpl(repository: makeMeritBookRepository())
+    }
+
+    func makeMeritBookViewModel() -> ILMeritBookViewModel {
+        ILMeritBookViewModel(useCase: makeMeritBookUseCase())
+    }
+
+    func makeMeritBookCoordinator(navigationController: UINavigationController) -> ILMeritBookCoordinator {
+        ILMeritBookCoordinator(navigationController: navigationController, container: self)
     }
 
     // MARK: - Stats

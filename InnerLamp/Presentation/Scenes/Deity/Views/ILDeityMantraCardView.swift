@@ -25,12 +25,38 @@ final class ILDeityMantraCardView: UIView {
     private let gradientLayer = CAGradientLayer()
     private let glowLayer = CAGradientLayer()
 
-    private let eyebrowLabel = UILabel()
-    private let textLabel = UILabel()
-    private let sanskritLabel = UILabel()
-    private let noteLabel = UILabel()
-    private let chantButton = ILDeityPillButton(textColor: ILColors.inkOnGold)
-    private let shareButton = ILDeityPillButton(textColor: ILColors.templeHeaderInk)
+    private lazy var eyebrowLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.eyebrowSmall
+        return v
+    }()
+    private lazy var textLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var sanskritLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.heroSubtitleItalic
+        v.textColor = ILColors.templeHeaderSub
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var noteLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var chantButton: ILDeityPillButton = {
+        let v = ILDeityPillButton(textColor: ILColors.inkOnGold)
+        v.backgroundColor = ILColors.goldBright
+        return v
+    }()
+    private lazy var shareButton: ILDeityPillButton = {
+        let v = ILDeityPillButton(textColor: ILColors.templeHeaderInk)
+        v.layer.borderWidth = 1
+        return v
+    }()
 
     // MARK: - Initializer
     init(model: ILDeityMantraModel, chantTitle: String, shareTitle: String) {
@@ -85,20 +111,8 @@ final class ILDeityMantraCardView: UIView {
         glowLayer.endPoint = CGPoint(x: 1, y: 1)
         backdropLayer.addSublayer(glowLayer)
 
-        eyebrowLabel.font = ILTypography.eyebrowSmall
-
-        textLabel.numberOfLines = 0
-
-        sanskritLabel.font = ILTypography.heroSubtitleItalic
-        sanskritLabel.textColor = ILColors.templeHeaderSub
-        sanskritLabel.numberOfLines = 0
-
-        noteLabel.numberOfLines = 0
-
-        chantButton.backgroundColor = ILColors.goldBright
         chantButton.addTarget(self, action: #selector(handleChantTapped), for: .touchUpInside)
 
-        shareButton.layer.borderWidth = 1
         shareButton.addTarget(self, action: #selector(handleShareTapped), for: .touchUpInside)
 
         let buttonsRow = UIStackView(arrangedSubviews: [chantButton, shareButton, UIView()])
@@ -172,7 +186,14 @@ final class ILDeityMantraCardView: UIView {
 /// `UIButton.Configuration`, vì chữ của nó có thể biến mất sau khi màn được push/pop.
 private final class ILDeityPillButton: UIControl {
 
-    private let titleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.chip
+        label.textAlignment = .center
+        label.isUserInteractionEnabled = false
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
     var title: String = "" {
         didSet { titleLabel.text = title }
@@ -187,11 +208,7 @@ private final class ILDeityPillButton: UIControl {
         translatesAutoresizingMaskIntoConstraints = false
         layer.cornerRadius = 19
 
-        titleLabel.font = ILTypography.chip
         titleLabel.textColor = textColor
-        titleLabel.textAlignment = .center
-        titleLabel.isUserInteractionEnabled = false
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
 
         NSLayoutConstraint.activate([

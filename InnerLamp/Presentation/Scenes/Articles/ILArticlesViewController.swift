@@ -28,7 +28,11 @@ final class ILArticlesViewController: BaseViewController {
         return container
     }()
 
-    private lazy var headerView = ILNavBar(showBack: true)
+    private lazy var headerView: ILNavBar = {
+        let navBar = ILNavBar(showBack: true)
+        navBar.title = "articles.header.title".localized
+        return navBar
+    }()
 
     private lazy var headerDivider: UIView = {
         let divider = UIView()
@@ -36,9 +40,23 @@ final class ILArticlesViewController: BaseViewController {
         return divider
     }()
 
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
-    private let listView = ILArticlesListView()
+    private lazy var scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        return scrollView
+    }()
+
+    private lazy var contentView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var listView: ILArticlesListView = {
+        let view = ILArticlesListView()
+        return view
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILArticlesViewModel) {
@@ -67,18 +85,14 @@ final class ILArticlesViewController: BaseViewController {
         super.setupViews()
         view.backgroundColor = ILColors.canvas
 
-        headerView.title = "articles.header.title".localized
         headerView.onBack = { [weak self] in self?.backTappedSubject.send(()) }
 
         headerContainer.addSubview(headerView)
         headerContainer.addSubview(headerDivider)
 
         scrollView.delegate = self
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
 
-        contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
 
         listView.onArticleTap = { [weak self] article in

@@ -29,16 +29,19 @@ final class ILPlayerOptionRowView: UIControl {
     var onSelect: ((Int) -> Void)?
 
     // MARK: - UI Elements
-    private let stack = UIStackView()
+    private lazy var stack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.distribution = .fillEqually
+        stack.spacing = ILMetrics.spaceSmall
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
     private var buttons: [OptionButton] = []
 
     // MARK: - Initializer
     init() {
         super.init(frame: .zero)
-        stack.axis = .horizontal
-        stack.distribution = .fillEqually
-        stack.spacing = ILMetrics.spaceSmall
-        stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
 
         NSLayoutConstraint.activate([
@@ -91,13 +94,16 @@ private final class OptionButton: UIControl {
 
     var onTap: (() -> Void)?
 
-    private let titleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.chip
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
     init() {
         super.init(frame: .zero)
-        titleLabel.font = ILTypography.chip
-        titleLabel.textAlignment = .center
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
 
         layer.cornerRadius = 12

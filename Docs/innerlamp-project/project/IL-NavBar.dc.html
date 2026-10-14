@@ -13,7 +13,15 @@
   <div style="width:38px;flex:none;display:flex">
     <sc-if value="{{ showBack }}" hint-placeholder-val="{{ true }}">
       <div onClick="{{ onBack }}" title="Quay lại" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .16s ease;background: {{ btnBg }};border:1px solid {{ btnBd }}" style-hover="background: {{ btnHover }}">
-        <div style="width:8px;height:8px;border-left:1.7px solid {{ glyph }};border-bottom:1.7px solid {{ glyph }};transform:translateX(2px) rotate(45deg)"></div>
+        <sc-if value="{{ backChevron }}" hint-placeholder-val="{{ true }}">
+          <div style="width:8px;height:8px;border-left:1.7px solid {{ glyph }};border-bottom:1.7px solid {{ glyph }};transform:translateX(2px) rotate(45deg)"></div>
+        </sc-if>
+        <sc-if value="{{ backX }}">
+          <div style="position:relative;width:12px;height:12px">
+            <div style="position:absolute;top:5px;left:0;width:12px;height:1.7px;border-radius:2px;transform:rotate(45deg);background: {{ glyph }}"></div>
+            <div style="position:absolute;top:5px;left:0;width:12px;height:1.7px;border-radius:2px;transform:rotate(-45deg);background: {{ glyph }}"></div>
+          </div>
+        </sc-if>
       </div>
     </sc-if>
   </div>
@@ -49,7 +57,7 @@ class Component extends DCLogic {
       title: p.title ?? 'Tiêu đề',
       sub: p.sub ?? '',
       hasSub: !!(p.sub && String(p.sub).trim()),
-      showBack, showClose,
+      showBack, showClose, backX: p.backX === true, backChevron: p.backX !== true,
       right: p.right ?? '',
       hasRight: !!(p.right && String(p.right).trim()),
       onAction: p.onAction || (() => {}),

@@ -25,7 +25,10 @@ final class ILTalkPlayerCardView: UIView {
     var onForward: (() -> Void)?
 
     // MARK: - UI Elements
-    private let progressBar = ILLinearProgressBarView()
+    private lazy var progressBar: ILLinearProgressBarView = {
+        let v = ILLinearProgressBarView()
+        return v
+    }()
 
     private lazy var elapsedLabel: UILabel = makeTimeLabel()
     private lazy var remainingLabel: UILabel = makeTimeLabel()
@@ -39,14 +42,17 @@ final class ILTalkPlayerCardView: UIView {
 
     private lazy var rewindButton: UIButton = makeSeekButton()
     private lazy var forwardButton: UIButton = makeSeekButton()
-    private let playPauseButton = ILPlayPauseButton(
-        diameter: 58,
-        // Design: CSS triangle 18×22 with `margin-left:5px` in a centered circle → +2.5pt optical
-        // shift; pause bars 4.5×19. Base glyph is scaled ×1.2 (15×18 → 18×21.6, bars 4.8×19.2).
-        glyphScale: 1.2,
-        playGlyphSize: CGSize(width: 15, height: 18),
-        playGlyphOffsetX: 2.5
-    )
+    private lazy var playPauseButton: ILPlayPauseButton = {
+        let v = ILPlayPauseButton(
+            diameter: 58,
+            // Design: CSS triangle 18×22 with `margin-left:5px` in a centered circle → +2.5pt optical
+            // shift; pause bars 4.5×19. Base glyph is scaled ×1.2 (15×18 → 18×21.6, bars 4.8×19.2).
+            glyphScale: 1.2,
+            playGlyphSize: CGSize(width: 15, height: 18),
+            playGlyphOffsetX: 2.5
+        )
+        return v
+    }()
 
     private lazy var controlsStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [rewindButton, playPauseButton, forwardButton])
@@ -61,6 +67,7 @@ final class ILTalkPlayerCardView: UIView {
     /// letting the stack stretch the seek buttons across the full width.
     private lazy var controlsRow: UIView = {
         let container = UIView()
+        container.isUserInteractionEnabled = true
         container.addSubview(controlsStack)
         NSLayoutConstraint.activate([
             controlsStack.topAnchor.constraint(equalTo: container.topAnchor),
@@ -80,6 +87,7 @@ final class ILTalkPlayerCardView: UIView {
         stack.alignment = .fill
         stack.spacing = ILMetrics.spaceSmall
         stack.setCustomSpacing(ILMetrics.spaceMedium, after: timeRow)
+        stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
     }()
 
@@ -102,9 +110,6 @@ final class ILTalkPlayerCardView: UIView {
         layer.borderColor = ILColors.borderMedium.cgColor
         ILMetrics.shadowFloatingBar.apply(to: layer)
 
-        controlsRow.isUserInteractionEnabled = true
-
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(contentStack)
 
         NSLayoutConstraint.activate([

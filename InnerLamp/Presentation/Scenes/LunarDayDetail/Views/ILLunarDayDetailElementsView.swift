@@ -13,9 +13,29 @@ import UIKit
 final class ILLunarDayDetailElementsView: UIView {
 
     // MARK: - UI Elements
-    private let cardView = UIView()
-    private let napamLineLabel = UILabel()
-    private let tilesRow = UIStackView()
+    private lazy var cardView: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.surface
+        view.layer.cornerRadius = ILMetrics.radiusCardRegular
+        view.layer.borderWidth = 1
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var napamLineLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.dateTileDay
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var tilesRow: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.distribution = .fillEqually
+        stack.spacing = 8
+        return stack
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -38,18 +58,7 @@ final class ILLunarDayDetailElementsView: UIView {
     private func setupViews() {
         translatesAutoresizingMaskIntoConstraints = false
 
-        cardView.backgroundColor = ILColors.surface
-        cardView.layer.cornerRadius = ILMetrics.radiusCardRegular
-        cardView.layer.borderWidth = 1
-        cardView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(cardView)
-
-        napamLineLabel.font = ILTypography.dateTileDay
-        napamLineLabel.numberOfLines = 1
-
-        tilesRow.axis = .horizontal
-        tilesRow.distribution = .fillEqually
-        tilesRow.spacing = 8
 
         let contentStack = UIStackView(arrangedSubviews: [napamLineLabel, tilesRow])
         contentStack.axis = .vertical

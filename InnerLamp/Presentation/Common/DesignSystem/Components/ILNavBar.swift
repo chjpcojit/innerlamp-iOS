@@ -75,6 +75,14 @@ public final class ILNavBar: UIView {
         didSet { updateAppearance() }
     }
 
+    /// `true` swaps the left chevron for a ✕ glyph (modal-style screens). It still fires `onBack`.
+    public var usesCloseGlyphOnLeft: Bool = false {
+        didSet {
+            backButton.glyph = usesCloseGlyphOnLeft ? .close : .chevronLeft
+            backButton.accessibilityLabel = (usesCloseGlyphOnLeft ? "common.close" : "common.back").localized
+        }
+    }
+
     public var onBack: (() -> Void)?
     public var onClose: (() -> Void)?
     public var onAction: (() -> Void)?
@@ -270,7 +278,9 @@ private final class ILNavBarRoundButton: UIControl {
 
     var onTap: (() -> Void)?
 
-    private let glyph: Glyph
+    var glyph: Glyph {
+        didSet { setNeedsLayout() }
+    }
     private let glyphLayer = CAShapeLayer()
 
     override var isHighlighted: Bool {

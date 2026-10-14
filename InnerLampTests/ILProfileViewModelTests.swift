@@ -17,15 +17,15 @@ final class ILProfileViewModelTests: XCTestCase {
     private var editProfileTappedSubject: PassthroughSubject<Void, Never>!
     private var statsTappedSubject: PassthroughSubject<Void, Never>!
     private var awardsTappedSubject: PassthroughSubject<Void, Never>!
-    private var offeringTappedSubject: PassthroughSubject<Void, Never>!
+    private var meritTappedSubject: PassthroughSubject<Void, Never>!
     private var donateTappedSubject: PassthroughSubject<Void, Never>!
     private var reminderTappedSubject: PassthroughSubject<Void, Never>!
-    private var meritBookTappedSubject: PassthroughSubject<Void, Never>!
     private var createFamilyTreeTappedSubject: PassthroughSubject<Void, Never>!
     private var settingsTappedSubject: PassthroughSubject<Void, Never>!
     private var notificationsTappedSubject: PassthroughSubject<Void, Never>!
     private var familyTreeTappedSubject: PassthroughSubject<Void, Never>!
     private var communityTappedSubject: PassthroughSubject<Void, Never>!
+    private var logoutConfirmedSubject: PassthroughSubject<Void, Never>!
 
     override func setUp() {
         super.setUp()
@@ -37,15 +37,15 @@ final class ILProfileViewModelTests: XCTestCase {
         editProfileTappedSubject = PassthroughSubject<Void, Never>()
         statsTappedSubject = PassthroughSubject<Void, Never>()
         awardsTappedSubject = PassthroughSubject<Void, Never>()
-        offeringTappedSubject = PassthroughSubject<Void, Never>()
+        meritTappedSubject = PassthroughSubject<Void, Never>()
         donateTappedSubject = PassthroughSubject<Void, Never>()
         reminderTappedSubject = PassthroughSubject<Void, Never>()
-        meritBookTappedSubject = PassthroughSubject<Void, Never>()
         createFamilyTreeTappedSubject = PassthroughSubject<Void, Never>()
         settingsTappedSubject = PassthroughSubject<Void, Never>()
         notificationsTappedSubject = PassthroughSubject<Void, Never>()
         familyTreeTappedSubject = PassthroughSubject<Void, Never>()
         communityTappedSubject = PassthroughSubject<Void, Never>()
+        logoutConfirmedSubject = PassthroughSubject<Void, Never>()
     }
 
     override func tearDown() {
@@ -54,15 +54,15 @@ final class ILProfileViewModelTests: XCTestCase {
         editProfileTappedSubject = nil
         statsTappedSubject = nil
         awardsTappedSubject = nil
-        offeringTappedSubject = nil
+        meritTappedSubject = nil
         donateTappedSubject = nil
         reminderTappedSubject = nil
-        meritBookTappedSubject = nil
         createFamilyTreeTappedSubject = nil
         settingsTappedSubject = nil
         notificationsTappedSubject = nil
         familyTreeTappedSubject = nil
         communityTappedSubject = nil
+        logoutConfirmedSubject = nil
         sut = nil
         mockUseCase = nil
         super.tearDown()
@@ -74,15 +74,15 @@ final class ILProfileViewModelTests: XCTestCase {
             editProfileTapped: editProfileTappedSubject.eraseToAnyPublisher(),
             statsTapped: statsTappedSubject.eraseToAnyPublisher(),
             awardsTapped: awardsTappedSubject.eraseToAnyPublisher(),
-            offeringTapped: offeringTappedSubject.eraseToAnyPublisher(),
+            meritTapped: meritTappedSubject.eraseToAnyPublisher(),
             donateTapped: donateTappedSubject.eraseToAnyPublisher(),
             reminderTapped: reminderTappedSubject.eraseToAnyPublisher(),
-            meritBookTapped: meritBookTappedSubject.eraseToAnyPublisher(),
             settingsTapped: settingsTappedSubject.eraseToAnyPublisher(),
             notificationsTapped: notificationsTappedSubject.eraseToAnyPublisher(),
             familyTreeTapped: familyTreeTappedSubject.eraseToAnyPublisher(),
             createFamilyTreeTapped: createFamilyTreeTappedSubject.eraseToAnyPublisher(),
-            communityTapped: communityTappedSubject.eraseToAnyPublisher()
+            communityTapped: communityTappedSubject.eraseToAnyPublisher(),
+            logoutConfirmed: logoutConfirmedSubject.eraseToAnyPublisher()
         )
     }
 
@@ -131,6 +131,32 @@ final class ILProfileViewModelTests: XCTestCase {
         XCTAssertEqual(state?.communityValue, "Từ Quang")
     }
 
+    func test_viewDidLoad_appliesServerAccountWhenLoadSucceeds() async {
+        var loaded = mockUseCase.profile
+        loaded.fullName = "a@b.com"
+        loaded.dharmaName = "Diệu Tâm"
+        mockUseCase.loadResult = .success(loaded)
+        let output = sut.transform(input: makeInput())
+        let latest = captureLatestState(output)
+
+        viewDidLoadSubject.send(())
+        for _ in 0..<50 where latest()?.header.fullName != "a@b.com" { await Task.yield() }
+
+        XCTAssertEqual(latest()?.header.fullName, "a@b.com")
+        XCTAssertEqual(latest()?.header.subtitleHighlight, "Diệu Tâm")
+    }
+
+    func test_viewDidLoad_keepsPlaceholderWhenServerLoadFails() async {
+        mockUseCase.loadResult = .failure(ILAccountProfileError.offline)
+        let output = sut.transform(input: makeInput())
+        let latest = captureLatestState(output)
+
+        viewDidLoadSubject.send(())
+        for _ in 0..<20 { await Task.yield() }
+
+        XCTAssertEqual(latest()?.header.fullName, "Nguyễn Bình An")
+    }
+
     func test_viewDidLoad_withEmptyProfile_hidesOptionalSectionsAndShowsFallbacks() {
         mockUseCase.profile = .empty
         sut = ILProfileViewModel(useCase: mockUseCase)
@@ -161,6 +187,48 @@ final class ILProfileViewModelTests: XCTestCase {
         XCTAssertEqual(latest()?.buildText, String(format: "profile.footer.build".localized, build))
     }
 
+    // MARK: - Logout
+    func test_logoutConfirmed_success_callsUseCaseAndFiresLoggedOut() async {
+        _ = sut.transform(input: makeInput())
+        let events = captureNavEvents()
+
+        logoutConfirmedSubject.send(())
+        for _ in 0..<20 where events().isEmpty { await Task.yield() }
+
+        XCTAssertEqual(mockUseCase.logoutCallCount, 1)
+        XCTAssertEqual(events(), [.loggedOut])
+    }
+
+    func test_logoutConfirmed_failure_reportsErrorKeepsUserSignedInAndReenablesButton() async {
+        mockUseCase.logoutResult = .failure(ILProfileLogoutError.storageFailed)
+        let output = sut.transform(input: makeInput())
+        let latest = captureLatestState(output)
+        let events = captureNavEvents()
+        var errors: [String] = []
+        output.logoutError.sink { errors.append($0) }.store(in: &cancellables)
+
+        logoutConfirmedSubject.send(())
+        for _ in 0..<20 where errors.isEmpty { await Task.yield() }
+
+        XCTAssertEqual(errors, ["profile.logout.error".localized])
+        XCTAssertTrue(events().isEmpty)
+        XCTAssertEqual(latest()?.isLoggingOut, false)
+    }
+
+    func test_logoutConfirmed_marksLoggingOutWhileRunningAndIgnoresASecondConfirm() async {
+        let output = sut.transform(input: makeInput())
+        let latest = captureLatestState(output)
+        let events = captureNavEvents()
+
+        logoutConfirmedSubject.send(())
+        logoutConfirmedSubject.send(())
+
+        XCTAssertEqual(latest()?.isLoggingOut, true)
+        for _ in 0..<20 where events().isEmpty { await Task.yield() }
+        XCTAssertEqual(mockUseCase.logoutCallCount, 1)
+        XCTAssertEqual(events(), [.loggedOut])
+    }
+
     // MARK: - Navigation
     func test_editProfileTapped_firesEditProfileEvent() {
         _ = sut.transform(input: makeInput())
@@ -189,13 +257,13 @@ final class ILProfileViewModelTests: XCTestCase {
         XCTAssertEqual(events(), [.openAwards])
     }
 
-    func test_offeringTapped_firesOpenOfferingEvent() {
+    func test_meritTapped_firesOpenMeritBookEvent() {
         _ = sut.transform(input: makeInput())
         let events = captureNavEvents()
 
-        offeringTappedSubject.send(())
+        meritTappedSubject.send(())
 
-        XCTAssertEqual(events(), [.openOffering])
+        XCTAssertEqual(events(), [.openMeritBook])
     }
 
     func test_donateTapped_firesOpenDonateEvent() {
@@ -205,15 +273,6 @@ final class ILProfileViewModelTests: XCTestCase {
         donateTappedSubject.send(())
 
         XCTAssertEqual(events(), [.openDonate])
-    }
-
-    func test_meritBookTapped_firesOpenMeritBookEvent() {
-        _ = sut.transform(input: makeInput())
-        let events = captureNavEvents()
-
-        meritBookTappedSubject.send(())
-
-        XCTAssertEqual(events(), [.openMeritBook])
     }
 
     func test_createFamilyTreeTapped_firesCreateFamilyTreeEvent() {
@@ -341,8 +400,24 @@ final class MockILProfileUseCase: ILProfileUseCase {
         )
     }
 
+    /// `nil` → `loadProfile()` returns `profile`.
+    var loadResult: Result<ILProfileEntity, Error>?
+
     func getProfile() -> ILProfileEntity {
         getProfileCallCount += 1
         return profile
+    }
+
+    func loadProfile() async throws -> ILProfileEntity {
+        try (loadResult ?? .success(profile)).get()
+    }
+
+    private(set) var logoutCallCount = 0
+    var logoutResult: Result<Void, Error> = .success(())
+
+    func logout() async throws {
+        logoutCallCount += 1
+        await Task.yield()
+        try logoutResult.get()
     }
 }

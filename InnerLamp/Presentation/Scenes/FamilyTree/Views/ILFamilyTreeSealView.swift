@@ -13,7 +13,12 @@ final class ILFamilyTreeSealView: UIView {
 
     // MARK: - Properties
     private let ringLayer = CAShapeLayer()
-    private let glyphLabel = UILabel()
+    private lazy var glyphLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = Tree.cream
+        label.textAlignment = .center
+        return label
+    }()
     private let ringInset: CGFloat
     private let sealRadius: CGFloat
 
@@ -37,8 +42,6 @@ final class ILFamilyTreeSealView: UIView {
 
         glyphLabel.text = glyph
         glyphLabel.font = font
-        glyphLabel.textColor = Tree.cream
-        glyphLabel.textAlignment = .center
         addSubview(glyphLabel)
     }
 

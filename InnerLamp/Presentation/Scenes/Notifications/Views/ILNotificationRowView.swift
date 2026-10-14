@@ -22,8 +22,19 @@ final class ILNotificationRowView: UIView {
     }
 
     // MARK: - UI Elements
-    private let iconTile = UIView()
-    private let glyphView = UIView()
+    private lazy var iconTile: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = Layout.tileRadius
+        view.clipsToBounds = true
+        return view
+    }()
+
+    private lazy var glyphView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -74,12 +85,8 @@ final class ILNotificationRowView: UIView {
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
 
-        iconTile.translatesAutoresizingMaskIntoConstraints = false
-        iconTile.layer.cornerRadius = Layout.tileRadius
-        iconTile.clipsToBounds = true
         addSubview(iconTile)
 
-        glyphView.translatesAutoresizingMaskIntoConstraints = false
         iconTile.addSubview(glyphView)
 
         let titleRow = UIStackView(arrangedSubviews: [titleLabel, timeLabel])

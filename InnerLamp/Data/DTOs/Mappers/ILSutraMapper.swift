@@ -43,7 +43,7 @@ nonisolated enum ILSutraMapper {
             durationMinutes: summary.durationMinutes,
             translator: summary.translator,
             sourceName: translation?.sourceName ?? "",
-            sourceURL: sourceURL(from: translation?.sourceUrl),
+            sourceURL: absoluteWebLink(from: translation?.sourceUrl),
             license: translation?.license ?? "",
             lineCount: translation?.lineCount ?? 0,
             chapters: sections.enumerated().map { index, section in
@@ -53,7 +53,28 @@ nonisolated enum ILSutraMapper {
                     title: section.name,
                     lineCount: section.lineCount
                 )
-            }
+            },
+            summary: nonEmpty(dto.summary) ?? "",
+            author: nonEmpty(dto.author) ?? "",
+            hanTranslator: nonEmpty(dto.hanTranslator) ?? "",
+            hanTranslationYear: dto.hanTranslationYear,
+            referenceNote: nonEmpty(dto.referenceNote) ?? "",
+            deities: (dto.deities ?? []).map { deity in
+                ILSutraDetailDeityEntity(
+                    id: deity.deityId,
+                    name: nonEmpty(deity.nameVi) ?? deity.deityId,
+                    role: deity.role.flatMap(deityRole(wireValue:))
+                )
+            },
+            alternateTitles: alternateTitles(
+                from: dto,
+                excluding: [summary.title, summary.originalTitle]
+            ),
+            isUnreviewed: nonEmpty(dto.reviewStatus) != nil,
+            variant: translation?.variant.flatMap(variant(wireValue:)),
+            licenseURL: absoluteWebLink(from: translation?.licenseUrl),
+            licenseNote: nonEmpty(translation?.licenseNote) ?? "",
+            note: nonEmpty(translation?.note) ?? ""
         )
     }
 
@@ -71,16 +92,51 @@ nonisolated enum ILSutraMapper {
         return dto.titles.keys.sorted().compactMap { nonEmpty(dto.titles[$0]) }.first ?? dto.id
     }
 
-    /// Pāli name, else English name — whichever differs from the displayed title.
+    /// The server `original_title` (detail only), else the Pāli name, else the English name — whichever
+    /// differs from the displayed title.
     private static func originalTitle(from dto: ILSutraDTO, title: String) -> String {
+        if let value = nonEmpty(dto.originalTitle), value != title { return value }
         for language in ["pli", "en"] {
             if let value = nonEmpty(dto.titles[language]), value != title { return value }
         }
         return ""
     }
 
+    /// The other-language names in `titles`, in a stable order (Pāli, Sanskrit, Chinese, English, then
+    /// any language the app does not know), skipping `vi` and the values already shown.
+    private static func alternateTitles(
+        from dto: ILSutraDTO,
+        excluding shown: [String]
+    ) -> [ILSutraDetailAlternateTitleEntity] {
+        let preferred = ["pli", "sa", "zh", "en"]
+        let others = dto.titles.keys.filter { $0 != "vi" && !preferred.contains($0) }.sorted()
+        return (preferred + others).compactMap { language in
+            guard let text = nonEmpty(dto.titles[language]), !shown.contains(text) else { return nil }
+            return ILSutraDetailAlternateTitleEntity(language: language, text: text)
+        }
+    }
+
+    private static func deityRole(wireValue: String) -> ILSutraDeityRole? {
+        switch wireValue {
+        case "SPEAKER": .speaker
+        case "SUBJECT": .subject
+        case "MENTIONED": .mentioned
+        default: nil
+        }
+    }
+
+    private static func variant(wireValue: String) -> ILSutraTranslationVariant? {
+        switch wireValue {
+        case "translation": .translation
+        case "chant": .chant
+        case "meaning": .meaning
+        case "poem": .poem
+        default: nil
+        }
+    }
+
     /// Only an absolute `http(s)` link is kept — the value is opened in the browser.
-    private static func sourceURL(from raw: String?) -> String? {
+    private static func absoluteWebLink(from raw: String?) -> String? {
         guard let value = nonEmpty(raw),
               let url = URL(string: value),
               let scheme = url.scheme?.lowercased(),

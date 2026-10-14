@@ -19,9 +19,9 @@ protocol ILHomeUseCase {
     /// cho ngày được chọn. Trả về entity gốc nếu không tìm thấy `id`.
     func selectDay(id: String, in entity: ILHomeEntity) -> ILHomeEntity
 
-    /// Carousel "Sự kiện Phật giáo" — các sự kiện định kỳ theo âm lịch (từ Core Data) trong cả
-    /// năm dương lịch hiện tại chứa `date`, gom theo tháng dương lịch. Bất đồng bộ vì đọc từ Core
-    /// Data; tháng nào không có sự kiện thì không xuất hiện.
+    /// Carousel "Sự kiện Phật giáo" — các sự kiện của cả năm dương lịch chứa `date` (1/1 → 31/12)
+    /// từ `GET /v1/calendar/events` (network-only), gom theo tháng dương lịch; tháng nào không có
+    /// sự kiện thì không xuất hiện. Throws `ILCatalogError` when the server is unreachable.
     func loadBuddhistEventMonths(around date: Date) async throws -> [ILHomeEventMonthEntity]
 
     /// Câu kinh trên thẻ âm lịch lớn — 1 câu ngẫu nhiên từ catalog kinh trong Core Data
@@ -53,7 +53,7 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
     // TODO: khi có API nội dung/thống kê thật, thay phần mock bên dưới bằng
     // networkService.request(endpoint: HomeDashboardEndpoint(...)) (xem Core/Networking/NetworkService.swift).
     // Temples + deities already come from the server (`loadTopTemples()` / `loadTopDeities()`).
-    private let buddhistEventUseCase: ILBuddhistEventUseCase
+    private let calendarEventRepository: ILCalendarEventRepository
     private let sutraQuoteUseCase: ILSutraQuoteUseCase
     private let templeRepository: ILTempleRepository
     private let deityCatalogRepository: ILDeityCatalogRepository
@@ -61,14 +61,14 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
     private let photosRepository: ILPhotosRepository
 
     init(
-        buddhistEventUseCase: ILBuddhistEventUseCase,
+        calendarEventRepository: ILCalendarEventRepository,
         sutraQuoteUseCase: ILSutraQuoteUseCase,
         templeRepository: ILTempleRepository,
         deityCatalogRepository: ILDeityCatalogRepository,
         articleRepository: ILArticleRepository,
         photosRepository: ILPhotosRepository
     ) {
-        self.buddhistEventUseCase = buddhistEventUseCase
+        self.calendarEventRepository = calendarEventRepository
         self.sutraQuoteUseCase = sutraQuoteUseCase
         self.templeRepository = templeRepository
         self.deityCatalogRepository = deityCatalogRepository
@@ -88,7 +88,7 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
         // Câu kinh để trống — nạp ngẫu nhiên từ Core Data qua `loadRandomVerse()` ngay sau đó.
         entity.lunarDate = Self.makeLunarDate(for: today, verse: ILHomeQuoteEntity())
 
-        // Sự kiện Phật giáo định kỳ được nạp bất đồng bộ từ Core Data qua
+        // Sự kiện Phật giáo được nạp bất đồng bộ từ server qua
         // `loadBuddhistEventMonths(around:)` — khởi tạo rỗng để `getInitialState()` vẫn đồng bộ.
         entity.eventMonths = []
 
@@ -332,54 +332,43 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
         )
     }
 
-    /// Carousel "Sự kiện Phật giáo" — các sự kiện định kỳ theo âm lịch (từ Core Data) xuất hiện
-    /// trong cả năm dương lịch hiện tại (1/1 → 31/12), gom theo tháng. Mỗi ngày dương trong
-    /// khoảng được đổi sang âm lịch để tìm sự kiện trùng `lunarDay`/`lunarMonth` (xem
-    /// `ILBuddhistEventUseCase.occurrences`).
+    /// Carousel "Sự kiện Phật giáo" — sự kiện của cả năm dương lịch chứa `date` (1/1 → 31/12) từ
+    /// server, gom theo tháng dương lịch theo thứ tự thời gian. Ngày dương và âm lịch đều do server
+    /// tính; client chỉ gom nhóm và đặt nhãn.
     func loadBuddhistEventMonths(around date: Date) async throws -> [ILHomeEventMonthEntity] {
-        let templates = try await buddhistEventUseCase.loadTemplates()
-        guard !templates.isEmpty else { return [] }
-
         var calendar = Calendar(identifier: .gregorian)
         calendar.firstWeekday = 2
 
-        // Cả năm dương lịch hiện tại (1/1 → 31/12). `dateInterval(of: .year)` trả khoảng nửa mở
-        // (`end` = 1/1 năm sau), khớp hợp đồng `day < lastDay` của `occurrences`.
-        guard let yearInterval = calendar.dateInterval(of: .year, for: date) else { return [] }
-        let start = yearInterval.start
-        let end = yearInterval.end
-
-        let occurrences = buddhistEventUseCase.occurrences(
-            of: templates,
-            from: start,
-            to: end,
-            calendar: calendar
-        )
+        let year = calendar.component(.year, from: date)
+        let calendarEvents = try await calendarEventRepository.loadEvents(year: year)
+        let eventsByCode = Dictionary(calendarEvents.events.map { ($0.code, $0) }) { first, _ in first }
 
         // Gom theo tháng dương lịch, giữ thứ tự thời gian của tháng xuất hiện đầu tiên.
         var order: [String] = []
-        var eventsByMonth: [String: [ILBuddhistEventOccurrenceEntity]] = [:]
-        for occurrence in occurrences {
-            let key = Self.monthKey(for: occurrence.date, calendar: calendar)
-            if eventsByMonth[key] == nil { order.append(key) }
-            eventsByMonth[key, default: []].append(occurrence)
+        var itemsByMonth: [String: [ILHomeEventItemEntity]] = [:]
+        for occurrence in calendarEvents.occurrences.sorted(by: { $0.solarDate < $1.solarDate }) {
+            guard let event = eventsByCode[occurrence.eventCode] else { continue }
+            let key = Self.monthKey(for: occurrence.solarDate, calendar: calendar)
+            if itemsByMonth[key] == nil { order.append(key) }
+            itemsByMonth[key, default: []].append(
+                ILHomeEventItemEntity(
+                    id: "\(event.code)-\(Self.dayKey(for: occurrence.solarDate, calendar: calendar))",
+                    date: occurrence.solarDate,
+                    title: event.name,
+                    lunarLabel: Self.lunarLabel(for: occurrence),
+                    tone: Self.tone(forGroups: event.groupCodes),
+                    eventCode: event.code
+                )
+            )
         }
 
         return order.compactMap { key in
-            guard let items = eventsByMonth[key], let first = items.first else { return nil }
+            guard let items = itemsByMonth[key], let first = items.first else { return nil }
             let month = calendar.component(.month, from: first.date)
             return ILHomeEventMonthEntity(
                 id: key,
                 monthLabel: String(format: "home.events.monthFormat".localized, month),
-                events: items.map { occurrence in
-                    ILHomeEventItemEntity(
-                        id: "\(occurrence.template.id)-\(Self.dayKey(for: occurrence.date, calendar: calendar))",
-                        date: occurrence.date,
-                        title: occurrence.template.title,
-                        lunarLabel: Self.lunarLabel(for: occurrence.template),
-                        tone: Self.tone(for: occurrence.template.tradition)
-                    )
-                }
+                events: items
             )
         }
     }
@@ -404,26 +393,25 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
         return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 0, components.day ?? 0)
     }
 
-    /// Nhãn âm lịch ngắn cho 1 sự kiện — "Rằm · Tháng Tư", "Mùng 1 · Tháng Giêng", "19 · Tháng Hai".
-    private static func lunarLabel(for template: ILBuddhistEventTemplateEntity) -> String {
-        let monthName = ILLunarCalendar.lunarMonthLabel(template.lunarMonth, isLeap: false)
+    /// Nhãn âm lịch ngắn cho 1 lần xuất hiện — "Rằm · Tháng Tư", "Mùng 1 · Tháng Giêng",
+    /// "19 · Tháng Hai"; tháng nhuận được ghi rõ.
+    private static func lunarLabel(for occurrence: ILCalendarOccurrenceEntity) -> String {
+        let monthName = ILLunarCalendar.lunarMonthLabel(occurrence.lunarMonth, isLeap: occurrence.isLeapMonth)
         let dayLabel: String
-        switch template.lunarDay {
+        switch occurrence.lunarDay {
         case 1: dayLabel = "lunarCalendar.day.newMoon".localized
         case 15: dayLabel = "lunarCalendar.day.fullMoon".localized
-        default: dayLabel = "\(template.lunarDay)"
+        default: dayLabel = "\(occurrence.lunarDay)"
         }
         return "\(dayLabel) · \(monthName)"
     }
 
-    /// Tông màu hiển thị theo truyền thống — chỉ dùng trong carousel Trang chủ (xem
-    /// `ILHomeEventTone`).
-    private static func tone(for tradition: ILBuddhistTradition) -> ILHomeEventTone {
-        switch tradition {
-        case .mahayana: return .gold
-        case .theravada: return .green
-        case .universal: return .rose
-        }
+    /// Tông màu hiển thị theo nhóm của sự kiện — chỉ dùng trong carousel Trang chủ (xem
+    /// `ILHomeEventTone`). Nhóm Phật giáo lấy ưu tiên; mã nhóm lạ (BO thêm về sau) rơi về `.rose`.
+    private static func tone(forGroups groupCodes: [String]) -> ILHomeEventTone {
+        if groupCodes.contains("buddhist") { return .gold }
+        if groupCodes.contains("folk") { return .green }
+        return .rose
     }
 }
 

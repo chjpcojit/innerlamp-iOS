@@ -31,14 +31,42 @@ final class ILMalaCompletionView: UIView {
     var onDone: (() -> Void)?
 
     // MARK: - UI Elements
-    private let cardView = UIView()
+    private lazy var cardView: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = ILMetrics.radiusCardLarge + 2
+        view.layer.borderWidth = 1
+        view.layer.borderColor = ILColors.goldBorderOnDark.cgColor
+        view.clipsToBounds = true
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
     private let cardGradient = CAGradientLayer()
-    private let glowView = UIView()
+    private lazy var glowView: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.goldGlowStrong
+        view.layer.cornerRadius = glowSize / 2
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
     private let dropLayer = CAGradientLayer()
-    private let titleLabel = UILabel()
-    private let messageLabel = UILabel()
-    private let continueButton = ILButton(title: "", variant: .gold)
-    private let doneButton = ILButton(title: "", variant: .onDark)
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.scriptureTitle
+        label.textColor = ILColors.inkOnDark
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        return label
+    }()
+    private lazy var messageLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodyCompact
+        label.textColor = ILColors.inkOnDarkSecondary
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        return label
+    }()
+    private lazy var continueButton: ILButton = ILButton(title: "", variant: .gold)
+    private lazy var doneButton: ILButton = ILButton(title: "", variant: .onDark)
 
     private let glowSize: CGFloat = 56
     private let dropSize = CGSize(width: 14, height: 19)
@@ -58,30 +86,13 @@ final class ILMalaCompletionView: UIView {
         backgroundColor = ILColors.scrimDialog
         accessibilityViewIsModal = true
 
-        cardView.layer.cornerRadius = ILMetrics.radiusCardLarge + 2
-        cardView.layer.borderWidth = 1
-        cardView.layer.borderColor = ILColors.goldBorderOnDark.cgColor
-        cardView.clipsToBounds = true
-        cardView.translatesAutoresizingMaskIntoConstraints = false
         cardGradient.colors = [ILColors.darkBackgroundTop.cgColor, ILColors.darkBackground.cgColor]
         cardView.layer.insertSublayer(cardGradient, at: 0)
         addSubview(cardView)
 
-        glowView.backgroundColor = ILColors.goldGlowStrong
-        glowView.layer.cornerRadius = glowSize / 2
         dropLayer.colors = [ILColors.goldBright.cgColor, ILColors.gold.cgColor]
         dropLayer.cornerRadius = dropSize.width / 2
         glowView.layer.addSublayer(dropLayer)
-
-        titleLabel.font = ILTypography.scriptureTitle
-        titleLabel.textColor = ILColors.inkOnDark
-        titleLabel.textAlignment = .center
-        titleLabel.numberOfLines = 0
-
-        messageLabel.font = ILTypography.bodyCompact
-        messageLabel.textColor = ILColors.inkOnDarkSecondary
-        messageLabel.textAlignment = .center
-        messageLabel.numberOfLines = 0
 
         continueButton.onTap = { [weak self] in self?.onContinue?() }
         doneButton.onTap = { [weak self] in self?.onDone?() }
@@ -93,7 +104,6 @@ final class ILMalaCompletionView: UIView {
 
         // A fixed-size view inside a `.fill` vertical stack would be stretched — center it in a row.
         let glowRow = UIView()
-        glowView.translatesAutoresizingMaskIntoConstraints = false
         glowRow.addSubview(glowView)
 
         let content = UIStackView(arrangedSubviews: [glowRow, titleLabel, messageLabel, buttonRow])

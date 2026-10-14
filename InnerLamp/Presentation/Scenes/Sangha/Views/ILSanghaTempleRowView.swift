@@ -14,9 +14,26 @@ final class ILSanghaTempleRowView: UIView {
     var onPick: (() -> Void)?
 
     // MARK: - UI Elements
-    private let nameLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private let pickButton = ILSanghaPillButton()
+    private lazy var nameLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.rowTitle
+        label.textColor = ILColors.ink
+        return label
+    }()
+
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 2
+        return label
+    }()
+
+    private lazy var pickButton: ILSanghaPillButton = {
+        let button = ILSanghaPillButton()
+        button.configure(title: "sangha.row.pick".localized, style: .off)
+        return button
+    }()
 
     // MARK: - Initializer
     init() {
@@ -36,13 +53,6 @@ final class ILSanghaTempleRowView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        nameLabel.font = ILTypography.rowTitle
-        nameLabel.textColor = ILColors.ink
-        subtitleLabel.font = ILTypography.subhead
-        subtitleLabel.textColor = ILColors.inkTertiary
-        subtitleLabel.numberOfLines = 2
-
-        pickButton.configure(title: "sangha.row.pick".localized, style: .off)
         pickButton.addTarget(self, action: #selector(handlePick), for: .touchUpInside)
 
         let textStack = UIStackView(arrangedSubviews: [nameLabel, subtitleLabel])

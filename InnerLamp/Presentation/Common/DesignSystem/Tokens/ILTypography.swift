@@ -327,6 +327,12 @@ public enum ILTypography {
     public static let alertClose = beVietnamPro(size: 15, weight: .regular)
     /// Close "×" on the full-screen error: 17px
     public static let alertCloseLarge = beVietnamPro(size: 17, weight: .regular)
+    /// Nhãn nút hành động nguy hiểm dạng hàng (vd. "Đăng xuất" ở màn Tôi) — 15px medium theo
+    /// design handoff (`font:500 15px`).
+    public static let destructiveRowLabel = beVietnamPro(size: 15, weight: .medium)
+    /// Nút hủy trong hộp xác nhận kiểu hệ thống (vd. "Hủy" ở popup Đăng xuất) — 16px regular;
+    /// nút xác nhận dùng `title2` (16px semibold).
+    public static let confirmDialogButton = beVietnamPro(size: 16, weight: .regular)
     /// Dialog pill buttons: 13px medium
     public static let alertDialogButton = beVietnamPro(size: 13, weight: .medium)
     /// Full-screen error pill buttons: 14px medium

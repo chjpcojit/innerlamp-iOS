@@ -26,6 +26,20 @@ struct ILSutraDetailChapterModel: Equatable, Identifiable {
     let isCurrent: Bool
 }
 
+/// 1 hàng nhãn / giá trị trong các khối thông tin; `url != nil` thì hàng chạm được (mở trình duyệt).
+/// `label` rỗng khi khối chỉ là 1 đoạn văn (giới thiệu, lưu ý).
+struct ILSutraDetailInfoRowModel: Equatable {
+    let label: String
+    let value: String
+    let url: URL?
+}
+
+/// 1 khối thông tin dưới hero ("Giới thiệu", "Thông tin", "Bản dịch & giấy phép", "Lưu ý").
+struct ILSutraDetailInfoSectionModel: Equatable {
+    let title: String
+    let rows: [ILSutraDetailInfoRowModel]
+}
+
 /// UI state cho màn Chi tiết bài kinh — Presentation layer, do `ILSutraDetailViewModel` sở hữu và
 /// cập nhật độc quyền. Không UIKit, không business logic — `ViewController` chỉ đọc để hiển thị.
 /// Các chuỗi đã format ("26 phẩm · 423 kệ · ...", "34%", nhãn chip) nằm ở đây, không nằm trên
@@ -50,8 +64,8 @@ struct ILSutraDetailStateModel: Equatable {
     var progressValue: Double = 0
 
     var descriptionText: String = ""
-    /// "Dịch / hiệu đính: HT Thích Minh Châu".
-    var translatorText: String = ""
+    /// Các khối thông tin đã bỏ giá trị rỗng; khối không còn hàng nào bị loại hẳn.
+    var infoSections: [ILSutraDetailInfoSectionModel] = []
     var tocTitle: String = ""
     /// "26 phẩm" / "2 phần" (đã format theo `ILSutraDetailStructure`).
     var tocCountText: String = ""

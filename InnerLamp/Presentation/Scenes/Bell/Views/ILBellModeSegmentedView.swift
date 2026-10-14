@@ -24,8 +24,25 @@ final class ILBellModeSegmentedView: UIControl {
     var onSelect: ((Int) -> Void)?
 
     // MARK: - UI Elements
-    private let container = UIView()
-    private let stack = UIStackView()
+    private lazy var container: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.medTrackSubtle
+        view.layer.cornerRadius = ILMetrics.radiusPill
+        view.layer.borderWidth = 1
+        view.layer.borderColor = ILColors.medTrack.cgColor
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var stack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.distribution = .fillEqually
+        stack.alignment = .fill
+        stack.spacing = 0
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
     private var segmentViews: [SegmentButton] = []
 
     // MARK: - Initializer
@@ -42,18 +59,8 @@ final class ILBellModeSegmentedView: UIControl {
 
     // MARK: - Setup
     private func setupViews() {
-        container.backgroundColor = ILColors.medTrackSubtle
-        container.layer.cornerRadius = ILMetrics.radiusPill
-        container.layer.borderWidth = 1
-        container.layer.borderColor = ILColors.medTrack.cgColor
-        container.translatesAutoresizingMaskIntoConstraints = false
         addSubview(container)
 
-        stack.axis = .horizontal
-        stack.distribution = .fillEqually
-        stack.alignment = .fill
-        stack.spacing = 0
-        stack.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(stack)
 
         NSLayoutConstraint.activate([
@@ -114,13 +121,16 @@ private final class SegmentButton: UIControl {
 
     var onTap: (() -> Void)?
 
-    private let titleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodySmallMedium
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
     init() {
         super.init(frame: .zero)
-        titleLabel.font = ILTypography.bodySmallMedium
-        titleLabel.textAlignment = .center
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
 
         layer.cornerRadius = ILMetrics.radiusPill

@@ -19,8 +19,10 @@ Two states, plus a shared block:
   "Lịch lễ" → Festivals).
 
 **UI only for now:** the tab makes no API / Core Data call and has no loading or error state — all content
-is synchronous mock data from `ILSanghaUseCaseImpl`. The practice temple id is stored in `UserDefaults`
-(`sangha.myTempleID`, default Chùa Từ Quang, also used when the stored value is empty; the "no temple" state only appears for an unknown id). "Chọn" saves the id and re-renders; "Đổi chùa" opens the
+is synchronous mock data from `ILSanghaUseCaseImpl`. The practice temple is, in order: the temple picked in the app (id in `UserDefaults`
+`sangha.myTempleID`), else the user's `ordination_temple` from the account profile (`GET /v1/users/me`, address / abbot /
+hours from `GET /v1/temples/{id}`; the name alone when the catalog call fails), else the "no temple" state — there is no
+built-in default temple. `loadMyTemple()` is therefore `async`. "Chọn" saves the id and re-renders; "Đổi chùa" opens the
 **TempleFinder** screen (`Presentation/Scenes/TempleFinder/`, pick mode of the prototype `findtp`) — search the whole directory,
 pick a temple, or propose a missing one (UI only). The tab reloads on `viewWillAppear`; a temple picked from the directory is stored
 as id + name/address snapshot (`sangha.myTempleSnapshot`) — see `TD-Sangha-002`. See
@@ -57,6 +59,8 @@ list (no location) — AS-Sangha-002.
 
 ## Changelog
 
+- 2026-10-12 — practice temple now follows the account profile (`ordination_temple`); "no temple" state when the profile has
+  none; removed the default Chùa Từ Quang; `ILSanghaUseCase.loadMyTemple()` is `async`.
 - 2026-10-05 — "Đổi chùa" now opens the new TempleFinder screen instead of clearing the choice (`clearMyTemple` removed);
   new `viewWillAppear` Input reloads the tab; `selectMyTemple(_ temple:)` + snapshot for directory temples.
 - 2026-10-05 — rebuilt to match the prototype `sangha` screen (practice temple / chooser / festival days);

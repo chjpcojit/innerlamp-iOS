@@ -79,7 +79,7 @@ public final class ILMalaCounterView: UIView {
         backgroundColor = ILColors.surface
         layer.cornerRadius = ILMetrics.radiusCardLarge
         layer.borderWidth = 1
-        layer.borderColor = ILColors.border.cgColor
+        layer.borderColor = cgColor(ILColors.border)
 
         beadControl.translatesAutoresizingMaskIntoConstraints = false
         beadControl.isUserInteractionEnabled = false
@@ -90,7 +90,7 @@ public final class ILMalaCounterView: UIView {
             return bead
         }
 
-        tailLayer.backgroundColor = ILColors.gold.withAlphaComponent(0.7).cgColor
+        tailLayer.backgroundColor = cgColor(ILColors.gold.withAlphaComponent(0.7))
         tailLayer.cornerRadius = 1
         beadControl.layer.addSublayer(tailLayer)
 
@@ -172,6 +172,11 @@ public final class ILMalaCounterView: UIView {
         }
     }
 
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window != nil { applyColorAppearanceChange() }
+    }
+
     public override func layoutSubviews() {
         super.layoutSubviews()
         layoutBeads()
@@ -207,24 +212,30 @@ public final class ILMalaCounterView: UIView {
             let side = isLit ? beadSize + beadRingWidth * 2 : beadSize
             bead.bounds = CGRect(x: 0, y: 0, width: side, height: side)
             bead.cornerRadius = side / 2
-            bead.backgroundColor = (isLit ? ILColors.malaBeadLit : ILColors.malaBeadIdle).cgColor
+            bead.backgroundColor = cgColor(isLit ? ILColors.malaBeadLit : ILColors.malaBeadIdle)
             bead.borderWidth = isLit ? beadRingWidth : 0
-            bead.borderColor = ILColors.malaBeadLitRing.cgColor
+            bead.borderColor = cgColor(ILColors.malaBeadLitRing)
         }
         // Mother bead: 12px gold with a 2px ring in the card color.
         let motherSide = motherBeadSize + motherBeadRingWidth * 2
         motherBeadLayer.bounds = CGRect(x: 0, y: 0, width: motherSide, height: motherSide)
         motherBeadLayer.cornerRadius = motherSide / 2
-        motherBeadLayer.backgroundColor = ILColors.gold.cgColor
+        motherBeadLayer.backgroundColor = cgColor(ILColors.gold)
         motherBeadLayer.borderWidth = motherBeadRingWidth
-        motherBeadLayer.borderColor = ILColors.surface.cgColor
+        motherBeadLayer.borderColor = cgColor(ILColors.surface)
         CATransaction.commit()
     }
 
     private func applyColorAppearanceChange() {
-        layer.borderColor = ILColors.border.cgColor
-        tailLayer.backgroundColor = ILColors.gold.withAlphaComponent(0.7).cgColor
+        layer.borderColor = cgColor(ILColors.border)
+        tailLayer.backgroundColor = cgColor(ILColors.gold.withAlphaComponent(0.7))
         updateCount()
+    }
+
+    /// EN: Resolves a dynamic color against this view's own traits — `UIColor.cgColor` alone uses `UITraitCollection.current`, which is stale in layer code and trait-change callbacks (beads stayed light-mode in dark mode).
+    /// VI: Resolve màu dynamic theo trait của chính view — `UIColor.cgColor` đơn thuần dùng `UITraitCollection.current` nên bị cũ ở code layer/callback đổi trait (hạt giữ màu light khi sang dark mode).
+    private func cgColor(_ color: UIColor) -> CGColor {
+        color.resolvedColor(with: traitCollection).cgColor
     }
 
     @objc private func handleTap() {

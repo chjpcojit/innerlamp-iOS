@@ -37,6 +37,8 @@ final class ILHomeCoordinator: Coordinator {
                     self?.showMala()
                 case .openMemorial:
                     self?.showMemorial()
+                case .openLightLamp:
+                    self?.showLightLamp()
                 case .openLunarCalendar:
                     self?.showLunarCalendar()
                 case .openLunarDayDetail(let date, let verse):
@@ -47,12 +49,16 @@ final class ILHomeCoordinator: Coordinator {
                     self?.showBell()
                 case .openFestivals:
                     self?.showFestivals()
+                case .openFestivalDetail(let code, let date):
+                    self?.showFestivalDetail(eventCode: code, date: date)
                 case .openArticle(let id):
                     self?.showArticle(id)
                 case .openArticles:
                     self?.showArticles()
                 case .openTemple(let id):
                     self?.showTemple(id)
+                case .openTemples:
+                    self?.showTemples()
                 case .openDeity(let id):
                     self?.showDeity(id)
                 case .openDeities:
@@ -74,6 +80,13 @@ final class ILHomeCoordinator: Coordinator {
     /// Màn Sổ giỗ — đẩy lên từ link "Sổ giỗ" cạnh "Lịch âm" ở dải lịch tuần.
     private func showMemorial() {
         let coordinator = container.makeMemorialCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    /// Màn Thắp đèn (+ Vườn đèn) — đẩy lên từ hàng gợi ý "Thắp đèn — Vu Lan".
+    private func showLightLamp() {
+        let coordinator = container.makeLightLampCoordinator(navigationController: navigationController)
         addChild(coordinator)
         coordinator.start()
     }
@@ -119,6 +132,17 @@ final class ILHomeCoordinator: Coordinator {
         coordinator.start()
     }
 
+    /// Màn Chi tiết ngày lễ — đẩy lên từ chạm 1 sự kiện ở carousel "Sự kiện Phật giáo".
+    private func showFestivalDetail(eventCode: String, date: Date) {
+        let coordinator = container.makeFestivalDetailCoordinator(
+            navigationController: navigationController,
+            eventCode: eventCode,
+            date: date
+        )
+        addChild(coordinator)
+        coordinator.start()
+    }
+
     private func showArticle(_ articleID: String) {
         let coordinator = container.makeArticleCoordinator(navigationController: navigationController, articleID: articleID)
         addChild(coordinator)
@@ -134,6 +158,13 @@ final class ILHomeCoordinator: Coordinator {
 
     private func showTemple(_ templeID: String) {
         let coordinator = container.makeTempleCoordinator(navigationController: navigationController, templeID: templeID)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    /// Màn "Tất cả chùa" — đẩy lên từ link "Xem tất cả" của carousel "Chùa Việt Nam".
+    private func showTemples() {
+        let coordinator = container.makeTemplesCoordinator(navigationController: navigationController)
         addChild(coordinator)
         coordinator.start()
     }

@@ -40,15 +40,71 @@ final class ILBellPadView: UIControl {
     private var haloResetWorkItem: DispatchWorkItem?
 
     // MARK: - UI Elements
-    private let stageView = UIView()
-    private let haloView = UIView()
+    private lazy var stageView: UIView = {
+        let view = UIView()
+        view.isUserInteractionEnabled = false
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var haloView: UIView = {
+        let view = UIView()
+        view.alpha = 0
+        view.frame = CGRect(x: 0, y: 0, width: Self.stageSize, height: Self.stageSize)
+        return view
+    }()
+
     private let haloGradient = CAGradientLayer()
-    private let rippleHost = UIView()
-    private let instrumentView = UIImageView()
-    private let malletView = UIImageView()
-    private let tagLabel = UILabel()
-    private let numberLabel = UILabel()
-    private let hintLabel = UILabel()
+
+    private lazy var rippleHost: UIView = {
+        let view = UIView()
+        return view
+    }()
+
+    private lazy var instrumentView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.bounds = CGRect(origin: .zero, size: Self.instrumentFrame.size)
+        imageView.layer.shadowColor = UIColor.black.cgColor
+        imageView.layer.shadowOpacity = 0.5
+        imageView.layer.shadowOffset = CGSize(width: 0, height: 14)
+        imageView.layer.shadowRadius = 8
+        return imageView
+    }()
+
+    private lazy var malletView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.bounds = CGRect(origin: .zero, size: Self.malletSize)
+        imageView.layer.anchorPoint = CGPoint(x: 0.5, y: 1)
+        imageView.layer.position = Self.malletPivot
+        imageView.transform = Self.malletRestTransform
+        imageView.layer.shadowColor = UIColor.black.cgColor
+        imageView.layer.shadowOpacity = 0.45
+        imageView.layer.shadowOffset = CGSize(width: -3, height: 6)
+        imageView.layer.shadowRadius = 3
+        return imageView
+    }()
+
+    private lazy var tagLabel: UILabel = {
+        let label = UILabel()
+        return label
+    }()
+
+    private lazy var numberLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bellPadNumber
+        label.textColor = ILColors.medInk
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var hintLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.medInkTertiary
+        label.textAlignment = .center
+        return label
+    }()
 
     // MARK: - Layout constants (design handoff, stage coordinates)
     private static let stageSize: CGFloat = 236
@@ -72,8 +128,6 @@ final class ILBellPadView: UIControl {
 
     // MARK: - Setup
     private func setupViews() {
-        stageView.isUserInteractionEnabled = false
-        stageView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stageView)
 
         // Halo — radial gold glow, invisible until a strike.
@@ -83,44 +137,20 @@ final class ILBellPadView: UIControl {
         haloGradient.endPoint = CGPoint(x: 1, y: 1)
         haloGradient.locations = [0, 0.68]
         haloView.layer.addSublayer(haloGradient)
-        haloView.alpha = 0
-        haloView.frame = CGRect(x: 0, y: 0, width: Self.stageSize, height: Self.stageSize)
         haloGradient.frame = haloView.bounds
         stageView.addSubview(haloView)
 
         rippleHost.frame = haloView.frame
         stageView.addSubview(rippleHost)
 
-        instrumentView.contentMode = .scaleAspectFit
-        instrumentView.bounds = CGRect(origin: .zero, size: Self.instrumentFrame.size)
-        instrumentView.layer.shadowColor = UIColor.black.cgColor
-        instrumentView.layer.shadowOpacity = 0.5
-        instrumentView.layer.shadowOffset = CGSize(width: 0, height: 14)
-        instrumentView.layer.shadowRadius = 8
         stageView.addSubview(instrumentView)
 
-        malletView.bounds = CGRect(origin: .zero, size: Self.malletSize)
-        malletView.layer.anchorPoint = CGPoint(x: 0.5, y: 1)
-        malletView.layer.position = Self.malletPivot
-        malletView.transform = Self.malletRestTransform
-        malletView.layer.shadowColor = UIColor.black.cgColor
-        malletView.layer.shadowOpacity = 0.45
-        malletView.layer.shadowOffset = CGSize(width: -3, height: 6)
-        malletView.layer.shadowRadius = 3
         stageView.addSubview(malletView)
-
-        numberLabel.font = ILTypography.bellPadNumber
-        numberLabel.textColor = ILColors.medInk
-        numberLabel.textAlignment = .center
 
         let readoutRow = UIStackView(arrangedSubviews: [tagLabel, numberLabel])
         readoutRow.axis = .horizontal
         readoutRow.alignment = .lastBaseline
         readoutRow.spacing = 8
-
-        hintLabel.font = ILTypography.subhead
-        hintLabel.textColor = ILColors.medInkTertiary
-        hintLabel.textAlignment = .center
 
         let readoutStack = UIStackView(arrangedSubviews: [readoutRow, hintLabel])
         readoutStack.axis = .vertical

@@ -130,7 +130,13 @@ final class ILFamilyTreeChroniclePillButton: UIControl {
 
     var onTap: (() -> Void)?
 
-    private let titleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let v = UILabel()
+        v.textAlignment = .center
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     private let style: Style
     private let dashLayer = CAShapeLayer()
 
@@ -141,8 +147,6 @@ final class ILFamilyTreeChroniclePillButton: UIControl {
         accessibilityLabel = title
         titleLabel.text = title
         titleLabel.font = font
-        titleLabel.textAlignment = .center
-        titleLabel.isUserInteractionEnabled = false
 
         switch style {
         case .filled:
@@ -164,7 +168,6 @@ final class ILFamilyTreeChroniclePillButton: UIControl {
             titleLabel.textColor = ILColors.FamilyTree.forest
         }
 
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
         NSLayoutConstraint.activate([
             heightAnchor.constraint(greaterThanOrEqualToConstant: height),

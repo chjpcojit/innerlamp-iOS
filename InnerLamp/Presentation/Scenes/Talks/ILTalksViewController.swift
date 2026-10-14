@@ -23,11 +23,27 @@ final class ILTalksViewController: BaseViewController {
     private let talkTappedSubject = PassthroughSubject<String, Never>()
 
     // MARK: - UI Elements
-    private let headerBand = ILStickyHeaderBand()
-    private lazy var headerView = ILNavBar(showBack: true)
-    private let filterChips = ILChipScrollView()
-    private let listView = ILTalksListView()
-    private let emptyStateView = ILStateView(kind: .empty)
+    private lazy var headerBand: ILStickyHeaderBand = {
+        let v = ILStickyHeaderBand()
+        return v
+    }()
+    private lazy var headerView: ILNavBar = {
+        let v = ILNavBar(showBack: true)
+        return v
+    }()
+    private lazy var filterChips: ILChipScrollView = {
+        let v = ILChipScrollView()
+        return v
+    }()
+    private lazy var listView: ILTalksListView = {
+        let v = ILTalksListView()
+        return v
+    }()
+    private lazy var emptyStateView: ILStateView = {
+        let v = ILStateView(kind: .empty)
+        v.isHidden = true
+        return v
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILTalksViewModel) {
@@ -68,7 +84,6 @@ final class ILTalksViewController: BaseViewController {
             self.filterSelectedSubject.send(self.currentFilters[index].value)
         }
         listView.onItemTap = { [weak self] item in self?.talkTappedSubject.send(item.id) }
-        emptyStateView.isHidden = true
 
         [headerView, filterChips].forEach(headerBand.addSubview)
         view.addSubview(listView)

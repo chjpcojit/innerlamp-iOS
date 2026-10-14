@@ -21,8 +21,17 @@ final class ILFamilyTreeAddMemberPickerView: UIView {
     // MARK: - Properties
     var onPick: ((String) -> Void)?
 
-    private let scrollView = UIScrollView()
-    private let stack = UIStackView()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var stack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     private lazy var heightConstraint = heightAnchor.constraint(equalToConstant: Layout.rowHeight)
 
     // MARK: - Initializer
@@ -34,8 +43,6 @@ final class ILFamilyTreeAddMemberPickerView: UIView {
         layer.borderColor = Tree.cardRing.cgColor
         clipsToBounds = true
 
-        stack.axis = .vertical
-        [scrollView, stack].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
         addSubview(scrollView)
         scrollView.addSubview(stack)
         NSLayoutConstraint.activate([

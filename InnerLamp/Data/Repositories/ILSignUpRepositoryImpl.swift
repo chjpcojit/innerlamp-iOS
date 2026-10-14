@@ -61,8 +61,10 @@ extension ILSignUpError {
                 return .otpResendTooSoon(retryAfterSeconds: details?["retry_after_seconds"]?.value as? Int)
             case "SMS_SEND_FAILED":
                 return .smsSendFailed
+            case "INVALID_TEMPLE":
+                return .invalidTemple
             case "VALIDATION_ERROR", "INVALID_EMAIL", "INVALID_PHONE", "INVALID_PASSWORD",
-                 "PAYLOAD_TOO_LARGE":
+                 "INVALID_FULL_NAME", "INVALID_DHARMA_NAME", "PAYLOAD_TOO_LARGE":
                 return .invalidInput
             default:
                 return .server

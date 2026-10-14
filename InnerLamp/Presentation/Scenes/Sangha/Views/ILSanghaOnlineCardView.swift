@@ -12,10 +12,32 @@ final class ILSanghaOnlineCardView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let dotView = UIView()
-    private let scheduleLabel = UILabel()
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
+    private lazy var dotView: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 4
+        return view
+    }()
+
+    private lazy var scheduleLabel: UILabel = {
+        let label = UILabel()
+        return label
+    }()
+
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.rowTitle
+        label.textColor = ILColors.ink
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        return label
+    }()
 
     // MARK: - Initializer
     init() {
@@ -44,20 +66,12 @@ final class ILSanghaOnlineCardView: UIControl {
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
 
-        dotView.layer.cornerRadius = 4
         dotView.widthAnchor.constraint(equalToConstant: 8).isActive = true
         dotView.heightAnchor.constraint(equalToConstant: 8).isActive = true
         let tagRow = UIStackView(arrangedSubviews: [dotView, scheduleLabel])
         tagRow.axis = .horizontal
         tagRow.alignment = .center
         tagRow.spacing = 8
-
-        titleLabel.font = ILTypography.rowTitle
-        titleLabel.textColor = ILColors.ink
-        titleLabel.numberOfLines = 0
-        subtitleLabel.font = ILTypography.subhead
-        subtitleLabel.textColor = ILColors.inkTertiary
-        subtitleLabel.numberOfLines = 0
 
         let stack = UIStackView(arrangedSubviews: [tagRow, titleLabel, subtitleLabel])
         stack.axis = .vertical

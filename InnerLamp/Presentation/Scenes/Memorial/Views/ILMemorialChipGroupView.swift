@@ -18,12 +18,15 @@ final class ILMemorialChipGroupView: UIView {
     private var chips: [ILChip] = []
 
     // MARK: - UI Elements
-    private let flowView = ILChipFlowView(rowSpacing: ILMetrics.spaceSmall, itemSpacing: ILMetrics.spaceSmall)
+    private lazy var flowView: ILChipFlowView = {
+        let view = ILChipFlowView(rowSpacing: ILMetrics.spaceSmall, itemSpacing: ILMetrics.spaceSmall)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     // MARK: - Initializer
     init() {
         super.init(frame: .zero)
-        flowView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(flowView)
         NSLayoutConstraint.activate([
             flowView.topAnchor.constraint(equalTo: topAnchor),

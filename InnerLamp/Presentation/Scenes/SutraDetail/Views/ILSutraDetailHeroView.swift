@@ -55,7 +55,7 @@ final class ILSutraDetailHeroView: UIView {
         return label
     }()
 
-    private let tagsFlow = ILChipFlowView(rowSpacing: ILMetrics.spaceSmall, itemSpacing: ILMetrics.spaceSmall)
+    private lazy var tagsFlow = ILChipFlowView(rowSpacing: ILMetrics.spaceSmall, itemSpacing: ILMetrics.spaceSmall)
 
     private lazy var contentStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [kickerLabel, titleLabel, originalNameLabel, metaLabel, tagsFlow])
@@ -202,8 +202,15 @@ private final class ILSutraDetailTagPillView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // The pill is created while the screen is already showing, so its `traitCollection` is only
+    // right once it is in a window — resolve the border against it there, not at `init`.
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        applyColors()
+    }
+
     private func applyColors() {
         backgroundColor = isFilled ? ILColors.featGlow : .clear
-        layer.borderColor = ILColors.heroAccentBorder.cgColor
+        layer.borderColor = ILColors.heroAccentBorder.resolvedColor(with: traitCollection).cgColor
     }
 }

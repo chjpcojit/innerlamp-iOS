@@ -14,6 +14,9 @@ final class ILMainTabCoordinator: Coordinator {
     var childCoordinators: [any Coordinator] = []
     weak var parentCoordinator: (any Coordinator)?
 
+    /// Called when the user signed out from the Me tab — the app owner leaves the main area for Login.
+    var onLogout: (() -> Void)?
+
     private let container: DIContainer
 
     init(navigationController: UINavigationController, container: DIContainer) {
@@ -45,6 +48,7 @@ final class ILMainTabCoordinator: Coordinator {
         let meNavigation = BaseNavigationController()
         let profileCoordinator = container.makeProfileCoordinator(navigationController: meNavigation)
         addChild(profileCoordinator)
+        profileCoordinator.onLogout = { [weak self] in self?.onLogout?() }
         profileCoordinator.start()
 
         // Thứ tự phải khớp `ILMainTabBarController.tabOrder`.
@@ -53,16 +57,16 @@ final class ILMainTabCoordinator: Coordinator {
             animated: false
         )
 
-        // Nút Đèn giữa bar — mở màn Chuẩn bị thiền (modal full-screen).
-        tabBarController.onLampTapped = { [weak self] in self?.showMeditationSetup() }
+        // Nút Đèn giữa bar — present màn Thắp đèn (modal full-screen, phủ tab bar).
+        tabBarController.onLampTapped = { [weak self] in self?.showLightLamp() }
 
         navigationController.setNavigationBarHidden(true, animated: false)
         navigationController.setViewControllers([tabBarController], animated: true)
     }
 
-    private func showMeditationSetup() {
-        let coordinator = container.makeMeditationSetupCoordinator(navigationController: navigationController)
+    private func showLightLamp() {
+        let coordinator = container.makeLightLampCoordinator(navigationController: navigationController)
         addChild(coordinator)
-        coordinator.start()
+        coordinator.startModal()
     }
 }

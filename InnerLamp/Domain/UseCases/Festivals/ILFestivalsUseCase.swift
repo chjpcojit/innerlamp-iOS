@@ -6,37 +6,40 @@
 import Foundation
 
 protocol ILFestivalsUseCase {
-    /// Các ngày lễ Phật giáo (lễ / vía Phật giáo từ catalog Core Data, cộng Rằm/Mùng Một là ngày trai giới)
-    /// từ ngày 1/1 của năm chứa `date` đến hết 2 năm sau đó (3 năm dương lịch), gom theo tháng dương.
-    /// Ngày đã qua có `daysUntil` âm.
+    /// Các ngày lễ Phật giáo của đúng một năm dương lịch `year` (từ 1/1 đến 31/12) lấy từ server
+    /// (`GET /v1/calendar/events?year=`), cộng Rằm/Mùng Một không có lễ riêng là ngày trai giới,
+    /// gom theo tháng dương. `today` là mốc tính `daysUntil` (ngày đã qua có `daysUntil` âm) và
+    /// quyết định nhãn tháng có kèm năm hay không.
     ///
-    /// Tháng nào không có ngày lễ thì không xuất hiện trong kết quả.
-    func loadMonths(from date: Date) async throws -> [ILFestivalMonthEntity]
+    /// Tháng nào không có ngày lễ thì không xuất hiện trong kết quả. Lỗi mạng/server được ném ra
+    /// dưới dạng `ILCatalogError`.
+    func loadMonths(year: Int, today date: Date) async throws -> [ILFestivalMonthEntity]
 }
 
 final class ILFestivalsUseCaseImpl: ILFestivalsUseCase {
 
-    private let buddhistEventUseCase: ILBuddhistEventUseCase
+    private let calendarEventRepository: ILCalendarEventRepository
 
-    init(buddhistEventUseCase: ILBuddhistEventUseCase) {
-        self.buddhistEventUseCase = buddhistEventUseCase
+    init(calendarEventRepository: ILCalendarEventRepository) {
+        self.calendarEventRepository = calendarEventRepository
     }
 
-    func loadMonths(from date: Date) async throws -> [ILFestivalMonthEntity] {
+    func loadMonths(year: Int, today date: Date) async throws -> [ILFestivalMonthEntity] {
         var calendar = Calendar(identifier: .gregorian)
         calendar.firstWeekday = 2
 
         let today = calendar.startOfDay(for: date)
-        guard let rangeStart = calendar.date(from: DateComponents(year: calendar.component(.year, from: today), month: 1, day: 1)),
-              let end = calendar.date(byAdding: .year, value: Self.yearsCovered, to: rangeStart) else {
+        guard let rangeStart = calendar.date(from: DateComponents(year: year, month: 1, day: 1)),
+              let end = calendar.date(byAdding: .year, value: 1, to: rangeStart) else {
             return []
         }
 
-        // Lễ Phật giáo chung: bỏ Tết dân gian (`.folk`) và lễ Nam tông.
-        let templates = try await buddhistEventUseCase.loadTemplates()
-            .filter { $0.category != .folk && $0.tradition != .theravada }
-        let occurrences = buddhistEventUseCase.occurrences(of: templates, from: rangeStart, to: end, calendar: calendar)
-        let occurrencesByDay = Dictionary(grouping: occurrences) { calendar.startOfDay(for: $0.date) }
+        // Ngày dương và âm lịch của lễ do server tính; client chỉ gom nhóm theo ngày.
+        let calendarEvents = try await calendarEventRepository.loadEvents(year: year)
+        let eventsByCode = Dictionary(calendarEvents.events.map { ($0.code, $0) }) { first, _ in first }
+        let occurrencesByDay = Dictionary(grouping: calendarEvents.occurrences) {
+            calendar.startOfDay(for: $0.solarDate)
+        }
 
         var order: [String] = []
         var daysByMonth: [String: [ILFestivalDayEntity]] = [:]
@@ -47,13 +50,18 @@ final class ILFestivalsUseCaseImpl: ILFestivalsUseCase {
 
             if let dayOccurrences = occurrencesByDay[day] {
                 for occurrence in dayOccurrences {
+                    guard let event = eventsByCode[occurrence.eventCode] else { continue }
                     Self.append(
                         ILFestivalDayEntity(
-                            id: "\(Self.dayKey(day, calendar: calendar))-\(occurrence.template.id)",
+                            id: "\(Self.dayKey(day, calendar: calendar))-\(event.code)",
                             date: day,
-                            title: occurrence.template.title,
+                            title: event.name,
                             kind: .festival,
-                            daysUntil: daysUntil
+                            daysUntil: daysUntil,
+                            lunarDay: occurrence.lunarDay,
+                            lunarMonth: occurrence.lunarMonth,
+                            isLeapMonth: occurrence.isLeapMonth,
+                            eventCode: event.code
                         ),
                         date: day,
                         calendar: calendar,
@@ -76,7 +84,10 @@ final class ILFestivalsUseCaseImpl: ILFestivalsUseCase {
                             date: day,
                             title: String(format: observanceKey.localized, Self.lunarMonthName(lunar.month)),
                             kind: .observance,
-                            daysUntil: daysUntil
+                            daysUntil: daysUntil,
+                            lunarDay: lunar.day,
+                            lunarMonth: lunar.month,
+                            isLeapMonth: lunar.isLeapMonth
                         ),
                         date: day,
                         calendar: calendar,
@@ -103,9 +114,6 @@ final class ILFestivalsUseCaseImpl: ILFestivalsUseCase {
     }
 
     // MARK: - Helpers
-
-    /// Năm hiện tại + 2 năm sau.
-    private static let yearsCovered = 3
 
     private static func append(
         _ entity: ILFestivalDayEntity,

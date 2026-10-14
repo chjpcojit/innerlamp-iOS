@@ -25,6 +25,8 @@ final class ILSignUpCoordinator: Coordinator, ILAddTempleCoordinatorDelegate {
     var childCoordinators: [any Coordinator] = []
     weak var parentCoordinator: (any Coordinator)?
     weak var delegate: ILSignUpCoordinatorDelegate?
+    /// `true` khi SignUp là màn gốc của luồng auth (mở từ Splash): thay stack thay vì push, ẩn nút back.
+    var isRoot = false
 
     private let container: DIContainer
     private var viewModel: ILSignUpViewModel?
@@ -67,8 +69,12 @@ final class ILSignUpCoordinator: Coordinator, ILAddTempleCoordinatorDelegate {
             }
             .store(in: &cancellables)
 
-        let viewController = ILSignUpViewController(viewModel: viewModel)
-        navigationController.pushViewController(viewController, animated: true)
+        let viewController = ILSignUpViewController(viewModel: viewModel, showsBackButton: !isRoot)
+        if isRoot {
+            navigationController.setViewControllers([viewController], animated: true)
+        } else {
+            navigationController.pushViewController(viewController, animated: true)
+        }
     }
 
     private func showAddTemple(prefillName: String, existingPlaces: [ILOrdinationPlaceEntity]) {

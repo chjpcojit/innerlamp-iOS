@@ -13,12 +13,42 @@ final class ILReaderAutoScrollRowView: UIView {
     var onToggle: (() -> Void)?
 
     // MARK: - UI Elements
-    private let pillView = UIControl()
-    private let switchContainer = UIView()
-    private let switchControl = UISwitch()
-    private let toggleLabel = UILabel()
-    private let noteLabel = UILabel()
-    private let hintLabel = UILabel()
+    private lazy var pillView: UIControl = {
+        let v = UIControl()
+        v.layer.cornerRadius = 15
+        v.layer.borderWidth = 1
+        return v
+    }()
+    private lazy var switchContainer: UIView = {
+        let v = UIView()
+        return v
+    }()
+    // The design toggle is 28×16pt; a `UISwitch` is 51×31pt, so scale it inside a fixed box.
+    private lazy var switchControl: UISwitch = {
+        let v = UISwitch()
+        v.onTintColor = ILColors.gold
+        v.transform = CGAffineTransform(scaleX: 28.0 / 51.0, y: 28.0 / 51.0)
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var toggleLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.subheadMedium
+        return v
+    }()
+    private lazy var noteLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        return v
+    }()
+    private lazy var hintLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        v.textAlignment = .right
+        v.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return v
+    }()
 
     // MARK: - Initializer
     init() {
@@ -32,22 +62,9 @@ final class ILReaderAutoScrollRowView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        pillView.layer.cornerRadius = 15
-        pillView.layer.borderWidth = 1
         pillView.addTarget(self, action: #selector(handleToggle), for: .touchUpInside)
 
-        // The design toggle is 28×16pt; a `UISwitch` is 51×31pt, so scale it inside a fixed box.
-        switchControl.onTintColor = ILColors.gold
-        switchControl.transform = CGAffineTransform(scaleX: 28.0 / 51.0, y: 28.0 / 51.0)
-        switchControl.isUserInteractionEnabled = false
         switchContainer.addSubview(switchControl)
-        switchControl.translatesAutoresizingMaskIntoConstraints = false
-
-        toggleLabel.font = ILTypography.subheadMedium
-        noteLabel.font = ILTypography.label
-        hintLabel.font = ILTypography.label
-        hintLabel.textAlignment = .right
-        hintLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let pillStack = UIStackView(arrangedSubviews: [switchContainer, toggleLabel])
         pillStack.axis = .horizontal

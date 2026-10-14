@@ -36,11 +36,25 @@ final class ILSanghaViewController: BaseViewController {
     private let dayReminderTappedSubject = PassthroughSubject<String, Never>()
 
     // MARK: - UI Elements
-    private lazy var headerView = ILTabHeaderView(title: "sangha.title".localized)
+    private lazy var headerBand: ILStickyHeaderBand = {
+        let band = ILStickyHeaderBand()
+        return band
+    }()
+
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.displayMedium
+        label.textColor = ILColors.ink
+        label.text = "sangha.title".localized
+        label.accessibilityTraits = .header
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
     private lazy var scrollView: UIScrollView = {
         let scroll = UIScrollView()
         scroll.showsVerticalScrollIndicator = false
+        scroll.contentInsetAdjustmentBehavior = .never
         return scroll
     }()
 
@@ -48,6 +62,7 @@ final class ILSanghaViewController: BaseViewController {
         let stack = UIStackView()
         stack.axis = .vertical
         stack.alignment = .fill
+        stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
     }()
 
@@ -70,16 +85,23 @@ final class ILSanghaViewController: BaseViewController {
         hasAppeared = true
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        applyHeaderInset()
+    }
+
     // MARK: - Setup
     override func setupViews() {
         super.setupViews()
         view.backgroundColor = ILColors.canvas
 
-        [scrollView, headerView].forEach {
+        // Band last so it sits above the scroll view.
+        [scrollView, headerBand].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        headerBand.addSubview(titleLabel)
+        headerBand.bind(to: scrollView)
         scrollView.addSubview(contentStack)
     }
 
@@ -87,11 +109,18 @@ final class ILSanghaViewController: BaseViewController {
         super.setupConstraints()
 
         NSLayoutConstraint.activate([
-            headerView.topAnchor.constraint(equalTo: view.topAnchor),
-            headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            headerBand.topAnchor.constraint(equalTo: view.topAnchor),
+            headerBand.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerBand.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
-            scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: ILMetrics.spaceMedium),
+            titleLabel.leadingAnchor.constraint(equalTo: headerBand.leadingAnchor, constant: ILMetrics.screenHorizontal),
+            titleLabel.trailingAnchor.constraint(equalTo: headerBand.trailingAnchor, constant: -ILMetrics.screenHorizontal),
+            titleLabel.bottomAnchor.constraint(equalTo: headerBand.bottomAnchor, constant: -ILMetrics.spaceMedium + 2),
+
+            // Scroll view chạy dưới header để nội dung mờ xuyên qua kính; chiều cao header được áp
+            // thành top content inset trong `viewDidLayoutSubviews`.
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -355,6 +384,16 @@ final class ILSanghaViewController: BaseViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(view)
         contentStack.setCustomSpacing(spacingAfter, after: view)
+    }
+
+    /// Đẩy nội dung xuống dưới header; lần layout đầu thì đặt offset ở đỉnh nội dung thay vì dưới header.
+    private func applyHeaderInset() {
+        let top = headerBand.bounds.height
+        guard top > 0, scrollView.contentInset.top != top else { return }
+        let wasAtTop = scrollView.contentOffset.y <= -scrollView.contentInset.top
+        scrollView.contentInset.top = top
+        scrollView.verticalScrollIndicatorInsets.top = top
+        if wasAtTop { scrollView.contentOffset.y = -top }
     }
 
     // MARK: - Actions

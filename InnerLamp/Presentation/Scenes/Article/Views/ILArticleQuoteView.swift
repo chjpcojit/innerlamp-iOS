@@ -27,9 +27,28 @@ final class ILArticleQuoteView: UIView {
     }
 
     // MARK: - UI Elements
-    private let borderView = UIView()
-    private let quoteLabel = UILabel()
-    private let sourceLabel = UILabel()
+    private lazy var borderView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = ILColors.gold.withAlphaComponent(0.5)
+        return view
+    }()
+
+    private lazy var quoteLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    private lazy var sourceLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
     // MARK: - Initializer
     init() {
@@ -44,17 +63,6 @@ final class ILArticleQuoteView: UIView {
     // MARK: - Setup
     private func setupViews() {
         translatesAutoresizingMaskIntoConstraints = false
-
-        borderView.translatesAutoresizingMaskIntoConstraints = false
-        borderView.backgroundColor = ILColors.gold.withAlphaComponent(0.5)
-
-        quoteLabel.numberOfLines = 0
-        quoteLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        sourceLabel.font = ILTypography.subhead
-        sourceLabel.textColor = ILColors.inkTertiary
-        sourceLabel.numberOfLines = 0
-        sourceLabel.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(borderView)
         addSubview(quoteLabel)

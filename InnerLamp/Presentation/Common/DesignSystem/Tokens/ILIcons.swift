@@ -112,6 +112,9 @@ public enum ILIcons {
     public static let rowTalk = template("row_talk")
 
     // MARK: - Profile menu / donate icons (template, 44×44 vector — `IL-Icon` glyphs of the prototype)
+    /// Person bust (head + shoulders) — "Sửa hồ sơ"
+    public static let rowUser = template("row_user")
+
     /// Family tree (three nodes joined by a branch) — "Gia phả dòng họ"
     public static let rowTree = template("row_tree")
 
@@ -135,6 +138,9 @@ public enum ILIcons {
 
     /// Lotus — "Ủng hộ InnerLamp" card
     public static let rowLotus = template("row_lotus")
+
+    /// Calendar page with a date dot — "Hộ trì hằng tháng" card in the merit book
+    public static let rowCalendar = template("row_calendar")
 
     // MARK: - Illustrations (full-color)
     /// Singing bowl photo, 200×200 — stage of the Chuông mõ screen (bell mode)

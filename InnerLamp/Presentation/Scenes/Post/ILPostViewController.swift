@@ -17,12 +17,21 @@ final class ILPostViewController: BaseViewController {
     private let shareTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
-    private let headerContainer = UIView()
+    private lazy var headerContainer: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.canvas
+        return v
+    }()
 
     private lazy var headerView = ILNavBar(showBack: true)
 
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsVerticalScrollIndicator = false
+        v.alwaysBounceVertical = true
+        return v
+    }()
+    private lazy var contentView = UIView()
 
     private lazy var postCard = ILPostCardView()
     private lazy var commentList = ILPostCommentListView()
@@ -57,11 +66,7 @@ final class ILPostViewController: BaseViewController {
 
         headerView.onBack = { [weak self] in self?.backTappedSubject.send(()) }
 
-        headerContainer.backgroundColor = ILColors.canvas
         headerContainer.addSubview(headerView)
-
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = true
 
         postCard.onLikeTap = { [weak self] in self?.likeTappedSubject.send(()) }
         postCard.onShareTap = { [weak self] in self?.shareTappedSubject.send(()) }

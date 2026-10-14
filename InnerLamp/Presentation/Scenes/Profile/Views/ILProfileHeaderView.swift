@@ -5,9 +5,8 @@
 
 import UIKit
 
-/// Đầu trang màn Tôi (khớp `isProfile` trong design handoff): ảnh bìa 250pt tràn cạnh với nút pill
-/// "Sửa hồ sơ" nổi trên ảnh, avatar tròn 84pt đè lên mép dưới ảnh bìa, tên + dòng "Pháp danh … ·
-/// Phật tử tại gia" bên phải avatar.
+/// Đầu trang màn Tôi (khớp `isProfile` trong design handoff): ảnh bìa 250pt tràn cạnh, avatar tròn
+/// 84pt đè lên mép dưới ảnh bìa, tên + dòng "Pháp danh … · Phật tử tại gia" bên phải avatar.
 ///
 /// View này nằm đầu nội dung cuộn (không ghim). Màn chủ chuyển `contentOffset.y` vào
 /// `update(contentOffsetY:)`:
@@ -27,17 +26,25 @@ final class ILProfileHeaderView: UIView {
         static let avatarBorderWidth: CGFloat = 3
         static let avatarRingWidth: CGFloat = 1
         static let textBottomInset: CGFloat = 6
-        static let pillTopInset: CGFloat = 8
         static let parallaxFactor: CGFloat = 0.45
     }
 
-    // MARK: - Properties
-    var onEditTapped: (() -> Void)?
-
     // MARK: - UI Elements
-    private let coverContainer = UIView()
+    private lazy var coverContainer: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
     /// Gradient + ảnh bìa: phần được phóng to / trượt khi cuộn.
-    private let coverMedia = UIView()
+    private lazy var coverMedia: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.insertSublayer(coverGradient, at: 0)
+        coverGradient.startPoint = CGPoint(x: 0.5, y: 0)
+        coverGradient.endPoint = CGPoint(x: 0.5, y: 1)
+        return view
+    }()
     private let coverGradient = CAGradientLayer()
     private let fadeGradient = CAGradientLayer()
 
@@ -48,7 +55,14 @@ final class ILProfileHeaderView: UIView {
         return imageView
     }()
 
-    private let fadeView = UIView()
+    private lazy var fadeView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.insertSublayer(fadeGradient, at: 0)
+        view.isUserInteractionEnabled = false
+        return view
+    }()
+
     private let avatarGradient = CAGradientLayer()
 
     private lazy var avatarView: UIView = {
@@ -93,25 +107,6 @@ final class ILProfileHeaderView: UIView {
         return label
     }()
 
-    private lazy var editButton: UIButton = {
-        var configuration = UIButton.Configuration.plain()
-        configuration.title = "profile.header.edit".localized
-        configuration.baseForegroundColor = ILColors.inkOnDark
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
-        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
-            var attributes = attributes
-            attributes.font = ILTypography.subheadMedium
-            return attributes
-        }
-        let button = UIButton(configuration: configuration)
-        button.backgroundColor = ILColors.coverPill
-        button.layer.cornerRadius = ILMetrics.radiusPill
-        button.clipsToBounds = true
-        button.setContentHuggingPriority(.required, for: .horizontal)
-        button.addTarget(self, action: #selector(handleEditTapped), for: .touchUpInside)
-        return button
-    }()
-
     // MARK: - Initializer
     init() {
         super.init(frame: .zero)
@@ -126,20 +121,19 @@ final class ILProfileHeaderView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        // Bare sublayers animate `frame` implicitly (0.25s): the cover / fade / avatar gradients would
+        // visibly grow from zero on first layout and re-flash whenever the header is re-laid out.
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         coverGradient.frame = coverMedia.bounds
         fadeGradient.frame = fadeView.bounds
         avatarGradient.frame = avatarView.bounds
+        CATransaction.commit()
     }
 
     // MARK: - Setup
     private func setupViews() {
         backgroundColor = .clear
-
-        coverMedia.layer.insertSublayer(coverGradient, at: 0)
-        coverGradient.startPoint = CGPoint(x: 0.5, y: 0)
-        coverGradient.endPoint = CGPoint(x: 0.5, y: 1)
-        fadeView.layer.insertSublayer(fadeGradient, at: 0)
-        fadeView.isUserInteractionEnabled = false
 
         initialLabel.translatesAutoresizingMaskIntoConstraints = false
         avatarView.addSubview(initialLabel)
@@ -164,17 +158,15 @@ final class ILProfileHeaderView: UIView {
         rowStack.alignment = .bottom
         rowStack.spacing = ILMetrics.spaceMedium + 2
 
-        [coverContainer, rowStack, avatarRingView].forEach {
+        addSubview(coverContainer)
+        [rowStack, avatarRingView].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             addSubview($0)
         }
-        [coverMedia, coverImageView, fadeView, editButton].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-        }
+        coverImageView.translatesAutoresizingMaskIntoConstraints = false
         coverContainer.addSubview(coverMedia)
         coverMedia.addSubview(coverImageView)
         coverContainer.addSubview(fadeView)
-        coverContainer.addSubview(editButton)
 
         NSLayoutConstraint.activate([
             coverContainer.topAnchor.constraint(equalTo: topAnchor),
@@ -196,9 +188,6 @@ final class ILProfileHeaderView: UIView {
             fadeView.trailingAnchor.constraint(equalTo: coverContainer.trailingAnchor),
             fadeView.bottomAnchor.constraint(equalTo: coverContainer.bottomAnchor),
             fadeView.heightAnchor.constraint(equalToConstant: Layout.fadeHeight),
-
-            editButton.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: Layout.pillTopInset),
-            editButton.trailingAnchor.constraint(equalTo: coverContainer.trailingAnchor, constant: -ILMetrics.screenHorizontal),
 
             avatarView.widthAnchor.constraint(equalToConstant: Layout.avatarSize),
             avatarView.heightAnchor.constraint(equalToConstant: Layout.avatarSize),
@@ -282,9 +271,5 @@ final class ILProfileHeaderView: UIView {
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in
             self.applyDynamicColors()
         }
-    }
-
-    @objc private func handleEditTapped() {
-        onEditTapped?()
     }
 }

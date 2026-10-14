@@ -15,7 +15,13 @@ final class ILLibraryQuickAccessGridView: UIView {
     var onTileTapped: ((ILLibraryQuickAccessKind) -> Void)?
 
     // MARK: - UI Elements
-    private let columnsStack = UIStackView()
+    private lazy var columnsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = ILMetrics.rowSpacing
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
     // MARK: - Initializer
     init() {
@@ -29,9 +35,6 @@ final class ILLibraryQuickAccessGridView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        columnsStack.axis = .vertical
-        columnsStack.spacing = ILMetrics.rowSpacing
-        columnsStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(columnsStack)
 
         NSLayoutConstraint.activate([
@@ -72,7 +75,13 @@ private final class ILLibraryQuickAccessTileView: UIControl {
     var onTap: (() -> Void)?
 
     private let model: ILLibraryQuickAccessModel
-    private let glyphTile = UIView()
+    private lazy var glyphTile: UIView = {
+        let view = UIView()
+        view.backgroundColor = Self.mapTone(model.tone).tintBackground
+        view.layer.cornerRadius = Self.glyphTileSize / 2
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     init(model: ILLibraryQuickAccessModel) {
         self.model = model
@@ -92,9 +101,6 @@ private final class ILLibraryQuickAccessTileView: UIControl {
         layer.borderColor = ILColors.border.cgColor
 
         let tone = Self.mapTone(model.tone)
-        glyphTile.backgroundColor = tone.tintBackground
-        glyphTile.layer.cornerRadius = Self.glyphTileSize / 2
-        glyphTile.translatesAutoresizingMaskIntoConstraints = false
 
         let glyphLabel = UILabel()
         glyphLabel.font = ILTypography.directionGlyph

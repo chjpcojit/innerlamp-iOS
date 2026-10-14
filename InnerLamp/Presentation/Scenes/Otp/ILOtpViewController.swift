@@ -109,6 +109,7 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
 
     private lazy var resendRowView: ILOtpResendRowView = {
         let view = ILOtpResendRowView()
+        view.translatesAutoresizingMaskIntoConstraints = false
         view.onResendTapped = { [weak self] in
             self?.handleResendTapped()
         }
@@ -117,6 +118,7 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
 
     private lazy var voiceCallBannerView: ILOtpVoiceCallBannerView = {
         let view = ILOtpVoiceCallBannerView()
+        view.translatesAutoresizingMaskIntoConstraints = false
         view.onTap = { [weak self] in
             self?.requestVoiceCallTappedSubject.send(())
         }
@@ -138,6 +140,7 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
 
     private lazy var expiryLabel: UILabel = {
         let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
         label.font = ILTypography.caption
         label.textColor = ILColors.inkFaint
         label.textAlignment = .center
@@ -148,7 +151,11 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
 
     // Ghim đáy màn hình, cuộn riêng phần trên — cùng pattern `footerContainer` với màn
     // Đăng nhập/Đăng ký (`view.keyboardLayoutGuide`, tự trồi lên theo bàn phím).
-    private let footerContainer = UIView()
+    private lazy var footerContainer: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILOtpViewModel) {
@@ -181,13 +188,10 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
         scrollView.addSubview(contentView)
 
         [titleLabel, subtitleStack, codeInputView, resendRowView, voiceCallBannerView].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
         }
 
-        footerContainer.translatesAutoresizingMaskIntoConstraints = false
         [verifyButton, expiryLabel].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
             footerContainer.addSubview($0)
         }
         view.addSubview(footerContainer)

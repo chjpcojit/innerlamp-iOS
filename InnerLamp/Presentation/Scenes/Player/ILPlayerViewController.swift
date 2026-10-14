@@ -27,7 +27,7 @@ final class ILPlayerViewController: BaseViewController {
 
     private let centerGuide = UILayoutGuide()
 
-    private let artworkView = ILPlayerArtworkView()
+    private lazy var artworkView = ILPlayerArtworkView()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -56,7 +56,7 @@ final class ILPlayerViewController: BaseViewController {
         return stack
     }()
 
-    private let progressBar = ILLinearProgressBarView()
+    private lazy var progressBar = ILLinearProgressBarView()
 
     private lazy var elapsedLabel: UILabel = {
         let label = UILabel()
@@ -81,9 +81,9 @@ final class ILPlayerViewController: BaseViewController {
 
     private lazy var rewindButton = makeSeekButton()
     private lazy var forwardButton = makeSeekButton()
-    private let playPauseButton = ILPlayPauseButton(diameter: 72, glyphColor: ILColors.canvas)
+    private lazy var playPauseButton = ILPlayPauseButton(diameter: 72, glyphColor: ILColors.canvas)
 
-    private let controlsContainer = UIView()
+    private lazy var controlsContainer = UIView()
 
     private lazy var controlsRow: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [rewindButton, playPauseButton, forwardButton])
@@ -100,7 +100,7 @@ final class ILPlayerViewController: BaseViewController {
         return label
     }()
 
-    private let speedRow = ILPlayerOptionRowView()
+    private lazy var speedRow = ILPlayerOptionRowView()
 
     private lazy var sleepSectionLabel: UILabel = {
         let label = UILabel()
@@ -109,7 +109,7 @@ final class ILPlayerViewController: BaseViewController {
         return label
     }()
 
-    private let sleepRow = ILPlayerOptionRowView()
+    private lazy var sleepRow = ILPlayerOptionRowView()
 
     private lazy var sleepNoteLabel: UILabel = {
         let label = UILabel()

@@ -13,7 +13,10 @@ final class ILOnboardingIntroStepView: UIView {
 
     // MARK: - UI Elements
     /// `IL-Logo` 100px ở đầu step (design `step0`).
-    private let logoView = ILLogoView(size: 100)
+    private lazy var logoView: ILLogoView = {
+        let view = ILLogoView(size: 100)
+        return view
+    }()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()

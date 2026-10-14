@@ -20,9 +20,11 @@ final class ILHomeViewController: BaseViewController {
     private let photosTappedSubject = PassthroughSubject<Void, Never>()
     private let bellTappedSubject = PassthroughSubject<Void, Never>()
     private let eventsTappedSubject = PassthroughSubject<Void, Never>()
+    private let eventTappedSubject = PassthroughSubject<String, Never>()
     private let articleTappedSubject = PassthroughSubject<String, Never>()
     private let articlesViewAllTappedSubject = PassthroughSubject<Void, Never>()
     private let templeTappedSubject = PassthroughSubject<String, Never>()
+    private let templesViewAllTappedSubject = PassthroughSubject<Void, Never>()
     private let deityTappedSubject = PassthroughSubject<String, Never>()
     private let deitiesViewAllTappedSubject = PassthroughSubject<Void, Never>()
     private let suggestedSessionTappedSubject = PassthroughSubject<String, Never>()
@@ -30,42 +32,135 @@ final class ILHomeViewController: BaseViewController {
     private let avatarTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.showsVerticalScrollIndicator = false
+        v.contentInsetAdjustmentBehavior = .never
+        return v
+    }()
+    private lazy var contentView: UIView = {
+        let v = UIView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     // Pinned greeting header: sits above the scroll view and blurs in as content scrolls under it.
-    private let headerContainer = ILStickyHeaderBand(tintColor: ILColors.canvasWarm)
-    private let headerView = ILHomeGreetingHeaderView()
+    private lazy var headerContainer: ILStickyHeaderBand = ILStickyHeaderBand(tintColor: ILColors.canvasWarm)
+    private lazy var headerView: ILHomeGreetingHeaderView = {
+        let v = ILHomeGreetingHeaderView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     private var lastHeaderHeight: CGFloat = 0
-    private let weekCalendarView = ILHomeWeekCalendarView()
-    private let lunarHeroCard = ILHomeLunarHeroCardView()
+    private lazy var weekCalendarView: ILHomeWeekCalendarView = {
+        let v = ILHomeWeekCalendarView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var lunarHeroCard: ILHomeLunarHeroCardView = {
+        let v = ILHomeLunarHeroCardView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let eventsHeader = ILSectionHeaderView(title: "home.events.title".localized, trailingText: "home.events.viewAll".localized, icon: ILIcons.homeEvent, iconTone: .rose)
-    private let eventsCarousel = ILHomeEventsCarouselView()
+    private lazy var eventsHeader: ILSectionHeaderView = {
+        let v = ILSectionHeaderView(title: "home.events.title".localized, trailingText: "home.events.viewAll".localized, icon: ILIcons.homeEvent, iconTone: .rose)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var eventsCarousel: ILHomeEventsCarouselView = {
+        let v = ILHomeEventsCarouselView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let photosHeader = ILSectionHeaderView(title: "home.photos.title".localized, trailingText: "home.photos.viewAll".localized, icon: ILIcons.homePhoto, iconTone: .rose)
-    private let photosGrid = ILHomePhotoGridView()
+    private lazy var photosHeader: ILSectionHeaderView = {
+        let v = ILSectionHeaderView(title: "home.photos.title".localized, trailingText: "home.photos.viewAll".localized, icon: ILIcons.homePhoto, iconTone: .rose)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var photosGrid: ILHomePhotoGridView = {
+        let v = ILHomePhotoGridView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let templesHeader = ILSectionHeaderView(title: "home.temple.title".localized, trailingText: "home.temple.find".localized, icon: ILIcons.homeTemple, iconTone: .gold)
-    private let templesCarousel = ILHomeTempleCarouselView()
+    private lazy var templesHeader: ILSectionHeaderView = {
+        let v = ILSectionHeaderView(title: "home.temple.title".localized, trailingText: "home.temple.find".localized, icon: ILIcons.homeTemple, iconTone: .gold)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var templesCarousel: ILHomeTempleCarouselView = {
+        let v = ILHomeTempleCarouselView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let deitiesHeader = ILSectionHeaderView(title: "home.deity.title".localized, trailingText: "home.deity.viewAll".localized, icon: ILIcons.homeBuddha, iconTone: .gold)
-    private let deitiesCarousel = ILHomeDeityCarouselView()
+    private lazy var deitiesHeader: ILSectionHeaderView = {
+        let v = ILSectionHeaderView(title: "home.deity.title".localized, trailingText: "home.deity.viewAll".localized, icon: ILIcons.homeBuddha, iconTone: .gold)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var deitiesCarousel: ILHomeDeityCarouselView = {
+        let v = ILHomeDeityCarouselView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let todayCard = ILStatProgressCardView(title: "home.today.title".localized)
-    private let streakCard = ILStatStreakCardView(title: "home.streak.title".localized, unitText: "home.streak.unit".localized)
-    private let statsStack = UIStackView()
+    private lazy var todayCard: ILStatProgressCardView = ILStatProgressCardView(title: "home.today.title".localized)
+    private lazy var streakCard: ILStatStreakCardView = ILStatStreakCardView(title: "home.streak.title".localized, unitText: "home.streak.unit".localized)
+    private lazy var statsStack: UIStackView = {
+        let v = UIStackView()
+        v.addArrangedSubview(todayCard)
+        v.addArrangedSubview(streakCard)
+        v.axis = .horizontal
+        v.spacing = ILMetrics.rowSpacing
+        v.distribution = .fillEqually
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let malaHeader = ILSectionHeaderView(title: "home.mala.title".localized, trailingText: "home.mala.fullscreen".localized, icon: ILIcons.homeBeads, iconTone: .rose)
-    private let malaCounter = ILMalaCounterView()
+    private lazy var malaHeader: ILSectionHeaderView = {
+        let v = ILSectionHeaderView(title: "home.mala.title".localized, trailingText: "home.mala.fullscreen".localized, icon: ILIcons.homeBeads, iconTone: .rose)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var malaCounter: ILMalaCounterView = {
+        let v = ILMalaCounterView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let bellCard = ILHomeBellCardView()
+    private lazy var bellCard: ILHomeBellCardView = {
+        let v = ILHomeBellCardView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let suggestedHeader = ILSectionHeaderView(title: "home.suggested.title".localized, icon: ILIcons.homeSchedule, iconTone: .green)
-    private let suggestedStack = UIStackView()
+    private lazy var suggestedHeader: ILSectionHeaderView = {
+        let v = ILSectionHeaderView(title: "home.suggested.title".localized, icon: ILIcons.homeSchedule, iconTone: .green)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var suggestedStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = ILMetrics.rowSpacing
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let articlesHeader = ILSectionHeaderView(title: "home.article.title".localized, trailingText: "home.article.library".localized, icon: ILIcons.homeArticle, iconTone: .green)
-    private let articlesList = ILHomeArticleListView()
+    private lazy var articlesHeader: ILSectionHeaderView = {
+        let v = ILSectionHeaderView(title: "home.article.title".localized, trailingText: "home.article.library".localized, icon: ILIcons.homeArticle, iconTone: .green)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var articlesList: ILHomeArticleListView = {
+        let v = ILHomeArticleListView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
 
     // MARK: - Initializer
@@ -104,80 +199,48 @@ final class ILHomeViewController: BaseViewController {
         super.setupViews()
         view.backgroundColor = ILColors.canvasWarm
 
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.contentInsetAdjustmentBehavior = .never
         view.addSubview(scrollView)
 
         headerContainer.bind(to: scrollView)
         headerContainer.addSubview(headerView)
         view.addSubview(headerContainer)
 
-        contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
 
-        headerView.translatesAutoresizingMaskIntoConstraints = false
         headerView.onNotificationTap = { [weak self] in self?.handleNotificationTapped() }
         headerView.onAvatarTap = { [weak self] in self?.handleAvatarTapped() }
 
-        weekCalendarView.translatesAutoresizingMaskIntoConstraints = false
         weekCalendarView.onCalendarLinkTap = { [weak self] in self?.handleCalendarLinkTapped() }
         weekCalendarView.onMemorialLinkTap = { [weak self] in self?.memorialTappedSubject.send(()) }
         weekCalendarView.onSelectDay = { [weak self] day in self?.dayTappedSubject.send(day.id) }
 
-        lunarHeroCard.translatesAutoresizingMaskIntoConstraints = false
         lunarHeroCard.onTap = { [weak self] in self?.handleLunarHeroTapped() }
 
-        eventsHeader.translatesAutoresizingMaskIntoConstraints = false
         eventsHeader.onTrailingTap = { [weak self] in self?.handleEventsViewAllTapped() }
 
-        eventsCarousel.translatesAutoresizingMaskIntoConstraints = false
         eventsCarousel.onEventTap = { [weak self] event in self?.handleEventTapped(event) }
+        eventsCarousel.onMoreTap = { [weak self] in self?.handleEventsViewAllTapped() }
 
-        photosHeader.translatesAutoresizingMaskIntoConstraints = false
         photosHeader.onTrailingTap = { [weak self] in self?.handlePhotosViewAllTapped() }
 
-        photosGrid.translatesAutoresizingMaskIntoConstraints = false
         photosGrid.onTap = { [weak self] in self?.handlePhotoTapped() }
 
-        templesHeader.translatesAutoresizingMaskIntoConstraints = false
-        templesHeader.onTrailingTap = { [weak self] in self?.handleTemplesFindTapped() }
+        templesHeader.onTrailingTap = { [weak self] in self?.handleTemplesViewAllTapped() }
 
-        templesCarousel.translatesAutoresizingMaskIntoConstraints = false
         templesCarousel.onTempleTap = { [weak self] temple in self?.handleTempleTapped(temple) }
 
-        deitiesHeader.translatesAutoresizingMaskIntoConstraints = false
         deitiesHeader.onTrailingTap = { [weak self] in self?.handleDeitiesViewAllTapped() }
 
-        deitiesCarousel.translatesAutoresizingMaskIntoConstraints = false
         deitiesCarousel.onDeityTap = { [weak self] deity in self?.handleDeityTapped(deity) }
 
-        statsStack.addArrangedSubview(todayCard)
-        statsStack.addArrangedSubview(streakCard)
-        statsStack.axis = .horizontal
-        statsStack.spacing = ILMetrics.rowSpacing
-        statsStack.distribution = .fillEqually
-        statsStack.translatesAutoresizingMaskIntoConstraints = false
-
-        malaHeader.translatesAutoresizingMaskIntoConstraints = false
         malaHeader.onTrailingTap = { [weak self] in self?.handleMalaFullscreenTapped() }
 
-        malaCounter.translatesAutoresizingMaskIntoConstraints = false
         malaCounter.onTap = { [weak self] in self?.handleMalaFullscreenTapped() }
 
-        bellCard.translatesAutoresizingMaskIntoConstraints = false
         bellCard.onTap = { [weak self] in self?.handleBellTapped() }
 
-        suggestedHeader.translatesAutoresizingMaskIntoConstraints = false
-
-        suggestedStack.axis = .vertical
-        suggestedStack.spacing = ILMetrics.rowSpacing
-        suggestedStack.translatesAutoresizingMaskIntoConstraints = false
-
-        articlesHeader.translatesAutoresizingMaskIntoConstraints = false
         articlesHeader.onTrailingTap = { [weak self] in self?.handleArticlesViewAllTapped() }
 
-        articlesList.translatesAutoresizingMaskIntoConstraints = false
         articlesList.onArticleTap = { [weak self] article in self?.handleArticleTapped(article) }
 
         [
@@ -303,9 +366,11 @@ final class ILHomeViewController: BaseViewController {
             photosTapped: photosTappedSubject.eraseToAnyPublisher(),
             bellTapped: bellTappedSubject.eraseToAnyPublisher(),
             eventsTapped: eventsTappedSubject.eraseToAnyPublisher(),
+            eventTapped: eventTappedSubject.eraseToAnyPublisher(),
             articleTapped: articleTappedSubject.eraseToAnyPublisher(),
             articlesViewAllTapped: articlesViewAllTappedSubject.eraseToAnyPublisher(),
             templeTapped: templeTappedSubject.eraseToAnyPublisher(),
+            templesViewAllTapped: templesViewAllTappedSubject.eraseToAnyPublisher(),
             deityTapped: deityTappedSubject.eraseToAnyPublisher(),
             deitiesViewAllTapped: deitiesViewAllTappedSubject.eraseToAnyPublisher(),
             suggestedSessionTapped: suggestedSessionTappedSubject.eraseToAnyPublisher(),
@@ -474,9 +539,9 @@ final class ILHomeViewController: BaseViewController {
         eventsTappedSubject.send(())
     }
 
-    /// Chạm 1 sự kiện trong carousel "Sự kiện Phật giáo" — mở màn Lịch lễ Phật giáo (`festivals`).
+    /// Chạm 1 sự kiện trong carousel "Sự kiện Phật giáo" — mở màn Chi tiết ngày lễ.
     private func handleEventTapped(_ event: ILHomeEventItemModel) {
-        eventsTappedSubject.send(())
+        eventTappedSubject.send(event.id)
     }
 
     private func handleMalaFullscreenTapped() {
@@ -498,9 +563,9 @@ final class ILHomeViewController: BaseViewController {
         photosTappedSubject.send(())
     }
 
-    /// Link "Tìm chùa" ở carousel "Chùa Việt Nam" — màn danh sách/tìm chùa chưa build.
-    private func handleTemplesFindTapped() {
-        // TODO: điều hướng sang màn tìm chùa (Đạo tràng) khi có coordinator tương ứng.
+    /// Link "Xem tất cả" ở carousel "Chùa Việt Nam" — mở màn "Tất cả chùa".
+    private func handleTemplesViewAllTapped() {
+        templesViewAllTappedSubject.send(())
     }
 
     /// Chi tiết 1 chùa trong carousel "Chùa Việt Nam" — mở màn Trang chùa (`temple`) theo

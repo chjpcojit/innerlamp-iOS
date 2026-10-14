@@ -24,7 +24,12 @@ final class ILBellChipView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let titleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     private let titleLabelHorizontalPadding: CGFloat
 
     // MARK: - Initializer
@@ -46,8 +51,6 @@ final class ILBellChipView: UIControl {
         layer.borderWidth = 1
 
         titleLabel.text = label
-        titleLabel.setContentHuggingPriority(.required, for: .horizontal)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
 
         NSLayoutConstraint.activate([

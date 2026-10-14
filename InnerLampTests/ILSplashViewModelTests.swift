@@ -65,7 +65,7 @@ final class ILSplashViewModelTests: XCTestCase {
         XCTAssertEqual(receivedEvent, .goToOnboarding)
     }
 
-    func test_splashFinished_withoutSessionButOnboardingCompleted_firesGoToLoginNavigationEvent() {
+    func test_splashFinished_withoutSessionButOnboardingCompleted_firesGoToSignupNavigationEvent() {
         mockUseCase.hasSessionResult = false
         mockUseCase.isOnboardingCompletedResult = true
         let splashFinishedSubject = PassthroughSubject<Void, Never>()
@@ -82,7 +82,7 @@ final class ILSplashViewModelTests: XCTestCase {
 
         splashFinishedSubject.send(())
 
-        XCTAssertEqual(receivedEvent, .goToLogin)
+        XCTAssertEqual(receivedEvent, .goToSignup)
     }
 
     func test_splashFinished_withStoredSession_firesGoToMainNavigationEvent() {

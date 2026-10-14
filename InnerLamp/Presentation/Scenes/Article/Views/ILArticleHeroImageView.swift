@@ -11,8 +11,19 @@ import UIKit
 final class ILArticleHeroImageView: UIView {
 
     // MARK: - UI Elements
-    private let placeholderLabel = UILabel()
-    private let imageView = ILRemoteImageView(frame: .zero)
+    private lazy var placeholderLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 1
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    private lazy var imageView: ILRemoteImageView = {
+        let view = ILRemoteImageView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     // MARK: - Initializer
     init() {
@@ -36,12 +47,6 @@ final class ILArticleHeroImageView: UIView {
         backgroundColor = ILColors.tint
         layer.cornerRadius = ILMetrics.radiusCardMedium
         clipsToBounds = true
-
-        placeholderLabel.numberOfLines = 1
-        placeholderLabel.textAlignment = .center
-        placeholderLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        imageView.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(placeholderLabel)
         addSubview(imageView)

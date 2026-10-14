@@ -21,7 +21,10 @@ final class ILLibraryViewController: BaseViewController {
     private let itemTappedSubject = PassthroughSubject<String, Never>()
 
     // MARK: - UI Elements
-    private let headerBand = ILStickyHeaderBand()
+    private lazy var headerBand: ILStickyHeaderBand = {
+        let band = ILStickyHeaderBand()
+        return band
+    }()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -29,12 +32,14 @@ final class ILLibraryViewController: BaseViewController {
         label.textColor = ILColors.ink
         label.text = "library.title".localized
         label.accessibilityTraits = .header
+        label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
 
     private lazy var scrollView: UIScrollView = {
         let scroll = UIScrollView()
         scroll.showsVerticalScrollIndicator = false
+        scroll.contentInsetAdjustmentBehavior = .never
         return scroll
     }()
 
@@ -42,18 +47,46 @@ final class ILLibraryViewController: BaseViewController {
         let stack = UIStackView()
         stack.axis = .vertical
         stack.alignment = .fill
+        stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
     }()
 
-    private lazy var searchBar = ILSearchBarView(placeholder: "library.search.placeholder".localized)
-    private lazy var quickAccessGrid = ILLibraryQuickAccessGridView()
-    private lazy var featureCard = ILFeatureCardView()
-    private lazy var deitiesHeader = ILSectionHeaderView(title: "")
+    private lazy var searchBar: ILSearchBarView = {
+        let bar = ILSearchBarView(placeholder: "library.search.placeholder".localized)
+        return bar
+    }()
+
+    private lazy var quickAccessGrid: ILLibraryQuickAccessGridView = {
+        let grid = ILLibraryQuickAccessGridView()
+        return grid
+    }()
+
+    private lazy var featureCard: ILFeatureCardView = {
+        let card = ILFeatureCardView()
+        return card
+    }()
+
+    private lazy var deitiesHeader: ILSectionHeaderView = {
+        let header = ILSectionHeaderView(title: "")
+        return header
+    }()
+
     /// Dùng chung view carousel với Trang chủ (`ILHomeDeityCarouselView`) — cùng dữ liệu
     /// "Chư Phật & Bồ Tát", chỉ khác tiêu đề section (xem `ILLibraryStateModel.deitiesTitle`).
-    private lazy var deitiesCarousel = ILHomeDeityCarouselView()
-    private lazy var listView = ILLibraryListView()
-    private lazy var skeletonView = ILSkeletonLoadingView()
+    private lazy var deitiesCarousel: ILHomeDeityCarouselView = {
+        let carousel = ILHomeDeityCarouselView()
+        return carousel
+    }()
+
+    private lazy var listView: ILLibraryListView = {
+        let list = ILLibraryListView()
+        return list
+    }()
+
+    private lazy var skeletonView: ILSkeletonLoadingView = {
+        let view = ILSkeletonLoadingView()
+        return view
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILLibraryViewModel) {
@@ -86,12 +119,9 @@ final class ILLibraryViewController: BaseViewController {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         headerBand.addSubview(titleLabel)
-        scrollView.contentInsetAdjustmentBehavior = .never
         headerBand.bind(to: scrollView)
 
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
 
         [searchBar, quickAccessGrid, featureCard, deitiesHeader, deitiesCarousel, listView].forEach {

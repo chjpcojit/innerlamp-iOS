@@ -35,7 +35,13 @@ final class ILSplashBrandBackdropView: UIView {
 
     // MARK: - Layers
     private let backgroundGradientLayer = CAGradientLayer()
-    private let topGlowView = UIView()
+    private lazy var topGlowView: UIView = {
+        let v = UIView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.isUserInteractionEnabled = false
+        v.backgroundColor = .clear
+        return v
+    }()
     private let topGlowGradientLayer = CAGradientLayer()
 
     // MARK: - Initializer
@@ -61,9 +67,6 @@ final class ILSplashBrandBackdropView: UIView {
         layer.insertSublayer(backgroundGradientLayer, at: 0)
 
         // radial-gradient(circle, var(--il-spl-glow), transparent 62%)
-        topGlowView.translatesAutoresizingMaskIntoConstraints = false
-        topGlowView.isUserInteractionEnabled = false
-        topGlowView.backgroundColor = .clear
         topGlowGradientLayer.type = .radial
         topGlowGradientLayer.locations = [0.0, Metrics.glowEndLocation]
         topGlowGradientLayer.startPoint = CGPoint(x: 0.5, y: 0.5)

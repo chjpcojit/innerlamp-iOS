@@ -15,16 +15,20 @@ import Foundation
 /// Contract: `Docs/Specs/API/openapi.yaml` v3.9 `RequestOTPRequest` /
 /// `RequestOTPData` — `POST /v1/auth/register/request-otp`.
 nonisolated struct ILSignUpRequestOTPRequestDTO: Encodable {
+    let fullName: String
     let dharmaName: String
-    /// Optional — sent as an empty string when the user left the field blank.
-    let ordinationPlace: String
+    /// Optional — id from `GET /v1/temples/options`. `nil` is omitted from the body (the server
+    /// reads an absent field as "no temple"); an unknown id is `400 INVALID_TEMPLE`. The old
+    /// `ordination_place` field is rejected by the server (strict body decoding).
+    let ordinationTempleId: String?
     let phoneNumber: String
     let email: String
     let password: String
 
     enum CodingKeys: String, CodingKey {
+        case fullName = "full_name"
         case dharmaName = "dharma_name"
-        case ordinationPlace = "ordination_place"
+        case ordinationTempleId = "ordination_temple_id"
         case phoneNumber = "phone_number"
         case email
         case password

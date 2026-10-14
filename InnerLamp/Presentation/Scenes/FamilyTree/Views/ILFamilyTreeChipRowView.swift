@@ -16,8 +16,23 @@ final class ILFamilyTreeChipRowView: UIView {
     // MARK: - Properties
     var onSelect: ((Int) -> Void)?
 
-    private let scrollView = UIScrollView()
-    private let stack = UIStackView()
+    private lazy var scrollView: UIScrollView = {
+        let scroll = UIScrollView()
+        scroll.showsHorizontalScrollIndicator = false
+        scroll.alwaysBounceHorizontal = true
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        return scroll
+    }()
+
+    private lazy var stack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.spacing = ILMetrics.spaceSmall - 2
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+
     private var chips: [ChipControl] = []
 
     // MARK: - Initializer
@@ -32,15 +47,7 @@ final class ILFamilyTreeChipRowView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        scrollView.showsHorizontalScrollIndicator = false
-        scrollView.alwaysBounceHorizontal = true
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(scrollView)
-
-        stack.axis = .horizontal
-        stack.spacing = ILMetrics.spaceSmall - 2
-        stack.alignment = .center
-        stack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(stack)
 
         NSLayoutConstraint.activate([
@@ -84,16 +91,19 @@ private extension ILFamilyTreeChipRowView {
             didSet { label.text = title }
         }
 
-        private let label = UILabel()
+        private lazy var label: UILabel = {
+            let label = UILabel()
+            label.font = ILTypography.treeChip
+            label.isUserInteractionEnabled = false
+            label.translatesAutoresizingMaskIntoConstraints = false
+            return label
+        }()
 
         override init(frame: CGRect) {
             super.init(frame: frame)
             layer.cornerRadius = Metrics.chipHeight / 2
             layer.borderWidth = 1
             accessibilityTraits = .button
-            label.font = ILTypography.treeChip
-            label.isUserInteractionEnabled = false
-            label.translatesAutoresizingMaskIntoConstraints = false
             addSubview(label)
             NSLayoutConstraint.activate([
                 heightAnchor.constraint(equalToConstant: Metrics.chipHeight),

@@ -1,7 +1,7 @@
 # Tasks — Home
 
-Version: 1.10
-Last updated: 2026-10-07
+Version: 1.11
+Last updated: 2026-10-11
 Status: in-progress (Phase 1–2 done; Phase 3 pending — mock data, no API)
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -80,6 +80,13 @@ Status: in-progress (Phase 1–2 done; Phase 3 pending — mock data, no API)
       service
 - [x] Unit tests for the temple/deity carousels (`ILHomeUseCaseTests` with mock
       repositories, `ILHomeViewModelTests` async load + card formatting)
+- [x] Events carousel reads `GET /v1/calendar/events` (v1.11): `CalendarEventsEndpoint`,
+      `ILCalendarEventsDTO`, `ILCalendarEventMapper`, `ILCalendarEventRepository(+Impl)`,
+      `ILHomeUseCaseImpl` takes `calendarEventRepository`; tests in `ILHomeUseCaseTests`
+      and `ILCalendarEventsTests`
+- [ ] Offline cache for the events carousel (TD-Home-003)
+- [ ] Manual device test of the events carousel against the dev backend (current month
+      first, Rằm/Mùng 1 density — AS-Home-003)
 - [ ] Loading / error UI for the server-backed carousels
 - [ ] Manual test against a real/staging backend once available
 

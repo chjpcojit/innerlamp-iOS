@@ -121,7 +121,7 @@ Mỗi thao tác UI gửi giá trị lên `*Subject` riêng của nó (không g�
 3. Nếu còn lỗi → `stateSubject.send(.success(currentState))` ngay, dừng lại; `updateUI` set
    `ILField.fieldState = .error(message)` cho field tương ứng.
 4. Nếu hợp lệ → `isSubmitting = true`, gửi state ngay (nút chuyển `.loading`, "Đang gửi mã…"),
-   spawn `Task` gọi `useCase.sendVerificationCode(displayName:ordinationPlace:phoneNumber:email:password:)` —
+   spawn `Task` gọi `useCase.sendVerificationCode(fullName:displayName:ordinationTempleID:phoneNumber:email:password:)` —
    `phoneNumber` truyền vào là `currentState.phoneE164` (mã vùng + số cách nhóm 3 chữ số), không
    phải chuỗi số thô người dùng gõ.
 5. **Thành công**: `isSubmitting = false`, gửi state, gửi

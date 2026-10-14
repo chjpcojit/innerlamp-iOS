@@ -71,10 +71,13 @@ final class ILPhotosMasonryGridView: UIView {
         return view
     }()
 
-    private let footerView = ILLoadMoreFooterView(
-        loadingText: "photos.loadingMore".localized,
-        endText: "photos.end".localized
-    )
+    private lazy var footerView: ILLoadMoreFooterView = {
+        let view = ILLoadMoreFooterView(
+            loadingText: "photos.loadingMore".localized,
+            endText: "photos.end".localized
+        )
+        return view
+    }()
 
     /// Replaces every cell. With `animated` the old grid dissolves into the new one and the list
     /// returns to the top (a new category starts from its first photo).
@@ -226,11 +229,14 @@ private final class ILPhotosMasonryLayout: UICollectionViewLayout {
 // MARK: - Cell
 private final class ILPhotosPhotoCell: UICollectionViewCell {
 
-    private let cardView = ILPhotosPhotoCardView()
+    private lazy var cardView: ILPhotosPhotoCardView = {
+        let view = ILPhotosPhotoCardView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        cardView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(cardView)
         NSLayoutConstraint.activate([
             cardView.topAnchor.constraint(equalTo: contentView.topAnchor),

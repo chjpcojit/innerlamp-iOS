@@ -21,13 +21,56 @@ final class ILSanghaDateRowView: UIView {
     var onAction: (() -> Void)?
 
     // MARK: - UI Elements
-    private let dayLabel = UILabel()
-    private let monthLabel = UILabel()
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private let suggestionLabel = UILabel()
-    private let pillButton = ILSanghaPillButton()
-    private let chevronLabel = UILabel()
+    private lazy var dayLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.dateNumber
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var monthLabel: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.rowTitle
+        label.textColor = ILColors.ink
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var suggestionLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.note
+        label.textColor = ILColors.link
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var pillButton: ILSanghaPillButton = {
+        let button = ILSanghaPillButton()
+        return button
+    }()
+
+    private lazy var chevronLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.chevron
+        label.textColor = ILColors.inkFaint
+        label.text = "›"
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        return label
+    }()
 
     // MARK: - Initializer
     init() {
@@ -74,25 +117,6 @@ final class ILSanghaDateRowView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        dayLabel.font = ILTypography.dateNumber
-        dayLabel.textAlignment = .center
-        monthLabel.textAlignment = .center
-
-        titleLabel.font = ILTypography.rowTitle
-        titleLabel.textColor = ILColors.ink
-        titleLabel.numberOfLines = 0
-        subtitleLabel.font = ILTypography.subhead
-        subtitleLabel.textColor = ILColors.inkTertiary
-        subtitleLabel.numberOfLines = 0
-        suggestionLabel.font = ILTypography.note
-        suggestionLabel.textColor = ILColors.link
-        suggestionLabel.numberOfLines = 0
-
-        chevronLabel.font = ILTypography.chevron
-        chevronLabel.textColor = ILColors.inkFaint
-        chevronLabel.text = "›"
-        chevronLabel.setContentHuggingPriority(.required, for: .horizontal)
-
         pillButton.addTarget(self, action: #selector(handleAction), for: .touchUpInside)
 
         let dateColumn = UIStackView(arrangedSubviews: [dayLabel, monthLabel])

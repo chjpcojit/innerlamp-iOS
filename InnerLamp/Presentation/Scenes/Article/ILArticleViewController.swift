@@ -23,16 +23,38 @@ final class ILArticleViewController: BaseViewController {
     private let sourceTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
-    private let headerContainer = ILStickyHeaderBand()
+    private lazy var headerContainer: ILStickyHeaderBand = {
+        let band = ILStickyHeaderBand()
+        return band
+    }()
 
-    private lazy var headerView = ILNavBar(showBack: true)
+    private lazy var headerView: ILNavBar = {
+        let navBar = ILNavBar(showBack: true)
+        return navBar
+    }()
 
+    private lazy var scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.contentInsetAdjustmentBehavior = .never
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.alwaysBounceVertical = true
+        return scrollView
+    }()
 
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
-    private lazy var skeletonView = ILSkeletonLoadingView()
+    private lazy var contentView: UIView = {
+        let view = UIView()
+        return view
+    }()
 
-    private lazy var heroImageView = ILArticleHeroImageView()
+    private lazy var skeletonView: ILSkeletonLoadingView = {
+        let view = ILSkeletonLoadingView()
+        return view
+    }()
+
+    private lazy var heroImageView: ILArticleHeroImageView = {
+        let view = ILArticleHeroImageView()
+        return view
+    }()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -91,9 +113,17 @@ final class ILArticleViewController: BaseViewController {
         return divider
     }()
 
-    private let bodyStack = UIStackView()
+    private lazy var bodyStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = ILMetrics.spaceMedium
+        return stack
+    }()
 
-    private lazy var quoteView = ILArticleQuoteView()
+    private lazy var quoteView: ILArticleQuoteView = {
+        let view = ILArticleQuoteView()
+        return view
+    }()
 
     /// "Nguồn: Báo Giác Ngộ" — the article is a summary of a press original; tapping opens
     /// `source_url` when the server provided a valid link.
@@ -106,8 +136,15 @@ final class ILArticleViewController: BaseViewController {
         return label
     }()
 
-    private lazy var saveButton = ILButton(title: "article.save".localized, variant: .ghost)
-    private lazy var shareButton = ILButton(title: "article.share".localized, variant: .primary)
+    private lazy var saveButton: ILButton = {
+        let button = ILButton(title: "article.save".localized, variant: .ghost)
+        return button
+    }()
+
+    private lazy var shareButton: ILButton = {
+        let button = ILButton(title: "article.share".localized, variant: .primary)
+        return button
+    }()
 
     private lazy var actionsStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [saveButton, shareButton])
@@ -117,9 +154,15 @@ final class ILArticleViewController: BaseViewController {
         return stack
     }()
 
-    private lazy var readMoreHeader = ILSectionHeaderView(title: "article.readMore".localized)
+    private lazy var readMoreHeader: ILSectionHeaderView = {
+        let header = ILSectionHeaderView(title: "article.readMore".localized)
+        return header
+    }()
 
-    private lazy var nextArticlesList = ILArticleNextArticleListView()
+    private lazy var nextArticlesList: ILArticleNextArticleListView = {
+        let list = ILArticleNextArticleListView()
+        return list
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILArticleViewModel) {
@@ -158,12 +201,6 @@ final class ILArticleViewController: BaseViewController {
         headerContainer.addSubview(headerView)
         headerContainer.bind(to: scrollView)
 
-        scrollView.contentInsetAdjustmentBehavior = .never
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = true
-
-        bodyStack.axis = .vertical
-        bodyStack.spacing = ILMetrics.spaceMedium
 
         saveButton.onTap = { [weak self] in self?.saveTappedSubject.send(()) }
         shareButton.onTap = { [weak self] in self?.shareTappedSubject.send(()) }

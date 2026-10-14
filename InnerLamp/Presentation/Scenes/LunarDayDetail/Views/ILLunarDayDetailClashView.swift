@@ -28,8 +28,21 @@ final class ILLunarDayDetailClashView: UIView {
     }
 
     // MARK: - UI Elements
-    private let chipsRow = UIStackView()
-    private let noteLabel = UILabel()
+    private lazy var chipsRow: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.spacing = 8
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+
+    private lazy var noteLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -47,14 +60,6 @@ final class ILLunarDayDetailClashView: UIView {
         layer.cornerRadius = ILMetrics.radiusCardRegular
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
-
-        chipsRow.axis = .horizontal
-        chipsRow.spacing = 8
-        chipsRow.alignment = .center
-        chipsRow.translatesAutoresizingMaskIntoConstraints = false
-
-        noteLabel.numberOfLines = 0
-        noteLabel.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(chipsRow)
         addSubview(noteLabel)

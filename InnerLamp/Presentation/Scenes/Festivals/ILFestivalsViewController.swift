@@ -13,7 +13,11 @@ final class ILFestivalsViewController: BaseViewController {
     private var cancellables = Set<AnyCancellable>()
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
     private let tabSelectedSubject = PassthroughSubject<ILFestivalsTab, Never>()
+    private let loadMoreSubject = PassthroughSubject<Void, Never>()
+    private let dayTappedSubject = PassthroughSubject<String, Never>()
     private let backTappedSubject = PassthroughSubject<Void, Never>()
+    /// Các tháng đang hiển thị — để chỉ nối thêm tháng mới khi tải năm kế tiếp (không dựng lại).
+    private var renderedMonths: [ILFestivalMonthModel] = []
     private var lastHeaderHeight: CGFloat = 0
     private var monthSections: [String: UIView] = [:]
     /// Tháng cần cuộn tới khi mở màn lần đầu; xoá sau khi đã cuộn.
@@ -22,13 +26,30 @@ final class ILFestivalsViewController: BaseViewController {
 
     // MARK: - UI Elements
     // Pinned header: sits above the scroll view and blurs in as content scrolls under it.
-    private let headerContainer = ILStickyHeaderBand()
+    private lazy var headerContainer: ILStickyHeaderBand = {
+        let band = ILStickyHeaderBand()
+        return band
+    }()
 
-    private lazy var headerView = ILNavBar(title: "festivals.header.title".localized)
+    private lazy var headerView: ILNavBar = {
+        let navBar = ILNavBar(title: "festivals.header.title".localized)
+        return navBar
+    }()
 
-    private lazy var allChip = ILChip(label: "festivals.tab.all".localized)
-    private lazy var festivalsChip = ILChip(label: "festivals.tab.major".localized)
-    private lazy var observancesChip = ILChip(label: "festivals.tab.observance".localized)
+    private lazy var allChip: ILChip = {
+        let chip = ILChip(label: "festivals.tab.all".localized)
+        return chip
+    }()
+
+    private lazy var festivalsChip: ILChip = {
+        let chip = ILChip(label: "festivals.tab.major".localized)
+        return chip
+    }()
+
+    private lazy var observancesChip: ILChip = {
+        let chip = ILChip(label: "festivals.tab.observance".localized)
+        return chip
+    }()
 
     private lazy var chipsRow: UIStackView = {
         let row = UIStackView(arrangedSubviews: [allChip, festivalsChip, observancesChip, UIView()])
@@ -42,6 +63,7 @@ final class ILFestivalsViewController: BaseViewController {
         let scroll = UIScrollView()
         scroll.showsVerticalScrollIndicator = false
         scroll.contentInsetAdjustmentBehavior = .never
+        scroll.delegate = self
         return scroll
     }()
 
@@ -50,12 +72,20 @@ final class ILFestivalsViewController: BaseViewController {
         stack.axis = .vertical
         stack.alignment = .fill
         stack.spacing = ILMetrics.groupSpacing + 2
+        stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
     }()
 
     private lazy var introLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.attributedText = ILTypography.makeParagraph(
+            text: "festivals.intro".localized,
+            font: ILTypography.note,
+            color: ILColors.inkTertiary,
+            cssLineHeight: 1.6
+        )
         return label
     }()
 
@@ -104,16 +134,8 @@ final class ILFestivalsViewController: BaseViewController {
         }
         headerContainer.bind(to: scrollView)
 
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
 
-        introLabel.translatesAutoresizingMaskIntoConstraints = false
-        introLabel.attributedText = ILTypography.makeParagraph(
-            text: "festivals.intro".localized,
-            font: ILTypography.note,
-            color: ILColors.inkTertiary,
-            cssLineHeight: 1.6
-        )
         contentStack.addArrangedSubview(introLabel)
 
         allChip.onTap = { [weak self] in self?.tabSelectedSubject.send(.all) }
@@ -159,6 +181,8 @@ final class ILFestivalsViewController: BaseViewController {
         let input = ILFestivalsViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             tabSelected: tabSelectedSubject.eraseToAnyPublisher(),
+            loadMoreTriggered: loadMoreSubject.eraseToAnyPublisher(),
+            dayTapped: dayTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
@@ -228,16 +252,27 @@ final class ILFestivalsViewController: BaseViewController {
         observancesChip.chipState = tab == .observances ? .selected : .normal
     }
 
-    /// Dựng lại danh sách tháng (tiêu đề tháng + các thẻ ngày lễ). `introLabel` giữ nguyên ở đầu
-    /// stack; các mục tháng được thêm sau nó và xoá khi render lại.
+    /// Cập nhật danh sách tháng (tiêu đề tháng + các thẻ ngày lễ). `introLabel` giữ nguyên ở đầu
+    /// stack. Dữ liệu không đổi thì bỏ qua; khi chỉ có tháng mới nối thêm vào cuối (tải năm kế
+    /// tiếp) thì chỉ thêm các tháng đó; còn lại (đổi tab) dựng lại toàn bộ.
     private func rebuildMonths(_ months: [ILFestivalMonthModel]) {
-        for subview in contentStack.arrangedSubviews where subview !== introLabel {
-            contentStack.removeArrangedSubview(subview)
-            subview.removeFromSuperview()
-        }
-        monthSections = [:]
+        guard months != renderedMonths else { return }
 
-        for month in months {
+        let isAppend = months.count > renderedMonths.count
+            && Array(months.prefix(renderedMonths.count)) == renderedMonths
+        var newMonths = months
+        if isAppend {
+            newMonths = Array(months.dropFirst(renderedMonths.count))
+        } else {
+            for subview in contentStack.arrangedSubviews where subview !== introLabel {
+                contentStack.removeArrangedSubview(subview)
+                subview.removeFromSuperview()
+            }
+            monthSections = [:]
+        }
+        renderedMonths = months
+
+        for month in newMonths {
             let section = makeMonthSection(month)
             monthSections[month.id] = section
             contentStack.addArrangedSubview(section)
@@ -260,8 +295,23 @@ final class ILFestivalsViewController: BaseViewController {
         for day in month.days {
             let item = ILFestivalsItemView()
             item.configure(with: day)
+            // Chỉ ngày lễ có tên mới có trang chi tiết; ngày trai giới không chạm được.
+            if day.isFestival {
+                item.onTap = { [weak self] in self?.dayTappedSubject.send(day.id) }
+            }
             stack.addArrangedSubview(item)
         }
         return stack
+    }
+}
+
+// MARK: - UIScrollViewDelegate
+extension ILFestivalsViewController: UIScrollViewDelegate {
+    /// Gần cuối danh sách (còn khoảng một màn hình) thì xin tải năm kế tiếp; ViewModel chặn tải trùng.
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let visibleBottom = scrollView.contentOffset.y + scrollView.bounds.height
+        guard scrollView.contentSize.height > 0,
+              visibleBottom > scrollView.contentSize.height - scrollView.bounds.height else { return }
+        loadMoreSubject.send(())
     }
 }

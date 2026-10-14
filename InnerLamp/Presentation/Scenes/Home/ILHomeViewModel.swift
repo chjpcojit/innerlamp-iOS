@@ -14,6 +14,8 @@ enum ILHomeNavEvent: Equatable {
     case openMala
     /// Link "Sổ giỗ" ở dải lịch tuần — mở màn Sổ giỗ.
     case openMemorial
+    /// Hàng gợi ý "Thắp đèn — Vu Lan" ở "Thời khóa gợi ý" — mở màn Thắp đèn.
+    case openLightLamp
     /// Link "Lịch âm" ở dải lịch tuần — mở màn Lịch âm.
     case openLunarCalendar
     /// Chạm thẻ âm lịch lớn — mở màn Chi tiết ngày âm với ngày dương đang chọn.
@@ -26,12 +28,17 @@ enum ILHomeNavEvent: Equatable {
     case openBell
     /// Nút "Tất cả" / chạm 1 lễ ở mục "Sự kiện Phật giáo" — mở màn Lịch lễ Phật giáo.
     case openFestivals
+    /// Chạm 1 sự kiện trong carousel "Sự kiện Phật giáo" — mở màn Chi tiết ngày lễ của sự kiện
+    /// `code` vào ngày dương `date`.
+    case openFestivalDetail(code: String, date: Date)
     /// Chạm 1 bài viết ở khối "Bài viết Phật pháp hay" — mở màn Bài viết với `id` bài.
     case openArticle(id: String)
     /// Link "Xem tất cả" ở khối "Bài viết Phật pháp hay" — mở màn Tất cả bài viết.
     case openArticles
     /// Chạm 1 chùa trong carousel "Chùa Việt Nam" — mở màn Trang chùa với `id` chùa.
     case openTemple(id: String)
+    /// Link "Xem tất cả" ở khối "Chùa Việt Nam" — mở màn "Tất cả chùa".
+    case openTemples
     /// Chạm 1 vị Phật / Bồ Tát trong carousel "Thư viện Phật & Bồ Tát" — mở màn chi tiết `id`.
     case openDeity(id: String)
     /// Link "Xem tất cả" ở khối "Thư viện Phật & Bồ Tát" — mở màn danh sách "Chư Phật & Bồ Tát".
@@ -66,11 +73,15 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
         let photosTapped: AnyPublisher<Void, Never>
         let bellTapped: AnyPublisher<Void, Never>
         let eventsTapped: AnyPublisher<Void, Never>
+        /// Chạm 1 sự kiện trong carousel "Sự kiện Phật giáo" — mang theo `id` sự kiện.
+        let eventTapped: AnyPublisher<String, Never>
         let articleTapped: AnyPublisher<String, Never>
         /// Link "Xem tất cả" ở khối "Bài viết Phật pháp hay".
         let articlesViewAllTapped: AnyPublisher<Void, Never>
         /// Chạm 1 chùa trong carousel "Chùa Việt Nam" — mang theo `id` chùa.
         let templeTapped: AnyPublisher<String, Never>
+        /// Link "Xem tất cả" ở khối "Chùa Việt Nam".
+        let templesViewAllTapped: AnyPublisher<Void, Never>
         /// Chạm 1 vị Phật / Bồ Tát trong carousel "Thư viện Phật & Bồ Tát" — mang theo `id`.
         let deityTapped: AnyPublisher<String, Never>
         /// Link "Xem tất cả" ở khối "Thư viện Phật & Bồ Tát".
@@ -163,6 +174,10 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
             .sink { [weak self] _ in self?.navigationEventSubject.send(.openFestivals) }
             .store(in: &cancellables)
 
+        input.eventTapped
+            .sink { [weak self] id in self?.handleEventTapped(id) }
+            .store(in: &cancellables)
+
         input.articleTapped
             .sink { [weak self] id in self?.navigationEventSubject.send(.openArticle(id: id)) }
             .store(in: &cancellables)
@@ -173,6 +188,10 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
 
         input.templeTapped
             .sink { [weak self] id in self?.navigationEventSubject.send(.openTemple(id: id)) }
+            .store(in: &cancellables)
+
+        input.templesViewAllTapped
+            .sink { [weak self] _ in self?.navigationEventSubject.send(.openTemples) }
             .store(in: &cancellables)
 
         input.deityTapped
@@ -346,6 +365,14 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
         loadHeroImage()
     }
 
+    /// Chạm 1 sự kiện trong carousel — mở màn Chi tiết ngày lễ. Sự kiện chưa có mã (không thể
+    /// tải chi tiết) thì bỏ qua.
+    private func handleEventTapped(_ id: String) {
+        guard let event = currentEntity.eventMonths.flatMap(\.events).first(where: { $0.id == id }),
+              !event.eventCode.isEmpty else { return }
+        navigationEventSubject.send(.openFestivalDetail(code: event.eventCode, date: event.date))
+    }
+
     /// Chạm thẻ âm lịch lớn — mở màn Chi tiết ngày âm với ngày dương đang chọn.
     private func handleLunarHeroTapped() {
         guard let day = currentEntity.weekPages.flatMap(\.days).first(where: { $0.id == currentEntity.selectedDayID }) else {
@@ -355,15 +382,18 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
         navigationEventSubject.send(.openLunarDayDetail(date: day.date, verse: verse.lines.isEmpty ? nil : verse))
     }
 
-    /// Điều hướng theo `kind` của mục (không theo chuỗi `id`). Chỉ thiền có màn đích; Đọc kinh /
-    /// Cúng dường chưa build nên chưa phát event.
+    /// Điều hướng theo `kind` của mục (không theo chuỗi `id`). Thiền và Thắp đèn có màn đích; Đọc kinh
+    /// chưa build nên chưa phát event.
     private func handleSuggestedSessionTapped(_ id: String) {
         guard let session = currentEntity.suggestedSessions.first(where: { $0.id == id }) else { return }
         switch session.kind {
         case .meditation:
             navigationEventSubject.send(.openMeditationSetup)
-        case .sutra, .offering:
-            // TODO: điều hướng sang màn Đọc kinh / Cúng dường khi có coordinator tương ứng.
+        // @ai: assumption — see Docs/Assumptions/LightLamp/AS-LightLamp-005-entry-point-home-row-only.md
+        case .offering:
+            navigationEventSubject.send(.openLightLamp)
+        case .sutra:
+            // TODO: điều hướng sang màn Đọc kinh khi có coordinator tương ứng.
             break
         }
     }
@@ -491,7 +521,7 @@ final class ILHomeViewModel: ILHomeViewModelProtocol {
         state.photosMoreLabel = "home.photos.moreLabel".localized
 
         state.templesTitle = "home.temple.title".localized
-        state.templesFindText = "home.temple.find".localized
+        state.templesFindText = "home.temple.viewAll".localized
         state.templesLoading = !loaded.contains(.temples) && entity.temples.isEmpty
         state.templesEmptyText = loaded.contains(.temples) && entity.temples.isEmpty
             ? "home.temple.updating".localized

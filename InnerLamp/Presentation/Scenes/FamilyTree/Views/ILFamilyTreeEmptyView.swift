@@ -18,9 +18,29 @@ final class ILFamilyTreeEmptyView: UIView {
     var onJoinTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let scrollView = UIScrollView()
-    private let contentStack = UIStackView()
-    private let bottomBar = UIView()
+    private lazy var scrollView: UIScrollView = {
+        let scroll = UIScrollView()
+        scroll.showsVerticalScrollIndicator = false
+        scroll.alwaysBounceVertical = false
+        scroll.contentInsetAdjustmentBehavior = .never
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        return scroll
+    }()
+
+    private lazy var contentStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 0
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+
+    private lazy var bottomBar: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -34,10 +54,6 @@ final class ILFamilyTreeEmptyView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = false
-        scrollView.contentInsetAdjustmentBehavior = .never
-
         let illustration = ILFamilyTreeEmptyIllustrationView()
 
         let titleLabel = UILabel()
@@ -81,22 +97,16 @@ final class ILFamilyTreeEmptyView: UIView {
             alignment: .center
         )
 
-        contentStack.axis = .vertical
-        contentStack.spacing = 0
         [header, makeStepsCard()].forEach { contentStack.addArrangedSubview($0) }
         contentStack.setCustomSpacing(26, after: header)
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
 
         let bottomStack = UIStackView(arrangedSubviews: [buttons, footnote])
         bottomStack.axis = .vertical
         bottomStack.spacing = 14
         bottomStack.translatesAutoresizingMaskIntoConstraints = false
-        bottomBar.backgroundColor = .clear
-        bottomBar.translatesAutoresizingMaskIntoConstraints = false
         bottomBar.addSubview(bottomStack)
 
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(scrollView)
         addSubview(bottomBar)
 
@@ -318,9 +328,28 @@ private final class ILFamilyTreeEmptyIllustrationView: UIView {
 
     private let glowLayer = CAGradientLayer()
     private let slotLayers = [CAShapeLayer(), CAShapeLayer()]
-    private let trunkView = UIView()
-    private let branchView = UIView()
-    private let sealView = UIView()
+    private lazy var trunkView: UIView = {
+        let view = UIView()
+        view.backgroundColor = Tree.bark.withAlphaComponent(0.35)
+        return view
+    }()
+
+    private lazy var branchView: UIView = {
+        let view = UIView()
+        view.backgroundColor = Tree.bark.withAlphaComponent(0.25)
+        return view
+    }()
+
+    private lazy var sealView: UIView = {
+        let view = UIView()
+        view.backgroundColor = Tree.seal
+        view.layer.cornerRadius = 8
+        view.layer.shadowColor = Tree.seal.cgColor
+        view.layer.shadowOpacity = 0.3
+        view.layer.shadowRadius = 7
+        view.layer.shadowOffset = CGSize(width: 0, height: 6)
+        return view
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -343,8 +372,6 @@ private final class ILFamilyTreeEmptyIllustrationView: UIView {
         glowLayer.endPoint = CGPoint(x: 1, y: 1)
         layer.addSublayer(glowLayer)
 
-        trunkView.backgroundColor = Tree.bark.withAlphaComponent(0.35)
-        branchView.backgroundColor = Tree.bark.withAlphaComponent(0.25)
         [branchView, trunkView].forEach { addSubview($0) }
 
         slotLayers.forEach {
@@ -355,12 +382,6 @@ private final class ILFamilyTreeEmptyIllustrationView: UIView {
             layer.addSublayer($0)
         }
 
-        sealView.backgroundColor = Tree.seal
-        sealView.layer.cornerRadius = 8
-        sealView.layer.shadowColor = Tree.seal.cgColor
-        sealView.layer.shadowOpacity = 0.3
-        sealView.layer.shadowRadius = 7
-        sealView.layer.shadowOffset = CGSize(width: 0, height: 6)
         addSubview(sealView)
 
         let sealLabel = UILabel()

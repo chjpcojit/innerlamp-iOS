@@ -15,15 +15,20 @@ final class ILProfileViewController: BaseViewController, UIScrollViewDelegate {
     private let editProfileTappedSubject = PassthroughSubject<Void, Never>()
     private let statsTappedSubject = PassthroughSubject<Void, Never>()
     private let awardsTappedSubject = PassthroughSubject<Void, Never>()
-    private let offeringTappedSubject = PassthroughSubject<Void, Never>()
+    private let meritTappedSubject = PassthroughSubject<Void, Never>()
     private let donateTappedSubject = PassthroughSubject<Void, Never>()
     private let reminderTappedSubject = PassthroughSubject<Void, Never>()
-    private let meritBookTappedSubject = PassthroughSubject<Void, Never>()
     private let settingsTappedSubject = PassthroughSubject<Void, Never>()
     private let notificationsTappedSubject = PassthroughSubject<Void, Never>()
     private let familyTreeTappedSubject = PassthroughSubject<Void, Never>()
     private let createFamilyTreeTappedSubject = PassthroughSubject<Void, Never>()
     private let communityTappedSubject = PassthroughSubject<Void, Never>()
+    private let logoutConfirmedSubject = PassthroughSubject<Void, Never>()
+
+    /// Last model painted. `render` is called for every state emission (e.g. again once
+    /// `GET /v1/users/me` answers); sections whose data did not change are left alone so their
+    /// cells/cards are not torn down and rebuilt mid-scroll.
+    private var renderedModel: ILProfileStateModel?
 
     // MARK: - UI Elements
     // Cover + avatar + name scroll with the content; the compact bar is pinned and fades in once the
@@ -70,6 +75,13 @@ final class ILProfileViewController: BaseViewController, UIScrollViewDelegate {
     }()
 
     private lazy var menuCard = ILProfileMenuCardView()
+
+    private lazy var logoutButton: ILProfileLogoutButtonView = {
+        let button = ILProfileLogoutButtonView()
+        button.title = "profile.logout.button".localized
+        return button
+    }()
+
     private lazy var versionFooter = ILProfileVersionFooterView()
 
     // MARK: - Initializer
@@ -106,7 +118,7 @@ final class ILProfileViewController: BaseViewController, UIScrollViewDelegate {
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
 
-        [statsCard, heatmapCard, badgesHeader, badgesRow, meritCard, donateCard, menuCard, versionFooter].forEach {
+        [statsCard, heatmapCard, badgesHeader, badgesRow, meritCard, donateCard, menuCard, logoutButton, versionFooter].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentStack.addArrangedSubview($0)
         }
@@ -116,21 +128,22 @@ final class ILProfileViewController: BaseViewController, UIScrollViewDelegate {
         contentStack.setCustomSpacing(ILMetrics.groupSpacing + 2, after: badgesRow)
         contentStack.setCustomSpacing(ILMetrics.spaceMedium, after: meritCard)
         contentStack.setCustomSpacing(ILMetrics.spaceMedium, after: donateCard)
-        contentStack.setCustomSpacing(ILMetrics.groupSpacing + 4, after: menuCard)
+        contentStack.setCustomSpacing(ILMetrics.spaceMedium, after: menuCard)
+        contentStack.setCustomSpacing(ILMetrics.groupSpacing + 4, after: logoutButton)
 
-        headerView.onEditTapped = { [weak self] in self?.editProfileTappedSubject.send(()) }
         heatmapCard.onTap = { [weak self] in self?.statsTappedSubject.send(()) }
         badgesHeader.onTrailingTap = { [weak self] in self?.awardsTappedSubject.send(()) }
         badgesRow.onTap = { [weak self] in self?.awardsTappedSubject.send(()) }
-        meritCard.onTap = { [weak self] in self?.offeringTappedSubject.send(()) }
+        meritCard.onTap = { [weak self] in self?.meritTappedSubject.send(()) }
         donateCard.onTap = { [weak self] in self?.donateTappedSubject.send(()) }
         menuCard.onReminderTapped = { [weak self] in self?.reminderTappedSubject.send(()) }
-        menuCard.onMeritBookTapped = { [weak self] in self?.meritBookTappedSubject.send(()) }
         menuCard.onSettingsTapped = { [weak self] in self?.settingsTappedSubject.send(()) }
         menuCard.onNotificationsTapped = { [weak self] in self?.notificationsTappedSubject.send(()) }
+        menuCard.onEditProfileTapped = { [weak self] in self?.editProfileTappedSubject.send(()) }
         menuCard.onFamilyTreeTapped = { [weak self] in self?.familyTreeTappedSubject.send(()) }
         menuCard.onCreateFamilyTreeTapped = { [weak self] in self?.createFamilyTreeTappedSubject.send(()) }
         menuCard.onCommunityTapped = { [weak self] in self?.communityTappedSubject.send(()) }
+        logoutButton.onTap = { [weak self] in self?.presentLogoutConfirmation() }
     }
 
     override func setupConstraints() {
@@ -167,15 +180,15 @@ final class ILProfileViewController: BaseViewController, UIScrollViewDelegate {
             editProfileTapped: editProfileTappedSubject.eraseToAnyPublisher(),
             statsTapped: statsTappedSubject.eraseToAnyPublisher(),
             awardsTapped: awardsTappedSubject.eraseToAnyPublisher(),
-            offeringTapped: offeringTappedSubject.eraseToAnyPublisher(),
+            meritTapped: meritTappedSubject.eraseToAnyPublisher(),
             donateTapped: donateTappedSubject.eraseToAnyPublisher(),
             reminderTapped: reminderTappedSubject.eraseToAnyPublisher(),
-            meritBookTapped: meritBookTappedSubject.eraseToAnyPublisher(),
             settingsTapped: settingsTappedSubject.eraseToAnyPublisher(),
             notificationsTapped: notificationsTappedSubject.eraseToAnyPublisher(),
             familyTreeTapped: familyTreeTappedSubject.eraseToAnyPublisher(),
             createFamilyTreeTapped: createFamilyTreeTappedSubject.eraseToAnyPublisher(),
-            communityTapped: communityTappedSubject.eraseToAnyPublisher()
+            communityTapped: communityTappedSubject.eraseToAnyPublisher(),
+            logoutConfirmed: logoutConfirmedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
 
@@ -183,6 +196,10 @@ final class ILProfileViewController: BaseViewController, UIScrollViewDelegate {
         // and deferring it renders the first state only after the appear transition has run.
         output.state
             .sink { [weak self] state in self?.render(state: state) }
+            .store(in: &cancellables)
+
+        output.logoutError
+            .sink { [weak self] message in self?.showError(message) }
             .store(in: &cancellables)
 
         // Gửi sau khi đã subscribe ở trên, trong cùng 1 call đồng bộ — PassthroughSubject không
@@ -211,24 +228,67 @@ final class ILProfileViewController: BaseViewController, UIScrollViewDelegate {
     }
 
     private func updateUI(with model: ILProfileStateModel) {
-        headerView.configure(with: model.header)
-        compactBar.configure(name: model.header.fullName)
+        let previous = renderedModel
+        guard model != previous else { return }
+        renderedModel = model
 
-        statsCard.configure(items: model.stats.map { .init(value: $0.value, caption: $0.caption) })
-
-        if let heatmap = model.heatmap {
-            heatmapCard.configure(with: heatmap)
+        /// `true` on the first paint (no previous model) and whenever `keyPath` actually changed.
+        func changed<Value: Equatable>(_ keyPath: KeyPath<ILProfileStateModel, Value>) -> Bool {
+            previous?[keyPath: keyPath] != model[keyPath: keyPath]
         }
-        heatmapCard.isHidden = model.heatmap == nil
 
-        badgesHeader.trailingText = model.badgesLinkText
-        badgesRow.configure(badges: model.badges)
-        badgesHeader.isHidden = !model.hasBadges
-        badgesRow.isHidden = !model.hasBadges
+        if changed(\.header) {
+            headerView.configure(with: model.header)
+            compactBar.configure(name: model.header.fullName)
+        }
 
-        meritCard.configure(summary: model.meritSummary)
+        if changed(\.stats) {
+            statsCard.configure(items: model.stats.map { .init(value: $0.value, caption: $0.caption) })
+        }
 
-        menuCard.configure(reminderValue: model.reminderValue, communityValue: model.communityValue)
-        versionFooter.configure(versionText: model.versionText, buildText: model.buildText)
+        if changed(\.heatmap) {
+            if let heatmap = model.heatmap {
+                heatmapCard.configure(with: heatmap)
+            }
+            heatmapCard.isHidden = model.heatmap == nil
+        }
+
+        if changed(\.badges) || changed(\.badgesLinkText) {
+            badgesHeader.trailingText = model.badgesLinkText
+            badgesRow.configure(badges: model.badges)
+            badgesHeader.isHidden = !model.hasBadges
+            badgesRow.isHidden = !model.hasBadges
+        }
+
+        if changed(\.meritSummary) {
+            meritCard.configure(summary: model.meritSummary)
+        }
+
+        if changed(\.reminderValue) || changed(\.communityValue) {
+            menuCard.configure(reminderValue: model.reminderValue, communityValue: model.communityValue)
+        }
+
+        if changed(\.versionText) || changed(\.buildText) {
+            versionFooter.configure(versionText: model.versionText, buildText: model.buildText)
+        }
+
+        logoutButton.isEnabled = !model.isLoggingOut
+    }
+
+    // MARK: - Logout
+    /// The popup is a presentation concern (like `ILAlertPresenter` toasts), so the view shows it;
+    /// only the confirmed choice reaches the ViewModel.
+    private func presentLogoutConfirmation() {
+        ILAlertPresenter.shared.show(
+            .confirm(
+                title: "profile.logout.confirm.title".localized,
+                message: "profile.logout.confirm.message".localized,
+                cancel: ILAlertAction(title: "profile.logout.confirm.cancel".localized),
+                confirm: ILAlertAction(title: "profile.logout.confirm.action".localized) { [weak self] in
+                    self?.logoutConfirmedSubject.send(())
+                }
+            ),
+            from: self
+        )
     }
 }

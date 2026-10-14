@@ -1,7 +1,7 @@
 # Requirements — Home
 
-Version: 1.10
-Last updated: 2026-10-07
+Version: 1.11
+Last updated: 2026-10-11
 Status: in-progress — full UI + local logic with mock data; no dashboard API
 yet (all content is stubbed in the UseCase)
 Feature folder: `InnerLamp/Presentation/Scenes/Home/`
@@ -62,8 +62,16 @@ app's main sections, so that I can get oriented and start a session quickly.
   SYSTEM SHALL keep the placeholder tiles and hide the overlay without failing
   Home. (Contract: `Docs/Specs/Photos/design.md` → "API contract".)
 
+- WHEN Home loads, THE SYSTEM SHALL request the whole current solar year of
+  events (`GET /v1/calendar/events?year=<current year>`, authenticated), group
+  the occurrences by solar month (1/1 → 31/12) and open the "Sự kiện Phật giáo"
+  carousel on the current month; IF the request fails, THEN THE SYSTEM SHALL
+  leave the carousel empty without failing Home. Each card shows the server's
+  event name, the solar day/weekday and the server's lunar date. (Contract:
+  `design.md` → "API contract — calendar events".)
+
 - A real dashboard/content API. All content (daily quote, session/streak
-  statistics, suggested sessions, photos, temples, articles, events) is mock
+  statistics, suggested sessions, photos, temples, articles and events are server-backed; the rest is mock
   data inside `ILHomeUseCaseImpl`, marked with TODO comments to replace with
   `NetworkService` calls once a contract exists. (`tasks.md` Phase 3.)
 

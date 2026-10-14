@@ -21,16 +21,37 @@ final class ILTalkViewController: BaseViewController {
     private let meditateTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsVerticalScrollIndicator = false
+        v.alwaysBounceVertical = true
+        v.contentInsetAdjustmentBehavior = .never
+        return v
+    }()
+    private lazy var contentView: UIView = {
+        let v = UIView()
+        return v
+    }()
 
     /// Glass band behind the nav bar: see-through over the hero, blurs once the content scrolls under it.
-    private let headerBand = ILStickyHeaderBand(tintRestAlpha: 0)
-    private let navBar = ILNavBar(showBack: true)
+    private lazy var headerBand: ILStickyHeaderBand = {
+        let v = ILStickyHeaderBand(tintRestAlpha: 0)
+        return v
+    }()
+    private lazy var navBar: ILNavBar = {
+        let v = ILNavBar(showBack: true)
+        return v
+    }()
 
-    private let heroView = ILTalkHeroView()
+    private lazy var heroView: ILTalkHeroView = {
+        let v = ILTalkHeroView()
+        return v
+    }()
 
-    private let playerCard = ILTalkPlayerCardView()
+    private lazy var playerCard: ILTalkPlayerCardView = {
+        let v = ILTalkPlayerCardView()
+        return v
+    }()
 
     private lazy var descriptionLabel: UILabel = {
         let label = UILabel()
@@ -45,8 +66,14 @@ final class ILTalkViewController: BaseViewController {
         return label
     }()
 
-    private let chapterListView = ILTalkChapterListView()
-    private let chaptersEmptyView = ILTalkChaptersEmptyView()
+    private lazy var chapterListView: ILTalkChapterListView = {
+        let v = ILTalkChapterListView()
+        return v
+    }()
+    private lazy var chaptersEmptyView: ILTalkChaptersEmptyView = {
+        let v = ILTalkChaptersEmptyView()
+        return v
+    }()
 
     /// Holds the chapter list or the empty block — the hidden one collapses, so the meditate
     /// card always anchors to a single view.
@@ -56,7 +83,10 @@ final class ILTalkViewController: BaseViewController {
         return stack
     }()
 
-    private let meditateCard = ILTalkMeditateCardView()
+    private lazy var meditateCard: ILTalkMeditateCardView = {
+        let v = ILTalkMeditateCardView()
+        return v
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILTalkViewModel) {
@@ -98,9 +128,6 @@ final class ILTalkViewController: BaseViewController {
 
         meditateCard.onTap = { [weak self] in self?.meditateTappedSubject.send(()) }
 
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = true
-        scrollView.contentInsetAdjustmentBehavior = .never
         headerBand.bind(to: scrollView)
         headerBand.addSubview(navBar)
 

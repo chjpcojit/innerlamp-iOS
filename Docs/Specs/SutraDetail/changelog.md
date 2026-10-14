@@ -4,6 +4,25 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v1.4 (2026-10-11)
+
+- Product decision: the detail screen shows **all** fields the API returns. `summary` is shown when present
+  and hidden while empty (backend seeds it later). Added EARS criteria for the summary, information and
+  "Bản dịch & giấy phép" blocks and the unreviewed notice.
+- `design.md`: layer row for the new DTO / Entity / StateModel / view fields; Step-by-step Flow note (still a
+  single call). `tasks.md`: new Phase 6. Two ⚠️ Not confirmed items remain (row labels / deity-row tap;
+  unreviewed-notice wording and the "reviewed" value).
+- Backend JSON sample received the same day and the display was implemented (Phase 6 `[x]` except running
+  the tests, README and device QA). Resolves the earlier "nested shapes pending" item.
+
+## v1.3 (2026-10-11)
+
+- Re-confirmed `GET /v1/sutras/{id}` with the backend: contract unchanged (BE HEAD `87c3083`). Recorded
+  the fields the API returns that the app does not consume yet (`summary`, `deities`, `original_title`,
+  `author`, `han_*`, `reference_note`, translation `variant` / `license_url` / `license_note` / `note`).
+- `design.md` Step-by-step Flow and `requirements.md` Pending updated; ⚠️ Not confirmed item added.
+  No code change. Adds AS-SutraDetail-002; AS-SutraDetail-001 corrected ("API has no description").
+
 ## v1.2 (2026-10-07)
 
 - Integrated the real API (`GET /v1/sutras/{id}`): the static 11-sutra catalog and sample progress are

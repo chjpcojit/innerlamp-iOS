@@ -8,7 +8,7 @@ import Combine
 
 enum ILSplashNavEvent: Equatable {
     case goToOnboarding
-    case goToLogin
+    case goToSignup
     case goToMain
 }
 
@@ -72,13 +72,13 @@ final class ILSplashViewModel: ILSplashViewModelProtocol {
     }
 
     /// Quyết định điểm đến kế tiếp sau khi màn Splash chạy xong:
-    /// có session → Main; mất session nhưng đã onboard → Login; còn lại → Onboarding.
+    /// có session → Main; mất session nhưng đã onboard → SignUp; còn lại → Onboarding.
     /// `hasSession()` phải được gọi trước vì nó dọn token còn sót khi cài mới.
     private func handleSplashFinished() {
         if useCase.hasSession() {
             navigationEventSubject.send(.goToMain)
         } else if useCase.isOnboardingCompleted() {
-            navigationEventSubject.send(.goToLogin)
+            navigationEventSubject.send(.goToSignup)
         } else {
             navigationEventSubject.send(.goToOnboarding)
         }

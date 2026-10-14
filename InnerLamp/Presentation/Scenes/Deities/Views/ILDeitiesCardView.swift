@@ -20,12 +20,51 @@ final class ILDeitiesCardView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let imageArea = ILRemoteImageView(frame: .zero)
-    private let kindBadge = UIView()
-    private let kindLabel = UILabel()
-    private let nameLabel = UILabel()
-    private let roleLabel = UILabel()
-    private let memorialLabel = UILabel()
+    private lazy var imageArea: ILRemoteImageView = {
+        let v = ILRemoteImageView(frame: .zero)
+        v.backgroundColor = ILColors.sunk2
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var kindBadge: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.scrim.withAlphaComponent(0.6)
+        v.layer.cornerRadius = ILMetrics.radiusPill
+        v.clipsToBounds = true
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var kindLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.captionSmall
+        v.textColor = ILColors.inkOnDark
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var nameLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.scriptureBodySmall
+        v.textColor = ILColors.ink
+        v.numberOfLines = 2
+        v.lineBreakMode = .byTruncatingTail
+        return v
+    }()
+    private lazy var roleLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        v.textColor = ILColors.inkTertiary
+        v.numberOfLines = 2
+        v.lineBreakMode = .byTruncatingTail
+        return v
+    }()
+    private lazy var memorialLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.captionMedium
+        v.textColor = ILColors.link
+        v.numberOfLines = 1
+        return v
+    }()
 
     // MARK: - Initializer
     init() {
@@ -57,34 +96,8 @@ final class ILDeitiesCardView: UIControl {
         clipsToBounds = true
 
         // Ô ảnh tôn tượng từ server (nền `sunk2` làm placeholder khi chưa có / lỗi) + badge loại.
-        imageArea.backgroundColor = ILColors.sunk2
-        imageArea.isUserInteractionEnabled = false
-        imageArea.translatesAutoresizingMaskIntoConstraints = false
-
-        kindBadge.backgroundColor = ILColors.scrim.withAlphaComponent(0.6)
-        kindBadge.layer.cornerRadius = ILMetrics.radiusPill
-        kindBadge.clipsToBounds = true
-        kindBadge.translatesAutoresizingMaskIntoConstraints = false
         imageArea.addSubview(kindBadge)
-
-        kindLabel.font = ILTypography.captionSmall
-        kindLabel.textColor = ILColors.inkOnDark
-        kindLabel.translatesAutoresizingMaskIntoConstraints = false
         kindBadge.addSubview(kindLabel)
-
-        nameLabel.font = ILTypography.scriptureBodySmall
-        nameLabel.textColor = ILColors.ink
-        nameLabel.numberOfLines = 2
-        nameLabel.lineBreakMode = .byTruncatingTail
-
-        roleLabel.font = ILTypography.label
-        roleLabel.textColor = ILColors.inkTertiary
-        roleLabel.numberOfLines = 2
-        roleLabel.lineBreakMode = .byTruncatingTail
-
-        memorialLabel.font = ILTypography.captionMedium
-        memorialLabel.textColor = ILColors.link
-        memorialLabel.numberOfLines = 1
 
         let textStack = UIStackView(arrangedSubviews: [nameLabel, roleLabel, memorialLabel])
         textStack.axis = .vertical

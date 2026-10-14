@@ -9,23 +9,29 @@ import UIKit
 /// góc trên, cell cuối bo 2 góc dưới, các cell giữa chồng viền 1pt lên nhau thành đường kẻ.
 class ILTempleFinderCardCell: UITableViewCell {
 
-    private let cardView = UIView()
+    private lazy var cardView: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.surface
+        v.layer.cornerRadius = ILMetrics.radiusCardRegular
+        v.layer.borderWidth = 1
+        v.layer.borderColor = ILColors.border.cgColor
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     private var topConstraint: NSLayoutConstraint?
-    private(set) var contentContainer = UIView()
+    private(set) lazy var contentContainer: UIView = {
+        let v = UIView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = .clear
         selectionStyle = .none
 
-        cardView.backgroundColor = ILColors.surface
-        cardView.layer.cornerRadius = ILMetrics.radiusCardRegular
-        cardView.layer.borderWidth = 1
-        cardView.layer.borderColor = ILColors.border.cgColor
-        cardView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(cardView)
 
-        contentContainer.translatesAutoresizingMaskIntoConstraints = false
         cardView.addSubview(contentContainer)
 
         let top = cardView.topAnchor.constraint(equalTo: contentView.topAnchor)
@@ -68,28 +74,41 @@ final class ILTempleFinderRowCell: ILTempleFinderCardCell {
 
     var onPick: (() -> Void)?
 
-    private let nameLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private let mineLabel = UILabel()
-    private let pickButton = ILSanghaPillButton()
+    private lazy var nameLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.rowTitle
+        label.textColor = ILColors.ink
+        label.numberOfLines = 2
+        return label
+    }()
+
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 2
+        return label
+    }()
+
+    private lazy var mineLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subheadMedium
+        label.textColor = ILColors.link
+        label.text = "templeFinder.row.mine".localized
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return label
+    }()
+
+    private lazy var pickButton: ILSanghaPillButton = {
+        let button = ILSanghaPillButton()
+        button.configure(title: "templeFinder.row.pick".localized, style: .off)
+        return button
+    }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
 
-        nameLabel.font = ILTypography.rowTitle
-        nameLabel.textColor = ILColors.ink
-        nameLabel.numberOfLines = 2
-        subtitleLabel.font = ILTypography.subhead
-        subtitleLabel.textColor = ILColors.inkTertiary
-        subtitleLabel.numberOfLines = 2
-
-        mineLabel.font = ILTypography.subheadMedium
-        mineLabel.textColor = ILColors.link
-        mineLabel.text = "templeFinder.row.mine".localized
-        mineLabel.setContentHuggingPriority(.required, for: .horizontal)
-        mineLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        pickButton.configure(title: "templeFinder.row.pick".localized, style: .off)
         pickButton.addTarget(self, action: #selector(handlePick), for: .touchUpInside)
 
         let textStack = UIStackView(arrangedSubviews: [nameLabel, subtitleLabel])
@@ -179,12 +198,15 @@ final class ILTempleFinderEmptyCell: ILTempleFinderCardCell {
 
     static let reuseIdentifier = "ILTempleFinderEmptyCell"
 
-    private let label = UILabel()
+    private lazy var label: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        label.numberOfLines = 0
-        label.translatesAutoresizingMaskIntoConstraints = false
         contentContainer.addSubview(label)
         NSLayoutConstraint.activate([
             label.topAnchor.constraint(equalTo: contentContainer.topAnchor, constant: ILMetrics.spaceStandard + 2),
@@ -210,13 +232,16 @@ final class ILTempleFinderSentCell: UITableViewCell {
 
     static let reuseIdentifier = "ILTempleFinderSentCell"
 
-    private let banner = ILInlineBannerView()
+    private lazy var banner: ILInlineBannerView = {
+        let v = ILInlineBannerView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = .clear
         selectionStyle = .none
-        banner.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(banner)
         NSLayoutConstraint.activate([
             banner.topAnchor.constraint(equalTo: contentView.topAnchor),

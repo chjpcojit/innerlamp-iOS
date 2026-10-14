@@ -32,9 +32,31 @@ final class ILLunarDayDetailVerseCardView: UIView {
     // MARK: - UI Elements
     private let gradientLayer = CAGradientLayer()
     private let glowLayer = CAGradientLayer()
-    private let verseStack = UIStackView()
-    private let sourceLabel = UILabel()
-    private let contentStack = UIStackView()
+
+    private lazy var verseStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 4
+        stack.alignment = .center
+        return stack
+    }()
+
+    private lazy var sourceLabel: UILabel = {
+        let label = UILabel()
+        label.font = sourceFont
+        label.textColor = ILColors.templeHeaderSub
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var contentStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -63,18 +85,6 @@ final class ILLunarDayDetailVerseCardView: UIView {
         glowLayer.locations = [0, 0.66]
         layer.insertSublayer(glowLayer, above: gradientLayer)
 
-        verseStack.axis = .vertical
-        verseStack.spacing = 4
-        verseStack.alignment = .center
-
-        sourceLabel.font = sourceFont
-        sourceLabel.textColor = ILColors.templeHeaderSub
-        sourceLabel.textAlignment = .center
-        sourceLabel.numberOfLines = 0
-
-        contentStack.axis = .vertical
-        contentStack.alignment = .center
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(verseStack)
         contentStack.addArrangedSubview(sourceLabel)
         contentStack.setCustomSpacing(Layout.sourceTopSpacing, after: verseStack)

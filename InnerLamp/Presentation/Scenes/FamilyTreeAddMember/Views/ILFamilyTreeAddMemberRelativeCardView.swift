@@ -24,10 +24,35 @@ final class ILFamilyTreeAddMemberRelativeCardView: UIView {
 
     // MARK: - UI Elements
     private let sealLayer = CAShapeLayer()
-    private let sealView = UIView()
-    private let nameLabel = UILabel()
-    private let metaLabel = UILabel()
-    private let toggleButton = UIButton(type: .system)
+    private lazy var sealView: UIView = {
+        let v = UIView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var nameLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.treeSheetName
+        v.textColor = Tree.heading
+        return v
+    }()
+    private lazy var metaLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        v.textColor = Tree.inkTertiary
+        return v
+    }()
+    private lazy var toggleButton: UIButton = {
+        let v = UIButton(type: .system)
+        v.titleLabel?.font = ILTypography.chip
+        v.setTitleColor(Tree.forest, for: .normal)
+        v.layer.cornerRadius = Layout.pillHeight / 2
+        v.layer.borderWidth = 1
+        v.layer.borderColor = Tree.outlineButtonBorder.cgColor
+        v.contentEdgeInsets = UIEdgeInsets(top: 0, left: Layout.pillPadding, bottom: 0, right: Layout.pillPadding)
+        v.setContentHuggingPriority(.required, for: .horizontal)
+        v.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return v
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -60,26 +85,12 @@ final class ILFamilyTreeAddMemberRelativeCardView: UIView {
         sealLayer.fillColor = Tree.gold.cgColor
         sealView.layer.addSublayer(sealLayer)
 
-        nameLabel.font = ILTypography.treeSheetName
-        nameLabel.textColor = Tree.heading
-        metaLabel.font = ILTypography.label
-        metaLabel.textColor = Tree.inkTertiary
-
-        toggleButton.titleLabel?.font = ILTypography.chip
-        toggleButton.setTitleColor(Tree.forest, for: .normal)
-        toggleButton.layer.cornerRadius = Layout.pillHeight / 2
-        toggleButton.layer.borderWidth = 1
-        toggleButton.layer.borderColor = Tree.outlineButtonBorder.cgColor
-        toggleButton.contentEdgeInsets = UIEdgeInsets(top: 0, left: Layout.pillPadding, bottom: 0, right: Layout.pillPadding)
-        toggleButton.setContentHuggingPriority(.required, for: .horizontal)
-        toggleButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         toggleButton.addTarget(self, action: #selector(handleToggle), for: .touchUpInside)
 
         let texts = UIStackView(arrangedSubviews: [nameLabel, metaLabel])
         texts.axis = .vertical
         texts.spacing = 1
 
-        sealView.translatesAutoresizingMaskIntoConstraints = false
         let row = UIStackView(arrangedSubviews: [sealView, texts, toggleButton])
         row.axis = .horizontal
         row.alignment = .center

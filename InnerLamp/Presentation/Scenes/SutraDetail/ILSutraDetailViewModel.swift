@@ -17,6 +17,8 @@ enum ILSutraDetailNavEvent: Equatable {
     case download
     /// Nút phát tròn ở thanh CTA đáy — mở trình phát toàn màn (màn `player` chưa build).
     case openPlayer
+    /// Chạm 1 hàng liên kết (nguồn / giấy phép) — mở trình duyệt.
+    case openLink(URL)
 }
 
 protocol ILSutraDetailViewModelProtocol: ViewModelType {
@@ -36,6 +38,8 @@ final class ILSutraDetailViewModel: ILSutraDetailViewModelProtocol {
         let playTapped: AnyPublisher<Void, Never>
         /// Chạm 1 phẩm trong Mục lục — cùng đích với "Tụng theo" (màn `reader`).
         let chapterTapped: AnyPublisher<Void, Never>
+        /// Chạm 1 hàng có liên kết trong các khối thông tin.
+        let linkTapped: AnyPublisher<URL, Never>
     }
 
     struct Output {
@@ -86,6 +90,10 @@ final class ILSutraDetailViewModel: ILSutraDetailViewModelProtocol {
             .sink { [weak self] _ in self?.navigationEventSubject.send(.openReader) }
             .store(in: &cancellables)
 
+        input.linkTapped
+            .sink { [weak self] url in self?.navigationEventSubject.send(.openLink(url)) }
+            .store(in: &cancellables)
+
         return Output(state: stateSubject.eraseToAnyPublisher())
     }
 
@@ -119,7 +127,7 @@ final class ILSutraDetailViewModel: ILSutraDetailViewModelProtocol {
             state.descriptionText = [sutra.collection, sutra.reference]
                 .filter { !$0.isEmpty }
                 .joined(separator: "sutraDetail.descriptionSeparator".localized)
-            state.translatorText = translatorText(for: sutra)
+            state.infoSections = infoSections(for: sutra)
             state.tags = tagModels(for: sutra)
             state.tocCountText = sutra.chapters.isEmpty
                 ? ""
@@ -162,20 +170,89 @@ final class ILSutraDetailViewModel: ILSutraDetailViewModelProtocol {
         return parts.joined(separator: "sutraDetail.metaSeparator".localized)
     }
 
-    /// "Dịch / hiệu đính: Thích Minh Châu" and, on the next line, the source + license — the
-    /// backend asks the client to always show the translator and license.
-    private static func translatorText(for sutra: ILSutraDetailSutraEntity) -> String {
-        var lines: [String] = []
-        if !sutra.translator.isEmpty {
-            lines.append(String(format: "sutraDetail.translator".localized, sutra.translator))
+    /// Summary → information → translation & license → unreviewed notice. Empty values are dropped and
+    /// a section without rows is omitted (the backend asks the client to always show the translator
+    /// and license when present).
+    /// @ai: assumption — see Docs/Assumptions/SutraDetail/AS-SutraDetail-002-extra-api-fields-default-labels.md
+    private static func infoSections(for sutra: ILSutraDetailSutraEntity) -> [ILSutraDetailInfoSectionModel] {
+        func row(_ labelKey: String, _ value: String) -> ILSutraDetailInfoRowModel? {
+            value.isEmpty ? nil : ILSutraDetailInfoRowModel(label: labelKey.localized, value: value, url: nil)
         }
-        if !sutra.sourceName.isEmpty {
-            lines.append(String(format: "sutraDetail.source".localized, sutra.sourceName))
+        func linkRow(_ labelKey: String, _ link: String?) -> ILSutraDetailInfoRowModel? {
+            guard let link, let url = URL(string: link) else { return nil }
+            return ILSutraDetailInfoRowModel(label: labelKey.localized, value: link, url: url)
         }
-        if !sutra.license.isEmpty {
-            lines.append(String(format: "sutraDetail.license".localized, sutra.license))
+
+        var infoRows: [ILSutraDetailInfoRowModel?] = sutra.alternateTitles.map {
+            ILSutraDetailInfoRowModel(
+                label: String(format: "sutraDetail.info.altTitle".localized, languageName($0.language)),
+                value: $0.text,
+                url: nil
+            )
         }
-        return lines.joined(separator: "\n")
+        infoRows.append(row("sutraDetail.info.author", sutra.author))
+        infoRows.append(row("sutraDetail.info.hanTranslator", hanTranslatorText(for: sutra)))
+        infoRows.append(row("sutraDetail.info.referenceNote", sutra.referenceNote))
+        infoRows += sutra.deities.map {
+            ILSutraDetailInfoRowModel(label: deityRoleLabel($0.role), value: $0.name, url: nil)
+        }
+
+        let translationRows: [ILSutraDetailInfoRowModel?] = [
+            row("sutraDetail.translation.variant", variantLabel(sutra.variant)),
+            row("sutraDetail.translation.translator", sutra.translator),
+            row("sutraDetail.translation.source", sutra.sourceName),
+            linkRow("sutraDetail.translation.sourceLink", sutra.sourceURL),
+            row("sutraDetail.translation.license", sutra.license),
+            row("sutraDetail.translation.licenseNote", sutra.licenseNote),
+            linkRow("sutraDetail.translation.licenseLink", sutra.licenseURL),
+            row("sutraDetail.translation.note", sutra.note)
+        ]
+
+        let paragraph: (String) -> [ILSutraDetailInfoRowModel] = {
+            $0.isEmpty ? [] : [ILSutraDetailInfoRowModel(label: "", value: $0, url: nil)]
+        }
+        let sections: [(titleKey: String, rows: [ILSutraDetailInfoRowModel])] = [
+            ("sutraDetail.section.summary", paragraph(sutra.summary)),
+            ("sutraDetail.section.info", infoRows.compactMap { $0 }),
+            ("sutraDetail.section.translation", translationRows.compactMap { $0 }),
+            ("sutraDetail.section.notice", paragraph(sutra.isUnreviewed ? "sutraDetail.notice.unreviewed".localized : ""))
+        ]
+        return sections
+            .filter { !$0.rows.isEmpty }
+            .map { ILSutraDetailInfoSectionModel(title: $0.titleKey.localized, rows: $0.rows) }
+    }
+
+    /// "Nghĩa Tịnh · 703" — the translator, plus the year when the server has one.
+    private static func hanTranslatorText(for sutra: ILSutraDetailSutraEntity) -> String {
+        guard !sutra.hanTranslator.isEmpty else { return "" }
+        guard let year = sutra.hanTranslationYear else { return sutra.hanTranslator }
+        return String(format: "sutraDetail.info.hanTranslatorYear".localized, sutra.hanTranslator, year)
+    }
+
+    private static func deityRoleLabel(_ role: ILSutraDeityRole?) -> String {
+        switch role {
+        case .speaker: "sutraDetail.deityRole.speaker".localized
+        case .subject: "sutraDetail.deityRole.subject".localized
+        case .mentioned: "sutraDetail.deityRole.mentioned".localized
+        case nil: "sutraDetail.deityRole.other".localized
+        }
+    }
+
+    private static func variantLabel(_ variant: ILSutraTranslationVariant?) -> String {
+        switch variant {
+        case .translation: "sutraDetail.variant.translation".localized
+        case .chant: "sutraDetail.variant.chant".localized
+        case .meaning: "sutraDetail.variant.meaning".localized
+        case .poem: "sutraDetail.variant.poem".localized
+        case nil: ""
+        }
+    }
+
+    /// `pli` → "Pāli"; a language the app does not know shows its upper-cased code.
+    private static func languageName(_ code: String) -> String {
+        let key = "sutraDetail.language.\(code)"
+        let name = key.localized
+        return name == key ? code.uppercased() : name
     }
 
     /// "Tụng hằng ngày" chip, then one chip per purpose (design `su.chips`).

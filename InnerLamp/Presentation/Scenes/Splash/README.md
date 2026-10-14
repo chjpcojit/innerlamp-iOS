@@ -1,7 +1,7 @@
 # Splash
 
 First screen the app shows — pure branding (lamp ignition animation, no loading indicator, no user
-interaction). Auto-advances after 3.2s: to `Main` when a Keychain session exists, to `Login` when
+interaction). Auto-advances after 3.2s: to `Main` when a Keychain session exists, to `SignUp` when
 there is none but onboarding was completed, otherwise to `Onboarding`. Owned top-level by `AppCoordinator`. Themed light/dark via the `--il-spl-*` tokens.
 
 Status, layers and flow live in one place each — do not duplicate them here:
@@ -22,7 +22,7 @@ Status, layers and flow live in one place each — do not duplicate them here:
 ## Changelog
 
 - 2026-10-10 — removed the pulsing-dots loading indicator (`ILSplashLoadingIndicatorView`) to match
-  the design handoff; routing is by stored Keychain session (`hasSession()`), plus `.goToLogin` when onboarded without a session; README slimmed down.
+  the design handoff; routing is by stored Keychain session (`hasSession()`), plus `.goToSignup` when onboarded without a session; README slimmed down.
 - 2026-09-25 — light mode: themed `--il-spl-*` colors refresh on `traitCollectionDidChange`; added
   `ILLampGlowView.Style.splash`. The static launch screen also follows system light/dark (no app
   theme override can run that early).

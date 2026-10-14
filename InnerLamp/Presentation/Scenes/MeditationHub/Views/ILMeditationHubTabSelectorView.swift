@@ -24,7 +24,14 @@ final class ILMeditationHubTabSelectorView: UIView {
     var onSelect: ((ILMeditationHubTabKind) -> Void)?
 
     // MARK: - UI Elements
-    private let itemsStack = UIStackView()
+    private lazy var itemsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.distribution = .fillEqually
+        stack.spacing = Layout.itemSpacing
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
     private var items: [TabItem] = []
 
     // MARK: - Initializer
@@ -52,10 +59,6 @@ final class ILMeditationHubTabSelectorView: UIView {
     // MARK: - Setup
     private func setupViews() {
         layer.cornerRadius = Layout.trackRadius
-        itemsStack.axis = .horizontal
-        itemsStack.distribution = .fillEqually
-        itemsStack.spacing = Layout.itemSpacing
-        itemsStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(itemsStack)
 
         NSLayoutConstraint.activate([
@@ -107,7 +110,13 @@ final class ILMeditationHubTabSelectorView: UIView {
 
         var onTap: (() -> Void)?
 
-        private let titleLabel = UILabel()
+        private lazy var titleLabel: UILabel = {
+            let label = UILabel()
+            label.font = ILTypography.sectionTitle
+            label.textAlignment = .center
+            label.translatesAutoresizingMaskIntoConstraints = false
+            return label
+        }()
 
         override init(frame: CGRect) {
             super.init(frame: frame)
@@ -124,9 +133,6 @@ final class ILMeditationHubTabSelectorView: UIView {
 
             layer.cornerRadius = Layout.itemRadius
 
-            titleLabel.font = ILTypography.sectionTitle
-            titleLabel.textAlignment = .center
-            titleLabel.translatesAutoresizingMaskIntoConstraints = false
             addSubview(titleLabel)
 
             NSLayoutConstraint.activate([

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>@keyframes ilapUp{from{transform:translateY(100%)}to{transform:none}}@keyframes ilapFade{from{opacity:0}to{opacity:1}}@keyframes ilapPulse{0%,100%{opacity:.5}50%{opacity:1}}</style></helmet>
+<div ref="{{ rootRef }}" style="display:flex;flex-direction:column;gap:14px;font-family:'Be Vietnam Pro',sans-serif">
+  <sc-for list="{{ fields }}" as="f" hint-placeholder-count="2">
+    <div>
+      <div style="display:flex;justify-content:space-between;gap:8px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5);margin-bottom:6px"><span>{{ f.label }}</span><span style="font-weight:400;color:var(--il-ink-38)">{{ f.req }}</span></div>
+      <div onClick="{{ f.open }}" style="height:48px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 14px;border-radius:14px;border:1px solid {{ f.bd }};background:var(--il-card);cursor:{{ f.cursor }};opacity:{{ f.op }}" style-hover="border-color:var(--il-ink-24)">
+        <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:{{ f.color }}">{{ f.text }}</div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--il-ink-42)"><path d="M6 9l6 6 6-6"></path></svg>
+      </div>
+    </div>
+  </sc-for>
+</div>
+
+<sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;top:{{ boxTop }};left:{{ boxLeft }};width:{{ boxW }};height:{{ boxH }};overflow:hidden;border-radius:{{ boxR }};z-index:200;display:flex;flex-direction:column;justify-content:flex-end;font-family:'Be Vietnam Pro',sans-serif">
+    <div onClick="{{ close }}" style="position:absolute;inset:0;background:rgba(0,0,0,.4);animation:ilapFade .3s ease"></div>
+    <div style="position:relative;height:calc(100% - 58px);display:flex;flex-direction:column;background:var(--il-sunk);border-radius:12px 12px 0 0;box-shadow:0 -2px 18px rgba(0,0,0,.18);animation:ilapUp .42s cubic-bezier(.32,.72,0,1)">
+      <div style="display:flex;justify-content:center;padding:5px 0 0"><div style="width:36px;height:5px;border-radius:3px;background:var(--il-ink-24)"></div></div>
+      <div style="display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;height:44px;padding:0 8px">
+        <div onClick="{{ close }}" style="height:44px;display:flex;align-items:center;padding:0 8px;font:400 17px 'Be Vietnam Pro',sans-serif;color:var(--il-link);cursor:pointer">Hủy</div>
+        <div style="text-align:center;min-width:0">
+          <div style="font:600 16px/1.2 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ sheetTitle }}</div>
+          <div style="font:400 11.5px/1.3 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ sheetSub }}</div>
+        </div>
+        <div></div>
+      </div>
+      <div style="padding:6px 16px 10px">
+        <div style="height:36px;display:flex;align-items:center;gap:6px;padding:0 8px;border-radius:10px;background:var(--il-ink-07)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:none;color:var(--il-ink-45)"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <input value="{{ q }}" onChange="{{ setQ }}" placeholder="{{ searchPh }}" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 16px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink)">
+          <sc-if value="{{ qOn }}" hint-placeholder-val="{{ false }}"><div onClick="{{ clearQ }}" style="width:18px;height:18px;border-radius:9px;background:var(--il-ink-36);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--il-sunk)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></div></sc-if>
+        </div>
+      </div>
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:4px 16px 34px">
+        <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:12px;background:var(--il-card);overflow:hidden">
+            <sc-for list="{{ skel }}" as="k" hint-placeholder-count="6">
+              <div style="height:48px;display:flex;align-items:center;margin-left:16px;padding-right:16px;border-top:{{ k.sep }}">
+                <div style="height:11px;width:{{ k.w }};border-radius:6px;background:var(--il-ink-07);animation:ilapPulse 1.2s ease-in-out infinite"></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ listOn }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:12px;background:var(--il-card);overflow:hidden">
+            <sc-for list="{{ items }}" as="o" hint-placeholder-count="0">
+              <div onClick="{{ o.pick }}" style="min-height:48px;display:flex;align-items:center;cursor:pointer;padding-left:16px" style-hover="background:var(--il-ink-04)" style-active="background:var(--il-ink-07)">
+                <div style="flex:1;min-width:0;min-height:48px;display:flex;align-items:center;gap:12px;padding-right:16px;border-top:{{ o.sep }}">
+                  <div style="flex:1;min-width:0;font:400 16px/1.35 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink)">{{ o.name }}</div>
+                  <sc-if value="{{ o.on }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--il-link)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:40px 12px;text-align:center;font:400 14px/1.6 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-6);text-wrap:pretty">{{ emptyTxt }}</div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:360,&quot;height&quot;:200},&quot;province&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;ward&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;error&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;&quot;,&quot;prov&quot;,&quot;ward&quot;],&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;'' | 'prov' | 'ward'&quot;},&quot;optional&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;provinceLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Tỉnh / thành phố&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;wardLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Phường / xã&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;onChange&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(v: {province: string, ward: string}) =&gt; void&quot;}}">
+class Component extends DCLogic {
+  static PROVINCES = {
+    'THÀNH PHỐ TRỰC THUỘC TRUNG ƯƠNG': ['TP. Hà Nội', 'TP. Hồ Chí Minh', 'TP. Hải Phòng', 'TP. Đà Nẵng', 'TP. Huế', 'TP. Cần Thơ'],
+    'TỈNH': ['An Giang', 'Bắc Ninh', 'Cà Mau', 'Cao Bằng', 'Đắk Lắk', 'Điện Biên', 'Đồng Nai', 'Đồng Tháp', 'Gia Lai', 'Hà Tĩnh', 'Hưng Yên', 'Khánh Hòa', 'Lai Châu', 'Lạng Sơn', 'Lào Cai', 'Lâm Đồng', 'Nghệ An', 'Ninh Bình', 'Phú Thọ', 'Quảng Ngãi', 'Quảng Ninh', 'Quảng Trị', 'Sơn La', 'Tây Ninh', 'Thái Nguyên', 'Thanh Hóa', 'Tuyên Quang', 'Vĩnh Long'],
+  };
+  static WARDS = {
+    'TP. Hồ Chí Minh': ['Phường Sài Gòn', 'Phường Tân Định', 'Phường Bến Thành', 'Phường Cầu Ông Lãnh', 'Phường Bàn Cờ', 'Phường Xuân Hòa', 'Phường Nhiêu Lộc', 'Phường Chợ Quán', 'Phường Chợ Lớn', 'Phường Gia Định', 'Phường Bình Thạnh', 'Phường Thủ Đức', 'Xã Bình Chánh', 'Xã Củ Chi', 'Xã Cần Giờ'],
+    'TP. Hà Nội': ['Phường Hoàn Kiếm', 'Phường Cửa Nam', 'Phường Ba Đình', 'Phường Ngọc Hà', 'Phường Giảng Võ', 'Phường Hai Bà Trưng', 'Phường Văn Miếu - Quốc Tử Giám', 'Phường Đống Đa', 'Phường Tây Hồ', 'Phường Cầu Giấy', 'Xã Sóc Sơn', 'Xã Hương Sơn'],
+    'TP. Huế': ['Phường Thuận Hóa', 'Phường Phú Xuân', 'Phường Kim Long', 'Phường Vỹ Dạ', 'Phường Thủy Xuân', 'Phường Hương An', 'Phường Dương Nỗ'],
+    'TP. Đà Nẵng': ['Phường Hải Châu', 'Phường Hòa Cường', 'Phường Thanh Khê', 'Phường An Khê', 'Phường Sơn Trà', 'Phường An Hải', 'Phường Ngũ Hành Sơn', 'Phường Hội An'],
+  };
+  // Mock server call: GET /meta/wards?province=…
+  static fetchWards(p) {
+    return new Promise(r => setTimeout(() => r(Component.WARDS[p] || ['Phường 1 (dữ liệu mẫu)', 'Phường 2 (dữ liệu mẫu)', 'Xã 1 (dữ liệu mẫu)']), 700));
+  }
+  state = { sheet: null, q: '', wards: null, wardsFor: null, loading: false };
+  componentWillUnmount() { this._dead = true; }
+  rootRef = React.createRef();
+  // Anchor the sheet to the device screen: the outermost clipping ancestor (the phone screen), not the browser viewport.
+  measure() {
+    for (let n = this.rootRef.current && this.rootRef.current.parentElement; n && n !== document.body; n = n.parentElement) {
+      const cs = getComputedStyle(n), r = n.getBoundingClientRect();
+      if (cs.overflowY !== 'visible' && r.height >= 560 && r.width <= 520) {
+        let rad = '0px';
+        for (let m = n; m && m !== document.body; m = m.parentElement) {
+          const mr = m.getBoundingClientRect(), br = getComputedStyle(m).borderTopLeftRadius;
+          if (Math.abs(mr.width - r.width) > 24) break;
+          if (parseFloat(br) > 0) { rad = br; break; }
+        }
+        return { top: r.top, left: r.left, width: r.width, height: r.height, r: rad };
+      }
+    }
+    return { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight, r: '0px' };
+  }
+  loadWards(p) {
+    if (this.state.wardsFor === p && this.state.wards) return;
+    this.setState({ loading: true, wards: null, wardsFor: p });
+    Component.fetchWards(p).then(w => { if (!this._dead && this.state.wardsFor === p) this.setState({ wards: w, loading: false }); });
+  }
+  renderVals() {
+    const p = this.props, s = this.state, prov = p.province || '', ward = p.ward || '', err = p.error || '';
+    const emit = v => p.onChange && p.onChange(v);
+    const norm = v => (v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').trim();
+    const q = norm(s.q);
+    const open = k => () => {
+      if (k === 'ward' && !prov) return;
+      this.setState({ sheet: k, q: '', box: this.measure() });
+      if (k === 'ward') this.loadWards(prov);
+    };
+    const close = () => this.setState({ sheet: null, q: '' });
+    const field = (k, label, val, ph, off) => ({
+      label, req: p.optional ? '' : 'bắt buộc', text: val || ph, open: open(k),
+      color: val ? 'var(--il-ink)' : 'var(--il-ink-42)', bd: err === k ? '#B4533A' : 'var(--il-ink-14)',
+      op: off ? 0.55 : 1, cursor: off ? 'default' : 'pointer',
+    });
+    const mkItems = (list, cur, pick) => list.filter(n => !q || norm(n).includes(q)).map((n, i) => ({
+      name: n, on: n === cur,
+      sep: i ? '0.5px solid var(--il-ink-12)' : '0', pick: () => { pick(n); close(); },
+    }));
+    let items = [], loading = false;
+    if (s.sheet === 'prov') {
+      const all = [].concat(...Object.values(Component.PROVINCES));
+      items = mkItems(all, prov, n => n !== prov && emit({ province: n, ward: '' }));
+    } else if (s.sheet === 'ward') {
+      loading = s.loading;
+      if (!loading && s.wards) items = mkItems(s.wards, ward, n => emit({ province: prov, ward: n }));
+    }
+    return {
+      fields: [
+        field('prov', p.provinceLabel || 'Tỉnh / thành phố', prov, 'Chọn tỉnh / thành phố'),
+        field('ward', p.wardLabel || 'Phường / xã', ward, prov ? 'Chọn phường / xã' : 'Chọn tỉnh / thành phố trước', !prov),
+      ],
+      sheetOn: !!s.sheet, close, rootRef: this.rootRef,
+      boxTop: (s.box ? s.box.top : 0) + 'px', boxLeft: (s.box ? s.box.left : 0) + 'px',
+      boxW: s.box ? s.box.width + 'px' : '100vw', boxH: s.box ? s.box.height + 'px' : '100vh', boxR: s.box ? s.box.r : '0px',
+      sheetTitle: s.sheet === 'prov' ? 'Chọn tỉnh / thành phố' : 'Chọn phường / xã',
+      sheetSub: s.sheet === 'prov' ? '34 tỉnh, thành · từ 01/07/2025' : prov,
+      searchPh: s.sheet === 'prov' ? 'Tìm tỉnh, thành phố' : 'Tìm phường, xã',
+      q: s.q, qOn: !!s.q, setQ: e => this.setState({ q: e.target.value }), clearQ: () => this.setState({ q: '' }),
+      loading, skel: ['62%', '48%', '70%', '54%', '66%', '44%', '58%'].map((w, i) => ({ w, sep: i ? '0.5px solid var(--il-ink-12)' : '0' })),
+      items, listOn: !loading && items.length > 0, empty: !loading && !items.length && !!s.sheet,
+      emptyTxt: 'Không tìm thấy “' + s.q.trim() + '”.',
+    };
+  }
+}
+</script>
+</body>
+</html>

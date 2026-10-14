@@ -1,7 +1,7 @@
 # Tasks — SignUp
 
-Version: 1.13
-Last updated: 2026-09-23
+Version: 1.15
+Last updated: 2026-10-11
 Status: in-progress (Phase 3 done bar the manual real-backend test; the OTP
 timing ⚠️ is resolved — SignUp passes the server's `expires_in_seconds` /
 `resend_after_seconds` through to the OTP screen, which now has its own spec in
@@ -58,6 +58,36 @@ timing ⚠️ is resolved — SignUp passes the server's `expires_in_seconds` /
       driven via `Input` publishers) — originally against a manual
       `MockILSignUpUseCase`; reworked in Phase 3 to inject
       `MockILSignUpRepository` into the real `ILSignUpUseCaseImpl`
+
+## Phase 4 — Ordination place from `GET /v1/temples/options` (v1.14)
+
+- [x] `TempleOptionsEndpoint`, `TempleSuggestionEndpoint` (Data / Remote)
+- [x] `ILTempleOptionDTO` + `ILTempleSuggestionRequestDTO/ResponseDTO`
+- [x] `ILTempleOptionEntity`, `ILTempleOptionRepository(+Impl)`, mapper,
+      DI (`makeTempleOptionRepository`)
+- [x] `ILOrdinationPlaceUseCase.loadPlaces(query:page:)`
+- [x] ViewModel: server search (debounced `?q=`), load more, stale-response
+      guard; picker view: append-only rows, scroll-to-load-more
+- [x] `ordination_place` → `ordination_temple_id` end to end
+      (entity, DTO, mapper, use case, ViewModel)
+- [x] Unit tests written: `ILTempleOptionsTests`, updated
+      `ILSignUpViewModelTests` / `ILSignUpRepositoryTests` — compile
+      (`build-for-testing`); **not executed** yet (device locked)
+- [ ] Run the suites above on a device; manual check of search and paging
+      against the real backend
+- [ ] Wire `TempleSuggestionEndpoint` into AddTemple (needs ward codes from
+      `/v1/administrative-units/new/...`, TD-SignUp-002)
+
+## Phase 6 — Full name field (v1.15)
+
+- [x] `ILSignUpEntity.fullName`, `ILSignUpRequestOTPRequestDTO.fullName`
+      (`full_name`), mapper, `validateFullName`, `sendVerificationCode(fullName:…)`
+- [x] `ILSignUpStateModel.fullName/fullNameError`, ViewModel `fullNameChanged`,
+      `ILField` as first field in `ILSignUpViewController`, `vi.json` keys
+- [x] Tests written: `ILSignUpViewModelTests` (3 new), `ILSignUpRepositoryTests`
+      (mapper + wire shape). Not executed — see Assumption AS-SignUp-004
+- [ ] Backend confirms `full_name` on `POST /v1/auth/register/request-otp`
+      (until then a real submit may return `400 VALIDATION_ERROR`)
 
 ## Phase 3 — API integration (done; only the manual real-backend test left)
 

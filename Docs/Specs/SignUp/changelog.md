@@ -4,6 +4,52 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md`
 in this folder. All three files share one changelog since they change
 together as one spec unit.
 
+## v1.16 (2026-10-11)
+
+- Backend confirmed `full_name` on register request-otp (required, trimmed + NFC, max 300
+  characters; `INVALID_FULL_NAME` for blank / too long). `requirements.md` note updated,
+  `AS-SignUp-004` -> Validated, `INVALID_FULL_NAME` mapped to the invalid-input error.
+  Caveat: the backend change was uncommitted (local dev server) at confirmation time.
+
+## v1.15 (2026-10-11)
+
+- `requirements.md`: new first criterion — required "Họ và tên" field, sent
+  as `full_name` separately from `dharma_name`; ⚠️ not confirmed by backend.
+- `design.md`: Entity, UseCase, DTO, API table and submit flow list
+  `fullName` / `full_name`.
+- `tasks.md`: new Phase 6 (full name field). Tests compile-checked by
+  build only; not executed.
+- `Docs/Specs/API/openapi.yaml`: `RequestOTPRequest.full_name` added as a
+  client-proposed field (comment links the Assumption).
+- `SRS.md` v0.2: new FR-020 (required full name) and traceability row; FR-001,
+  FR-009, FR-010 mention the field; §1.2/§1.4/§2.2/§3.1.1 updated. Synced
+  stale items: dharma name is free-text with suggestion (supersedes
+  2026-09-15), ordination place is the temple picker sending
+  `ordination_temple_id`, API table lists `INVALID_DHARMA_NAME` /
+  `INVALID_TEMPLE`. The SRS still has no Gherkin block (legacy).
+- `requirements.md`: the "dharma name free-text?" resolved question now
+  reads Yes, matching the shipped field.
+
+## v1.14 (2026-10-11)
+
+- `requirements.md`: the ordination-place criterion is replaced by three
+  picker criteria (paged load from `GET /v1/temples/options`, server-side
+  search with `?q=` and stale-response guard, picked temple sent as
+  `ordination_temple_id`). The request field is renamed from
+  `ordination_place` everywhere; a new "Open questions (resolved)" entry
+  records the backend's answer (the old field is rejected with `400`).
+- `design.md`: new "Ordination place picker" section (layer table, data
+  flow, known limitations); Layers table, submit flow and API table use
+  `ordinationTempleID` / `ordination_temple_id`. The v1.6 section is kept
+  as history.
+- `tasks.md`: new Phase 4 (endpoints, DTOs, repository, use case, picker,
+  tests). Tests compile but were not executed.
+- Backend register contract re-confirmed (backend session, 2026-10-11):
+  `INVALID_TEMPLE` now maps to its own `ILSignUpError.invalidTemple`
+  ("pick again") and `INVALID_DHARMA_NAME` to `invalidInput`; the API
+  table in `design.md` lists both. `Docs/Specs/API/openapi.yaml` request
+  and `user` schemas use `ordination_temple_id`.
+
 ## v1.13 (2026-09-23)
 
 - `requirements.md`: prose sync to the shipped call. The submit acceptance

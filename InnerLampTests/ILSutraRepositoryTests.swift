@@ -197,6 +197,58 @@ final class ILSutraRepositoryTests: XCTestCase {
         )
     }
 
+    /// Shape captured from the dev server (`GET /v1/sutras/kim-quang-minh`, 2026-10-11), shortened.
+    func test_loadSutra_mapsEveryDetailOnlyField() async throws {
+        let json = #"""
+        {"id":"kim-quang-minh","tradition":"MAHAYANA","kind":"SUTRA","collection":"Hộ quốc","reference":"Taishō T0665","titles":{"en":"Golden Light Sutra","sa":"Suvarṇaprabhāsottama Sūtra","vi":"Kinh Kim Quang Minh","zh":"金光明最勝王經","xx":"Other"},"daily_chant":false,"purposes":["HOC_GIAO_LY"],"duration_minutes":900,"audio_url":"","summary":"Kinh Đại thừa dài.","deities":[{"deity_id":"buddha_shakyamuni","role":"SPEAKER","name_vi":"Thích Ca Mâu Ni Phật","thumbnail_url":"http://h/t.webp"},{"deity_id":"x","role":"NEW_ROLE","name_vi":"","thumbnail_url":""}],"review_status":"UNREVIEWED","original_title":"Kim Quang Minh Tối Thắng Vương Kinh","author":"","han_translator":"Nghĩa Tịnh","han_translation_year":703,"reference_note":"Ghi chú","translations":[{"key":"vi-translation","lang":"vi","variant":"chant","translator":"Thích Trí Quang","license":"UNKNOWN","line_count":6450,"source_name":"Quảng Đức","source_url":"http://q.test/k","license_url":"https://l.test/c","license_note":"no license statement","note":"Gộp 31 trang","sections":[]}]}
+        """#
+        network.responses["/v1/sutras/kim-quang-minh"] = .success(ILCatalogFixtures.envelope(json))
+
+        let sutra = try await repository.loadSutra(id: "kim-quang-minh")
+
+        XCTAssertEqual(sutra.summary, "Kinh Đại thừa dài.")
+        XCTAssertEqual(sutra.originalTitle, "Kim Quang Minh Tối Thắng Vương Kinh")
+        XCTAssertEqual(sutra.author, "")
+        XCTAssertEqual(sutra.hanTranslator, "Nghĩa Tịnh")
+        XCTAssertEqual(sutra.hanTranslationYear, 703)
+        XCTAssertEqual(sutra.referenceNote, "Ghi chú")
+        XCTAssertEqual(
+            sutra.deities,
+            [
+                ILSutraDetailDeityEntity(id: "buddha_shakyamuni", name: "Thích Ca Mâu Ni Phật", role: .speaker),
+                ILSutraDetailDeityEntity(id: "x", name: "x", role: nil)
+            ]
+        )
+        XCTAssertEqual(
+            sutra.alternateTitles,
+            [
+                ILSutraDetailAlternateTitleEntity(language: "sa", text: "Suvarṇaprabhāsottama Sūtra"),
+                ILSutraDetailAlternateTitleEntity(language: "zh", text: "金光明最勝王經"),
+                ILSutraDetailAlternateTitleEntity(language: "en", text: "Golden Light Sutra"),
+                ILSutraDetailAlternateTitleEntity(language: "xx", text: "Other")
+            ]
+        )
+        XCTAssertTrue(sutra.isUnreviewed)
+        XCTAssertEqual(sutra.variant, .chant)
+        XCTAssertEqual(sutra.licenseURL, "https://l.test/c")
+        XCTAssertEqual(sutra.licenseNote, "no license statement")
+        XCTAssertEqual(sutra.note, "Gộp 31 trang")
+    }
+
+    func test_loadSutra_missingDetailOnlyFields_fallBackToEmpty() async throws {
+        network.responses["/v1/sutras/kinh-tu-bi"] = .success(ILCatalogFixtures.envelope(
+            #"{"id":"kinh-tu-bi","titles":{"vi":"Kinh Từ Bi"},"daily_chant":false,"purposes":[],"translations":[]}"#
+        ))
+
+        let sutra = try await repository.loadSutra(id: "kinh-tu-bi")
+
+        XCTAssertEqual(sutra.summary, "")
+        XCTAssertEqual(sutra.deities, [])
+        XCTAssertNil(sutra.hanTranslationYear)
+        XCTAssertFalse(sutra.isUnreviewed)
+        XCTAssertNil(sutra.licenseURL)
+    }
+
     func test_loadSutra_dropsNonHTTPSourceLink() async throws {
         network.responses["/v1/sutras/kinh-tu-bi"] = .success(ILCatalogFixtures.envelope(detailJSON(sourceURL: "javascript:alert(1)")))
 

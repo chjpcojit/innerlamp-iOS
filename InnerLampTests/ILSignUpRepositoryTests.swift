@@ -66,9 +66,17 @@ final class ILSignUpRepositoryTests: XCTestCase {
     }
 
     func test_from_validationCodes_mapToInvalidInput() {
-        for code in ["VALIDATION_ERROR", "INVALID_EMAIL", "INVALID_PHONE", "INVALID_PASSWORD", "PAYLOAD_TOO_LARGE"] {
+        for code in ["VALIDATION_ERROR", "INVALID_EMAIL", "INVALID_PHONE", "INVALID_PASSWORD",
+                     "INVALID_FULL_NAME", "INVALID_DHARMA_NAME", "PAYLOAD_TOO_LARGE"] {
             XCTAssertEqual(ILSignUpError.from(apiError(code)), .invalidInput, "code: \(code)")
         }
+    }
+
+    func test_from_invalidTemple_mapsToItsOwnCaseWithAPickAgainMessage() {
+        let error = ILSignUpError.from(apiError("INVALID_TEMPLE"))
+
+        XCTAssertEqual(error, .invalidTemple)
+        XCTAssertNotEqual(error.errorDescription, ILSignUpError.invalidInput.errorDescription)
     }
 
     func test_from_unknownApiCode_mapsToServer() {
@@ -103,8 +111,9 @@ final class ILSignUpRepositoryTests: XCTestCase {
 
     func test_mapper_mapsEveryEntityFieldToTheRequestDTO() {
         let entity = ILSignUpEntity(
+            fullName: "Nguyễn Bình An",
             displayName: "Diệu Tâm",
-            ordinationPlace: "Chùa Hoa Nghiêm",
+            ordinationTempleID: "temple_north_011",
             phoneNumber: "+84 912 345 678",
             email: "phapdanh@email.com",
             password: "secret12"
@@ -112,8 +121,9 @@ final class ILSignUpRepositoryTests: XCTestCase {
 
         let dto = ILSignUpMapper.toDTO(entity)
 
+        XCTAssertEqual(dto.fullName, "Nguyễn Bình An")
         XCTAssertEqual(dto.dharmaName, "Diệu Tâm")
-        XCTAssertEqual(dto.ordinationPlace, "Chùa Hoa Nghiêm")
+        XCTAssertEqual(dto.ordinationTempleId, "temple_north_011")
         XCTAssertEqual(dto.phoneNumber, "+84 912 345 678")
         XCTAssertEqual(dto.email, "phapdanh@email.com")
         XCTAssertEqual(dto.password, "secret12")
@@ -132,8 +142,9 @@ final class ILSignUpRepositoryTests: XCTestCase {
 
     func test_requestDTO_encodesExplicitSnakeCaseKeys() throws {
         let dto = ILSignUpRequestOTPRequestDTO(
+            fullName: "Nguyễn Bình An",
             dharmaName: "Diệu Tâm",
-            ordinationPlace: "Chùa Hoa Nghiêm",
+            ordinationTempleId: "temple_north_011",
             phoneNumber: "+84 912 345 678",
             email: "phapdanh@email.com",
             password: "secret12"
@@ -143,12 +154,32 @@ final class ILSignUpRepositoryTests: XCTestCase {
             JSONSerialization.jsonObject(with: try JSONEncoder().encode(dto)) as? [String: Any]
         )
 
+        XCTAssertEqual(json["full_name"] as? String, "Nguyễn Bình An")
+        XCTAssertNil(json["fullName"])
         XCTAssertEqual(json["dharma_name"] as? String, "Diệu Tâm")
-        XCTAssertEqual(json["ordination_place"] as? String, "Chùa Hoa Nghiêm")
+        XCTAssertEqual(json["ordination_temple_id"] as? String, "temple_north_011")
+        XCTAssertNil(json["ordination_place"], "The server rejects the retired field")
         XCTAssertEqual(json["phone_number"] as? String, "+84 912 345 678")
         XCTAssertEqual(json["email"] as? String, "phapdanh@email.com")
         XCTAssertEqual(json["password"] as? String, "secret12")
         XCTAssertNil(json["dharmaName"])
+    }
+
+    func test_requestDTO_withoutTemple_omitsTheTempleField() throws {
+        let dto = ILSignUpRequestOTPRequestDTO(
+            fullName: "Nguyễn Bình An",
+            dharmaName: "Diệu Tâm",
+            ordinationTempleId: nil,
+            phoneNumber: "+84 912 345 678",
+            email: "phapdanh@email.com",
+            password: "secret12"
+        )
+
+        let json = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: try JSONEncoder().encode(dto)) as? [String: Any]
+        )
+
+        XCTAssertNil(json["ordination_temple_id"], "Absent field = no temple; the server also rejects unknown keys")
     }
 
     func test_responseDTO_decodesSnakeCaseBodyUnderConvertFromSnakeCase() throws {
@@ -165,8 +196,9 @@ final class ILSignUpRepositoryTests: XCTestCase {
 
     func test_endpoint_isPublicPostWithBodyAndRegistrationPath() throws {
         let dto = ILSignUpRequestOTPRequestDTO(
+            fullName: "Nguyễn Bình An",
             dharmaName: "Diệu Tâm",
-            ordinationPlace: "",
+            ordinationTempleId: nil,
             phoneNumber: "+84 912 345 678",
             email: "phapdanh@email.com",
             password: "secret12"

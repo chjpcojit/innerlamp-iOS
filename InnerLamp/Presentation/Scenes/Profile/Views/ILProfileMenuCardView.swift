@@ -5,21 +5,27 @@
 
 import UIKit
 
-/// Nhóm 7 hàng điều hướng có icon cuối màn Tôi (Gia phả dòng họ / Tạo gia phả mới / Chuông tỉnh thức /
-/// Sổ công đức / Cài đặt / Thông báo / Chùa tu tập) trong 1 thẻ bo góc. Là composition riêng của
+/// Nhóm 7 hàng điều hướng có icon cuối màn Tôi (Sửa hồ sơ / Gia phả dòng họ / Tạo gia phả mới /
+/// Chuông tỉnh thức / Cài đặt / Thông báo / Chùa tu tập) trong 1 thẻ bo góc. Là composition riêng của
 /// màn Tôi từ `ILSettingRow` dùng chung.
 final class ILProfileMenuCardView: UIView {
 
     // MARK: - Properties
+    var onEditProfileTapped: (() -> Void)?
     var onFamilyTreeTapped: (() -> Void)?
     var onCreateFamilyTreeTapped: (() -> Void)?
     var onReminderTapped: (() -> Void)?
-    var onMeritBookTapped: (() -> Void)?
     var onSettingsTapped: (() -> Void)?
     var onNotificationsTapped: (() -> Void)?
     var onCommunityTapped: (() -> Void)?
 
     // MARK: - UI Elements
+    private lazy var editProfileRow = ILSettingRow(
+        title: "profile.menu.editProfile".localized,
+        kind: .chevron,
+        icon: ILIcons.rowUser
+    )
+
     private lazy var familyTreeRow = ILSettingRow(
         title: "profile.menu.familyTree".localized,
         kind: .value,
@@ -36,12 +42,6 @@ final class ILProfileMenuCardView: UIView {
         title: "profile.menu.reminder".localized,
         kind: .value,
         icon: ILIcons.rowBell
-    )
-
-    private lazy var meritBookRow = ILSettingRow(
-        title: "profile.menu.meritBook".localized,
-        kind: .chevron,
-        icon: ILIcons.rowJournal
     )
 
     private lazy var settingsRow = ILSettingRow(
@@ -83,7 +83,7 @@ final class ILProfileMenuCardView: UIView {
         clipsToBounds = true
 
         let stack = UIStackView(arrangedSubviews: [
-            familyTreeRow, createFamilyTreeRow, reminderRow, meritBookRow, settingsRow, notificationsRow, communityRow
+            editProfileRow, familyTreeRow, createFamilyTreeRow, reminderRow, settingsRow, notificationsRow, communityRow
         ])
         stack.axis = .vertical
         stack.alignment = .fill
@@ -97,10 +97,10 @@ final class ILProfileMenuCardView: UIView {
             stack.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
 
+        editProfileRow.onTap = { [weak self] in self?.onEditProfileTapped?() }
         familyTreeRow.onTap = { [weak self] in self?.onFamilyTreeTapped?() }
         createFamilyTreeRow.onTap = { [weak self] in self?.onCreateFamilyTreeTapped?() }
         reminderRow.onTap = { [weak self] in self?.onReminderTapped?() }
-        meritBookRow.onTap = { [weak self] in self?.onMeritBookTapped?() }
         settingsRow.onTap = { [weak self] in self?.onSettingsTapped?() }
         notificationsRow.onTap = { [weak self] in self?.onNotificationsTapped?() }
         communityRow.onTap = { [weak self] in self?.onCommunityTapped?() }

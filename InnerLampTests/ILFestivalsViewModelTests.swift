@@ -16,6 +16,8 @@ final class ILFestivalsViewModelTests: XCTestCase {
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
     private var tabSelectedSubject: PassthroughSubject<ILFestivalsTab, Never>!
     private var backTappedSubject: PassthroughSubject<Void, Never>!
+    private var loadMoreSubject: PassthroughSubject<Void, Never>!
+    private var dayTappedSubject: PassthroughSubject<String, Never>!
 
     override func setUp() {
         super.setUp()
@@ -27,6 +29,8 @@ final class ILFestivalsViewModelTests: XCTestCase {
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
         tabSelectedSubject = PassthroughSubject<ILFestivalsTab, Never>()
         backTappedSubject = PassthroughSubject<Void, Never>()
+        loadMoreSubject = PassthroughSubject<Void, Never>()
+        dayTappedSubject = PassthroughSubject<String, Never>()
     }
 
     override func tearDown() {
@@ -34,6 +38,8 @@ final class ILFestivalsViewModelTests: XCTestCase {
         viewDidLoadSubject = nil
         tabSelectedSubject = nil
         backTappedSubject = nil
+        loadMoreSubject = nil
+        dayTappedSubject = nil
         sut = nil
         mockUseCase = nil
         super.tearDown()
@@ -43,6 +49,8 @@ final class ILFestivalsViewModelTests: XCTestCase {
         ILFestivalsViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             tabSelected: tabSelectedSubject.eraseToAnyPublisher(),
+            loadMoreTriggered: loadMoreSubject.eraseToAnyPublisher(),
+            dayTapped: dayTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher()
         )
     }
@@ -58,19 +66,31 @@ final class ILFestivalsViewModelTests: XCTestCase {
             days: [
                 ILFestivalDayEntity(
                     id: "2026-09-15", date: stubDate, title: "Đại lễ Phật Đản", kind: .festival,
-                    daysUntil: 0
+                    daysUntil: 0,
+                    lunarDay: 15, lunarMonth: 8, isLeapMonth: false,
+                    eventCode: "phat-dan"
                 ),
                 ILFestivalDayEntity(
                     id: "2026-09-16", date: stubDate, title: "Vía Văn Thù Bồ Tát", kind: .festival,
-                    daysUntil: 2
+                    daysUntil: 2,
+                    lunarDay: 15, lunarMonth: 8, isLeapMonth: false
                 ),
                 ILFestivalDayEntity(
                     id: "2026-09-17", date: stubDate, title: "Rằm tháng Tám — ngày trai giới",
-                    kind: .observance, daysUntil: 3
+                    kind: .observance, daysUntil: 3,
+                    lunarDay: 15, lunarMonth: 8, isLeapMonth: false
                 )
             ]
         )
     ]
+
+    private static var currentYear: Int {
+        Calendar(identifier: .gregorian).component(.year, from: Date())
+    }
+
+    private static func subtitle(total: Int) -> String {
+        String(format: "festivals.header.subtitleFormat".localized, "\(currentYear)", total)
+    }
 
     // MARK: - Tests
 
@@ -95,7 +115,7 @@ final class ILFestivalsViewModelTests: XCTestCase {
         XCTAssertEqual(receivedState?.selectedTab, .all)
         XCTAssertEqual(receivedState?.months.count, 1)
         XCTAssertEqual(receivedState?.months.first?.days.count, 3)
-        XCTAssertEqual(receivedState?.subtitle, String(format: "festivals.header.subtitleFormat".localized, 3))
+        XCTAssertEqual(receivedState?.subtitle, Self.subtitle(total: 3))
     }
 
     func test_viewDidLoad_mapsFestivalDayFields() {
@@ -132,7 +152,7 @@ final class ILFestivalsViewModelTests: XCTestCase {
         XCTAssertEqual(receivedState?.selectedTab, .festivals)
         XCTAssertEqual(receivedState?.months.first?.days.count, 2)
         XCTAssertEqual(receivedState?.months.first?.days.contains(where: { $0.title.contains("trai giới") }), false)
-        XCTAssertEqual(receivedState?.subtitle, String(format: "festivals.header.subtitleFormat".localized, 2))
+        XCTAssertEqual(receivedState?.subtitle, Self.subtitle(total: 2))
     }
 
     func test_tabSelected_observances_filtersOutFestivals() {
@@ -144,7 +164,7 @@ final class ILFestivalsViewModelTests: XCTestCase {
         XCTAssertEqual(receivedState?.selectedTab, .observances)
         XCTAssertEqual(receivedState?.months.first?.days.count, 1)
         XCTAssertEqual(receivedState?.months.first?.days.first?.isFestival, false)
-        XCTAssertEqual(receivedState?.subtitle, String(format: "festivals.header.subtitleFormat".localized, 1))
+        XCTAssertEqual(receivedState?.subtitle, Self.subtitle(total: 1))
     }
 
     func test_tabSelected_filtersOutEmptyMonth() {
@@ -154,7 +174,8 @@ final class ILFestivalsViewModelTests: XCTestCase {
                 days: [
                     ILFestivalDayEntity(
                         id: "2026-09-17", date: Self.stubDate, title: "Rằm tháng Tám — ngày trai giới",
-                        kind: .observance, daysUntil: 3
+                        kind: .observance, daysUntil: 3,
+                        lunarDay: 15, lunarMonth: 8, isLeapMonth: false
                     )
                 ]
             )
@@ -167,7 +188,72 @@ final class ILFestivalsViewModelTests: XCTestCase {
         let receivedState = applyTab(.festivals, output: output)
 
         XCTAssertEqual(receivedState?.months.isEmpty, true)
-        XCTAssertEqual(receivedState?.subtitle, String(format: "festivals.header.subtitleFormat".localized, 0))
+        XCTAssertEqual(receivedState?.subtitle, Self.subtitle(total: 0))
+    }
+
+    func test_viewDidLoad_requestsCurrentYear() {
+        let output = sut.transform(input: makeInput())
+        _ = waitForSuccess(output)
+
+        XCTAssertEqual(mockUseCase.requestedYears, [Self.currentYear])
+    }
+
+    func test_loadMore_loadsNextYearAndAppendsMonths() {
+        let output = sut.transform(input: makeInput())
+        _ = waitForSuccess(output)
+        mockUseCase.loadMonthsResult = [
+            ILFestivalMonthEntity(
+                id: "next-01", label: "Tháng 1",
+                days: [
+                    ILFestivalDayEntity(
+                        id: "next-01-01", date: Self.stubDate, title: "Rằm", kind: .observance, daysUntil: 100,
+                        lunarDay: 15, lunarMonth: 8, isLeapMonth: false
+                    )
+                ]
+            )
+        ]
+
+        var received: ILFestivalsStateModel?
+        let appended = expectation(description: "next year appended")
+        output.state
+            .sink { state in
+                if case .success(let model) = state, model.months.count == 2 {
+                    received = model
+                    appended.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        loadMoreSubject.send(())
+        wait(for: [appended], timeout: 1.0)
+
+        XCTAssertEqual(mockUseCase.requestedYears, [Self.currentYear, Self.currentYear + 1])
+        XCTAssertEqual(received?.months.map(\.id), ["2026-09", "next-01"])
+        XCTAssertEqual(
+            received?.subtitle,
+            String(format: "festivals.header.subtitleFormat".localized, "\(Self.currentYear)–\(Self.currentYear + 1)", 4)
+        )
+    }
+
+    func test_loadMore_failure_keepsExistingMonths() {
+        let output = sut.transform(input: makeInput())
+        _ = waitForSuccess(output)
+        mockUseCase.loadMonthsError = NSError(domain: "test", code: 1)
+
+        var failureCount = 0
+        output.state
+            .sink { state in
+                if case .failure = state { failureCount += 1 }
+            }
+            .store(in: &cancellables)
+
+        loadMoreSubject.send(())
+        let settled = expectation(description: "load more settled")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { settled.fulfill() }
+        wait(for: [settled], timeout: 1.0)
+
+        XCTAssertEqual(failureCount, 0)
+        XCTAssertEqual(mockUseCase.requestedYears.count, 2)
     }
 
     func test_backTapped_firesGoBackNavigationEvent() {
@@ -180,6 +266,32 @@ final class ILFestivalsViewModelTests: XCTestCase {
         backTappedSubject.send(())
 
         XCTAssertEqual(receivedEvent, .goBack)
+    }
+
+    func test_dayTapped_festival_firesOpenFestivalDetailNavigationEvent() {
+        let output = sut.transform(input: makeInput())
+        _ = waitForSuccess(output)
+        var receivedEvent: ILFestivalsNavEvent?
+        sut.navigationEventPublisher
+            .sink { receivedEvent = $0 }
+            .store(in: &cancellables)
+
+        dayTappedSubject.send("2026-09-15")
+
+        XCTAssertEqual(receivedEvent, .openFestivalDetail(code: "phat-dan", date: Self.stubDate))
+    }
+
+    func test_dayTapped_observance_doesNotNavigate() {
+        let output = sut.transform(input: makeInput())
+        _ = waitForSuccess(output)
+        var receivedEvent: ILFestivalsNavEvent?
+        sut.navigationEventPublisher
+            .sink { receivedEvent = $0 }
+            .store(in: &cancellables)
+
+        dayTappedSubject.send("2026-09-17")
+
+        XCTAssertNil(receivedEvent)
     }
 
     func test_viewDidLoad_failure_emitsFailure() {
@@ -252,8 +364,11 @@ final class MockILFestivalsUseCase: ILFestivalsUseCase {
     var loadMonthsResult: [ILFestivalMonthEntity] = []
     var loadMonthsError: Error?
 
-    func loadMonths(from date: Date) async throws -> [ILFestivalMonthEntity] {
+    var requestedYears: [Int] = []
+
+    func loadMonths(year: Int, today date: Date) async throws -> [ILFestivalMonthEntity] {
         loadMonthsCalled = true
+        requestedYears.append(year)
         if let error = loadMonthsError { throw error }
         return loadMonthsResult
     }

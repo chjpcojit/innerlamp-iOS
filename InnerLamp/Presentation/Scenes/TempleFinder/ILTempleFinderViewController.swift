@@ -96,12 +96,29 @@ final class ILTempleFinderViewController: BaseViewController {
         return table
     }()
 
-    private let formScrollView = UIScrollView()
-    private let formView = ILTempleFinderAddFormView()
-    private let skeletonView = ILTempleFinderSkeletonView()
-    private let errorStateView = ILStateView(kind: .error)
+    private lazy var formScrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsVerticalScrollIndicator = false
+        v.keyboardDismissMode = .onDrag
+        v.isHidden = true
+        return v
+    }()
+    private lazy var formView = ILTempleFinderAddFormView()
+    private lazy var skeletonView: ILTempleFinderSkeletonView = {
+        let v = ILTempleFinderSkeletonView()
+        v.isHidden = true
+        return v
+    }()
+    private lazy var errorStateView = ILStateView(kind: .error)
     private lazy var retryButton = ILButton(title: "common.retry".localized, variant: .primary)
-    private let errorStack = UIStackView()
+    private lazy var errorStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.alignment = .fill
+        v.spacing = ILMetrics.groupSpacing
+        v.isHidden = true
+        return v
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILTempleFinderViewModel) {
@@ -136,22 +153,13 @@ final class ILTempleFinderViewController: BaseViewController {
         [headerView, searchInput, chipsScrollView, headerDivider].forEach { headerContainer.addSubview($0) }
         chipsScrollView.addSubview(chipsStack)
 
-        formScrollView.showsVerticalScrollIndicator = false
-        formScrollView.keyboardDismissMode = .onDrag
-        formScrollView.isHidden = true
         formScrollView.addSubview(formView)
         formView.onCancel = { [weak self] in self?.addCancelledSubject.send(()) }
         formView.onSubmit = { [weak self] proposal in self?.addSubmittedSubject.send(proposal) }
 
-        skeletonView.isHidden = true
-
         retryButton.onTap = { [weak self] in self?.retryTappedSubject.send(()) }
-        errorStack.axis = .vertical
-        errorStack.alignment = .fill
-        errorStack.spacing = ILMetrics.groupSpacing
         errorStack.addArrangedSubview(errorStateView)
         errorStack.addArrangedSubview(retryButton)
-        errorStack.isHidden = true
 
         view.addSubview(tableView)
         view.addSubview(formScrollView)

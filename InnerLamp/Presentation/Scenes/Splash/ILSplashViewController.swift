@@ -46,20 +46,21 @@ final class ILSplashViewController: BaseViewController {
     private var hasStartedAnimations = false
 
     // MARK: - UI Elements
-    private let backdropView = ILSplashBrandBackdropView()
-    private let ambienceView = ILSplashAmbienceView()
-    private let lampGlowView = ILLogoView(size: Metrics.lampDiameter)
-    private let emberFieldView = ILSplashEmberFieldView()
-    private let wordmarkLabel = ILSplashWordmarkLabel(text: "splash.wordmark".localized)
+    private lazy var backdropView: ILSplashBrandBackdropView = ILSplashBrandBackdropView()
+    private lazy var ambienceView: ILSplashAmbienceView = ILSplashAmbienceView()
+    private lazy var lampGlowView: ILLogoView = ILLogoView(size: Metrics.lampDiameter)
+    private lazy var emberFieldView: ILSplashEmberFieldView = ILSplashEmberFieldView()
+    private lazy var wordmarkLabel: ILSplashWordmarkLabel = ILSplashWordmarkLabel(text: "splash.wordmark".localized)
 
-    private let taglineLabel: UILabel = {
-        let label = UILabel()
-        label.font = ILTypography.splashTagline
-        label.textColor = ILColors.splashInkSub
-        label.textAlignment = .center
-        label.numberOfLines = 0
-        label.text = "splash.tagline".localized
-        return label
+    private lazy var taglineLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.splashTagline
+        v.textColor = ILColors.splashInkSub
+        v.textAlignment = .center
+        v.numberOfLines = 0
+        v.text = "splash.tagline".localized
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
     }()
 
     /// Khối giữa canh giữa màn theo chiều dọc — thay cho `justify-content:center` của design.
@@ -97,8 +98,6 @@ final class ILSplashViewController: BaseViewController {
         [backdropView, ambienceView, lampGlowView, emberFieldView, wordmarkLabel, taglineLabel]
             .forEach(view.addSubview)
         view.addLayoutGuide(columnGuide)
-
-        taglineLabel.translatesAutoresizingMaskIntoConstraints = false
     }
 
     override func setupConstraints() {

@@ -48,6 +48,8 @@ final class ILSutraDetailCoordinator: Coordinator {
                     break
                 case .openPlayer:
                     self.showPlayer()
+                case .openLink(let url):
+                    UIApplication.shared.open(url)
                 }
             }
             .store(in: &cancellables)

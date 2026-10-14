@@ -13,19 +13,110 @@ import UIKit
 final class ILLunarDayDetailAlmanacView: UIView {
 
     // MARK: - UI Elements
-    private let cardView = UIView()
-    private let ratingCircle = UIView()
-    private let ratingCircleLabel = UILabel()
-    private let titleLabel = UILabel()
-    private let subLabel = UILabel()
-    private let scaleStack = UIStackView()
-    private let dosBox = UIView()
-    private let dosHeaderLabel = UILabel()
-    private let dosList = UIStackView()
-    private let dontsBox = UIView()
-    private let dontsHeaderLabel = UILabel()
-    private let dontsList = UIStackView()
-    private let noteLabel = UILabel()
+    private lazy var cardView: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.surface
+        view.layer.cornerRadius = ILMetrics.radiusCardRegular
+        view.layer.borderWidth = 1
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var ratingCircle: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 31
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var ratingCircleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.scriptureBodySmall
+        label.textColor = .white
+        label.textAlignment = .center
+        label.numberOfLines = 1
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.6
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.scriptureBodyLarge
+        label.textColor = ILColors.ink
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var subLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.note
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var scaleStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.distribution = .fillEqually
+        stack.spacing = 4
+        return stack
+    }()
+
+    private lazy var dosBox: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = ILMetrics.radiusCardSmall
+        view.layer.borderWidth = 1
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var dosHeaderLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.eyebrow
+        label.text = "lunarDayDetail.almanac.dos".localized
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var dosList: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 6
+        return stack
+    }()
+
+    private lazy var dontsBox: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = ILMetrics.radiusCardSmall
+        view.layer.borderWidth = 1
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var dontsHeaderLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.eyebrow
+        label.text = "lunarDayDetail.almanac.donts".localized
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var dontsList: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 6
+        return stack
+    }()
+
+    private lazy var noteLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
     private var rating: ILLunarDayDetailDayRating = .binh
 
@@ -62,22 +153,9 @@ final class ILLunarDayDetailAlmanacView: UIView {
         translatesAutoresizingMaskIntoConstraints = false
 
         // Thẻ chính.
-        cardView.backgroundColor = ILColors.surface
-        cardView.layer.cornerRadius = ILMetrics.radiusCardRegular
-        cardView.layer.borderWidth = 1
-        cardView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(cardView)
 
         // Vòng tròn đánh giá 62pt.
-        ratingCircle.layer.cornerRadius = 31
-        ratingCircle.translatesAutoresizingMaskIntoConstraints = false
-        ratingCircleLabel.font = ILTypography.scriptureBodySmall
-        ratingCircleLabel.textColor = .white
-        ratingCircleLabel.textAlignment = .center
-        ratingCircleLabel.numberOfLines = 1
-        ratingCircleLabel.adjustsFontSizeToFitWidth = true
-        ratingCircleLabel.minimumScaleFactor = 0.6
-        ratingCircleLabel.translatesAutoresizingMaskIntoConstraints = false
         ratingCircle.addSubview(ratingCircleLabel)
         NSLayoutConstraint.activate([
             ratingCircle.widthAnchor.constraint(equalToConstant: 62),
@@ -86,14 +164,6 @@ final class ILLunarDayDetailAlmanacView: UIView {
             ratingCircleLabel.trailingAnchor.constraint(equalTo: ratingCircle.trailingAnchor, constant: -6),
             ratingCircleLabel.centerYAnchor.constraint(equalTo: ratingCircle.centerYAnchor)
         ])
-
-        titleLabel.font = ILTypography.scriptureBodyLarge
-        titleLabel.textColor = ILColors.ink
-        titleLabel.numberOfLines = 1
-
-        subLabel.font = ILTypography.note
-        subLabel.textColor = ILColors.inkTertiary
-        subLabel.numberOfLines = 1
 
         let titleStack = UIStackView(arrangedSubviews: [titleLabel, subLabel])
         titleStack.axis = .vertical
@@ -105,23 +175,6 @@ final class ILLunarDayDetailAlmanacView: UIView {
         headerRow.alignment = .center
         headerRow.spacing = 14
 
-        scaleStack.axis = .horizontal
-        scaleStack.distribution = .fillEqually
-        scaleStack.spacing = 4
-
-        dosHeaderLabel.font = ILTypography.eyebrow
-        dosHeaderLabel.text = "lunarDayDetail.almanac.dos".localized
-        dosHeaderLabel.numberOfLines = 1
-
-        dontsHeaderLabel.font = ILTypography.eyebrow
-        dontsHeaderLabel.text = "lunarDayDetail.almanac.donts".localized
-        dontsHeaderLabel.numberOfLines = 1
-
-        dosList.axis = .vertical
-        dosList.spacing = 6
-        dontsList.axis = .vertical
-        dontsList.spacing = 6
-
         configureBox(dosBox, header: dosHeaderLabel, list: dosList, kind: .do)
         configureBox(dontsBox, header: dontsHeaderLabel, list: dontsList, kind: .dont)
 
@@ -132,8 +185,6 @@ final class ILLunarDayDetailAlmanacView: UIView {
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         cardView.addSubview(contentStack)
 
-        noteLabel.numberOfLines = 0
-        noteLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(noteLabel)
 
         NSLayoutConstraint.activate([
@@ -159,10 +210,6 @@ final class ILLunarDayDetailAlmanacView: UIView {
 
     /// NÊN (xanh) / KHÔNG NÊN (đỏ) — khung nền nhạt + viền, header chữ hoa nhỏ.
     private func configureBox(_ box: UIView, header: UILabel, list: UIStackView, kind: ListKind) {
-        box.layer.cornerRadius = ILMetrics.radiusCardSmall
-        box.layer.borderWidth = 1
-        box.translatesAutoresizingMaskIntoConstraints = false
-
         let stack = UIStackView(arrangedSubviews: [header, list])
         stack.axis = .vertical
         stack.alignment = .fill

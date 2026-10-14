@@ -28,17 +28,83 @@ final class ILSignUpLegalSheetViewController: BaseViewController {
 
     private var document: Document
 
-    private let segmentedView = ILSegmentedToggleView(titles: Document.allCases.map(\.tabTitle))
-    private let topDivider = UIView()
-    private let scrollView = UIScrollView()
-    private let contentStack = UIStackView()
-    private let titleLabel = UILabel()
-    private let effectiveLabel = UILabel()
-    private let sectionsStack = UIStackView()
-    private let contactLabel = UILabel()
-    private let footerDivider = UIView()
-    private let closeButton = ILButton(title: "legal.close".localized, variant: .ghost)
-    private let agreeButton = ILButton(title: "legal.agree".localized, variant: .primary)
+    private lazy var segmentedView: ILSegmentedToggleView = {
+        let view = ILSegmentedToggleView(titles: Document.allCases.map(\.tabTitle))
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var topDivider: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = ILColors.ink.withAlphaComponent(0.07)
+        return view
+    }()
+
+    private lazy var scrollView: UIScrollView = {
+        let view = UIScrollView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.showsVerticalScrollIndicator = false
+        return view
+    }()
+
+    private lazy var contentStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 0
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.signUpTitle
+        label.textColor = ILColors.ink
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var effectiveLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.note
+        label.textColor = ILColors.inkMuted
+        label.text = "legal.effective".localized
+        return label
+    }()
+
+    private lazy var sectionsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = ILMetrics.groupSpacing
+        return stack
+    }()
+
+    private lazy var contactLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.note
+        label.textColor = ILColors.inkMuted
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var footerDivider: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = ILColors.ink.withAlphaComponent(0.07)
+        return view
+    }()
+
+    private lazy var closeButton: ILButton = {
+        let button = ILButton(title: "legal.close".localized, variant: .ghost)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private lazy var agreeButton: ILButton = {
+        let button = ILButton(title: "legal.agree".localized, variant: .primary)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
 
     init(document: Document) {
         self.document = document
@@ -61,7 +127,6 @@ final class ILSignUpLegalSheetViewController: BaseViewController {
         super.setupViews()
         view.backgroundColor = ILColors.surface
 
-        segmentedView.translatesAutoresizingMaskIntoConstraints = false
         segmentedView.selectedIndex = document.rawValue
         segmentedView.onSelect = { [weak self] index in
             guard let self, let selected = Document(rawValue: index) else { return }
@@ -72,34 +137,12 @@ final class ILSignUpLegalSheetViewController: BaseViewController {
         view.addSubview(segmentedView)
 
         [topDivider, footerDivider].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            $0.backgroundColor = ILColors.ink.withAlphaComponent(0.07)
             view.addSubview($0)
         }
 
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.showsVerticalScrollIndicator = false
         view.addSubview(scrollView)
 
-        contentStack.axis = .vertical
-        contentStack.spacing = 0
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
-
-        titleLabel.font = ILTypography.signUpTitle
-        titleLabel.textColor = ILColors.ink
-        titleLabel.numberOfLines = 0
-
-        effectiveLabel.font = ILTypography.note
-        effectiveLabel.textColor = ILColors.inkMuted
-        effectiveLabel.text = "legal.effective".localized
-
-        sectionsStack.axis = .vertical
-        sectionsStack.spacing = ILMetrics.groupSpacing
-
-        contactLabel.font = ILTypography.note
-        contactLabel.textColor = ILColors.inkMuted
-        contactLabel.numberOfLines = 0
 
         contentStack.addArrangedSubview(titleLabel)
         contentStack.setCustomSpacing(6, after: titleLabel)
@@ -109,9 +152,7 @@ final class ILSignUpLegalSheetViewController: BaseViewController {
         contentStack.setCustomSpacing(ILMetrics.groupSpacing, after: sectionsStack)
         contentStack.addArrangedSubview(contactLabel)
 
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
         closeButton.onTap = { [weak self] in self?.dismiss(animated: true) }
-        agreeButton.translatesAutoresizingMaskIntoConstraints = false
         agreeButton.onTap = { [weak self] in
             self?.dismiss(animated: true) { self?.onAgree?() }
         }

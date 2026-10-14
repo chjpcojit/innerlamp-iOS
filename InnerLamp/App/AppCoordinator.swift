@@ -45,6 +45,15 @@ final class AppCoordinator: Coordinator {
         showLogin()
     }
 
+    /// The Me tab already revoked the session and cleared the Keychain + local user; all that is
+    /// left is to leave the main area. Same guard as `handleSessionExpired` — a 401 during the
+    /// revoke call may have routed to Login already.
+    private func handleLoggedOut() {
+        guard childCoordinators.contains(where: { $0 is ILMainTabCoordinator }) else { return }
+        childCoordinators.removeAll { $0 is ILMainTabCoordinator }
+        showLogin()
+    }
+
     private func showSplash() {
         let splashCoordinator = container.makeSplashCoordinator(navigationController: navigationController)
         splashCoordinator.delegate = self
@@ -73,8 +82,12 @@ final class AppCoordinator: Coordinator {
         onboardingCoordinator.start()
     }
 
-    private func showSignUp() {
+    /// `asRoot`: SignUp là màn đầu tiên của luồng auth (từ Splash) — thay toàn bộ stack và ẩn nút back,
+    /// vì phía sau không còn màn nào để quay lại.
+    private func showSignUp(asRoot: Bool = false) {
+        if asRoot { removeAuthFlowCoordinators() }
         let signUpCoordinator = container.makeSignUpCoordinator(navigationController: navigationController)
+        signUpCoordinator.isRoot = asRoot
         signUpCoordinator.delegate = self
         addChild(signUpCoordinator)
         signUpCoordinator.start()
@@ -110,6 +123,7 @@ final class AppCoordinator: Coordinator {
     /// Khu vực chính sau đăng nhập: tab bar 4 trang (Trang chủ / Thư viện / Đạo tràng / Tôi).
     private func showMain() {
         let mainTabCoordinator = container.makeMainTabCoordinator(navigationController: navigationController)
+        mainTabCoordinator.onLogout = { [weak self] in self?.handleLoggedOut() }
         addChild(mainTabCoordinator)
         mainTabCoordinator.start()
     }
@@ -121,8 +135,8 @@ extension AppCoordinator: ILSplashCoordinatorDelegate {
         showOnboarding()
     }
 
-    func splashDidRequestLogin(_ coordinator: ILSplashCoordinator) {
-        showLogin()
+    func splashDidRequestSignup(_ coordinator: ILSplashCoordinator) {
+        showSignUp(asRoot: true)
     }
 
     func splashDidRequestMain(_ coordinator: ILSplashCoordinator) {

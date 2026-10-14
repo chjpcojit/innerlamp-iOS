@@ -1,7 +1,7 @@
 # Requirements — Splash
 
-Version: 1.5
-Last updated: 2026-10-10
+Version: 1.6
+Last updated: 2026-10-11
 Status: implemented — branding animation and session-based routing done
 Feature folder: `InnerLamp/Presentation/Scenes/Splash/`
 
@@ -27,7 +27,7 @@ to send me to onboarding or straight into the main experience.
 - WHEN the splash animation has played long enough, THE SYSTEM SHALL auto-
   advance to the next screen.
 - WHEN the splash auto-advances AND no access token is stored in the Keychain
-  AND onboarding has been completed, THE SYSTEM SHALL route to Login.
+  AND onboarding has been completed, THE SYSTEM SHALL route to SignUp.
 - WHEN the splash auto-advances AND no access token is stored in the Keychain
   AND onboarding has not been completed, THE SYSTEM SHALL route to Onboarding.
 - WHEN a request is rejected and the session cannot be refreshed, THE SYSTEM
@@ -60,12 +60,12 @@ to send me to onboarding or straight into the main experience.
 
 - ~~Does a fresh install with no token see Onboarding or Login?~~ → Onboarding
   on the first launch after install, never afterwards; losing the session sends
-  the user to Login. Confirmed by the user, 2026-10-10 (`AS-Splash-001`
+  the user to SignUp. Confirmed by the user, 2026-10-10; SignUp (not Login) per user, 2026-10-11 (`AS-Splash-001`
   validated).
 
 - ~~Where should a user with no stored session go if they already completed
-  onboarding?~~ → Login. Confirmed by the user, 2026-10-10 (the same rule applies
-  when a session refresh fails). Implemented as `.goToLogin`.
+  onboarding?~~ → SignUp (changed from Login by the user, 2026-10-11). Implemented as
+  `.goToSignup`. A failed session refresh still routes to Login (owned by `AppCoordinator`).
 
 - ~~Should launch validate/refresh the token before routing to Main?~~ → No.
   Splash routes on token **existence** only; an expired access token still

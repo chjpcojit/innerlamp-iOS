@@ -20,7 +20,13 @@ final class ILMeditationSetupTipView: UIView {
     // MARK: - UI Elements
     private lazy var flameView = ILFlameView(height: 10, topColor: ILColors.goldBright)
 
-    private let flameBadge = UIView()
+    private lazy var flameBadge: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = 13
+        view.layer.borderWidth = 1
+        return view
+    }()
 
     private lazy var textLabel: UILabel = {
         let label = UILabel()
@@ -47,9 +53,6 @@ final class ILMeditationSetupTipView: UIView {
         backgroundColor = ILColors.gold.withAlphaComponent(0.12)
         layer.cornerRadius = 16
 
-        flameBadge.translatesAutoresizingMaskIntoConstraints = false
-        flameBadge.layer.cornerRadius = 13
-        flameBadge.layer.borderWidth = 1
         addSubview(flameBadge)
 
         flameView.translatesAutoresizingMaskIntoConstraints = false

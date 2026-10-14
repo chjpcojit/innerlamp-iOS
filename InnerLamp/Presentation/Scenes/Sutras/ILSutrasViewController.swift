@@ -28,14 +28,22 @@ final class ILSutrasViewController: BaseViewController {
     private var currentLengths: [ILSutrasFilterModel<ILSutraLengthFilter>] = []
 
     // MARK: - UI Elements
-    private let headerBand = ILStickyHeaderBand()
+    private lazy var headerBand = ILStickyHeaderBand()
     private lazy var headerView = ILNavBar(showBack: true)
     private lazy var searchInput = ILSearchInputView(placeholder: "sutras.search.placeholder".localized)
-    private let categoryChips = ILChipScrollView()
-    private let lengthChips = ILChipScrollView()
-    private let listView = ILSutrasListView()
-    private let emptyStateView = ILStateView(kind: .empty)
-    private let loadingView = ILSutrasSkeletonView()
+    private lazy var categoryChips = ILChipScrollView()
+    private lazy var lengthChips = ILChipScrollView()
+    private lazy var listView = ILSutrasListView()
+    private lazy var emptyStateView: ILStateView = {
+        let v = ILStateView(kind: .empty)
+        v.isHidden = true
+        return v
+    }()
+    private lazy var loadingView: ILSutrasSkeletonView = {
+        let v = ILSutrasSkeletonView()
+        v.isHidden = true
+        return v
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILSutrasViewModel) {
@@ -87,8 +95,6 @@ final class ILSutrasViewController: BaseViewController {
 
         listView.onItemTap = { [weak self] item in self?.sutraTappedSubject.send(item.id) }
         listView.onLoadMore = { [weak self] in self?.loadMoreTriggeredSubject.send(()) }
-        emptyStateView.isHidden = true
-        loadingView.isHidden = true
 
         [headerView, searchInput, categoryChips, lengthChips].forEach(headerBand.addSubview)
         view.addSubview(listView)

@@ -32,23 +32,105 @@ final class ILLunarDayDetailHeroView: ILStretchyHeaderView {
     private let gradientLayer = CAGradientLayer()
 
     private let scrimLayer = CAGradientLayer()
-    private let scrimView = UIView()
+    private lazy var scrimView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isUserInteractionEnabled = false
+        view.isHidden = true
+        return view
+    }()
+
     private var currentImageURL: String?
-    private let creditLabel = UILabel()
 
-    private let eyebrowDot = UIView()
-    private let eyebrowLabel = UILabel()
+    private lazy var creditLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.caption
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
+    }()
 
-    private let dayLabel = UILabel()
-    private let monthLabel = UILabel()
-    private let yearLabel = UILabel()
+    private lazy var eyebrowDot: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.featAccent
+        view.layer.cornerRadius = 7
+        view.layer.borderWidth = 1
+        view.layer.borderColor = ILColors.featAccent.withAlphaComponent(0.5).cgColor
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
-    private let solarLabel = UILabel()
-    private let typePill = UIView()
-    private let typeDot = UIView()
-    private let typeLabel = UILabel()
+    private lazy var eyebrowLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 1
+        return label
+    }()
 
-    private let adviceLabel = UILabel()
+    private lazy var dayLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.lunarHeroDay
+        label.textColor = ILColors.ink
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var monthLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.scriptureBody
+        label.textColor = ILColors.inkSecondary
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var yearLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodyCompact
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var solarLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.sectionTitle
+        label.textColor = ILColors.ink
+        label.numberOfLines = 1
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return label
+    }()
+
+    private lazy var typePill: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.surface
+        view.layer.cornerRadius = ILMetrics.radiusPill
+        view.layer.borderWidth = 1
+        view.layer.borderColor = ILColors.border.cgColor
+        return view
+    }()
+
+    private lazy var typeDot: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 3.5
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var typeLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subheadMedium
+        label.textColor = ILColors.ink
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var adviceLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodySmall
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        return label
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -118,9 +200,6 @@ final class ILLunarDayDetailHeroView: ILStretchyHeaderView {
         gradientLayer.endPoint = CGPoint(x: 0.5, y: 1)
         backgroundView.layer.insertSublayer(gradientLayer, at: 0)
 
-        scrimView.translatesAutoresizingMaskIntoConstraints = false
-        scrimView.isUserInteractionEnabled = false
-        scrimView.isHidden = true
         scrimLayer.locations = [0.0, 0.35, 0.6, 1.0]
         scrimLayer.startPoint = CGPoint(x: 0.5, y: 0)
         scrimLayer.endPoint = CGPoint(x: 0.5, y: 1)
@@ -135,34 +214,15 @@ final class ILLunarDayDetailHeroView: ILStretchyHeaderView {
         ])
 
         // Eyebrow: chấm vàng + "ÂM LỊCH".
-        eyebrowDot.backgroundColor = ILColors.featAccent
-        eyebrowDot.layer.cornerRadius = 7
-        eyebrowDot.layer.borderWidth = 1
-        eyebrowDot.layer.borderColor = ILColors.featAccent.withAlphaComponent(0.5).cgColor
-        eyebrowDot.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             eyebrowDot.widthAnchor.constraint(equalToConstant: 14),
             eyebrowDot.heightAnchor.constraint(equalToConstant: 14)
         ])
 
-        eyebrowLabel.numberOfLines = 1
-
         let eyebrowRow = UIStackView(arrangedSubviews: [eyebrowDot, eyebrowLabel])
         eyebrowRow.axis = .horizontal
         eyebrowRow.spacing = 7
         eyebrowRow.alignment = .center
-
-        dayLabel.font = ILTypography.lunarHeroDay
-        dayLabel.textColor = ILColors.ink
-        dayLabel.numberOfLines = 1
-
-        monthLabel.font = ILTypography.scriptureBody
-        monthLabel.textColor = ILColors.inkSecondary
-        monthLabel.numberOfLines = 1
-
-        yearLabel.font = ILTypography.bodyCompact
-        yearLabel.textColor = ILColors.inkTertiary
-        yearLabel.numberOfLines = 1
 
         let monthYearStack = UIStackView(arrangedSubviews: [monthLabel, yearLabel])
         monthYearStack.axis = .vertical
@@ -174,21 +234,10 @@ final class ILLunarDayDetailHeroView: ILStretchyHeaderView {
         dayRow.alignment = .bottom
         dayRow.spacing = 14
 
-        solarLabel.font = ILTypography.sectionTitle
-        solarLabel.textColor = ILColors.ink
-        solarLabel.numberOfLines = 1
-        solarLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        typeDot.layer.cornerRadius = 3.5
-        typeDot.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             typeDot.widthAnchor.constraint(equalToConstant: 7),
             typeDot.heightAnchor.constraint(equalToConstant: 7)
         ])
-
-        typeLabel.font = ILTypography.subheadMedium
-        typeLabel.textColor = ILColors.ink
-        typeLabel.numberOfLines = 1
 
         let pillStack = UIStackView(arrangedSubviews: [typeDot, typeLabel])
         pillStack.axis = .horizontal
@@ -197,10 +246,6 @@ final class ILLunarDayDetailHeroView: ILStretchyHeaderView {
         pillStack.translatesAutoresizingMaskIntoConstraints = false
         pillStack.isUserInteractionEnabled = false
 
-        typePill.backgroundColor = ILColors.surface
-        typePill.layer.cornerRadius = ILMetrics.radiusPill
-        typePill.layer.borderWidth = 1
-        typePill.layer.borderColor = ILColors.border.cgColor
         typePill.addSubview(pillStack)
         NSLayoutConstraint.activate([
             pillStack.topAnchor.constraint(equalTo: typePill.topAnchor, constant: 6),
@@ -213,15 +258,6 @@ final class ILLunarDayDetailHeroView: ILStretchyHeaderView {
         solarRow.axis = .horizontal
         solarRow.alignment = .center
         solarRow.distribution = .fill
-
-        adviceLabel.font = ILTypography.bodySmall
-        adviceLabel.textColor = ILColors.inkTertiary
-        adviceLabel.numberOfLines = 0
-
-        creditLabel.font = ILTypography.caption
-        creditLabel.textColor = ILColors.inkTertiary
-        creditLabel.numberOfLines = 0
-        creditLabel.isHidden = true
 
         let contentStack = UIStackView(arrangedSubviews: [eyebrowRow, dayRow, solarRow, adviceLabel, creditLabel])
         contentStack.axis = .vertical

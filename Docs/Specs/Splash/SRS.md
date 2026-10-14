@@ -5,8 +5,8 @@
 | Document type | Software Requirements Specification (SRS) — IEEE 29148-2018 |
 | Feature | Splash |
 | Product | InnerLamp |
-| Version | 0.5 (draft) |
-| Last updated | 2026-10-10 |
+| Version | 0.6 (draft) |
+| Last updated | 2026-10-11 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
 | Owner / author | ba-writer (Business Analyst) |
 | Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
@@ -28,7 +28,7 @@ engineering spec.
 
 - A brief branded splash screen shown first at launch, with the lamp ignition animation.
 - Automatic advance to the next screen after the animation.
-- Routing to Main (when a stored login session exists), Login (no session, onboarding completed) or
+- Routing to Main (when a stored login session exists), SignUp (no session, onboarding completed) or
   Onboarding (no session, onboarding not completed).
 - Discarding stale credentials left on the device by a previous install or an older app version.
 
@@ -111,7 +111,7 @@ and **no** dynamic content.
   - A stored access token means the user is logged in. Token expiry is not checked at launch; an expired
     token is refreshed automatically on the first request that gets rejected, and if the refresh fails the
     user is sent to Login.
-  - A user who finished onboarding earlier but has no stored session is routed to Login. A first-time
+  - A user who finished onboarding earlier but has no stored session is routed to SignUp. A first-time
     user sees Onboarding on the first launch only (`AS-Splash-001`, validated).
 - **Dependencies:**
   - Secure on-device credential storage (Keychain) for the session check and the credential cleanup.
@@ -197,9 +197,9 @@ branding views.
 **FR-004 — Route without a session**
 - **Priority:** Must
 - **Description:** WHEN the splash auto-advances AND no login session is stored on the device, THE SYSTEM
-  SHALL route to Login if onboarding has been completed, and to Onboarding otherwise.
+  SHALL route to SignUp if onboarding has been completed, and to Onboarding otherwise.
 - **Verification method:** Unit test.
-- **Source:** Implemented behavior; user decision 2026-10-10 (no token → Login); `AS-Splash-001`.
+- **Source:** Implemented behavior; user decision 2026-10-10 (no token → Login); 2026-10-11 changed to SignUp; `AS-Splash-001`.
 - **Acceptance criteria:**
 
   ```gherkin
@@ -213,7 +213,7 @@ branding views.
     Given the user completed Onboarding in the past
     And no login session is stored on the device
     When the splash screen auto-advances
-    Then the user is shown Login
+    Then the user is shown SignUp
   ```
 
 
@@ -327,7 +327,7 @@ branding views.
 ### 4.1 Verification approach
 
 - **Unit tests**: `ILSplashViewModelTests` (initial state; no session → Onboarding; no session +
-  onboarding completed → Login; stored session → Main) and `ILSplashUseCaseTests` (fresh-install wipe, session kept after first launch, legacy
+  onboarding completed → SignUp; stored session → Main) and `ILSplashUseCaseTests` (fresh-install wipe, session kept after first launch, legacy
   credential purge, no token).
 - **Manual QA** for the branding animation and light/dark theming.
 
@@ -363,7 +363,7 @@ branding views.
 |---|---|---|
 | Where does the "already onboarded?" signal come from? | `ILOnboardingUseCase.isOnboardingCompleted()` — no longer used for routing as of 2026-10-10 | 2026-09-27 |
 | Does Splash need a dynamic state model? | No — `ILSplashStateModel` is an empty marker | 2026-09-27 |
-| Where should a user with no session who completed Onboarding go? | Login (`FR-004`). | 2026-10-10 |
-| Does a fresh install see Onboarding or Login? | Onboarding on the first launch only; Login after a lost session (`AS-Splash-001`, validated). | 2026-10-10 |
+| Where should a user with no session who completed Onboarding go? | SignUp (`FR-004`; changed from Login by the user). | 2026-10-11 |
+| Does a fresh install see Onboarding or Login? | Onboarding on the first launch only; SignUp after a lost session (`AS-Splash-001`, validated). | 2026-10-10 |
 | Should launch validate or refresh the stored session before routing to Main? | No — route on existence only; the first rejected request refreshes automatically, and a failed refresh clears the session and goes to Login. | 2026-10-10 |
 | When to flip the hardcoded Onboarding route? | Superseded: routing is by stored login session (`FR-004`/`FR-005`), not by onboarding completion. Product decision date not recorded. | 2026-10-10 |

@@ -28,13 +28,16 @@ final class ILProfileCompactBarView: UIView {
         return label
     }()
 
-    private let dividerView = UIView()
+    private lazy var dividerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.border
+        return view
+    }()
 
     // MARK: - Initializer
     init() {
         super.init(frame: .zero)
         backgroundColor = ILColors.canvas
-        dividerView.backgroundColor = ILColors.border
         isUserInteractionEnabled = false
         alpha = 0
         isAccessibilityElement = false

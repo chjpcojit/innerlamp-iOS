@@ -23,10 +23,32 @@ final class ILFamilyTreeZoomControlsView: UIView {
         didSet { meButton.isHidden = !showsMe }
     }
 
-    private let zoomInButton = ControlButton(title: "+", accessibilityID: "familyTree.zoomIn")
-    private let zoomOutButton = ControlButton(title: "−", accessibilityID: "familyTree.zoomOut")
-    private let meButton = ControlButton(title: nil, accessibilityID: "familyTree.me")
-    private let rootButton = ControlButton(title: nil, accessibilityID: "familyTree.root")
+    private lazy var zoomInButton: ControlButton = {
+        let button = ControlButton(title: "+", accessibilityID: "familyTree.zoomIn")
+        button.accessibilityLabel = "familyTree.zoom.in".localized
+        return button
+    }()
+
+    private lazy var zoomOutButton: ControlButton = {
+        let button = ControlButton(title: "−", accessibilityID: "familyTree.zoomOut")
+        button.accessibilityLabel = "familyTree.zoom.out".localized
+        return button
+    }()
+
+    private lazy var meButton: ControlButton = {
+        let button = ControlButton(title: nil, accessibilityID: "familyTree.me")
+        button.accessibilityLabel = "familyTree.zoom.me".localized
+        button.isMe = true
+        button.isHidden = true
+        return button
+    }()
+
+    private lazy var rootButton: ControlButton = {
+        let button = ControlButton(title: nil, accessibilityID: "familyTree.root")
+        button.accessibilityLabel = "familyTree.zoom.root".localized
+        button.isRoot = true
+        return button
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -35,13 +57,6 @@ final class ILFamilyTreeZoomControlsView: UIView {
         zoomOutButton.addTarget(self, action: #selector(handleZoomOut), for: .touchUpInside)
         rootButton.addTarget(self, action: #selector(handleRoot), for: .touchUpInside)
         meButton.addTarget(self, action: #selector(handleMe), for: .touchUpInside)
-        meButton.accessibilityLabel = "familyTree.zoom.me".localized
-        meButton.isMe = true
-        meButton.isHidden = true
-        rootButton.accessibilityLabel = "familyTree.zoom.root".localized
-        zoomInButton.accessibilityLabel = "familyTree.zoom.in".localized
-        zoomOutButton.accessibilityLabel = "familyTree.zoom.out".localized
-        rootButton.isRoot = true
 
         let stack = UIStackView(arrangedSubviews: [zoomInButton, zoomOutButton, meButton, rootButton])
         stack.axis = .vertical
@@ -82,8 +97,23 @@ final class ILFamilyTreeZoomControlsView: UIView {
                 applyStyle()
             }
         }
-        private let titleLabel = UILabel()
-        private let iconView = UIImageView()
+        private lazy var titleLabel: UILabel = {
+            let label = UILabel()
+            label.font = ILTypography.directionGlyph
+            label.textAlignment = .center
+            label.translatesAutoresizingMaskIntoConstraints = false
+            label.isUserInteractionEnabled = false
+            return label
+        }()
+
+        private lazy var iconView: UIImageView = {
+            let view = UIImageView()
+            view.contentMode = .scaleAspectFit
+            view.translatesAutoresizingMaskIntoConstraints = false
+            view.isUserInteractionEnabled = false
+            return view
+        }()
+
         /// Little tree glyph on the "root" button. A shape layer, not `draw(_:)`: a drawn view gets
         /// its own backing bitmap, which painted a square block behind the rounded corners.
         private let rootGlyphLayer = CAShapeLayer()
@@ -99,14 +129,7 @@ final class ILFamilyTreeZoomControlsView: UIView {
             layer.shadowRadius = Metrics.controlShadowBlur
             layer.shadowOffset = CGSize(width: 0, height: Metrics.controlShadowOffsetY)
             titleLabel.text = title
-            titleLabel.font = ILTypography.directionGlyph
-            titleLabel.textAlignment = .center
-            titleLabel.translatesAutoresizingMaskIntoConstraints = false
-            titleLabel.isUserInteractionEnabled = false
             addSubview(titleLabel)
-            iconView.contentMode = .scaleAspectFit
-            iconView.translatesAutoresizingMaskIntoConstraints = false
-            iconView.isUserInteractionEnabled = false
             addSubview(iconView)
             rootGlyphLayer.fillColor = nil
             rootGlyphLayer.lineWidth = 1.7

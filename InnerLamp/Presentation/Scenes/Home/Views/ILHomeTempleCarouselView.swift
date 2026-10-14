@@ -41,9 +41,30 @@ final class ILHomeTempleCarouselView: UIView {
     private var pageStride: CGFloat { cardWidth + Self.cardSpacing }
 
     // MARK: - UI Elements
-    private let scrollView = UIScrollView()
-    private let cardsStack = UIStackView()
-    private let emptyLabel = UILabel()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsHorizontalScrollIndicator = false
+        v.decelerationRate = .fast
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var cardsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = Self.cardSpacing
+        v.alignment = .top
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var emptyLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.caption
+        v.textColor = ILColors.inkSubtle
+        v.numberOfLines = 0
+        v.isHidden = true
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     /// Only active while the placeholder is visible, so the carousel takes the label's height
     /// instead of collapsing to zero with no cards.
     private lazy var emptyLabelBottomConstraint = emptyLabel.bottomAnchor.constraint(equalTo: bottomAnchor)
@@ -63,24 +84,11 @@ final class ILHomeTempleCarouselView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        scrollView.showsHorizontalScrollIndicator = false
-        scrollView.decelerationRate = .fast
         scrollView.delegate = self
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-
-        cardsStack.axis = .horizontal
-        cardsStack.spacing = Self.cardSpacing
-        cardsStack.alignment = .top
-        cardsStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(cardsStack)
 
         addSubview(scrollView)
 
-        emptyLabel.font = ILTypography.caption
-        emptyLabel.textColor = ILColors.inkSubtle
-        emptyLabel.numberOfLines = 0
-        emptyLabel.isHidden = true
-        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(emptyLabel)
 
         NSLayoutConstraint.activate([

@@ -35,8 +35,19 @@ final class ILHomeArticleListView: UIView {
     var onArticleTap: ((ILHomeArticleModel) -> Void)?
 
     // MARK: - UI Elements
-    private let rowsStack = UIStackView()
-    private let emptyStateView = ILStateView(kind: .empty, title: "", message: "")
+    private lazy var rowsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = ILMetrics.rowSpacing
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var emptyStateView: ILStateView = {
+        let v = ILStateView(kind: .empty, title: "", message: "")
+        v.isHidden = true
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     /// Only active while the empty block is visible, so the list takes its height instead of
     /// collapsing to zero with no rows.
     private lazy var emptyStateBottomConstraint = emptyStateView.bottomAnchor.constraint(equalTo: bottomAnchor)
@@ -53,13 +64,8 @@ final class ILHomeArticleListView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        rowsStack.axis = .vertical
-        rowsStack.spacing = ILMetrics.rowSpacing
-        rowsStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(rowsStack)
 
-        emptyStateView.isHidden = true
-        emptyStateView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(emptyStateView)
 
         NSLayoutConstraint.activate([

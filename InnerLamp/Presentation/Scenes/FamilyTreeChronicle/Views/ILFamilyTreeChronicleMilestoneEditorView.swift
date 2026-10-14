@@ -23,7 +23,13 @@ final class ILFamilyTreeChronicleMilestoneEditorView: UIView {
     var onAdd: (() -> Void)?
 
     private var rows: [String: Row] = [:]
-    private let stack = UIStackView()
+    private lazy var stack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = Layout.rowGap
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     private lazy var addButton: ILFamilyTreeChroniclePillButton = {
         let button = ILFamilyTreeChroniclePillButton(
             title: "familyTreeChronicle.milestone.add".localized, style: .dashed,
@@ -36,9 +42,6 @@ final class ILFamilyTreeChronicleMilestoneEditorView: UIView {
     // MARK: - Initializer
     override init(frame: CGRect) {
         super.init(frame: frame)
-        stack.axis = .vertical
-        stack.spacing = Layout.rowGap
-        stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
         stack.addArrangedSubview(addButton)
         NSLayoutConstraint.activate([

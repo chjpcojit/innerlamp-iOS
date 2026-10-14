@@ -9,7 +9,12 @@ import UIKit
 /// (khớp các khối card của màn `sangha` trong design handoff).
 final class ILSanghaCardView: UIView {
 
-    private let stack = UIStackView()
+    private lazy var stack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
     init(rows: [UIView] = []) {
         super.init(frame: .zero)
@@ -19,8 +24,6 @@ final class ILSanghaCardView: UIView {
         layer.borderColor = ILColors.border.cgColor
         clipsToBounds = true
 
-        stack.axis = .vertical
-        stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: topAnchor),

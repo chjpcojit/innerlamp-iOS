@@ -68,6 +68,12 @@ public final class ILAlertPresenter {
                 from: viewController
             )
 
+        case let .confirm(title, message, cancel, confirm):
+            presentModal(
+                ILConfirmDialogViewController(title: title, message: message, cancel: cancel, confirm: confirm),
+                from: viewController
+            )
+
         case let .fullScreen(title, subtitle, message, errorCode, primary, secondary):
             presentModal(
                 ILErrorFullScreenViewController(

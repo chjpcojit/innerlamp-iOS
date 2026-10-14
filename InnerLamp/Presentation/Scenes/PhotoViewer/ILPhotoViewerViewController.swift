@@ -71,10 +71,24 @@ final class ILPhotoViewerViewController: BaseViewController, TransitionProviding
         accessibilityLabel: "photoViewer.a11y.next".localized
     )
 
-    private let counterLabel = UILabel()
-    private let imageArea = UIView()
-    private let heroImageView = ILRemoteImageView(frame: .zero)
-    private let infoPanel = ILPhotoViewerInfoPanelView()
+    private lazy var counterLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subheadMedium
+        label.textColor = ILColors.inkOnDarkSecondary
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var imageArea = UIView()
+
+    private lazy var heroImageView: ILRemoteImageView = {
+        let imageView = ILRemoteImageView(frame: .zero)
+        imageView.backgroundColor = ILColors.surfaceDark
+        imageView.contentMode = .scaleAspectFill
+        return imageView
+    }()
+
+    private lazy var infoPanel = ILPhotoViewerInfoPanelView()
 
     // MARK: - Initializer
     init(viewModel: ILPhotoViewerViewModel, startID: String) {
@@ -98,13 +112,6 @@ final class ILPhotoViewerViewController: BaseViewController, TransitionProviding
     override func setupViews() {
         super.setupViews()
         view.backgroundColor = ILColors.darkBackground
-
-        counterLabel.font = ILTypography.subheadMedium
-        counterLabel.textColor = ILColors.inkOnDarkSecondary
-        counterLabel.textAlignment = .center
-
-        heroImageView.backgroundColor = ILColors.surfaceDark
-        heroImageView.contentMode = .scaleAspectFill
 
         closeButton.addAction(UIAction { [weak self] _ in self?.closeTappedSubject.send(()) }, for: .touchUpInside)
         favoriteButton.addAction(UIAction { [weak self] _ in self?.favoriteTappedSubject.send(()) }, for: .touchUpInside)

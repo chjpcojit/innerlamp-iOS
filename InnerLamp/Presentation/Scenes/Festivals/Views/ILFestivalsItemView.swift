@@ -18,8 +18,22 @@ final class ILFestivalsItemView: UIView {
         static let weekdayTrackingEm: CGFloat = 0.08
     }
 
+    /// Chạm thẻ — chỉ đặt cho ngày lễ có trang chi tiết.
+    var onTap: (() -> Void)? {
+        didSet { isUserInteractionEnabled = onTap != nil }
+    }
+
     // MARK: - UI Elements
-    private let cardView = UIView()
+    private lazy var cardView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = ILColors.surface
+        view.layer.cornerRadius = ILMetrics.radiusCardSmall
+        view.layer.borderWidth = 1
+        view.layer.borderColor = ILColors.border.cgColor
+        return view
+    }()
+
     private var isToday = false
 
     private lazy var dayLabel: UILabel = {
@@ -72,12 +86,8 @@ final class ILFestivalsItemView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        cardView.translatesAutoresizingMaskIntoConstraints = false
-        cardView.backgroundColor = ILColors.surface
-        cardView.layer.cornerRadius = ILMetrics.radiusCardSmall
-        cardView.layer.borderWidth = 1
-        cardView.layer.borderColor = ILColors.border.cgColor
         addSubview(cardView)
+        addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap)))
 
         dayLabel.translatesAutoresizingMaskIntoConstraints = false
         weekdayLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -144,6 +154,10 @@ final class ILFestivalsItemView: UIView {
 
         isToday = model.isToday
         applyBorder()
+    }
+
+    @objc private func handleTap() {
+        onTap?()
     }
 
     private func applyBorder() {

@@ -13,12 +13,15 @@ final class ILFamilyTreeMemberPillView: UIView {
         static let horizontalPadding: CGFloat = 10
     }
 
-    private let label = UILabel()
+    private lazy var label: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.captionMedium
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     init() {
         super.init(frame: .zero)
-        label.font = ILTypography.captionMedium
-        label.translatesAutoresizingMaskIntoConstraints = false
         addSubview(label)
         NSLayoutConstraint.activate([
             label.topAnchor.constraint(equalTo: topAnchor, constant: Layout.verticalPadding),

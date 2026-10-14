@@ -16,17 +16,38 @@ final class ILMemorialReminderCardView: UIView {
     var onSyncToggled: ((Bool) -> Void)?
 
     // MARK: - UI Elements
-    private let reminderRow = ILSwitchRowView(
-        title: "memorial.edit.reminder.title".localized,
-        subtitle: "memorial.edit.reminder.subtitle".localized
-    )
-    private let leadGroup = ILMemorialChipGroupView()
-    private let timeGroup = ILMemorialChipGroupView()
-    private let syncRow = ILSwitchRowView(
-        title: "memorial.edit.sync.title".localized,
-        subtitle: "memorial.edit.sync.subtitle".localized
-    )
-    private let detailStack = UIStackView()
+    private lazy var reminderRow: ILSwitchRowView = {
+        let row = ILSwitchRowView(
+            title: "memorial.edit.reminder.title".localized,
+            subtitle: "memorial.edit.reminder.subtitle".localized
+        )
+        return row
+    }()
+
+    private lazy var leadGroup: ILMemorialChipGroupView = {
+        let group = ILMemorialChipGroupView()
+        return group
+    }()
+
+    private lazy var timeGroup: ILMemorialChipGroupView = {
+        let group = ILMemorialChipGroupView()
+        return group
+    }()
+
+    private lazy var syncRow: ILSwitchRowView = {
+        let row = ILSwitchRowView(
+            title: "memorial.edit.sync.title".localized,
+            subtitle: "memorial.edit.sync.subtitle".localized
+        )
+        return row
+    }()
+
+    private lazy var detailStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = ILMetrics.spaceMedium
+        return stack
+    }()
 
     // MARK: - Initializer
     init() {
@@ -59,8 +80,6 @@ final class ILMemorialReminderCardView: UIView {
         leadGroup.onSelect = { [weak self] id in self?.onLeadSelected?(id) }
         timeGroup.onSelect = { [weak self] id in self?.onTimeSelected?(id) }
 
-        detailStack.axis = .vertical
-        detailStack.spacing = ILMetrics.spaceMedium
         detailStack.addArrangedSubview(makeDivider())
         detailStack.addArrangedSubview(makeCaption("memorial.edit.reminder.lead".localized))
         detailStack.addArrangedSubview(leadGroup)

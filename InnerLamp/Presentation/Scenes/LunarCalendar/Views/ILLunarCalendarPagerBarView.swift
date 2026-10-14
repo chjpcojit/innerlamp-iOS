@@ -25,10 +25,10 @@ final class ILLunarCalendarPagerBarView: UIView {
     var onNext: (() -> Void)?
 
     // MARK: - UI Elements
-    private let previousButton = ILChevronCircleButton(direction: .left)
-    private let nextButton = ILChevronCircleButton(direction: .right)
+    private lazy var previousButton: ILChevronCircleButton = ILChevronCircleButton(direction: .left)
+    private lazy var nextButton: ILChevronCircleButton = ILChevronCircleButton(direction: .right)
 
-    private let hintLabel: UILabel = {
+    private lazy var hintLabel: UILabel = {
         let label = UILabel()
         label.font = ILTypography.chip
         label.textColor = ILColors.inkTertiary

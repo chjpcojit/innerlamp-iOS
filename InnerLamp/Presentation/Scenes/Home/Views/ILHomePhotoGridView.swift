@@ -43,19 +43,76 @@ final class ILHomePhotoGridView: UIView {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let largeTile = UIControl()
-    private let smallTileTop = UIControl()
-    private let smallTileBottom = UIControl()
+    private lazy var largeTile: UIControl = {
+        let v = UIControl()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.backgroundColor = ILColors.tint
+        v.layer.cornerRadius = ILMetrics.radiusCardSmall + 2
+        v.clipsToBounds = true
+        return v
+    }()
+    private lazy var smallTileTop: UIControl = {
+        let v = UIControl()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.backgroundColor = ILColors.tint
+        v.layer.cornerRadius = ILMetrics.radiusInput + 2
+        v.clipsToBounds = true
+        return v
+    }()
+    private lazy var smallTileBottom: UIControl = {
+        let v = UIControl()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.backgroundColor = ILColors.tint
+        v.layer.cornerRadius = ILMetrics.radiusInput + 2
+        v.clipsToBounds = true
+        return v
+    }()
 
-    private let largeImage = ILRemoteImageView(frame: .zero)
-    private let smallTopImage = ILRemoteImageView(frame: .zero)
-    private let smallBottomImage = ILRemoteImageView(frame: .zero)
+    private lazy var largeImage: ILRemoteImageView = {
+        let v = ILRemoteImageView(frame: .zero)
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var smallTopImage: ILRemoteImageView = {
+        let v = ILRemoteImageView(frame: .zero)
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var smallBottomImage: ILRemoteImageView = {
+        let v = ILRemoteImageView(frame: .zero)
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     /// In tile order (large, small top, small bottom) — matches `photos` indices.
     private var tileImageViews: [ILRemoteImageView] { [largeImage, smallTopImage, smallBottomImage] }
 
-    private let moreOverlay = UIView()
-    private let moreLabel = UILabel()
-    private let moreUnitLabel = UILabel()
+    private lazy var moreOverlay: UIView = {
+        let v = UIView()
+        v.isHidden = true
+        v.backgroundColor = ILColors.scrim.withAlphaComponent(0.52)
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var moreLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.scriptureTitle
+        v.textColor = ILColors.inkOnDark
+        v.textAlignment = .center
+        v.numberOfLines = 1
+        return v
+    }()
+    private lazy var moreUnitLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        v.textColor = ILColors.inkOnDarkSecondary
+        v.textAlignment = .center
+        v.numberOfLines = 1
+        return v
+    }()
 
     // MARK: - Initializer
     init() {
@@ -69,14 +126,11 @@ final class ILHomePhotoGridView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        configureTile(largeTile, radius: ILMetrics.radiusCardSmall + 2)
-        configureTile(smallTileTop, radius: ILMetrics.radiusInput + 2)
-        configureTile(smallTileBottom, radius: ILMetrics.radiusInput + 2)
+        for tile in [largeTile, smallTileTop, smallTileBottom] {
+            tile.addTarget(self, action: #selector(handleTileTap), for: .touchUpInside)
+        }
 
-        moreOverlay.isHidden = true
         for (tile, image) in [(largeTile, largeImage), (smallTileTop, smallTopImage), (smallTileBottom, smallBottomImage)] {
-            image.isUserInteractionEnabled = false
-            image.translatesAutoresizingMaskIntoConstraints = false
             tile.addSubview(image)
             NSLayoutConstraint.activate([
                 image.topAnchor.constraint(equalTo: tile.topAnchor),
@@ -85,20 +139,6 @@ final class ILHomePhotoGridView: UIView {
                 image.bottomAnchor.constraint(equalTo: tile.bottomAnchor)
             ])
         }
-
-        moreOverlay.backgroundColor = ILColors.scrim.withAlphaComponent(0.52)
-        moreOverlay.isUserInteractionEnabled = false
-        moreOverlay.translatesAutoresizingMaskIntoConstraints = false
-
-        moreLabel.font = ILTypography.scriptureTitle
-        moreLabel.textColor = ILColors.inkOnDark
-        moreLabel.textAlignment = .center
-        moreLabel.numberOfLines = 1
-
-        moreUnitLabel.font = ILTypography.label
-        moreUnitLabel.textColor = ILColors.inkOnDarkSecondary
-        moreUnitLabel.textAlignment = .center
-        moreUnitLabel.numberOfLines = 1
 
         let overlayStack = UIStackView(arrangedSubviews: [moreLabel, moreUnitLabel])
         overlayStack.axis = .vertical
@@ -139,14 +179,6 @@ final class ILHomePhotoGridView: UIView {
             overlayStack.centerXAnchor.constraint(equalTo: moreOverlay.centerXAnchor),
             overlayStack.centerYAnchor.constraint(equalTo: moreOverlay.centerYAnchor)
         ])
-    }
-
-    private func configureTile(_ tile: UIControl, radius: CGFloat) {
-        tile.translatesAutoresizingMaskIntoConstraints = false
-        tile.backgroundColor = ILColors.tint
-        tile.layer.cornerRadius = radius
-        tile.clipsToBounds = true
-        tile.addTarget(self, action: #selector(handleTileTap), for: .touchUpInside)
     }
 
     @objc private func handleTileTap() {

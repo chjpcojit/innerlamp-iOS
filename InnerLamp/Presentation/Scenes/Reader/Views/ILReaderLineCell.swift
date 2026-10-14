@@ -17,11 +17,37 @@ final class ILReaderLineCell: UITableViewCell {
     private static let highlightAlpha: CGFloat = 0.28
     private static let cueColumnWidth: CGFloat = 16
 
-    private let cueLabel = UILabel()
-    private let highlightView = UIView()
-    private let lineLabel = UILabel()
-    private let glossLabel = UILabel()
-    private let contentStack = UIStackView()
+    private lazy var cueLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.readerCue
+        v.textColor = ILColors.goldBright
+        v.textAlignment = .center
+        return v
+    }()
+    private lazy var highlightView: UIView = {
+        let v = UIView()
+        v.layer.cornerRadius = ILMetrics.radiusLineHighlight
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var lineLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var glossLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var contentStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = 4
+        v.alignment = .fill
+        return v
+    }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -36,21 +62,8 @@ final class ILReaderLineCell: UITableViewCell {
         backgroundColor = .clear
         selectionStyle = .none
 
-        cueLabel.font = ILTypography.readerCue
-        cueLabel.textColor = ILColors.goldBright
-        cueLabel.textAlignment = .center
-
-        highlightView.layer.cornerRadius = ILMetrics.radiusLineHighlight
-        lineLabel.numberOfLines = 0
-        glossLabel.numberOfLines = 0
-
-        highlightView.translatesAutoresizingMaskIntoConstraints = false
-        lineLabel.translatesAutoresizingMaskIntoConstraints = false
         highlightView.addSubview(lineLabel)
 
-        contentStack.axis = .vertical
-        contentStack.spacing = 4
-        contentStack.alignment = .fill
         contentStack.addArrangedSubview(highlightView)
         contentStack.addArrangedSubview(glossLabel)
 
@@ -116,15 +129,18 @@ final class ILReaderHeadingCell: UITableViewCell {
 
     static let reuseIdentifier = "ILReaderHeadingCell"
 
-    private let titleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = .clear
         selectionStyle = .none
 
-        titleLabel.numberOfLines = 0
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(titleLabel)
         NSLayoutConstraint.activate([
             // Design: `margin:22px 0 8px 26px` (16pt cue column + 10pt gap = 26pt indent).

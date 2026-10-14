@@ -5,7 +5,7 @@
 
 import UIKit
 
-/// Thẻ "Chùa tu tập của tôi": ảnh bìa (placeholder 140pt), tên + địa chỉ, pill trạng thái mở cửa,
+/// Thẻ "Chùa tu tập của tôi": ảnh bìa (140pt, nền placeholder khi chưa có ảnh), tên + địa chỉ, pill trạng thái mở cửa,
 /// hairline rồi dòng "Trụ trì: …". Cả thẻ là 1 vùng chạm mở Trang chùa.
 final class ILSanghaMyTempleCardView: UIControl {
 
@@ -19,13 +19,59 @@ final class ILSanghaMyTempleCardView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let coverView = UIView()
-    private let nameLabel = UILabel()
-    private let placeLabel = UILabel()
-    private let statusPill = UIView()
-    private let statusDot = UIView()
-    private let statusLabel = UILabel()
-    private let abbotLabel = UILabel()
+    private lazy var coverView: ILRemoteImageView = {
+        let view = ILRemoteImageView(frame: .zero)
+        view.backgroundColor = ILColors.sunk2
+        view.isUserInteractionEnabled = false
+        return view
+    }()
+
+    private lazy var nameLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.templeCardTitle
+        label.textColor = ILColors.ink
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var placeLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.note
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var statusPill: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 14
+        view.layer.borderWidth = 1
+        view.layer.borderColor = ILColors.border.cgColor
+        view.setContentHuggingPriority(.required, for: .horizontal)
+        view.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return view
+    }()
+
+    private lazy var statusDot: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = Layout.statusDotSize / 2
+        return view
+    }()
+
+    private lazy var statusLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subheadMedium
+        label.textColor = ILColors.inkSecondary
+        return label
+    }()
+
+    private lazy var abbotLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.note
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        return label
+    }()
 
     // MARK: - Initializer
     init() {
@@ -45,6 +91,7 @@ final class ILSanghaMyTempleCardView: UIControl {
         statusPill.isHidden = model.statusText.isEmpty
         statusLabel.text = model.statusText
         statusDot.backgroundColor = model.isOpen ? ILColors.green : ILColors.inkFaint
+        coverView.setImage(urlString: model.imageURL)
     }
 
     // MARK: - Setup
@@ -55,22 +102,10 @@ final class ILSanghaMyTempleCardView: UIControl {
         layer.borderColor = ILColors.border.cgColor
         clipsToBounds = true
 
-        coverView.backgroundColor = ILColors.sunk2
-        coverView.isUserInteractionEnabled = false
         coverView.heightAnchor.constraint(equalToConstant: Layout.coverHeight).isActive = true
 
-        nameLabel.font = ILTypography.templeCardTitle
-        nameLabel.textColor = ILColors.ink
-        nameLabel.numberOfLines = 0
-        placeLabel.font = ILTypography.note
-        placeLabel.textColor = ILColors.inkTertiary
-        placeLabel.numberOfLines = 0
-
-        statusDot.layer.cornerRadius = Layout.statusDotSize / 2
         statusDot.widthAnchor.constraint(equalToConstant: Layout.statusDotSize).isActive = true
         statusDot.heightAnchor.constraint(equalToConstant: Layout.statusDotSize).isActive = true
-        statusLabel.font = ILTypography.subheadMedium
-        statusLabel.textColor = ILColors.inkSecondary
         let statusStack = UIStackView(arrangedSubviews: [statusDot, statusLabel])
         statusStack.axis = .horizontal
         statusStack.alignment = .center
@@ -83,11 +118,6 @@ final class ILSanghaMyTempleCardView: UIControl {
             statusStack.leadingAnchor.constraint(equalTo: statusPill.leadingAnchor, constant: 10),
             statusStack.trailingAnchor.constraint(equalTo: statusPill.trailingAnchor, constant: -10)
         ])
-        statusPill.layer.cornerRadius = 14
-        statusPill.layer.borderWidth = 1
-        statusPill.layer.borderColor = ILColors.border.cgColor
-        statusPill.setContentHuggingPriority(.required, for: .horizontal)
-        statusPill.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         let titleStack = UIStackView(arrangedSubviews: [nameLabel, placeLabel])
         titleStack.axis = .vertical
@@ -101,10 +131,6 @@ final class ILSanghaMyTempleCardView: UIControl {
         let divider = UIView()
         divider.backgroundColor = ILColors.border
         divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
-
-        abbotLabel.font = ILTypography.note
-        abbotLabel.textColor = ILColors.inkTertiary
-        abbotLabel.numberOfLines = 0
 
         let infoStack = UIStackView(arrangedSubviews: [headRow, divider, abbotLabel])
         infoStack.axis = .vertical

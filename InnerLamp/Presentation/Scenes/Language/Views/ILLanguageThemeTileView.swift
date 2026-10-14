@@ -17,8 +17,14 @@ final class ILLanguageThemeTileView: UIControl {
     }
 
     // MARK: - UI Elements
-    private let swatchView = ILLanguageThemeSwatchView()
-    private let titleLabel = UILabel()
+    private lazy var swatchView: ILLanguageThemeSwatchView = ILLanguageThemeSwatchView()
+
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodySmallMedium
+        label.textAlignment = .center
+        return label
+    }()
 
     // MARK: - Initializer
     init(theme: ILSettingsThemeMode) {
@@ -35,9 +41,6 @@ final class ILLanguageThemeTileView: UIControl {
     private func setupViews() {
         layer.cornerRadius = ILMetrics.radiusCardRegular
         layer.borderWidth = 1
-
-        titleLabel.font = ILTypography.bodySmallMedium
-        titleLabel.textAlignment = .center
 
         let stack = UIStackView(arrangedSubviews: [swatchView, titleLabel])
         stack.axis = .vertical

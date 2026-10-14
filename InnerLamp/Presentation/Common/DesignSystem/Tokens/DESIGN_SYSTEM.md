@@ -323,6 +323,7 @@ The 6 shared error popups from the design handoff's "Popup lỗi" screen. Pick t
 | `.snackbar(message:action:)` | `ILSnackbarView` (bottom, dark) | One line, at most one action | Auto after 3.2s, action, swipe down |
 | `.sheet(title:message:errorCode:primary:secondary:)` | `ILErrorSheetViewController` | Long context + error code | A button, tap scrim, drag down |
 | `.dialog(title:message:primary:secondary:)` | `ILErrorDialogViewController` | Blocks the flow, must choose | A button only (scrim tap ignored) |
+| `.confirm(title:message:cancel:confirm:)` | `ILConfirmDialogViewController` | Confirms a destructive choice (not an error; no "!" badge), e.g. "Đăng xuất?" | A cell, or scrim tap = cancel |
 | `.fullScreen(title:subtitle:message:errorCode:primary:secondary:)` | `ILErrorFullScreenViewController` (always dark) | Severe failure, app cannot continue | A button or "×" |
 
 Rules:

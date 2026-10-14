@@ -6,7 +6,7 @@ feature: SutraDetail
 level: Medium
 status: Unvalidated
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-11
 files:
   - InnerLamp/Presentation/Scenes/SutraDetail/ILSutraDetailViewModel.swift
 source: BE contract for GET /v1/sutras/{id}; BE note that content is UNREVIEWED and licenses are partly unknown
@@ -14,8 +14,8 @@ owner: Product / BA
 ---
 
 ## Assumption / Giả định
-EN: The API has no description, so the description line shows "collection · reference" (e.g. "Tiểu Bộ · Snp 1.8"). The meta line shows "N dòng · duration". The kicker is kind (kinh văn / kệ tụng / thần chú) + tradition. Each table-of-contents row shows its line count. The translator, source name and license are shown verbatim under the description (the backend asked for them to be displayed); the license text can be long. The source link (`source_url`) is validated but not shown or tappable. The UNREVIEWED status and AI-assigned tags (`daily_chant`, `purposes`, deity links) are shown without any "unreviewed" notice.
-VI: API không có mô tả nên dòng mô tả hiện "bộ kinh · số hiệu" (vd. "Tiểu Bộ · Snp 1.8"). Dòng meta hiện "N dòng · thời lượng". Kicker là thể loại (kinh văn / kệ tụng / thần chú) + tông phái. Mỗi dòng Mục lục hiện số dòng. Dịch giả, nguồn và giấy phép hiển thị nguyên văn dưới mô tả (BE yêu cầu phải hiển thị); chuỗi giấy phép có thể dài. Link nguồn (`source_url`) được kiểm tra nhưng chưa hiển thị / chưa bấm được. Trạng thái UNREVIEWED và các nhãn do AI gán (`daily_chant`, `purposes`, liên kết deity) hiển thị mà không có cảnh báo "chưa duyệt".
+EN: _(Update 2026-10-11: the API does have an optional `summary`, empty and unreviewed for now — see AS-SutraDetail-002.)_ The description line shows "collection · reference" (e.g. "Tiểu Bộ · Snp 1.8"). The meta line shows "N dòng · duration". The kicker is kind (kinh văn / kệ tụng / thần chú) + tradition. Each table-of-contents row shows its line count. The translator, source name and license are shown verbatim under the description (the backend asked for them to be displayed); the license text can be long. The source link (`source_url`) is validated but not shown or tappable. The UNREVIEWED status and AI-assigned tags (`daily_chant`, `purposes`, deity links) are shown without any "unreviewed" notice.
+VI: _(Cập nhật 2026-10-11: API có field `summary` tuỳ chọn, hiện trống và chưa duyệt — xem AS-SutraDetail-002.)_ Dòng mô tả hiện "bộ kinh · số hiệu" (vd. "Tiểu Bộ · Snp 1.8"). Dòng meta hiện "N dòng · thời lượng". Kicker là thể loại (kinh văn / kệ tụng / thần chú) + tông phái. Mỗi dòng Mục lục hiện số dòng. Dịch giả, nguồn và giấy phép hiển thị nguyên văn dưới mô tả (BE yêu cầu phải hiển thị); chuỗi giấy phép có thể dài. Link nguồn (`source_url`) được kiểm tra nhưng chưa hiển thị / chưa bấm được. Trạng thái UNREVIEWED và các nhãn do AI gán (`daily_chant`, `purposes`, liên kết deity) hiển thị mà không có cảnh báo "chưa duyệt".
 
 ## Rationale / Cơ sở giả định
 EN: Uses only fields the API provides; the prototype has no copy or design for these lines.

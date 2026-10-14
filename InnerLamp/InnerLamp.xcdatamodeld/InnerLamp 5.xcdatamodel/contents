@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
+    <entity name="User" representedClassName="ILUserMO" syncable="YES">
+        <attribute name="dharmaName" optional="NO" attributeType="String"/>
+        <attribute name="email" optional="NO" attributeType="String"/>
+        <attribute name="id" optional="NO" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="ordinationPlace" optional="NO" attributeType="String"/>
+        <attribute name="phoneNumber" optional="NO" attributeType="String"/>
+    </entity>
+    <entity name="BuddhistEventTemplate" representedClassName="ILBuddhistEventTemplateMO" syncable="YES">
+        <attribute name="category" optional="NO" attributeType="String" defaultValueString="COMMEMORATION"/>
+        <attribute name="eventDescription" optional="NO" attributeType="String"/>
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="isLeapMonthEligible" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="lunarDay" optional="NO" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
+        <attribute name="lunarMonth" optional="NO" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
+        <attribute name="title" optional="NO" attributeType="String"/>
+        <attribute name="tradition" optional="NO" attributeType="String"/>
+    </entity>
+    <entity name="UserBirthProfile" representedClassName="ILUserBirthProfileMO" syncable="YES">
+        <attribute name="canIndex" optional="NO" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="chiIndex" optional="NO" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="element" optional="NO" attributeType="String"/>
+        <attribute name="lunarYear" optional="NO" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="solarBirthDate" optional="NO" attributeType="Date"/>
+    </entity>
+    <entity name="SutraQuote" representedClassName="ILSutraQuoteMO" syncable="YES">
+        <attribute name="chapterName" optional="NO" attributeType="String"/>
+        <attribute name="chapterNumber" optional="NO" attributeType="String"/>
+        <attribute name="content" optional="NO" attributeType="String"/>
+        <attribute name="sequence" optional="NO" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="sutraName" optional="NO" attributeType="String"/>
+        <attribute name="translator" optional="NO" attributeType="String"/>
+        <attribute name="verseNumber" optional="NO" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="sequence"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="Deity" representedClassName="ILDeityMO" syncable="YES">
+        <attribute name="biographySummary" optional="NO" attributeType="String"/>
+        <attribute name="canonicalSource" optional="NO" attributeType="String"/>
+        <attribute name="coreVirtue" optional="NO" attributeType="String"/>
+        <attribute name="dharaniName" optional="NO" attributeType="String"/>
+        <attribute name="dharaniSnippet" optional="NO" attributeType="String"/>
+        <attribute name="greatVowsData" optional="NO" attributeType="Binary"/>
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="kind" optional="NO" attributeType="String"/>
+        <attribute name="mantraShortSanskrit" optional="NO" attributeType="String"/>
+        <attribute name="mantraShortSinoVietnamese" optional="NO" attributeType="String"/>
+        <attribute name="mountOrThrone" optional="NO" attributeType="String"/>
+        <attribute name="nameChinese" optional="NO" attributeType="String"/>
+        <attribute name="nameSanskrit" optional="NO" attributeType="String"/>
+        <attribute name="nameVi" optional="NO" attributeType="String"/>
+        <attribute name="posture" optional="NO" attributeType="String"/>
+        <attribute name="pureLand" optional="NO" attributeType="String"/>
+        <attribute name="sacredArtifactsData" optional="NO" attributeType="Binary"/>
+        <attribute name="sortOrder" optional="NO" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="symbolicMeaning" optional="NO" attributeType="String"/>
+        <attribute name="titleHonorific" optional="NO" attributeType="String"/>
+        <relationship name="memorialDays" optional="YES" toMany="YES" ordered="YES" deletionRule="Cascade" destinationEntity="DeityMemorialDay" inverseName="deity" inverseEntity="DeityMemorialDay"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="DeityMemorialDay" representedClassName="ILDeityMemorialDayMO" syncable="YES">
+        <attribute name="eventName" optional="NO" attributeType="String"/>
+        <attribute name="lunarDay" optional="NO" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
+        <attribute name="lunarMonth" optional="NO" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
+        <relationship name="deity" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Deity" inverseName="memorialDays" inverseEntity="Deity"/>
+    </entity>
+    <entity name="CachedTemple" representedClassName="ILCachedTempleMO" syncable="YES">
+        <attribute name="address" optional="NO" attributeType="String"/>
+        <attribute name="detailPayload" optional="YES" attributeType="Binary"/>
+        <attribute name="establishedYear" optional="NO" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="heritageRank" optional="NO" attributeType="String"/>
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="imageURL" optional="YES" attributeType="String"/>
+        <attribute name="latitude" optional="NO" attributeType="Double" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="listPosition" optional="NO" attributeType="Integer 32" defaultValueString="-1" usesScalarValueType="YES"/>
+        <attribute name="longitude" optional="NO" attributeType="Double" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="region" optional="NO" attributeType="String"/>
+        <attribute name="sect" optional="NO" attributeType="String"/>
+        <attribute name="thumbnailURL" optional="YES" attributeType="String"/>
+        <attribute name="topPosition" optional="NO" attributeType="Integer 32" defaultValueString="-1" usesScalarValueType="YES"/>
+        <attribute name="type" optional="NO" attributeType="String"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="CachedDeity" representedClassName="ILCachedDeityMO" syncable="YES">
+        <attribute name="coreVirtue" optional="NO" attributeType="String"/>
+        <attribute name="detailPayload" optional="YES" attributeType="Binary"/>
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="imageURL" optional="NO" attributeType="String"/>
+        <attribute name="kind" optional="NO" attributeType="String"/>
+        <attribute name="listPosition" optional="NO" attributeType="Integer 32" defaultValueString="-1" usesScalarValueType="YES"/>
+        <attribute name="nameChinese" optional="NO" attributeType="String"/>
+        <attribute name="nameSanskrit" optional="NO" attributeType="String"/>
+        <attribute name="nameVi" optional="NO" attributeType="String"/>
+        <attribute name="pureLand" optional="NO" attributeType="String"/>
+        <attribute name="thumbnailURL" optional="NO" attributeType="String"/>
+        <attribute name="titleHonorific" optional="NO" attributeType="String"/>
+        <attribute name="topPosition" optional="NO" attributeType="Integer 32" defaultValueString="-1" usesScalarValueType="YES"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="CatalogListState" representedClassName="ILCatalogListStateMO" syncable="YES">
+        <attribute name="key" optional="NO" attributeType="String"/>
+        <attribute name="pageSize" optional="NO" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="total" optional="NO" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="key"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="Memorial" representedClassName="ILMemorialMO" syncable="YES">
+        <attribute name="calendarKind" optional="NO" attributeType="String" defaultValueString="lunar"/>
+        <attribute name="day" optional="NO" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
+        <attribute name="deathYear" optional="NO" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="month" optional="NO" attributeType="Integer 16" defaultValueString="1" usesScalarValueType="YES"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="note" optional="NO" attributeType="String" defaultValueString=""/>
+        <attribute name="portraitFileName" optional="YES" attributeType="String"/>
+        <attribute name="relationship" optional="NO" attributeType="String" defaultValueString="other"/>
+        <attribute name="reminderHour" optional="NO" attributeType="Integer 16" defaultValueString="7" usesScalarValueType="YES"/>
+        <attribute name="reminderLeadDays" optional="NO" attributeType="Integer 16" defaultValueString="-1" usesScalarValueType="YES"/>
+        <attribute name="reminderMinute" optional="NO" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="syncToReminders" optional="NO" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="Lamp" representedClassName="ILLampMO" syncable="YES">
+        <attribute name="durationDays" optional="NO" attributeType="Integer 16" defaultValueString="7" usesScalarValueType="YES"/>
+        <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="intention" optional="NO" attributeType="String" defaultValueString="peace"/>
+        <attribute name="kind" optional="NO" attributeType="String" defaultValueString="oil"/>
+        <attribute name="litAt" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="target" optional="NO" attributeType="String" defaultValueString=""/>
+        <attribute name="vow" optional="NO" attributeType="String" defaultValueString=""/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <elements>
+        <element name="User" positionX="-63" positionY="-18" width="128" height="104"/>
+        <element name="BuddhistEventTemplate" positionX="120" positionY="-18" width="128" height="164"/>
+        <element name="UserBirthProfile" positionX="120" positionY="120" width="128" height="134"/>
+        <element name="SutraQuote" positionX="-63" positionY="120" width="128" height="149"/>
+        <element name="Deity" positionX="300" positionY="-18" width="128" height="344"/>
+        <element name="DeityMemorialDay" positionX="480" positionY="-18" width="128" height="104"/>
+        <element name="CachedTemple" positionX="660" positionY="-18" width="128" height="254"/>
+        <element name="CachedDeity" positionX="840" positionY="-18" width="128" height="224"/>
+        <element name="CatalogListState" positionX="660" positionY="260" width="128" height="74"/>
+        <element name="Memorial" positionX="840" positionY="260" width="128" height="239"/>
+        <element name="Lamp" positionX="1020" positionY="260" width="128" height="149"/>
+    </elements>
+</model>

@@ -30,10 +30,33 @@ final class ILFamilyTreeChronicleHeadPickerView: UIView {
     var onPick: ((String) -> Void)?
     var onDismiss: (() -> Void)?
 
-    private let scrimView = UIControl()
-    private let sheetView = UIView()
-    private let scrollView = UIScrollView()
-    private let listStack = UIStackView()
+    private lazy var scrimView: UIControl = {
+        let v = UIControl()
+        v.backgroundColor = ILColors.scrimSheet
+        v.accessibilityLabel = "common.close".localized
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var sheetView: UIView = {
+        let v = UIView()
+        v.backgroundColor = Tree.paper
+        v.layer.cornerRadius = Layout.sheetRadius
+        v.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsVerticalScrollIndicator = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var listStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -79,13 +102,7 @@ final class ILFamilyTreeChronicleHeadPickerView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        scrimView.backgroundColor = ILColors.scrimSheet
         scrimView.addTarget(self, action: #selector(handleScrimTap), for: .touchUpInside)
-        scrimView.accessibilityLabel = "common.close".localized
-
-        sheetView.backgroundColor = Tree.paper
-        sheetView.layer.cornerRadius = Layout.sheetRadius
-        sheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
 
         let grabber = UIView()
         grabber.backgroundColor = Tree.grabber
@@ -119,18 +136,11 @@ final class ILFamilyTreeChronicleHeadPickerView: UIView {
         let headerDivider = UIView()
         headerDivider.backgroundColor = Tree.borderSoft
 
-        listStack.axis = .vertical
-        scrollView.showsVerticalScrollIndicator = false
-
-        [scrimView, sheetView].forEach {
+        [scrimView, sheetView].forEach { addSubview($0) }
+        [header, headerDivider].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
-            addSubview($0)
         }
-        [header, headerDivider, scrollView].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            sheetView.addSubview($0)
-        }
-        listStack.translatesAutoresizingMaskIntoConstraints = false
+        [header, headerDivider, scrollView].forEach { sheetView.addSubview($0) }
         scrollView.addSubview(listStack)
 
         // The sheet hugs its content (list height = content height) up to 78% of the screen.

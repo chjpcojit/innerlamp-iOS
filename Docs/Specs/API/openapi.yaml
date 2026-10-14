@@ -357,6 +357,11 @@ paths:
         session is taken from the token's extra.sid claim, never from the body.
         Idempotent: an already-revoked or unknown session still returns 200
         {"success": true} (AC13/AC14). An access token that carries no sid returns 401 (AC15).
+        Confirmed with the backend 2026-10-11 (verified against its code): mobile must not send
+        X-API-Key; the session's refresh token is revoked (refresh then returns
+        REFRESH_TOKEN_INVALID) but the access token itself stays valid until its exp (no
+        denylist), so clients must discard it locally; an expired access token needs refresh then
+        retry; no per-device (push / attestation) state; no rate limit on this route.
       security:
         - bearerAuth: []
       responses:
@@ -395,7 +400,7 @@ components:
   schemas:
     RequestOTPRequest:
       type: object
-      required: [email, password, phone_number]
+      required: [email, password, phone_number, full_name]
       properties:
         email:
           type: string
@@ -412,12 +417,26 @@ components:
             storage — "0901234567" and "+84901234567" collide on the same
             account.
           example: "0901234567"
+        # Confirmed by backend (2026-10-11, verified against its working tree — not yet
+        # committed there) — see Docs/Assumptions/SignUp/AS-SignUp-004-full-name-sent-as-full-name.md.
+        full_name:
+          type: string
+          description: >
+            User's real full name. Required. Server trims and NFC-normalizes it, max 300
+            characters. Missing -> 400 VALIDATION_ERROR; blank or too long ->
+            400 INVALID_FULL_NAME (details.field = "full_name").
+          example: "Nguyễn Bình An"
         dharma_name:
           type: string
           nullable: true
-        ordination_place:
+        # Backend (2026-10-11): `ordination_place` was removed; the body is decoded
+        # strictly, so sending it is `400 VALIDATION_ERROR`.
+        ordination_temple_id:
           type: string
           nullable: true
+          description: >
+            Temple id from GET /v1/temples/options. Absent / "" / null = no
+            temple. Unknown id -> 400 INVALID_TEMPLE (details.field).
 
     RequestOTPData:
       type: object
@@ -537,10 +556,17 @@ components:
           type: string
         phone_number:
           type: string
+        # Absent (never null / "") for accounts created before full_name became required.
+        # Also `data.full_name` on GET /v1/users/me; editable via PATCH /v1/users/me
+        # (cannot be cleared: null / "" / blank -> 400 INVALID_FULL_NAME).
+        full_name:
+          type: string
         dharma_name:
           type: string
           nullable: true
-        ordination_place:
+        # Backend (2026-10-11): the user object carries the temple id only (key
+        # absent when none). The name is in GET /v1/users/me `ordination_temple`.
+        ordination_temple_id:
           type: string
           nullable: true
         created_at:

@@ -18,7 +18,10 @@ final class ILAddTempleViewController: BaseViewController, TransitionProviding {
 
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
     private let nameChangedSubject = PassthroughSubject<String, Never>()
-    private let provinceChangedSubject = PassthroughSubject<String, Never>()
+    private let provincePickerOpenedSubject = PassthroughSubject<Void, Never>()
+    private let provinceSelectedSubject = PassthroughSubject<String, Never>()
+    private let wardPickerOpenedSubject = PassthroughSubject<Void, Never>()
+    private let wardSelectedSubject = PassthroughSubject<String, Never>()
     private let addressChangedSubject = PassthroughSubject<String, Never>()
     private let submitTappedSubject = PassthroughSubject<Void, Never>()
     private let cancelTappedSubject = PassthroughSubject<Void, Never>()
@@ -31,28 +34,108 @@ final class ILAddTempleViewController: BaseViewController, TransitionProviding {
         return view
     }()
 
-    private let scrollView = UIScrollView()
-    private let contentStack = UIStackView()
+    private lazy var scrollView: UIScrollView = {
+        let view = UIScrollView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.keyboardDismissMode = .interactive
+        view.showsVerticalScrollIndicator = false
+        return view
+    }()
 
-    private let introLabel = UILabel()
-    private let nameField = ILField(
-        label: "addTemple.field.name.label".localized,
-        placeholder: "addTemple.field.name.placeholder".localized
-    )
-    private let provinceField = ILField(
-        label: "addTemple.field.province.label".localized,
-        placeholder: "addTemple.field.province.placeholder".localized
-    )
-    private let addressField = ILField(
-        label: "addTemple.field.address.label".localized,
-        placeholder: "addTemple.field.address.placeholder".localized
-    )
-    private let errorLabel = UILabel()
+    private lazy var contentStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 14
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
-    private let footerContainer = UIView()
-    private let footerDivider = UIView()
-    private let submitButton = ILButton(title: "addTemple.cta.submit".localized, variant: .primary)
-    private let cancelButton = ILButton(title: "addTemple.cta.cancel".localized, variant: .ghost)
+    private lazy var introLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.attributedText = ILTypography.makeAttributedString(
+            text: "addTemple.intro".localized,
+            font: ILTypography.scriptureDescription,
+            color: ILColors.inkSecondary,
+            lineHeightMultiple: 1.6
+        )
+        return label
+    }()
+
+    private lazy var nameField: ILField = {
+        let field = ILField(
+            label: "addTemple.field.name.label".localized,
+            placeholder: "addTemple.field.name.placeholder".localized
+        )
+        field.innerTextField.returnKeyType = .next
+        field.innerTextField.autocapitalizationType = .words
+        return field
+    }()
+
+    private lazy var provinceField: ILSelectFieldView = {
+        ILSelectFieldView(
+            label: "addTemple.field.province.label".localized,
+            placeholder: "addTemple.field.province.placeholder".localized
+        )
+    }()
+
+    private lazy var wardField: ILSelectFieldView = {
+        ILSelectFieldView(
+            label: "addTemple.field.ward.label".localized,
+            placeholder: "addTemple.field.ward.placeholder".localized
+        )
+    }()
+
+    private lazy var addressField: ILField = {
+        let field = ILField(
+            label: "addTemple.field.address.label".localized,
+            placeholder: "addTemple.field.address.placeholder".localized
+        )
+        field.innerTextField.returnKeyType = .done
+        return field
+    }()
+
+    private lazy var errorLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.bodyCompact
+        label.textColor = ILColors.danger
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
+    }()
+
+    private var activePicker: (kind: PickerKind, controller: ILOptionPickerViewController)?
+    private var latestModel: ILAddTempleStateModel?
+
+    private enum PickerKind {
+        case province
+        case ward
+    }
+
+    private lazy var footerContainer: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private lazy var footerDivider: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = ILColors.ink.withAlphaComponent(0.08)
+        return view
+    }()
+
+    private lazy var submitButton: ILButton = {
+        let button = ILButton(title: "addTemple.cta.submit".localized, variant: .primary)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+
+    private lazy var cancelButton: ILButton = {
+        let button = ILButton(title: "addTemple.cta.cancel".localized, variant: .ghost)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILAddTempleViewModel) {
@@ -78,52 +161,23 @@ final class ILAddTempleViewController: BaseViewController, TransitionProviding {
         headerView.onBack = { [weak self] in self?.cancelTappedSubject.send(()) }
         view.addSubview(headerView)
 
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.keyboardDismissMode = .interactive
-        scrollView.showsVerticalScrollIndicator = false
         view.addSubview(scrollView)
 
-        contentStack.axis = .vertical
-        contentStack.spacing = 14
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
 
-        introLabel.numberOfLines = 0
-        introLabel.attributedText = ILTypography.makeAttributedString(
-            text: "addTemple.intro".localized,
-            font: ILTypography.scriptureDescription,
-            color: ILColors.inkSecondary,
-            lineHeightMultiple: 1.6
-        )
-
-        nameField.innerTextField.returnKeyType = .next
-        nameField.innerTextField.autocapitalizationType = .words
         nameField.onTextChanged = { [weak self] in self?.nameChangedSubject.send($0) }
-        nameField.onReturn = { [weak self] in self?.provinceField.innerTextField.becomeFirstResponder() }
+        nameField.onReturn = { [weak self] in self?.nameField.innerTextField.resignFirstResponder() }
 
-        provinceField.innerTextField.returnKeyType = .next
-        provinceField.innerTextField.autocapitalizationType = .words
-        provinceField.onTextChanged = { [weak self] in self?.provinceChangedSubject.send($0) }
-        provinceField.onReturn = { [weak self] in self?.addressField.innerTextField.becomeFirstResponder() }
+        provinceField.onTap = { [weak self] in self?.presentPicker(.province) }
+        wardField.onTap = { [weak self] in self?.presentPicker(.ward) }
 
-        addressField.innerTextField.returnKeyType = .done
         addressField.onTextChanged = { [weak self] in self?.addressChangedSubject.send($0) }
         addressField.onReturn = { [weak self] in self?.handleSubmitTapped() }
 
-        errorLabel.font = ILTypography.bodyCompact
-        errorLabel.textColor = ILColors.danger
-        errorLabel.numberOfLines = 0
-        errorLabel.isHidden = true
-
         contentStack.addArrangedSubview(introLabel)
         contentStack.setCustomSpacing(ILMetrics.groupSpacing, after: introLabel)
-        [nameField, provinceField, addressField, errorLabel].forEach(contentStack.addArrangedSubview)
+        [nameField, provinceField, wardField, addressField, errorLabel].forEach(contentStack.addArrangedSubview)
 
-        footerContainer.translatesAutoresizingMaskIntoConstraints = false
-        footerDivider.translatesAutoresizingMaskIntoConstraints = false
-        footerDivider.backgroundColor = ILColors.ink.withAlphaComponent(0.08)
-        submitButton.translatesAutoresizingMaskIntoConstraints = false
-        cancelButton.translatesAutoresizingMaskIntoConstraints = false
         submitButton.onTap = { [weak self] in self?.handleSubmitTapped() }
         cancelButton.onTap = { [weak self] in self?.cancelTappedSubject.send(()) }
         [footerDivider, submitButton, cancelButton].forEach(footerContainer.addSubview)
@@ -178,7 +232,10 @@ final class ILAddTempleViewController: BaseViewController, TransitionProviding {
         let input = ILAddTempleViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             nameChanged: nameChangedSubject.eraseToAnyPublisher(),
-            provinceChanged: provinceChangedSubject.eraseToAnyPublisher(),
+            provincePickerOpened: provincePickerOpenedSubject.eraseToAnyPublisher(),
+            provinceSelected: provinceSelectedSubject.eraseToAnyPublisher(),
+            wardPickerOpened: wardPickerOpenedSubject.eraseToAnyPublisher(),
+            wardSelected: wardSelectedSubject.eraseToAnyPublisher(),
             addressChanged: addressChangedSubject.eraseToAnyPublisher(),
             submitTapped: submitTappedSubject.eraseToAnyPublisher(),
             cancelTapped: cancelTappedSubject.eraseToAnyPublisher()
@@ -198,14 +255,73 @@ final class ILAddTempleViewController: BaseViewController, TransitionProviding {
 
         // Chỉ gán khi khác — gán `.text` luôn đẩy con trỏ về cuối chuỗi đang gõ.
         if nameField.text != model.name { nameField.text = model.name }
-        if provinceField.text != model.province { provinceField.text = model.province }
+        provinceField.value = model.province
+        wardField.value = model.ward
         if addressField.text != model.address { addressField.text = model.address }
 
         nameField.fieldState = model.errorField == .name ? .error(nil) : .normal
-        provinceField.fieldState = model.errorField == .province ? .error(nil) : .normal
+        provinceField.fieldState = model.errorField == .province ? .error : .normal
+        // Phường/xã chỉ chọn được sau khi đã có tỉnh — như prototype.
+        wardField.placeholder = model.province.isEmpty
+            ? "addTemple.field.ward.placeholderNoProvince".localized
+            : "addTemple.field.ward.placeholder".localized
+        wardField.fieldState = model.province.isEmpty ? .disabled : (model.errorField == .ward ? .error : .normal)
+
+        latestModel = model
+        refreshActivePicker()
 
         errorLabel.text = model.errorMessage
         errorLabel.isHidden = model.errorMessage == nil
+    }
+
+    // MARK: - Pickers
+    private func presentPicker(_ kind: PickerKind) {
+        guard let model = latestModel, activePicker == nil else { return }
+        view.endEditing(true)
+
+        let picker: ILOptionPickerViewController
+        switch kind {
+        case .province:
+            picker = ILOptionPickerViewController(
+                title: "addTemple.picker.province.title".localized,
+                subtitle: "addTemple.picker.province.subtitle".localized,
+                searchPlaceholder: "addTemple.picker.province.search".localized
+            )
+            picker.onSelect = { [weak self] in self?.provinceSelectedSubject.send($0) }
+        case .ward:
+            guard !model.province.isEmpty else { return }
+            picker = ILOptionPickerViewController(
+                title: "addTemple.picker.ward.title".localized,
+                subtitle: model.province,
+                searchPlaceholder: "addTemple.picker.ward.search".localized
+            )
+            picker.onSelect = { [weak self] in self?.wardSelectedSubject.send($0) }
+        }
+
+        activePicker = (kind, picker)
+        picker.onDismiss = { [weak self] in self?.activePicker = nil }
+        refreshActivePicker()
+        present(picker, animated: true)
+
+        switch kind {
+        case .province: provincePickerOpenedSubject.send(())
+        case .ward: wardPickerOpenedSubject.send(())
+        }
+    }
+
+    /// Danh mục có thể tải xong khi sheet đang mở — đẩy lại options/loading vào sheet.
+    private func refreshActivePicker() {
+        guard let model = latestModel, let activePicker else { return }
+        switch activePicker.kind {
+        case .province:
+            activePicker.controller.update(
+                options: model.provinceOptions, selected: model.province, isLoading: model.isLoadingProvinces
+            )
+        case .ward:
+            activePicker.controller.update(
+                options: model.wardOptions, selected: model.ward, isLoading: model.isLoadingWards
+            )
+        }
     }
 
     // MARK: - Actions

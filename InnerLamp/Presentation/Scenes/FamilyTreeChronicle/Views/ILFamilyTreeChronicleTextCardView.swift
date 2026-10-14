@@ -23,8 +23,18 @@ final class ILFamilyTreeChronicleTextCardView: UIView {
     /// Fires only while the placeholder is shown.
     var onPlaceholderTap: (() -> Void)?
 
-    private let tapControl = ILFamilyTreeChronicleTapControl()
-    private let textLabel = UILabel()
+    private lazy var tapControl: ILFamilyTreeChronicleTapControl = {
+        let v = ILFamilyTreeChronicleTapControl()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var textLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
     private let dashLayer = CAShapeLayer()
     private var isPlaceholder = false
     private var topConstraint: NSLayoutConstraint?
@@ -41,16 +51,11 @@ final class ILFamilyTreeChronicleTextCardView: UIView {
         dashLayer.lineWidth = 1
         layer.addSublayer(dashLayer)
 
-        textLabel.numberOfLines = 0
-        textLabel.isUserInteractionEnabled = false
         tapControl.onTap = { [weak self] in
             guard let self, self.isPlaceholder else { return }
             self.onPlaceholderTap?()
         }
-        [tapControl, textLabel].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            addSubview($0)
-        }
+        [tapControl, textLabel].forEach { addSubview($0) }
         let top = textLabel.topAnchor.constraint(equalTo: topAnchor)
         let bottom = textLabel.bottomAnchor.constraint(equalTo: bottomAnchor)
         let leading = textLabel.leadingAnchor.constraint(equalTo: leadingAnchor)

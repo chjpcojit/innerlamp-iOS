@@ -215,6 +215,10 @@ a{color:#8A5A18}a:hover{color:#B8862F}
     <div style="font:400 14px/1.6 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-52);margin-top:10px;max-width:290px">Hành trình tu tập sẽ được lưu lại, dù bạn đổi máy.</div>
 
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+      <div style="background:var(--il-card);border:1px solid var(--il-ink-12);border-radius:16px;padding:12px 16px">
+        <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45)">Họ và tên</div>
+        <input value="{{ fullName }}" onChange="{{ setFullName }}" placeholder="VD: Nguyễn Bình An" maxLength="60" autoComplete="name" style="display:block;width:100%;box-sizing:border-box;margin-top:3px;padding:0;border:0;outline:0;background:transparent;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink)">
+      </div>
       <div style="background:var(--il-card);border:1px solid var(--il-ink-12);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:12px" >
         <div style="flex:1;min-width:0">
           <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45)">Pháp danh hoặc tên gọi</div>
@@ -236,6 +240,41 @@ a{color:#8A5A18}a:hover{color:#B8862F}
           </div>
           <div style="width:7px;height:7px;flex:none;border-right:1.5px solid var(--il-ink-45);border-bottom:1.5px solid var(--il-ink-45);transition:transform .2s ease;transform: {{ ordChev }}"></div>
         </div>
+        <sc-if value="{{ ordPending }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:12px;margin-top:10px;background:rgba(184,134,47,.10);border:1px solid rgba(184,134,47,.3);border-radius:18px;padding:15px 16px">
+            <div style="width:8px;height:8px;border-radius:50%;background:#B8862F;flex:none;margin-top:5px"></div>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;font:400 12px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-62);text-wrap:pretty">
+              <div style="display:flex;gap:7px"><span style="flex:none">•</span><span>Chùa "{{ ordPendName }}" đang chờ InnerLamp duyệt.</span></div>
+              <div style="display:flex;gap:7px"><span style="flex:none">•</span><span>Hồ sơ của bạn sẽ chưa có nơi xuất gia.</span></div>
+              <div style="display:flex;gap:7px"><span style="flex:none">•</span><span>Sau khi chùa được duyệt, bạn có thể tự cập nhật nơi xuất gia trong phần Hồ sơ.</span></div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ ordOpen }}">
+          <div style="position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:50;background:var(--il-card);border:1px solid var(--il-ink-12);border-radius:16px;overflow:hidden;box-shadow:0 14px 36px rgba(34,30,25,.18)">
+            <div style="display:flex;align-items:center;gap:10px;height:46px;padding:0 14px;border-bottom:1px solid var(--il-ink-07)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="color:var(--il-ink-42);flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+              <input value="{{ ordQ }}" onChange="{{ ordQSet }}" placeholder="Tìm tên chùa, tỉnh thành" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink)">
+              <sc-if value="{{ ordQOn }}"><div onClick="{{ ordQClear }}" style="font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-link);cursor:pointer;padding:6px 0 6px 6px">Xóa</div></sc-if>
+            </div>
+            <div style="max-height:264px;overflow-y:auto">
+              <sc-for list="{{ ordOpts }}" as="o" hint-placeholder-count="6">
+                <div onClick="{{ o.pick }}" style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;border-top:1px solid {{ o.sep }};background: {{ o.bg }}" style-hover="background:var(--il-ink-04)">
+                  <div style="flex:1;min-width:0">
+                    <div style="font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink)">{{ o.label }}</div>
+                    <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45);margin-top:2px">{{ o.sub }}</div>
+                  </div>
+                  <div style="width:16px;height:16px;border-radius:50%;flex:none;box-sizing:border-box;border:1.5px solid {{ o.ring }};display:flex;align-items:center;justify-content:center"><div style="width:7px;height:7px;border-radius:50%;background: {{ o.dot }}"></div></div>
+                </div>
+              </sc-for>
+              <sc-if value="{{ ordEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 16px;font:400 13px/1.55 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5);text-wrap:pretty">{{ ordEmptyTxt }}</div></sc-if>
+            </div>
+            <div onClick="{{ ordAdd }}" style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-top:1px solid var(--il-ink-07);cursor:pointer" style-hover="background:var(--il-ink-04)">
+              <div style="flex:1;min-width:0"><div style="font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-link)">Không thấy chùa của bạn?</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5);margin-top:2px">Thêm thông tin chùa</div></div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="color:var(--il-link);flex:none"><path d="M12 5v14M5 12h14"></path></svg>
+            </div>
+          </div>
+        </sc-if>
       </div>
       <div style="position:relative">
         <div style="background:var(--il-card);border:1px solid {{ phoneBd }};border-radius:16px;padding:12px 16px">
@@ -288,41 +327,6 @@ a{color:#8A5A18}a:hover{color:#B8862F}
       <div onClick="{{ signupNext }}" style="height:54px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;background: {{ signupBg }};color: {{ signupFg }};box-shadow: {{ signupShadow }}">Gửi mã xác thực</div>
       <div onClick="{{ goLogin }}" style="text-align:center;margin-top:14px;font:400 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45);cursor:pointer">Tôi đã có tài khoản</div>
     </div>
-
-    <sc-if value="{{ ordOpen }}">
-      <div data-screen-label="Chọn nơi xuất gia" style="position:absolute;inset:0;z-index:30;font-family:'Be Vietnam Pro',sans-serif;display:flex;flex-direction:column;justify-content:flex-end">
-        <div onClick="{{ toggleOrd }}" style="position:absolute;inset:0;background:rgba(18,14,10,.46);animation:ilfade .26s ease"></div>
-        <div style="position:relative;height:78%;display:flex;flex-direction:column;background:var(--il-card);border-radius:28px 28px 0 0;box-shadow:0 -18px 46px rgba(20,16,12,.28);animation:ilup .34s cubic-bezier(.2,.9,.3,1)">
-          <div style="flex:none;padding:12px 22px 0">
-            <div style="width:38px;height:4px;border-radius:3px;background:var(--il-ink-14);margin:0 auto 14px"></div>
-            <div style="font:500 22px/1.3 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:var(--il-ink)">Nơi xuất gia</div>
-          </div>
-            <div style="display:flex;align-items:center;gap:10px;height:46px;padding:0 22px;border-bottom:1px solid var(--il-ink-07)">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="color:var(--il-ink-42);flex:none"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-              <input value="{{ ordQ }}" onChange="{{ ordQSet }}" placeholder="Tìm tên chùa, tỉnh thành" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink)">
-              <sc-if value="{{ ordQOn }}"><div onClick="{{ ordQClear }}" style="font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-link);cursor:pointer;padding:6px 0 6px 6px">Xóa</div></sc-if>
-            </div>
-            <div style="flex:1;min-height:0;overflow-y:auto">
-              <sc-for list="{{ ordOpts }}" as="o" hint-placeholder-count="6">
-                <div onClick="{{ o.pick }}" style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;border-top:1px solid {{ o.sep }};background: {{ o.bg }}" style-hover="background:var(--il-ink-04)">
-                  <div style="flex:1;min-width:0">
-                    <div style="font:400 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink)">{{ o.label }}</div>
-                    <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45);margin-top:2px">{{ o.sub }}</div>
-                  </div>
-                  <div style="width:16px;height:16px;border-radius:50%;flex:none;box-sizing:border-box;border:1.5px solid {{ o.ring }};display:flex;align-items:center;justify-content:center"><div style="width:7px;height:7px;border-radius:50%;background: {{ o.dot }}"></div></div>
-                </div>
-              </sc-for>
-              <sc-if value="{{ ordEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 16px;font:400 13px/1.55 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5);text-wrap:pretty">{{ ordEmptyTxt }}</div></sc-if>
-            </div>
-          <div style="flex:none;padding:0 0 22px;background:var(--il-card)">
-            <div onClick="{{ ordAdd }}" style="display:flex;align-items:center;gap:12px;padding:13px 22px;border-top:1px solid var(--il-ink-07);cursor:pointer" style-hover="background:var(--il-ink-04)">
-              <div style="flex:1;min-width:0"><div style="font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-link)">Không thấy chùa của bạn?</div><div style="font:400 11px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5);margin-top:2px">Thêm thông tin chùa</div></div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="color:var(--il-link);flex:none"><path d="M12 5v14M5 12h14"></path></svg>
-            </div>
-          </div>
-        </div>
-      </div>
-    </sc-if>
 
     <sc-if value="{{ lgOpen }}">
       <div data-screen-label="Điều khoản & quyền riêng tư" style="position:absolute;inset:0;z-index:30;font-family:'Be Vietnam Pro',sans-serif;display:flex;flex-direction:column;justify-content:flex-end">
@@ -593,22 +597,47 @@ a{color:#8A5A18}a:hover{color:#B8862F}
       <div style="font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-link);margin-top:12px;cursor:pointer">Đổi ảnh đại diện</div>
     </div>
     <div style="margin-top:22px;display:flex;flex-direction:column;gap:10px">
-      <sc-for list="{{ profileFields }}" as="f" hint-placeholder-count="4">
-        <div style="background:var(--il-card);border:1px solid var(--il-ink-1);border-radius:16px;padding:12px 16px">
-          <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45)">{{ f.label }}</div>
-          <div style="font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink);margin-top:3px">{{ f.value }}</div>
+      <div style="background:var(--il-card);border:1px solid var(--il-ink-1);border-radius:16px;padding:12px 16px">
+        <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45)">Pháp danh hoặc tên gọi</div>
+        <div style="font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink);margin-top:3px">Diệu Tâm</div>
+      </div>
+      <div style="background:var(--il-sunk2);border:1px solid var(--il-ink-06);border-radius:16px;padding:12px 16px;cursor:not-allowed">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45)">Số điện thoại</div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--il-ink-45)" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
         </div>
-      </sc-for>
+        <div style="font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45);margin-top:3px">+84 912 345 678</div>
+        <div style="font:400 11px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45);margin-top:4px">Số dùng để đăng nhập, không đổi được tại đây</div>
+      </div>
+      <div style="position:relative;background:var(--il-card);border:1px solid var(--il-ink-1);border-radius:16px;padding:12px 40px 12px 16px">
+        <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45)">Chùa / đạo tràng</div>
+        <div style="font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ pfTempleName }}</div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--il-ink-5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:16px;top:50%;margin-top:-7px;pointer-events:none"><path d="M6 9l6 6 6-6"></path></svg>
+        <select value="{{ pfTemple }}" onChange="{{ pfSetTemple }}" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px">
+          <sc-for list="{{ pfTempleOpts }}" as="o" hint-placeholder-count="3">
+            <option value="{{ o.id }}">{{ o.name }}</option>
+          </sc-for>
+        </select>
+      </div>
       <div style="background:var(--il-card);border:1px solid var(--il-ink-1);border-radius:16px;padding:12px 16px">
         <div style="font:400 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-45)">Đôi dòng về bạn</div>
         <div style="font:400 16px/1.8 Literata,serif;font-variant-numeric:lining-nums;color:var(--il-ink-78);margin-top:5px">Tập tụng kinh mỗi sáng từ năm 2021. Mong giữ tâm an trước mọi việc.</div>
       </div>
     </div>
-    <div style="font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink);margin-top:22px">Hiển thị trong đạo tràng</div>
-    <div style="margin-top:12px;background:var(--il-card);border:1px solid var(--il-ink-08);border-radius:20px;overflow:hidden">
-      <dc-import name="IL-SettingRow" title="Chuỗi ngày tinh tấn" kind="value" trailing="Công khai" hint-size="100%,52px"></dc-import>
-      <dc-import name="IL-SettingRow" title="Nhật ký tu tập" kind="value" trailing="Chỉ mình tôi" hint-size="100%,52px"></dc-import>
-      <dc-import name="IL-SettingRow" title="Lịch sử cúng dường" kind="value" trailing="Ẩn danh" last="{{ true }}" hint-size="100%,52px"></dc-import>
+    <div style="font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink);margin-top:22px" data-comment-anchor="a582d42316-div">Hiển thị trong đạo tràng</div>
+    <div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5);margin-top:4px;text-wrap:pretty">Chọn ai được xem từng mục trên hồ sơ của bạn.</div>
+    <div style="margin-top:12px;background:var(--il-card);border:1px solid var(--il-ink-08);border-radius:20px;padding:4px 16px">
+      <sc-for list="{{ pfVis }}" as="v" hint-placeholder-count="3">
+        <div style="padding:14px 0;border-bottom:1px solid {{ v.line }}">
+          <div style="font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink)">{{ v.title }}</div>
+          <div style="font:400 12px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5);margin-top:2px">{{ v.desc }}</div>
+          <div style="display:flex;gap:4px;margin-top:10px;padding:3px;border-radius:12px;background:var(--il-sunk2)">
+            <sc-for list="{{ v.opts }}" as="o" hint-placeholder-count="3">
+              <div onClick="{{ o.pick }}" style="flex:1;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;transition:background .18s ease;background: {{ o.bg }};color: {{ o.fg }};box-shadow: {{ o.sh }}">{{ o.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
     </div>
     <div style="margin-top:22px;font:400 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-4)">Vùng cẩn trọng</div>
     <div style="margin-top:10px;display:flex;flex-direction:column;gap:10px">
@@ -834,7 +863,7 @@ a{color:#8A5A18}a:hover{color:#B8862F}
     <div onClick="{{ goMalaKeep }}" style="margin-top:12px;background:var(--il-card);border:1px solid var(--il-ink-08);border-radius:22px;padding:20px;display:flex;align-items:center;gap:20px;cursor:pointer">
       <div style="width:96px;height:104px;position:relative;cursor:pointer;flex:none">
         <sc-for list="{{ beadDots }}" as="d" hint-placeholder-count="18">
-          <div style="position:absolute;left:{{ d.x }};top:{{ d.y }};width:{{ d.s }};height:{{ d.s }};margin:{{ d.m }};border-radius:50%;background:{{ d.bg }};box-shadow:{{ d.sh }};transition:background .2s ease"></div>
+          <div data-rbead="1" style="position:absolute;left:{{ d.x }};top:{{ d.y }};width:{{ d.s }};height:{{ d.s }};margin:{{ d.m }};border-radius:50%;background:{{ d.bg }};box-shadow:{{ d.sh }};transition:background .2s ease"></div>
         </sc-for>
         <div style="position:absolute;left:47px;top:94px;width:2px;height:8px;border-radius:1px;background:#B8862F;opacity:.7"></div>
         <div style="position:absolute;left:18px;top:18px;width:60px;height:60px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform .12s ease;transform: {{ beadScale }}">
@@ -1651,7 +1680,7 @@ a{color:#8A5A18}a:hover{color:#B8862F}
       <div style="position:absolute;left:8px;width:22px;height:1px;background:rgba(217,150,60,.3);top: {{ markerLine }}"></div>
       <div style="position:absolute;right:8px;width:22px;height:1px;background:rgba(217,150,60,.3);top: {{ markerLine }}"></div>
       <sc-for list="{{ strand }}" as="b" hint-placeholder-count="7">
-        <div style="position:absolute;left:50%;border-radius:50%;box-shadow:0 6px 12px rgba(8,6,4,.55),0 1px 2px rgba(0,0,0,.5),inset 0 -4px 9px rgba(0,0,0,.55),inset 0 2px 3px rgba(255,236,200,.22);top: {{ b.top }};width: {{ b.size }};height: {{ b.size }};margin-left: {{ b.ml }};opacity: {{ b.op }};background: {{ b.bg }};transform: {{ b.rot }}"></div>
+        <div data-sbead="1" style="position:absolute;left:50%;border-radius:50%;box-shadow:0 6px 12px rgba(8,6,4,.55),0 1px 2px rgba(0,0,0,.5),inset 0 -4px 9px rgba(0,0,0,.55),inset 0 2px 3px rgba(255,236,200,.22);top: {{ b.top }};width: {{ b.size }};height: {{ b.size }};margin-left: {{ b.ml }};opacity: {{ b.op }};background: {{ b.bg }};transform: {{ b.rot }}"></div>
       </sc-for>
     </div>
 
@@ -1929,7 +1958,14 @@ a{color:#8A5A18}a:hover{color:#B8862F}
     <sc-if value="{{ atFormOn }}" hint-placeholder-val="{{ true }}">
     <div style="font:400 14px/1.6 'Literata',serif;font-variant-numeric:lining-nums;color:var(--il-ink-72);margin-top:4px;text-wrap:pretty">Chỉ cần tên chùa và nơi chùa tọa lạc. InnerLamp sẽ xác minh, bổ sung thông tin và đưa chùa vào danh bạ sau khi duyệt.</div>
     <div style="margin-top:20px;display:flex;flex-direction:column;gap:14px">
-      <sc-for list="{{ atMain }}" as="f" hint-placeholder-count="4">
+      <sc-for list="{{ atMain }}" as="f" hint-placeholder-count="1">
+        <div>
+          <div style="display:flex;justify-content:space-between;gap:8px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5);margin-bottom:6px"><span>{{ f.label }}</span><span style="font-weight:400;color:var(--il-ink-38)">{{ f.req }}</span></div>
+          <input value="{{ f.value }}" onChange="{{ f.set }}" placeholder="{{ f.ph }}" inputMode="{{ f.mode }}" style="width:100%;box-sizing:border-box;height:48px;padding:0 14px;border-radius:14px;border:1px solid {{ f.bd }};background:var(--il-card);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink)">
+        </div>
+      </sc-for>
+      <dc-import name="IL-AddressPicker" province="{{ atProv }}" ward="{{ atWard }}" error="{{ atAddrErr }}" on-change="{{ atAddrChange }}" hint-size="100%,158px"></dc-import>
+      <sc-for list="{{ atAddr }}" as="f" hint-placeholder-count="1">
         <div>
           <div style="display:flex;justify-content:space-between;gap:8px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5);margin-bottom:6px"><span>{{ f.label }}</span><span style="font-weight:400;color:var(--il-ink-38)">{{ f.req }}</span></div>
           <input value="{{ f.value }}" onChange="{{ f.set }}" placeholder="{{ f.ph }}" inputMode="{{ f.mode }}" style="width:100%;box-sizing:border-box;height:48px;padding:0 14px;border-radius:14px;border:1px solid {{ f.bd }};background:var(--il-card);outline:0;font:400 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink)">
@@ -2385,8 +2421,9 @@ a{color:#8A5A18}a:hover{color:#B8862F}
         <dc-import name="IL-NavBar" title="{{ tpHdrTitle }}" dark="{{ isDark }}" on-back="{{ back }}" hint-size="100%,38px"></dc-import>
       </div>
     </div>
-    <div style="position:relative;min-height:300px;box-sizing:border-box;background:var(--il-th-bg);overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:110px 20px 36px">
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 40%,var(--il-th-glow),transparent 100%)"></div>
+    <div style="position:relative;min-height:400px;box-sizing:border-box;background:var(--il-th-bg);overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:110px 20px 36px">
+      <div style="position:absolute;inset:0"><image-slot id="{{ tp.heroId }}" shape="rect" placeholder="Ảnh toàn cảnh chùa"></image-slot></div>
+      <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(20,16,12,.42) 0%,rgba(20,16,12,0) 26%,color-mix(in srgb,var(--il-th-bg) 55%,transparent) 58%,var(--il-th-bg) 92%)"></div>
       <div style="position:relative;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
         <div style="padding:4px 10px;border-radius:999px;border:1px solid var(--il-hero-acc2);font:500 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-hero-acc)">{{ tp.rank }}</div>
         <div style="padding:4px 10px;border-radius:999px;border:1px solid var(--il-hero-acc2);font:500 10.5px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-th-sub)">{{ tp.sect }}</div>
@@ -2444,6 +2481,15 @@ a{color:#8A5A18}a:hover{color:#B8862F}
       <div style="margin-top:10px;font:400 16px/1.8 Literata,serif;font-variant-numeric:lining-nums;color:var(--il-ink-72);text-wrap:pretty;overflow:hidden;max-height:{{ tpBioMax }}">{{ tp.bio }}</div>
       <div onClick="{{ tpBioToggle }}" style="margin-top:6px;font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-link);cursor:pointer">{{ tpBioLabel }}</div>
 
+      <div style="margin-top:26px;font:600 10.5px/1.3 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.16em;color:var(--il-ink-45)">HÌNH ẢNH</div>
+      <div style="margin:10px -20px 0;padding:0 20px;display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none">
+        <sc-for list="{{ tp.photos }}" as="p" hint-placeholder-count="3">
+          <div style="flex:none;width:{{ p.w }};height:180px;border-radius:18px;overflow:hidden;position:relative;background:var(--il-sunk2);scroll-snap-align:start">
+            <image-slot id="{{ p.id }}" shape="rect" placeholder="{{ p.ph }}"></image-slot>
+          </div>
+        </sc-for>
+      </div>
+
       <div style="margin-top:26px;font:600 10.5px/1.3 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.16em;color:var(--il-ink-45)">TỔ CHỨC & TRUYỀN THỪA</div>
       <div style="margin-top:10px;background:var(--il-card);border:1px solid var(--il-ink-08);border-radius:18px;padding:4px 16px">
         <sc-for list="{{ tp.org }}" as="o" hint-placeholder-count="3">
@@ -2460,7 +2506,16 @@ a{color:#8A5A18}a:hover{color:#B8862F}
       </div>
 
       <div style="margin-top:26px;font:600 10.5px/1.3 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;letter-spacing:.16em;color:var(--il-ink-45)">KIẾN TRÚC & DI SẢN</div>
-      <div style="margin-top:10px;font:400 14px/1.6 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-72);text-wrap:pretty"><span style="color:var(--il-ink);font-weight:500">{{ tp.archStyle }}</span> · {{ tp.materials }}</div>
+      <div style="margin-top:10px;background:var(--il-card);border:1px solid var(--il-ink-08);border-radius:18px;padding:4px 16px">
+        <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--il-ink-08)">
+          <div style="width:96px;flex:none;font:400 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5)">Kiểu kiến trúc</div>
+          <div style="flex:1;min-width:0;font:400 14px/1.6 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink);text-wrap:pretty">{{ tp.archStyle }}</div>
+        </div>
+        <div style="display:flex;gap:12px;padding:12px 0">
+          <div style="width:96px;flex:none;font:400 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5)">Vật liệu</div>
+          <div style="flex:1;min-width:0;font:400 14px/1.6 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink);text-wrap:pretty">{{ tp.materials }}</div>
+        </div>
+      </div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
         <sc-for list="{{ tp.highlights }}" as="x" hint-placeholder-count="2">
           <div style="display:flex;gap:12px;align-items:flex-start;background:var(--il-card);border:1px solid var(--il-ink-08);border-radius:16px;padding:12px 14px">
@@ -2553,7 +2608,7 @@ a{color:#8A5A18}a:hover{color:#B8862F}
   <div data-screen-label="Thắp đèn" style="height:100%;box-sizing:border-box;display:flex;flex-direction:column;background:var(--il-canvas);font-family:'Be Vietnam Pro',sans-serif">
     <div data-il-scroll="1" style="flex:1;min-height:0;overflow-y:auto;padding:0 20px 24px">
       <div style="position:sticky;top:0;z-index:40;margin:0 -20px;padding:56px 20px 10px;background:var(--il-canvas)">
-        <dc-import name="IL-NavBar" title="Thắp đèn" right="Vườn đèn" on-back="{{ back }}" on-action="{{ goGarden }}" hint-size="100%,38px"></dc-import>
+        <dc-import name="IL-NavBar" title="Thắp đèn" right="Vườn đèn" back-x="{{ true }}" on-back="{{ back }}" on-action="{{ goGarden }}" hint-size="100%,38px"></dc-import>
       </div>
       <div style="position:relative;margin-top:12px;border-radius:24px;overflow:hidden;background:var(--il-feat-bg);border:1px solid var(--il-feat-bd);transition:height .95s cubic-bezier(.22,.8,.2,1);height: {{ lp.stageH }}">
         <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 70% at 50% 45%,rgba(230,169,78,.40),rgba(217,150,60,.12) 55%,transparent 80%);transition:opacity 2s ease;opacity: {{ lp.warm }}"></div>
@@ -2615,10 +2670,6 @@ a{color:#8A5A18}a:hover{color:#B8862F}
           <div style="font:italic 500 20px/1.6 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:var(--il-ink);text-wrap:pretty">{{ lp.ded }}</div>
           <sc-if value="{{ lp.hasVow }}"><div style="font:italic 400 13px/1.5 Literata,serif;font-variant-numeric:lining-nums;color:var(--il-ink-6);margin-top:10px;text-wrap:pretty">{{ lp.vowQ }}</div></sc-if>
         </div>
-        <div style="display:flex;gap:10px;margin-top:14px;animation:ilup60 .6s cubic-bezier(.22,.8,.2,1) .56s both">
-          <div onClick="{{ lp.again }}" style="flex:1;height:50px;border-radius:999px;border:1px solid var(--il-ink-18);display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink);cursor:pointer">Thắp thêm đèn</div>
-          <div onClick="{{ goGarden }}" style="flex:1;height:50px;border-radius:999px;background:var(--il-ink);color:var(--il-canvas);display:flex;align-items:center;justify-content:center;font:500 13px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer">Vào vườn đèn</div>
-        </div>
         <div onClick="{{ lp.thinh }}" style="margin-top:14px;background:var(--il-card);border:1px solid rgba(184,134,47,.4);border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;animation:ilup40 .6s cubic-bezier(.22,.8,.2,1) .72s both">
           <dc-import name="IL-Icon" icon="temple" size="44" hint-size="44px,44px"></dc-import>
           <div style="flex:1;min-width:0">
@@ -2633,6 +2684,12 @@ a{color:#8A5A18}a:hover{color:#B8862F}
     <sc-if value="{{ lp.isForm }}" hint-placeholder-val="{{ true }}">
       <div style="flex:none;padding:12px 20px 30px;background:var(--il-canvas);border-top:1px solid var(--il-ink-06);transition:opacity .38s ease;opacity: {{ lp.formOp }}">
         <div onClick="{{ lp.light }}" style="height:54px;border-radius:999px;background:var(--il-ink);color:var(--il-canvas);display:flex;align-items:center;justify-content:center;font:500 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;box-shadow:0 8px 24px var(--il-ink-18);transition:opacity .2s ease;opacity: {{ lp.btnOp }}">{{ lp.btn }}</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ lp.isDone }}">
+      <div style="flex:none;padding:12px 20px 30px;background:var(--il-canvas);border-top:1px solid var(--il-ink-06);display:flex;flex-direction:column;gap:10px;animation:ilup60 .6s cubic-bezier(.22,.8,.2,1) .56s both">
+        <div onClick="{{ goGarden }}" style="height:54px;border-radius:999px;background:var(--il-ink);color:var(--il-canvas);display:flex;align-items:center;justify-content:center;font:500 15px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;cursor:pointer;box-shadow:0 8px 24px var(--il-ink-18)">Vào vườn đèn</div>
+        <div onClick="{{ lp.again }}" style="height:50px;border-radius:999px;border:1px solid var(--il-ink-18);display:flex;align-items:center;justify-content:center;font:500 14px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink);cursor:pointer">Thắp thêm đèn</div>
       </div>
     </sc-if>
   </div>
@@ -3155,7 +3212,6 @@ a{color:#8A5A18}a:hover{color:#B8862F}
     <div style="position:relative;margin:0 -20px;height:{{ pfHeroH }};overflow:hidden;background:var(--il-sunk2);transition:{{ pfHeroT }}">
       <div style="position:absolute;inset:0;transform:{{ pfImgT }};transition:{{ pfHeroT }}"><image-slot id="profile-hero" shape="rect" placeholder="Ảnh Phật pháp · ảnh bìa hồ sơ"></image-slot></div>
       <div style="position:absolute;left:0;right:0;bottom:0;height:90px;background:linear-gradient(transparent,var(--il-canvas));pointer-events:none"></div>
-      <div onClick="{{ goEdit }}" style="position:absolute;right:20px;top:56px;padding:8px 14px;border-radius:999px;background:rgba(20,17,13,.42);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font:500 12px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:#F7F2E8;cursor:pointer;white-space:nowrap">Sửa hồ sơ</div>
     </div>
     <div style="position:relative;z-index:2;margin-top:-44px;display:flex;align-items:flex-end;gap:16px" data-comment-anchor="3bcaf975a0-div">
       <div style="width:84px;height:84px;flex:none;border-radius:50%;background:linear-gradient(150deg,var(--il-sunk2),var(--il-tint));border:3px solid var(--il-canvas);box-shadow:0 0 0 1px rgba(184,134,47,.4);display:flex;align-items:center;justify-content:center;font:500 32px/1.25 'Cormorant Garamond',serif;font-variant-numeric:lining-nums;color:var(--il-link)">A</div>
@@ -3206,14 +3262,15 @@ a{color:#8A5A18}a:hover{color:#B8862F}
       <div style="font:400 18px 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-35)">›</div>
     </div>
     <div style="margin-top:14px;background:var(--il-card);border:1px solid var(--il-ink-08);border-radius:20px;overflow:hidden">
+      <dc-import name="IL-SettingRow" icon="user" title="Sửa hồ sơ" kind="chevron" on-tap="{{ goEdit }}" hint-size="100%,52px"></dc-import>
       <dc-import name="IL-SettingRow" icon="tree" title="Gia phả dòng họ" kind="value" trailing="Họ Nguyễn Hữu" on-tap="{{ goGiaPha }}" hint-size="100%,52px"></dc-import>
       <dc-import name="IL-SettingRow" icon="plus" title="Tạo gia phả mới" kind="value" trailing="" on-tap="{{ goGiaPhaNew }}" hint-size="100%,52px"></dc-import>
       <dc-import name="IL-SettingRow" icon="bell" title="Chuông tỉnh thức" kind="value" trailing="{{ remindSummary }}" on-tap="{{ goRemind }}" hint-size="100%,52px"></dc-import>
-      <dc-import name="IL-SettingRow" icon="journal" title="Sổ công đức" kind="chevron" on-tap="{{ goMerit }}" hint-size="100%,64px"></dc-import>
       <dc-import name="IL-SettingRow" icon="gear" title="Cài đặt" kind="chevron" on-tap="{{ goSettings }}" hint-size="100%,52px"></dc-import>
       <dc-import name="IL-SettingRow" icon="notif" title="Thông báo" kind="chevron" on-tap="{{ goNotif }}" hint-size="100%,52px"></dc-import>
       <dc-import name="IL-SettingRow" icon="temple" title="Chùa tu tập" kind="value" trailing="{{ chProfileName }}" on-tap="{{ goSangha }}" last="{{ true }}" hint-size="100%,52px"></dc-import>
     </div>
+    <div onClick="{{ loOpen }}" style="margin-top:14px;height:52px;display:flex;align-items:center;justify-content:center;background:var(--il-card);border:1px solid var(--il-ink-08);border-radius:20px;font:500 15px 'Be Vietnam Pro',sans-serif;color:#B4533A;cursor:pointer" style-active="background:var(--il-ink-04)">Đăng xuất</div>
     <div style="margin-top:24px;display:flex;flex-direction:column;align-items:center;gap:2px;font:400 12px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-5)">
       <div>InnerLamp · Phiên bản 1.4.2</div>
       <div>Bản dựng 218</div>
@@ -3223,6 +3280,21 @@ a{color:#8A5A18}a:hover{color:#B8862F}
     <div style="flex:none;padding:0 20px">
       <dc-import name="IL-BottomNav" active="me" hidden="{{ navHidden }}" on-nav="{{ onNav }}" hint-size="100%,110px"></dc-import>
     </div>
+    <sc-if value="{{ loShow }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:0 44px">
+        <div onClick="{{ loClose }}" style="position:absolute;inset:0;background:rgba(0,0,0,.4)"></div>
+        <div style="position:relative;width:100%;max-width:280px;background:var(--il-card);border-radius:16px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.25)">
+          <div style="padding:20px 18px 18px;text-align:center">
+            <div style="font:600 16px/1.35 'Be Vietnam Pro',sans-serif;color:var(--il-ink)">Đăng xuất?</div>
+            <div style="margin-top:6px;font:400 13px/1.5 'Be Vietnam Pro',sans-serif;font-variant-numeric:lining-nums;color:var(--il-ink-6);text-wrap:pretty">Bạn có chắc muốn đăng xuất khỏi InnerLamp?</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;border-top:0.5px solid var(--il-ink-14)">
+            <div onClick="{{ loClose }}" style="height:46px;display:flex;align-items:center;justify-content:center;font:400 16px 'Be Vietnam Pro',sans-serif;color:var(--il-link);cursor:pointer" style-active="background:var(--il-ink-04)">Hủy</div>
+            <div onClick="{{ loConfirm }}" style="height:46px;display:flex;align-items:center;justify-content:center;border-left:0.5px solid var(--il-ink-14);font:600 16px 'Be Vietnam Pro',sans-serif;color:#B4533A;cursor:pointer" style-active="background:var(--il-ink-04)">Đăng xuất</div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
   </div>
 </sc-if>
 
@@ -5535,7 +5607,10 @@ class Component extends DCLogic {
     const fld = ([k, label, ph, req, mode]) => ({ label, ph, req: req ? 'bắt buộc' : '', mode: mode || 'text', value: A[k], set: set(k), bd: A.ek === k ? '#B4533A' : 'var(--il-ink-14)' });
     const norm = v => (v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/^(chua|thien vien|tinh xa) /, '').trim();
     return {
-      atMain: [['name', 'Tên chùa', 'VD: Chùa Pháp Hoa', 1], ['prov', 'Tỉnh / thành phố', 'VD: TP. Hồ Chí Minh', 1], ['addr', 'Địa chỉ', 'Nếu bạn biết']].map(fld),
+      atMain: [['name', 'Tên chùa', 'VD: Chùa Pháp Hoa', 1]].map(fld),
+      atAddr: [['addr', 'Số nhà, tên đường', 'Nếu bạn biết']].map(fld),
+      atProv: A.prov || '', atWard: A.ward || '', atAddrErr: A.ek === 'prov' || A.ek === 'ward' ? A.ek : '',
+      atAddrChange: v => this.setState(p => ({ atp: { ...p.atp, prov: v.province, ward: v.ward, err: '', ek: '' } })),
       atErr: A.err, atTitle: s.atSuggest ? 'Đề xuất chùa' : 'Thêm thông tin chùa', atCta: s.atSuggest ? 'Gửi đề xuất' : 'Gửi để duyệt',
       atSentOn: !!s.atSent, atFormOn: !s.atSent,
       atSentTxt: 'Cảm ơn bạn đã giới thiệu ' + (s.atSent || '') + '. InnerLamp sẽ xác minh và bổ sung thông tin trong 3–5 ngày, sau đó chùa sẽ xuất hiện trong danh bạ.',
@@ -5543,12 +5618,13 @@ class Component extends DCLogic {
       atSubmit: () => {
         const n = A.name.trim();
         if (!n) return this.setState({ atp: { ...A, err: 'Nhập tên chùa.', ek: 'name' } });
-        if (!A.prov.trim()) return this.setState({ atp: { ...A, err: 'Nhập tỉnh / thành phố.', ek: 'prov' } });
+        if (!A.prov) return this.setState({ atp: { ...A, err: 'Chọn tỉnh / thành phố.', ek: 'prov' } });
+        if (!A.ward) return this.setState({ atp: { ...A, err: 'Chọn phường / xã.', ek: 'ward' } });
         const I = Component.TEMPLE_INFO, dup = Object.keys(I).find(id => norm(I[id].name) === norm(n) && norm(I[id].province) === norm(A.prov));
         if (dup) return this.setState({ atp: { ...A, err: I[dup].name + ' đã có trong danh bạ. Quay lại và tìm để chọn.', ek: 'name' } });
         if (s.atSuggest) return this.setState({ atSent: /^(chùa|thiền viện|tịnh xá|niệm phật đường)/i.test(n) ? n : 'Chùa ' + n, atp: null });
         const id = 'tp-u' + Date.now();
-        this.setState(p => ({ chCustom: { ...(p.chCustom || {}), [id]: { name: /^(chùa|thiền viện|tịnh xá|niệm phật đường)/i.test(n) ? n : 'Chùa ' + n, street: A.addr.trim(), province: A.prov.trim(), custom: true, pending: true } }, suTp: id, atp: null }));
+        this.setState(p => ({ chCustom: { ...(p.chCustom || {}), [id]: { name: /^(chùa|thiền viện|tịnh xá|niệm phật đường)/i.test(n) ? n : 'Chùa ' + n, street: [A.addr.trim(), A.ward].filter(Boolean).join(', '), district: A.ward, province: A.prov, custom: true, pending: true } }, suTp: id, atp: null }));
         this.pop();
       },
     };
@@ -5762,6 +5838,8 @@ class Component extends DCLogic {
         bio: T.bio, org, archStyle: T.archStyle, materials: T.materials, highlights: T.highlights, amen,
         rules: T.rules.map((x, i) => ({ n: String(i + 1).padStart(2, '0'), t: x })),
         hasSched: !!T.sched, noSched: !T.sched, mapId: 'map-' + (s.tpId || 'tp-tuquang'),
+        heroId: 'hero-' + (s.tpId || 'tp-tuquang'),
+        photos: ['Toàn cảnh chùa', 'Chánh điện', 'Tượng Phật', 'Cổng tam quan', 'Khuôn viên'].map((ph, i) => ({ id: 'gal-' + (s.tpId || 'tp-tuquang') + '-' + (i + 1), ph, w: i === 0 ? '220px' : '150px' })),
         addrLine: [T.street, T.ward, T.district, T.province].join(', '),
         regionLine: T.region + (T.subRegion !== T.region ? ' · ' + T.subRegion : ''),
         coord: T.lat.toFixed(4) + '° B, ' + T.lng.toFixed(4) + '° Đ', contacts, updated: T.updated,
@@ -6751,6 +6829,7 @@ class Component extends DCLogic {
         if (!q) rows = [{ id: 'none', label: 'Chưa xuất gia', sub: 'Cư sĩ tu tại gia' }, ...rows.slice(0, 6)];
         const curT = cur === 'none' ? { name: 'Chưa xuất gia' } : cur ? (CU[cur] || I[cur]) : null;
         return {
+          ordPending: !!(curT && curT.pending && !s.ordOpen), ordPendName: curT ? curT.name.replace(/^chùa\s+/i, '') : '',
           ordLabel: curT ? curT.name : 'Chọn chùa hoặc tu viện', ordFg: curT ? 'var(--il-ink)' : 'var(--il-ink-38)',
           ordBd: s.ordOpen ? 'rgba(184,134,47,.55)' : 'var(--il-ink-12)',
           ordChev: s.ordOpen ? 'rotate(225deg) translate(-2px,-2px)' : 'rotate(45deg) translate(-2px,-2px)',
@@ -6873,6 +6952,7 @@ class Component extends DCLogic {
 
       goEvents: () => { this.setState({ evTemple: 'tp-tuquang', tpId: 'tp-tuquang' }); this.go('events'); }, goFests: go('fests'), goBuddhas: go('buddhas'), ...this.buddhaVals(), ...this.sutraVals(), ...this.malaVals(), ...this.medVals(),
       goMalaKeep: () => { this.setState({ mlText: null, mlDone: false }); this.go('mala'); },
+      
       goMala: () => { this.setState({ mlText: null, beads: 0, mlDone: false, mlRound: 1 }); this.go('mala'); },
       ...this.festVals(), ...this.festDetailVals(), isFestDetail: is('festDetail'), ...this.chuaVals(), ...this.gioVals(), evTempleName: (Component.TEMPLE_INFO[s.evTemple || 'tp-tuquang'] || {}).name,
       evHas: (s.evTemple || 'tp-tuquang') === 'tp-tuquang', evEmpty: (s.evTemple || 'tp-tuquang') !== 'tp-tuquang', goRegister: go('register'), goCompose: go('compose'),
@@ -7061,6 +7141,7 @@ class Component extends DCLogic {
       signupNext: () => { if (s.terms) this.go('otp'); },
       dharmaName: s.dName != null ? s.dName : NAMES[s.nameIdx % NAMES.length],
       setDharmaName: e => this.setState({ dName: e.target.value }),
+      fullName: s.fullName || '', setFullName: e => this.setState({ fullName: e.target.value }),
       rollAngle: s.nameIdx * 180,
       rollName: () => this.setState(p => ({ nameIdx: p.nameIdx + 1, dName: NAMES[(p.nameIdx + 1) % NAMES.length] })),
 
@@ -7113,11 +7194,22 @@ class Component extends DCLogic {
         { name: 'Bạn đồng tu', sub: 'Chưa mở', tint: 'var(--il-ink-07)', shape: '50% 0 50% 50%', fill: 'transparent', bd: '1.4px dashed var(--il-ink-4)', o: 0.5 },
       ],
 
-      profileFields: [
-        { label: 'Pháp danh hoặc tên gọi', value: 'Diệu Tâm' },
-        { label: 'Số điện thoại', value: '+84 912 345 678' },
-        { label: 'Chùa / đạo tràng', value: 'Đạo tràng Từ Quang' },
-      ],
+      ...(() => {
+        const opts = [{ id: '', name: 'Chưa chọn' }, { id: 'tp-tuquang', name: 'Chùa Từ Quang' }, ...Component.TEMPLES.map(t => ({ id: t.id, name: t.name }))];
+        const cur = this.state.pfTemple ?? 'tp-tuquang';
+        const vis = this.state.pfVis || { streak: 0, journal: 2, donate: 1 };
+        const rows = [
+          { k: 'streak', title: 'Chuỗi ngày tinh tấn', desc: 'Số ngày tu tập liên tục', labels: ['Công khai', 'Đạo tràng', 'Chỉ mình tôi'] },
+          { k: 'journal', title: 'Nhật ký tu tập', desc: 'Ghi chép sau mỗi thời khóa', labels: ['Công khai', 'Đạo tràng', 'Chỉ mình tôi'] },
+          { k: 'donate', title: 'Lịch sử cúng dường', desc: 'Các lần cúng dường và thắp đèn', labels: ['Hiện tên', 'Ẩn danh', 'Chỉ mình tôi'] },
+        ];
+        return {
+          pfTemple: cur, pfTempleOpts: opts, pfTempleName: (opts.find(o => o.id === cur) || opts[0]).name,
+          pfSetTemple: e => this.setState({ pfTemple: e.target.value }),
+          pfVis: rows.map((r, i) => ({ title: r.title, desc: r.desc, line: i < rows.length - 1 ? 'var(--il-ink-06)' : 'transparent',
+            opts: r.labels.map((label, j) => { const on = vis[r.k] === j; return { label, bg: on ? 'var(--il-card)' : 'transparent', fg: on ? 'var(--il-ink)' : 'var(--il-ink-5)', sh: on ? '0 1px 4px var(--il-ink-12)' : 'none', pick: () => this.setState(s => ({ pfVis: { ...(s.pfVis || vis), [r.k]: j } })) }; }) })),
+        };
+      })(),
 
       goDetail: go('detail'), goPlayer: go('player'), goStats: go('stats'),
       goRemind: go('remind'), goEntry: go('entry'),
@@ -7167,6 +7259,8 @@ class Component extends DCLogic {
       roundsLabel: (s.beads >= 108 ? 3 : 2) + ' tràng',
       back: () => this.pop(),
       goHome: () => this.setState({ screen: 'home', stack: [] }),
+      loShow: !!s.loOpen, loOpen: () => this.setState({ loOpen: true }), loClose: () => this.setState({ loOpen: false }),
+      loConfirm: () => { this.setState({ loOpen: false }); this.fadeTo(() => ({ screen: 'login', stack: [] })); },
       goLogin: go('login'), goLib: go('lib'), goReader: go('reader'), goTalk: go('talk'), goTalks: go('talks'), isTalks: is('talks'), ...this.talksVals(),
       goSearch: go('search'), goEmpty: go('empty'), goSetup: go('setup'),       goDone: go('done'), goWrite: go('write'),  goBell: go('bell'), goPhotos: go('photos'), goSangha: go('sangha'), goFindTp: () => { this.setState({ chAdd: null, ftSent: null, ftQ: '', ftPick: false }); this.go('findtp'); }, isFindTp: is('findtp'), ...this.findTpVals(), isAddTp: is('addtp'), ...this.addTpVals(),
       goSuggestTp: () => { this.setState({ atSuggest: true, atSent: null, atp: { name: (s.tlQ || '').trim(), alias: '', addr: '', prov: '', abbot: '', phone: '', sect: -1, err: '', ek: '' } }); this.go('addtp'); },

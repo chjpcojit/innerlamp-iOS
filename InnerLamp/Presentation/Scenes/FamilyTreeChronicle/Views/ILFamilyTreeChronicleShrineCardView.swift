@@ -29,12 +29,44 @@ final class ILFamilyTreeChronicleShrineCardView: UIView {
     var onChangeTap: (() -> Void)?
     var onRemindTap: (() -> Void)?
 
-    private let nameLabel = UILabel()
-    private let addressLabel = UILabel()
-    private let keeperControl = ILFamilyTreeChronicleTapControl()
-    private let keeperLabel = UILabel()
-    private let anniversaryValueLabel = UILabel()
-    private let gatheringValueLabel = UILabel()
+    private lazy var nameLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.treeMemorialTitle
+        v.textColor = Tree.heading
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var addressLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmall
+        v.textColor = Tree.inkSecondary
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var keeperControl = ILFamilyTreeChronicleTapControl()
+    private lazy var keeperLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmallMedium
+        v.textColor = Tree.selected
+        v.numberOfLines = 0
+        v.isUserInteractionEnabled = false
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var anniversaryValueLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmall
+        v.textColor = Tree.ink
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var gatheringValueLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmall
+        v.textColor = Tree.ink
+        v.numberOfLines = 0
+        return v
+    }()
     private lazy var changeButton: ILFamilyTreeChroniclePillButton = {
         let button = ILFamilyTreeChroniclePillButton(
             title: "familyTreeChronicle.shrine.change".localized, style: .outlined,
@@ -82,18 +114,6 @@ final class ILFamilyTreeChronicleShrineCardView: UIView {
         layer.borderWidth = 1
         layer.borderColor = Tree.cardRing.cgColor
 
-        nameLabel.font = ILTypography.treeMemorialTitle
-        nameLabel.textColor = Tree.heading
-        nameLabel.numberOfLines = 0
-        addressLabel.font = ILTypography.bodySmall
-        addressLabel.textColor = Tree.inkSecondary
-        addressLabel.numberOfLines = 0
-
-        keeperLabel.font = ILTypography.bodySmallMedium
-        keeperLabel.textColor = Tree.selected
-        keeperLabel.numberOfLines = 0
-        keeperLabel.isUserInteractionEnabled = false
-        keeperLabel.translatesAutoresizingMaskIntoConstraints = false
         keeperControl.addSubview(keeperLabel)
         NSLayoutConstraint.activate([
             keeperLabel.topAnchor.constraint(equalTo: keeperControl.topAnchor),
@@ -102,12 +122,6 @@ final class ILFamilyTreeChronicleShrineCardView: UIView {
             keeperLabel.trailingAnchor.constraint(equalTo: keeperControl.trailingAnchor)
         ])
         keeperControl.onTap = { [weak self] in self?.onKeeperTap?() }
-
-        [anniversaryValueLabel, gatheringValueLabel].forEach {
-            $0.font = ILTypography.bodySmall
-            $0.textColor = Tree.ink
-            $0.numberOfLines = 0
-        }
 
         let keeperRow = UIStackView(arrangedSubviews: [keeperControl, changeButton])
         keeperRow.axis = .horizontal

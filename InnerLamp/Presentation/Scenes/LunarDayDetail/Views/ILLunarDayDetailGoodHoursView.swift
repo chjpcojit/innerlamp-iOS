@@ -19,7 +19,13 @@ final class ILLunarDayDetailGoodHoursView: UIView {
     }
 
     // MARK: - UI Elements
-    private let rowsStack = UIStackView()
+    private lazy var rowsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -33,9 +39,6 @@ final class ILLunarDayDetailGoodHoursView: UIView {
 
     private func setupViews() {
         translatesAutoresizingMaskIntoConstraints = false
-        rowsStack.axis = .vertical
-        rowsStack.spacing = 8
-        rowsStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(rowsStack)
 
         NSLayoutConstraint.activate([

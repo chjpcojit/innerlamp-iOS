@@ -12,6 +12,9 @@ final class ILProfileCoordinator: Coordinator {
     var childCoordinators: [any Coordinator] = []
     weak var parentCoordinator: (any Coordinator)?
 
+    /// Called once the session has been cleared; the app owner routes the user back to Login.
+    var onLogout: (() -> Void)?
+
     private let container: DIContainer
     private var cancellables = Set<AnyCancellable>()
 
@@ -36,17 +39,12 @@ final class ILProfileCoordinator: Coordinator {
                 case .openAwards:
                     // TODO: điều hướng sang Dấu ấn tu tập (`awards`) khi có coordinator.
                     break
-                case .openOffering:
-                    // TODO: điều hướng sang Cúng dường (`offer`) khi có coordinator.
-                    break
+                case .openMeritBook:
+                    self.showMeritBook()
                 case .openDonate:
-                    // TODO: present màn Ủng hộ InnerLamp (`paywall` trong prototype, modal) khi có coordinator.
-                    break
+                    self.showDonate()
                 case .openReminder:
                     // TODO: điều hướng sang Chuông tỉnh thức (`remind`) khi có coordinator.
-                    break
-                case .openMeritBook:
-                    // TODO: điều hướng sang Sổ công đức (`merit`) khi có coordinator.
                     break
                 case .openSettings:
                     self.showSettings()
@@ -59,6 +57,8 @@ final class ILProfileCoordinator: Coordinator {
                 case .openCommunity:
                     // TODO: điều hướng sang Trang chùa (`temple`) theo id khi có coordinator.
                     break
+                case .loggedOut:
+                    self.onLogout?()
                 }
             }
             .store(in: &cancellables)
@@ -95,6 +95,18 @@ final class ILProfileCoordinator: Coordinator {
         let coordinator = container.makeFamilyTreeCreateCoordinator(navigationController: navigationController)
         addChild(coordinator)
         coordinator.start()
+    }
+
+    private func showMeritBook() {
+        let coordinator = container.makeMeritBookCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.start()
+    }
+
+    private func showDonate() {
+        let coordinator = container.makeDonateCoordinator(navigationController: navigationController)
+        addChild(coordinator)
+        coordinator.startModal()
     }
 
     private func showNotifications() {

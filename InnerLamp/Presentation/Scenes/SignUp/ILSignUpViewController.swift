@@ -22,9 +22,12 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
     private var cancellables = Set<AnyCancellable>()
 
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
+    private let fullNameChangedSubject = PassthroughSubject<String, Never>()
     private let suggestDisplayNameTappedSubject = PassthroughSubject<Void, Never>()
     private let displayNameChangedSubject = PassthroughSubject<String, Never>()
-    private let ordinationPlaceChangedSubject = PassthroughSubject<String, Never>()
+    private let ordinationPlaceChangedSubject = PassthroughSubject<ILOrdinationPlaceSelection, Never>()
+    private let ordinationSearchChangedSubject = PassthroughSubject<String, Never>()
+    private let ordinationLoadMoreSubject = PassthroughSubject<Void, Never>()
     private let ordinationPickerOpenedSubject = PassthroughSubject<Void, Never>()
     private let addTempleTappedSubject = PassthroughSubject<String, Never>()
     private let countryChangedSubject = PassthroughSubject<ILCountry, Never>()
@@ -34,12 +37,13 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
     private let togglePasswordVisibilityTappedSubject = PassthroughSubject<Void, Never>()
     private let toggleTermsTappedSubject = PassthroughSubject<Void, Never>()
     private let submitTappedSubject = PassthroughSubject<Void, Never>()
+    private let showsBackButton: Bool
     private let backTappedSubject = PassthroughSubject<Void, Never>()
     private let loginPromptTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
     private lazy var headerView: ILNavBar = {
-        let view = ILNavBar(title: "signup.header.title".localized)
+        let view = ILNavBar(title: "signup.header.title".localized, showBack: showsBackButton)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -60,7 +64,11 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
     }()
 
     /// `IL-Logo` 100px đầu màn (design `isSignup`).
-    private let logoView = ILLogoView(size: 100)
+    private lazy var logoView: ILLogoView = {
+        let view = ILLogoView(size: 100)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -82,32 +90,67 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
         return label
     }()
 
-    private lazy var dharmaNameField = ILDharmaNameSuggestionField(
-        label: "signup.field.displayName.label".localized,
-        placeholder: "signup.field.displayName.placeholder".localized,
-        suggestTitle: "signup.field.displayName.suggestButton".localized
-    )
+    private lazy var fullNameField: ILField = {
+        let field = ILField(
+            label: "signup.field.fullName.label".localized,
+            placeholder: "signup.field.fullName.placeholder".localized
+        )
+        field.innerTextField.returnKeyType = .next
+        field.innerTextField.autocapitalizationType = .words
+        field.innerTextField.textContentType = .name
+        return field
+    }()
 
-    private let ordinationPlaceField = ILOrdinationPlaceFieldView()
+    private lazy var dharmaNameField: ILDharmaNameSuggestionField = {
+        let field = ILDharmaNameSuggestionField(
+            label: "signup.field.displayName.label".localized,
+            placeholder: "signup.field.displayName.placeholder".localized,
+            suggestTitle: "signup.field.displayName.suggestButton".localized
+        )
+        field.innerTextField.returnKeyType = .next
+        return field
+    }()
 
-    private lazy var phoneField = ILPhoneField(
-        label: "signup.field.phone.label".localized,
-        placeholder: "signup.field.phone.placeholder".localized
-    )
+    private lazy var ordinationPlaceField: ILOrdinationPlaceFieldView = {
+        ILOrdinationPlaceFieldView()
+    }()
 
-    private lazy var emailField = ILField(
-        label: "signup.field.email.label".localized,
-        placeholder: "signup.field.email.placeholder".localized,
-        hint: "signup.field.email.hint".localized
-    )
+    private lazy var phoneField: ILPhoneField = {
+        let field = ILPhoneField(
+            label: "signup.field.phone.label".localized,
+            placeholder: "signup.field.phone.placeholder".localized
+        )
+        field.innerTextField.returnKeyType = .next
+        return field
+    }()
 
-    private lazy var passwordField = ILField(
-        label: "signup.field.password.label".localized,
-        placeholder: "signup.field.password.placeholder".localized,
-        trailingText: "signup.password.show".localized
-    )
+    private lazy var emailField: ILField = {
+        let field = ILField(
+            label: "signup.field.email.label".localized,
+            placeholder: "signup.field.email.placeholder".localized,
+            hint: "signup.field.email.hint".localized
+        )
+        field.innerTextField.returnKeyType = .next
+        field.innerTextField.keyboardType = .emailAddress
+        field.innerTextField.autocapitalizationType = .none
+        field.innerTextField.autocorrectionType = .no
+        return field
+    }()
 
-    private lazy var strengthMeter = ILStrengthMeterView(numberOfSegments: 3)
+    private lazy var passwordField: ILField = {
+        let field = ILField(
+            label: "signup.field.password.label".localized,
+            placeholder: "signup.field.password.placeholder".localized,
+            trailingText: "signup.password.show".localized
+        )
+        field.innerTextField.isSecureTextEntry = true
+        field.innerTextField.returnKeyType = .done
+        return field
+    }()
+
+    private lazy var strengthMeter: ILStrengthMeterView = {
+        ILStrengthMeterView(numberOfSegments: 3)
+    }()
 
     private lazy var termsRow: ILCheckboxRow = {
         let row = ILCheckboxRow(text: "signup.terms.agree".localized)
@@ -120,7 +163,7 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
     }()
 
     private lazy var fieldsStack: UIStackView = {
-        let stack = UIStackView(arrangedSubviews: [dharmaNameField, ordinationPlaceField, phoneField, emailField, passwordField, strengthMeter])
+        let stack = ILOverflowHitStackView(arrangedSubviews: [fullNameField, dharmaNameField, ordinationPlaceField, phoneField, emailField, passwordField, strengthMeter])
         stack.axis = .vertical
         stack.spacing = ILMetrics.rowSpacing
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -161,8 +204,9 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
     }()
 
     // MARK: - Initializer
-    init(viewModel: ILSignUpViewModel) {
+    init(viewModel: ILSignUpViewModel, showsBackButton: Bool = true) {
         self.viewModel = viewModel
+        self.showsBackButton = showsBackButton
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -189,13 +233,19 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
         scrollView.addSubview(contentView)
         view.addSubview(scrollView)
 
+        fullNameField.onTextChanged = { [weak self] text in
+            self?.fullNameChangedSubject.send(text)
+        }
+        fullNameField.onReturn = { [weak self] in
+            self?.dharmaNameField.innerTextField.becomeFirstResponder()
+        }
+
         dharmaNameField.onSuggestTapped = { [weak self] in
             self?.suggestDisplayNameTappedSubject.send(())
         }
         dharmaNameField.onTextChanged = { [weak self] text in
             self?.displayNameChangedSubject.send(text)
         }
-        dharmaNameField.innerTextField.returnKeyType = .next
         dharmaNameField.onReturn = { [weak self] in
             self?.phoneField.innerTextField.becomeFirstResponder()
         }
@@ -205,15 +255,20 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
             view.endEditing(true)
             ordinationPickerOpenedSubject.send(())
         }
-        ordinationPlaceField.onSelect = { [weak self] name in
-            self?.ordinationPlaceChangedSubject.send(name)
+        ordinationPlaceField.onSelect = { [weak self] id, name in
+            self?.ordinationPlaceChangedSubject.send(ILOrdinationPlaceSelection(id: id, name: name))
+        }
+        ordinationPlaceField.onSearchChanged = { [weak self] query in
+            self?.ordinationSearchChangedSubject.send(query)
+        }
+        ordinationPlaceField.onLoadMore = { [weak self] in
+            self?.ordinationLoadMoreSubject.send(())
         }
         ordinationPlaceField.onAddTapped = { [weak self] query in
             self?.view.endEditing(true)
             self?.addTempleTappedSubject.send(query)
         }
 
-        phoneField.innerTextField.returnKeyType = .next
         phoneField.onCountryTap = { [weak self] in
             self?.handleCountryTap()
         }
@@ -224,10 +279,6 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
             self?.emailField.innerTextField.becomeFirstResponder()
         }
 
-        emailField.innerTextField.returnKeyType = .next
-        emailField.innerTextField.keyboardType = .emailAddress
-        emailField.innerTextField.autocapitalizationType = .none
-        emailField.innerTextField.autocorrectionType = .no
         emailField.onTextChanged = { [weak self] text in
             self?.emailChangedSubject.send(text)
         }
@@ -235,8 +286,6 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
             self?.passwordField.innerTextField.becomeFirstResponder()
         }
 
-        passwordField.innerTextField.isSecureTextEntry = true
-        passwordField.innerTextField.returnKeyType = .done
         passwordField.onTextChanged = { [weak self] text in
             self?.passwordChangedSubject.send(text)
         }
@@ -254,7 +303,6 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
             self?.presentLegalSheet(document: index == 0 ? .terms : .privacy)
         }
 
-        logoView.translatesAutoresizingMaskIntoConstraints = false
         [logoView, titleLabel, subtitleLabel, fieldsStack, termsRow].forEach { contentView.addSubview($0) }
 
         footerContainer.addSubview(footerDivider)
@@ -336,10 +384,13 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
 
         let input = ILSignUpViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
+            fullNameChanged: fullNameChangedSubject.eraseToAnyPublisher(),
             suggestDisplayNameTapped: suggestDisplayNameTappedSubject.eraseToAnyPublisher(),
             displayNameChanged: displayNameChangedSubject.eraseToAnyPublisher(),
             ordinationPlaceChanged: ordinationPlaceChangedSubject.eraseToAnyPublisher(),
             ordinationPickerOpened: ordinationPickerOpenedSubject.eraseToAnyPublisher(),
+            ordinationSearchChanged: ordinationSearchChangedSubject.eraseToAnyPublisher(),
+            ordinationLoadMoreRequested: ordinationLoadMoreSubject.eraseToAnyPublisher(),
             addTempleTapped: addTempleTappedSubject.eraseToAnyPublisher(),
             countryChanged: countryChangedSubject.eraseToAnyPublisher(),
             phoneNumberChanged: phoneNumberChangedSubject.eraseToAnyPublisher(),
@@ -380,12 +431,19 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
         // So sánh trước khi gán — set `.text` luôn đẩy cursor về cuối chuỗi, nếu gán lại đúng giá
         // trị đang gõ thì người dùng không thể đặt cursor giữa chuỗi để sửa. Chỉ thực sự cần gán
         // khi giá trị đổi từ nơi khác (vd. bấm "Gợi ý").
+        if fullNameField.innerTextField.text != model.fullName {
+            fullNameField.text = model.fullName
+        }
+        fullNameField.fieldState = model.fullNameError.map { .error($0) } ?? .normal
+
         if dharmaNameField.value != model.displayName {
             dharmaNameField.value = model.displayName
         }
 
         ordinationPlaceField.options = model.ordinationPlaceOptions
         ordinationPlaceField.isLoading = model.isLoadingOrdinationPlaces
+        ordinationPlaceField.isLoadingMore = model.isLoadingMoreOrdinationPlaces
+        ordinationPlaceField.hasMore = model.hasMoreOrdinationPlaces
         if let proposedID = model.selectedOrdinationPlaceID {
             ordinationPlaceField.select(id: proposedID)
         }
@@ -485,5 +543,17 @@ final class ILSignUpViewController: BaseViewController, TransitionProviding {
 
     @objc private func handleLoginPromptTapped() {
         loginPromptTappedSubject.send(())
+    }
+}
+
+/// Khung chọn nơi xuất gia nổi ra ngoài đáy stack (đè lên hàng điều khoản). Stack mặc định chỉ
+/// nhận chạm trong bounds của nó nên dòng "Thêm thông tin chùa" ở phần tràn không bấm được và
+/// chạm rơi xuống hàng điều khoản — nhận cả chạm rơi vào vùng tràn của view con.
+private final class ILOverflowHitStackView: UIStackView {
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        if super.point(inside: point, with: event) { return true }
+        return subviews.contains { subview in
+            !subview.isHidden && subview.point(inside: convert(point, to: subview), with: event)
+        }
     }
 }

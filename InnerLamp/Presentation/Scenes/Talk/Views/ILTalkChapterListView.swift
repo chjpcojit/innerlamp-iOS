@@ -18,7 +18,12 @@ final class ILTalkChapterListView: UIView {
     }
 
     // MARK: - UI Elements
-    private let rowsStack = UIStackView()
+    private lazy var rowsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -39,8 +44,6 @@ final class ILTalkChapterListView: UIView {
         layer.borderColor = ILColors.border.cgColor
         clipsToBounds = true
 
-        rowsStack.axis = .vertical
-        rowsStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(rowsStack)
 
         NSLayoutConstraint.activate([

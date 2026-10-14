@@ -20,7 +20,12 @@ final class ILSutraDetailChapterListView: UIView {
     var onChapterTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let rowsStack = UIStackView()
+    private lazy var rowsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -41,8 +46,6 @@ final class ILSutraDetailChapterListView: UIView {
         layer.borderColor = ILColors.border.cgColor
         clipsToBounds = true
 
-        rowsStack.axis = .vertical
-        rowsStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(rowsStack)
 
         NSLayoutConstraint.activate([

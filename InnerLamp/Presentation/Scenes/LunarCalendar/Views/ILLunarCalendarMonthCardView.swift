@@ -171,9 +171,23 @@ private final class ILLunarCalendarDayCellView: UIControl {
 
     var onTap: (() -> Void)?
 
-    private let solarLabel = UILabel()
-    private let lunarLabel = UILabel()
-    private let dot = UIView()
+    private lazy var solarLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.rowTitle
+        return label
+    }()
+
+    private lazy var lunarLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.calendarLunarDay
+        return label
+    }()
+
+    private lazy var dot: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 2
+        return view
+    }()
 
     init(day: ILLunarCalendarDayModel) {
         super.init(frame: .zero)
@@ -198,16 +212,13 @@ private final class ILLunarCalendarDayCellView: UIControl {
             backgroundColor = .clear
         }
 
-        solarLabel.font = ILTypography.rowTitle
         solarLabel.textColor = day.isSelected ? ILColors.canvas : ILColors.ink
         solarLabel.text = day.solarText
 
-        lunarLabel.font = ILTypography.calendarLunarDay
         lunarLabel.textColor = day.isSelected ? ILColors.canvasOnInkSecondary : ILColors.link
         lunarLabel.text = day.lunarText
 
         dot.backgroundColor = dotColor(for: day.dotKind, isSelected: day.isSelected)
-        dot.layer.cornerRadius = 2
 
         let stack = UIStackView(arrangedSubviews: [solarLabel, lunarLabel, dot])
         stack.axis = .vertical

@@ -13,11 +13,40 @@ final class ILSutrasCardView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let nameLabel = UILabel()
-    private let originalLabel = UILabel()
-    private let durationLabel = UILabel()
-    private let translatorLabel = UILabel()
-    private let badgesView = ILChipFlowView(rowSpacing: ILMetrics.spaceSmall - 2, itemSpacing: ILMetrics.spaceSmall - 2)
+    private lazy var nameLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.serifCardTitle
+        label.textColor = ILColors.ink
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var originalLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.heroSubtitleItalic
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var durationLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.chip
+        label.textColor = ILColors.ink
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return label
+    }()
+
+    private lazy var translatorLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var badgesView = ILChipFlowView(rowSpacing: ILMetrics.spaceSmall - 2, itemSpacing: ILMetrics.spaceSmall - 2)
 
     // MARK: - Initializer
     init() {
@@ -63,23 +92,6 @@ final class ILSutrasCardView: UIControl {
         layer.cornerRadius = ILMetrics.radiusCardSmall
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
-
-        nameLabel.font = ILTypography.serifCardTitle
-        nameLabel.textColor = ILColors.ink
-        nameLabel.numberOfLines = 0
-
-        originalLabel.font = ILTypography.heroSubtitleItalic
-        originalLabel.textColor = ILColors.inkTertiary
-        originalLabel.numberOfLines = 0
-
-        durationLabel.font = ILTypography.chip
-        durationLabel.textColor = ILColors.ink
-        durationLabel.setContentHuggingPriority(.required, for: .horizontal)
-        durationLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        translatorLabel.font = ILTypography.subhead
-        translatorLabel.textColor = ILColors.inkTertiary
-        translatorLabel.numberOfLines = 0
 
         let titleStack = UIStackView(arrangedSubviews: [nameLabel, originalLabel])
         titleStack.axis = .vertical

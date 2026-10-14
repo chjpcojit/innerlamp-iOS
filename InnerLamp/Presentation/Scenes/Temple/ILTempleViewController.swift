@@ -55,77 +55,253 @@ final class ILTempleViewController: BaseViewController {
     private var isBiographyExpanded = false
 
     // MARK: - UI Elements
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    private lazy var scrollView: UIScrollView = {
+        let v = UIScrollView()
+        v.showsVerticalScrollIndicator = false
+        v.alwaysBounceVertical = true
+        v.contentInsetAdjustmentBehavior = .never
+        return v
+    }()
+    private lazy var contentView = UIView()
 
     /// Dải header dán cố định — trong suốt trên hero, chuyển nền `canvas` khi cuộn qua hero.
     /// Blur only: the canvas tint is state-driven (`updateHeaderAppearance`), so the band's own tint stays off.
-    private let headerBand = ILStickyHeaderBand(tintRestAlpha: 0, tintGlassAlpha: 0)
-    private let navBar = ILNavBar(showBack: true)
+    private lazy var headerBand: ILStickyHeaderBand = {
+        let v = ILStickyHeaderBand(tintRestAlpha: 0, tintGlassAlpha: 0)
+        v.backgroundColor = ILColors.canvas.withAlphaComponent(0)
+        return v
+    }()
+    private lazy var navBar: ILNavBar = {
+        let v = ILNavBar(showBack: true)
+        v.usesTransparentButtons = true
+        return v
+    }()
 
-    private let heroView = ILTempleHeroView()
+    private lazy var heroView = ILTempleHeroView()
 
     private lazy var followButton = ILButton(title: "", variant: .primary)
     private lazy var directionsButton = ILButton(title: "", variant: .ghost)
     private lazy var offerButton = ILButton(title: "", variant: .ghost)
-    private let pillsStack = UIStackView()
+    private lazy var pillsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = ILMetrics.rowSpacing
+        v.distribution = .fillEqually
+        return v
+    }()
 
-    private let bodyStack = UIStackView()
+    private lazy var bodyStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.alignment = .fill
+        return v
+    }()
 
-    private let statusCard = ILTempleStatusCardView()
-    private let factsGrid = UIView()
+    private lazy var statusCard = ILTempleStatusCardView()
+    private lazy var factsGrid = UIView()
 
-    private let introEyebrow = ILSectionEyebrowView()
-    private let biographyLabel = UILabel()
-    private let biographyToggle = UIButton(type: .system)
+    private lazy var introEyebrow = ILSectionEyebrowView()
+    private lazy var biographyLabel: UILabel = {
+        let v = UILabel()
+        v.numberOfLines = 0
+        v.clipsToBounds = true
+        return v
+    }()
+    private lazy var biographyToggle: UIButton = {
+        let v = UIButton(type: .system)
+        styleLinkButton(v)
+        return v
+    }()
     private lazy var biographyCollapsedConstraint = biographyLabel.heightAnchor.constraint(
         lessThanOrEqualToConstant: Layout.collapsedBiographyHeight
     )
 
-    private let orgEyebrow = ILSectionEyebrowView()
-    private let orgCard = UIView()
-    private let orgStack = UIStackView()
+    private lazy var orgEyebrow = ILSectionEyebrowView()
+    private lazy var orgCard: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.surface
+        v.layer.cornerRadius = ILMetrics.radiusCardLarge
+        v.layer.borderWidth = 1
+        v.layer.borderColor = ILColors.border.cgColor
+        return v
+    }()
+    private lazy var orgStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let architectureEyebrow = ILSectionEyebrowView()
-    private let architectureLabel = UILabel()
-    private let highlightsStack = UIStackView()
+    private lazy var architectureEyebrow = ILSectionEyebrowView()
+    private lazy var architectureLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmall
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var highlightsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = ILMetrics.rowSpacing
+        return v
+    }()
 
-    private let amenitiesEyebrow = ILSectionEyebrowView()
-    private let amenitiesGrid = UIView()
+    private lazy var amenitiesEyebrow = ILSectionEyebrowView()
+    private lazy var amenitiesGrid = UIView()
 
-    private let rulesEyebrow = ILSectionEyebrowView()
-    private let rulesCard = UIView()
-    private let rulesStack = UIStackView()
+    private lazy var rulesEyebrow = ILSectionEyebrowView()
+    private lazy var rulesCard: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.featBackgroundStart
+        v.layer.cornerRadius = ILMetrics.radiusCardLarge
+        v.layer.borderWidth = 1
+        v.layer.borderColor = ILColors.featBorder.cgColor
+        return v
+    }()
+    private lazy var rulesStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = 10
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let eventsHeaderRow = UIStackView()
-    private let eventsEyebrow = ILSectionEyebrowView()
-    private let eventsViewAllButton = UIButton(type: .system)
-    private let eventsEmptyView = UIView()
-    private let eventsEmptyLabel = UILabel()
-    private let sessionsStack = UIStackView()
+    private lazy var eventsHeaderRow: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.alignment = .lastBaseline
+        return v
+    }()
+    private lazy var eventsEyebrow = ILSectionEyebrowView()
+    private lazy var eventsViewAllButton: UIButton = {
+        let v = UIButton(type: .system)
+        v.setTitleColor(ILColors.link, for: .normal)
+        v.titleLabel?.font = ILTypography.chip
+        v.setTitle("temple.events.viewAll".localized, for: .normal)
+        return v
+    }()
+    private lazy var eventsEmptyView: UIView = {
+        let v = UIView()
+        v.layer.cornerRadius = ILMetrics.radiusCardSmall
+        let dashedBorder = CAShapeLayer()
+        dashedBorder.strokeColor = ILColors.borderStrong.cgColor
+        dashedBorder.fillColor = nil
+        dashedBorder.lineDashPattern = [4, 4]
+        v.layer.addSublayer(dashedBorder)
+        return v
+    }()
+    private lazy var eventsEmptyLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmall
+        v.textColor = ILColors.inkTertiary
+        v.numberOfLines = 0
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
+    private lazy var sessionsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = ILMetrics.rowSpacing
+        return v
+    }()
 
-    private let locationEyebrow = ILSectionEyebrowView()
-    private let mapCard = UIView()
-    private let mapPlaceholder = UIView()
-    private let addressLabel = UILabel()
-    private let regionLabel = UILabel()
-    private let coordinateLabel = UILabel()
+    private lazy var locationEyebrow = ILSectionEyebrowView()
+    private lazy var mapCard: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.surface
+        v.layer.cornerRadius = ILMetrics.radiusCardLarge
+        v.layer.borderWidth = 1
+        v.layer.borderColor = ILColors.border.cgColor
+        v.clipsToBounds = true
+        return v
+    }()
+    private lazy var mapPlaceholder: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.sunk2
+        return v
+    }()
+    private lazy var addressLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.body
+        v.textColor = ILColors.ink
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var regionLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        v.textColor = ILColors.inkTertiary
+        return v
+    }()
+    private lazy var coordinateLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        v.textColor = ILColors.inkFaint
+        return v
+    }()
     private lazy var googleMapsButton = ILButton(title: "", variant: .ghost)
     private lazy var appleMapsButton = ILButton(title: "", variant: .ghost)
-    private let contactsCard = UIView()
-    private let contactsStack = UIStackView()
+    private lazy var contactsCard: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.surface
+        v.layer.cornerRadius = ILMetrics.radiusCardLarge
+        v.layer.borderWidth = 1
+        v.layer.borderColor = ILColors.border.cgColor
+        return v
+    }()
+    private lazy var contactsStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
-    private let footerStack = UIStackView()
-    private let updatedLabel = UILabel()
-    private let footerDotLabel = UILabel()
-    private let reportIssueLabel = UILabel()
+    private lazy var footerStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = 6
+        v.alignment = .center
+        v.distribution = .equalCentering
+        return v
+    }()
+    private lazy var updatedLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        v.textColor = ILColors.inkFaint
+        return v
+    }()
+    private lazy var footerDotLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        v.textColor = ILColors.inkFaint
+        v.text = "·"
+        return v
+    }()
+    private lazy var reportIssueLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        v.textColor = ILColors.inkFaint
+        v.text = "temple.footer.reportIssue".localized
+        return v
+    }()
 
     /// Whole-screen loading / error states, shown instead of `scrollView` while the profile is
     /// not on screen yet.
-    private let loadingView = ILTempleSkeletonView()
-    private let errorStateView = ILStateView(kind: .error)
+    private lazy var loadingView: ILTempleSkeletonView = {
+        let v = ILTempleSkeletonView()
+        v.isHidden = true
+        return v
+    }()
+    private lazy var errorStateView = ILStateView(kind: .error)
     private lazy var retryButton = ILButton(title: "common.retry".localized, variant: .primary)
-    private let errorStack = UIStackView()
+    private lazy var errorStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.alignment = .fill
+        v.spacing = ILMetrics.groupSpacing
+        v.isHidden = true
+        return v
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILTempleViewModel) {
@@ -161,12 +337,7 @@ final class ILTempleViewController: BaseViewController {
         view.backgroundColor = ILColors.canvas
 
         navBar.onBack = { [weak self] in self?.backTappedSubject.send(()) }
-        navBar.usesTransparentButtons = true
-        headerBand.backgroundColor = ILColors.canvas.withAlphaComponent(0)
 
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.alwaysBounceVertical = true
-        scrollView.contentInsetAdjustmentBehavior = .never
         scrollView.delegate = self
         scrollView.addSubview(contentView)
 
@@ -180,8 +351,6 @@ final class ILTempleViewController: BaseViewController {
         setupFooterSection()
         setupStateViews()
 
-        bodyStack.axis = .vertical
-        bodyStack.alignment = .fill
         [
             statusCard, factsGrid,
             introEyebrow, biographyLabel, biographyToggle,
@@ -248,15 +417,9 @@ final class ILTempleViewController: BaseViewController {
     }
 
     private func setupStateViews() {
-        loadingView.isHidden = true
-
         retryButton.onTap = { [weak self] in self?.retryTappedSubject.send(()) }
-        errorStack.axis = .vertical
-        errorStack.alignment = .fill
-        errorStack.spacing = ILMetrics.groupSpacing
         errorStack.addArrangedSubview(errorStateView)
         errorStack.addArrangedSubview(retryButton)
-        errorStack.isHidden = true
     }
 
     private func setupButtonsRow() {
@@ -264,29 +427,16 @@ final class ILTempleViewController: BaseViewController {
         directionsButton.onTap = { [weak self] in self?.googleMapsTappedSubject.send(()) }
         offerButton.onTap = { [weak self] in self?.offerTappedSubject.send(()) }
 
-        pillsStack.axis = .horizontal
-        pillsStack.spacing = ILMetrics.rowSpacing
-        pillsStack.distribution = .fillEqually
         pillsStack.addArrangedSubview(followButton)
         pillsStack.addArrangedSubview(directionsButton)
         pillsStack.addArrangedSubview(offerButton)
     }
 
     private func setupIntroSection() {
-        biographyLabel.numberOfLines = 0
-        biographyLabel.clipsToBounds = true
-        styleLinkButton(biographyToggle)
         biographyToggle.addTarget(self, action: #selector(handleBiographyToggle), for: .touchUpInside)
     }
 
     private func setupOrgSection() {
-        orgCard.backgroundColor = ILColors.surface
-        orgCard.layer.cornerRadius = ILMetrics.radiusCardLarge
-        orgCard.layer.borderWidth = 1
-        orgCard.layer.borderColor = ILColors.border.cgColor
-
-        orgStack.axis = .vertical
-        orgStack.translatesAutoresizingMaskIntoConstraints = false
         orgCard.addSubview(orgStack)
         NSLayoutConstraint.activate([
             orgStack.leadingAnchor.constraint(equalTo: orgCard.leadingAnchor, constant: 16),
@@ -297,22 +447,9 @@ final class ILTempleViewController: BaseViewController {
     }
 
     private func setupArchitectureSection() {
-        architectureLabel.font = ILTypography.bodySmall
-        architectureLabel.numberOfLines = 0
-
-        highlightsStack.axis = .vertical
-        highlightsStack.spacing = ILMetrics.rowSpacing
     }
 
     private func setupRulesSection() {
-        rulesCard.backgroundColor = ILColors.featBackgroundStart
-        rulesCard.layer.cornerRadius = ILMetrics.radiusCardLarge
-        rulesCard.layer.borderWidth = 1
-        rulesCard.layer.borderColor = ILColors.featBorder.cgColor
-
-        rulesStack.axis = .vertical
-        rulesStack.spacing = 10
-        rulesStack.translatesAutoresizingMaskIntoConstraints = false
         rulesCard.addSubview(rulesStack)
         NSLayoutConstraint.activate([
             rulesStack.leadingAnchor.constraint(equalTo: rulesCard.leadingAnchor, constant: 16),
@@ -323,31 +460,16 @@ final class ILTempleViewController: BaseViewController {
     }
 
     private func setupEventsSection() {
-        eventsViewAllButton.setTitleColor(ILColors.link, for: .normal)
-        eventsViewAllButton.titleLabel?.font = ILTypography.chip
-        eventsViewAllButton.setTitle("temple.events.viewAll".localized, for: .normal)
         eventsViewAllButton.addTarget(self, action: #selector(handleEventsTapped), for: .touchUpInside)
 
-        eventsHeaderRow.axis = .horizontal
-        eventsHeaderRow.alignment = .lastBaseline
         eventsHeaderRow.addArrangedSubview(eventsEyebrow)
         eventsHeaderRow.addArrangedSubview(UIView())
         eventsHeaderRow.addArrangedSubview(eventsViewAllButton)
 
-        eventsEmptyView.layer.cornerRadius = ILMetrics.radiusCardSmall
-        let dashedBorder = CAShapeLayer()
-        dashedBorder.strokeColor = ILColors.borderStrong.cgColor
-        dashedBorder.fillColor = nil
-        dashedBorder.lineDashPattern = [4, 4]
-        eventsEmptyView.layer.addSublayer(dashedBorder)
         eventsEmptyView.addGestureRecognizer(
             UITapGestureRecognizer(target: self, action: #selector(handleEventsTapped))
         )
 
-        eventsEmptyLabel.font = ILTypography.bodySmall
-        eventsEmptyLabel.textColor = ILColors.inkTertiary
-        eventsEmptyLabel.numberOfLines = 0
-        eventsEmptyLabel.translatesAutoresizingMaskIntoConstraints = false
         eventsEmptyView.addSubview(eventsEmptyLabel)
         NSLayoutConstraint.activate([
             eventsEmptyLabel.leadingAnchor.constraint(equalTo: eventsEmptyView.leadingAnchor, constant: 16),
@@ -355,19 +477,9 @@ final class ILTempleViewController: BaseViewController {
             eventsEmptyLabel.topAnchor.constraint(equalTo: eventsEmptyView.topAnchor, constant: 14),
             eventsEmptyLabel.bottomAnchor.constraint(equalTo: eventsEmptyView.bottomAnchor, constant: -14)
         ])
-
-        sessionsStack.axis = .vertical
-        sessionsStack.spacing = ILMetrics.rowSpacing
     }
 
     private func setupLocationSection() {
-        mapCard.backgroundColor = ILColors.surface
-        mapCard.layer.cornerRadius = ILMetrics.radiusCardLarge
-        mapCard.layer.borderWidth = 1
-        mapCard.layer.borderColor = ILColors.border.cgColor
-        mapCard.clipsToBounds = true
-
-        mapPlaceholder.backgroundColor = ILColors.sunk2
         let mapCaption = UILabel()
         mapCaption.font = ILTypography.label
         mapCaption.textColor = ILColors.inkMuted
@@ -378,16 +490,6 @@ final class ILTempleViewController: BaseViewController {
             mapCaption.centerXAnchor.constraint(equalTo: mapPlaceholder.centerXAnchor),
             mapCaption.centerYAnchor.constraint(equalTo: mapPlaceholder.centerYAnchor)
         ])
-
-        addressLabel.font = ILTypography.body
-        addressLabel.textColor = ILColors.ink
-        addressLabel.numberOfLines = 0
-
-        regionLabel.font = ILTypography.label
-        regionLabel.textColor = ILColors.inkTertiary
-
-        coordinateLabel.font = ILTypography.label
-        coordinateLabel.textColor = ILColors.inkFaint
 
         googleMapsButton.onTap = { [weak self] in self?.googleMapsTappedSubject.send(()) }
         appleMapsButton.onTap = { [weak self] in self?.appleMapsTappedSubject.send(()) }
@@ -420,13 +522,6 @@ final class ILTempleViewController: BaseViewController {
             mapDetailStack.bottomAnchor.constraint(equalTo: mapCard.bottomAnchor, constant: -16)
         ])
 
-        contactsCard.backgroundColor = ILColors.surface
-        contactsCard.layer.cornerRadius = ILMetrics.radiusCardLarge
-        contactsCard.layer.borderWidth = 1
-        contactsCard.layer.borderColor = ILColors.border.cgColor
-
-        contactsStack.axis = .vertical
-        contactsStack.translatesAutoresizingMaskIntoConstraints = false
         contactsCard.addSubview(contactsStack)
         NSLayoutConstraint.activate([
             contactsStack.leadingAnchor.constraint(equalTo: contactsCard.leadingAnchor, constant: 16),
@@ -437,21 +532,6 @@ final class ILTempleViewController: BaseViewController {
     }
 
     private func setupFooterSection() {
-        updatedLabel.font = ILTypography.label
-        updatedLabel.textColor = ILColors.inkFaint
-
-        reportIssueLabel.font = ILTypography.label
-        reportIssueLabel.textColor = ILColors.inkFaint
-        reportIssueLabel.text = "temple.footer.reportIssue".localized
-
-        footerDotLabel.font = ILTypography.label
-        footerDotLabel.textColor = ILColors.inkFaint
-        footerDotLabel.text = "·"
-
-        footerStack.axis = .horizontal
-        footerStack.spacing = 6
-        footerStack.alignment = .center
-        footerStack.distribution = .equalCentering
         [UIView(), updatedLabel, footerDotLabel, reportIssueLabel, UIView()].forEach { footerStack.addArrangedSubview($0) }
     }
 

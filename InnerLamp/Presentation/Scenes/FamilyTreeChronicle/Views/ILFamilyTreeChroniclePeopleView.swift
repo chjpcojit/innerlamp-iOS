@@ -20,13 +20,16 @@ final class ILFamilyTreeChroniclePeopleView: UIView {
     // MARK: - Properties
     var onPick: ((String) -> Void)?
 
-    private let stack = UIStackView()
+    private lazy var stack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
         super.init(frame: frame)
-        stack.axis = .vertical
-        stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: topAnchor),

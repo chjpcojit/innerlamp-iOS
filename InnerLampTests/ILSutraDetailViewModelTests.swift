@@ -22,6 +22,7 @@ final class ILSutraDetailViewModelTests: XCTestCase {
     private var chantTappedSubject: PassthroughSubject<Void, Never>!
     private var playTappedSubject: PassthroughSubject<Void, Never>!
     private var chapterTappedSubject: PassthroughSubject<Void, Never>!
+    private var linkTappedSubject: PassthroughSubject<URL, Never>!
 
     override func setUp() {
         super.setUp()
@@ -35,6 +36,7 @@ final class ILSutraDetailViewModelTests: XCTestCase {
         chantTappedSubject = PassthroughSubject<Void, Never>()
         playTappedSubject = PassthroughSubject<Void, Never>()
         chapterTappedSubject = PassthroughSubject<Void, Never>()
+        linkTappedSubject = PassthroughSubject<URL, Never>()
 
         // `transform` binds the inputs, so it must run exactly once per ViewModel.
         output = sut.transform(input: ILSutraDetailViewModel.Input(
@@ -43,13 +45,15 @@ final class ILSutraDetailViewModelTests: XCTestCase {
             downloadTapped: downloadTappedSubject.eraseToAnyPublisher(),
             chantTapped: chantTappedSubject.eraseToAnyPublisher(),
             playTapped: playTappedSubject.eraseToAnyPublisher(),
-            chapterTapped: chapterTappedSubject.eraseToAnyPublisher()
+            chapterTapped: chapterTappedSubject.eraseToAnyPublisher(),
+            linkTapped: linkTappedSubject.eraseToAnyPublisher()
         ))
     }
 
     override func tearDown() {
         cancellables = nil
         output = nil
+        linkTappedSubject = nil
         chapterTappedSubject = nil
         playTappedSubject = nil
         chantTappedSubject = nil
@@ -103,17 +107,66 @@ final class ILSutraDetailViewModelTests: XCTestCase {
         XCTAssertEqual(state?.downloadButtonTitle, "sutraDetail.download".localized)
     }
 
-    func test_viewDidLoad_showsTranslatorSourceAndLicense() {
+    func test_viewDidLoad_showsTranslatorSourceAndLicenseInTranslationSection() {
+        let state = loadState()
+
+        let section = state?.infoSections.first { $0.title == "sutraDetail.section.translation".localized }
+        XCTAssertEqual(
+            section?.rows.map(\.label),
+            [
+                "sutraDetail.translation.translator".localized,
+                "sutraDetail.translation.source".localized,
+                "sutraDetail.translation.sourceLink".localized,
+                "sutraDetail.translation.license".localized
+            ]
+        )
+        XCTAssertEqual(
+            section?.rows.map(\.value),
+            ["Thích Minh Châu", "SuttaCentral", "https://suttacentral.net/snp1.8", "CC0 1.0"]
+        )
+        XCTAssertEqual(section?.rows[2].url, URL(string: "https://suttacentral.net/snp1.8"))
+    }
+
+    func test_emptySummary_hidesSummarySection() {
+        let state = loadState()
+
+        XCTAssertFalse(state?.infoSections.contains { $0.title == "sutraDetail.section.summary".localized } ?? true)
+    }
+
+    func test_allDetailFields_buildSectionsInOrder() {
+        var sutra = ILSutraFixtures.detail()
+        sutra.summary = "Giới thiệu ngắn"
+        sutra.author = "Tác giả A"
+        sutra.hanTranslator = "Nghĩa Tịnh"
+        sutra.hanTranslationYear = 703
+        sutra.referenceNote = "Ghi chú"
+        sutra.deities = [ILSutraDetailDeityEntity(id: "d", name: "Thích Ca", role: .speaker)]
+        sutra.alternateTitles = [ILSutraDetailAlternateTitleEntity(language: "sa", text: "Sūtra")]
+        sutra.licenseNote = "Chưa rõ"
+        sutra.isUnreviewed = true
+        mockUseCase.sutra = sutra
         let state = loadState()
 
         XCTAssertEqual(
-            state?.translatorText,
+            state?.infoSections.map(\.title),
             [
-                String(format: "sutraDetail.translator".localized, "Thích Minh Châu"),
-                String(format: "sutraDetail.source".localized, "SuttaCentral"),
-                String(format: "sutraDetail.license".localized, "CC0 1.0")
-            ].joined(separator: "\n")
+                "sutraDetail.section.summary".localized,
+                "sutraDetail.section.info".localized,
+                "sutraDetail.section.translation".localized,
+                "sutraDetail.section.notice".localized
+            ]
         )
+        let info = state?.infoSections[1].rows
+        XCTAssertEqual(info?.map(\.value), ["Sūtra", "Tác giả A", "Nghĩa Tịnh · 703", "Ghi chú", "Thích Ca"])
+        XCTAssertEqual(info?.first?.label, String(format: "sutraDetail.info.altTitle".localized, "sutraDetail.language.sa".localized))
+        XCTAssertEqual(info?.last?.label, "sutraDetail.deityRole.speaker".localized)
+    }
+
+    func test_linkTapped_firesOpenLinkNavigationEvent() {
+        let event = firstEvent()
+        let url = URL(string: "https://example.com")!
+        linkTappedSubject.send(url)
+        XCTAssertEqual(event(), .openLink(url))
     }
 
     func test_tags_listDailyChantThenPurposes() {
@@ -166,7 +219,7 @@ final class ILSutraDetailViewModelTests: XCTestCase {
         XCTAssertEqual(state?.kicker, "")
         XCTAssertEqual(state?.metaText, String(format: "sutraDetail.lineCountFormat".localized, 9))
         XCTAssertEqual(state?.descriptionText, "")
-        XCTAssertEqual(state?.translatorText, "")
+        XCTAssertEqual(state?.infoSections, [])
         XCTAssertEqual(state?.tags, [])
     }
 

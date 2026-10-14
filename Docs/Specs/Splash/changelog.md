@@ -4,6 +4,18 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v1.6 (2026-10-11)
+
+- `requirements.md`: no session + onboarding completed now routes to SignUp
+  (was Login). Failed session refresh still routes to Login.
+- `design.md`: `.goToLogin` → `.goToSignup`; coordinator delegate
+  `splashDidRequestSignup` → `showSignUp(asRoot: true)` (replaces the stack and
+  hides the back button, since nothing is behind it).
+- `tasks.md`: routing item and test description updated.
+- `SRS.md`: FR-004 and its scenario updated.
+- Reason: user decision — Onboarding only on the first launch after install;
+  later launches without a session land on SignUp.
+
 ## v1.5 (2026-10-10)
 
 - `requirements.md`: the fresh-install ⚠️ is resolved — Onboarding on first

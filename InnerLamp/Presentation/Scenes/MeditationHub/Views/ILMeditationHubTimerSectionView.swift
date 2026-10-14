@@ -16,7 +16,13 @@ final class ILMeditationHubTimerSectionView: UIView {
 
     // MARK: - UI Elements
     private lazy var eyebrow = ILSectionEyebrowView()
-    private let rowsStack = UIStackView()
+    private lazy var rowsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.alignment = .fill
+        stack.spacing = ILMetrics.rowSpacing
+        return stack
+    }()
     private let customButton = DashedOutlineButton()
 
     // MARK: - Initializer
@@ -44,10 +50,6 @@ final class ILMeditationHubTimerSectionView: UIView {
         contentStack.spacing = ILMetrics.rowSpacing
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(contentStack)
-
-        rowsStack.axis = .vertical
-        rowsStack.alignment = .fill
-        rowsStack.spacing = ILMetrics.rowSpacing
 
         customButton.onTap = { [weak self] in self?.onCustomTimerTapped?() }
 
@@ -87,11 +89,41 @@ private final class PresetRowView: UIControl {
 
     var onTap: (() -> Void)?
 
-    private let minutesLabel = UILabel()
-    private let minutesUnitLabel = UILabel()
-    private let nameLabel = UILabel()
-    private let subtitleLabel = UILabel()
-    private let chevronLabel = UILabel()
+    private lazy var minutesLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.serifNumber
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var minutesUnitLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.microLabel
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var nameLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.serifCardTitle
+        label.numberOfLines = 1
+        return label
+    }()
+
+    private lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.numberOfLines = 2
+        return label
+    }()
+
+    private lazy var chevronLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.chevron
+        label.text = "›"
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        return label
+    }()
 
     init(model: ILMeditationHubPresetModel) {
         super.init(frame: .zero)
@@ -119,11 +151,6 @@ private final class PresetRowView: UIControl {
         circle.layer.borderWidth = 1
         circle.translatesAutoresizingMaskIntoConstraints = false
 
-        minutesLabel.font = ILTypography.serifNumber
-        minutesLabel.textAlignment = .center
-        minutesUnitLabel.font = ILTypography.microLabel
-        minutesUnitLabel.textAlignment = .center
-
         let circleTextStack = UIStackView(arrangedSubviews: [minutesLabel, minutesUnitLabel])
         circleTextStack.axis = .vertical
         circleTextStack.alignment = .center
@@ -131,19 +158,10 @@ private final class PresetRowView: UIControl {
         circleTextStack.translatesAutoresizingMaskIntoConstraints = false
         circle.addSubview(circleTextStack)
 
-        nameLabel.font = ILTypography.serifCardTitle
-        nameLabel.numberOfLines = 1
-        subtitleLabel.font = ILTypography.subhead
-        subtitleLabel.numberOfLines = 2
-
         let textStack = UIStackView(arrangedSubviews: [nameLabel, subtitleLabel])
         textStack.axis = .vertical
         textStack.alignment = .leading
         textStack.spacing = 3
-
-        chevronLabel.font = ILTypography.chevron
-        chevronLabel.text = "›"
-        chevronLabel.setContentHuggingPriority(.required, for: .horizontal)
 
         let contentStack = UIStackView(arrangedSubviews: [circle, textStack, chevronLabel])
         contentStack.axis = .horizontal
@@ -216,7 +234,14 @@ private final class DashedOutlineButton: UIControl {
 
     var onTap: (() -> Void)?
 
-    private let titleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.button
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
     private let borderLayer = CAShapeLayer()
 
     override init(frame: CGRect) {
@@ -242,9 +267,6 @@ private final class DashedOutlineButton: UIControl {
         borderLayer.lineDashPattern = [5, 4]
         layer.addSublayer(borderLayer)
 
-        titleLabel.font = ILTypography.button
-        titleLabel.textAlignment = .center
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
 
         NSLayoutConstraint.activate([

@@ -23,7 +23,13 @@ final class ILEventsListItemView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let dateTile = UIView()
+    private lazy var dateTile: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = ILMetrics.radiusIconTile
+        view.clipsToBounds = true
+        return view
+    }()
 
     private lazy var dayLabel: UILabel = {
         let label = UILabel()
@@ -81,10 +87,6 @@ final class ILEventsListItemView: UIControl {
         layer.cornerRadius = ILMetrics.radiusCardSmall + 2
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
-
-        dateTile.translatesAutoresizingMaskIntoConstraints = false
-        dateTile.layer.cornerRadius = ILMetrics.radiusIconTile
-        dateTile.clipsToBounds = true
 
         let dateStack = UIStackView(arrangedSubviews: [dayLabel, monthLabel])
         dateStack.axis = .vertical

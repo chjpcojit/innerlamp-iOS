@@ -771,13 +771,16 @@ private extension ILFamilyTreeDetailSheetView {
 
     /// Small pill with a text label (status / role).
     final class PillLabel: UIView {
-        private let label = UILabel()
+        private lazy var label: UILabel = {
+            let label = UILabel()
+            label.font = ILTypography.captionMedium
+            label.translatesAutoresizingMaskIntoConstraints = false
+            return label
+        }()
 
         init() {
             super.init(frame: .zero)
             layer.cornerRadius = 10
-            label.font = ILTypography.captionMedium
-            label.translatesAutoresizingMaskIntoConstraints = false
             addSubview(label)
             NSLayoutConstraint.activate([
                 label.topAnchor.constraint(equalTo: topAnchor, constant: 2),

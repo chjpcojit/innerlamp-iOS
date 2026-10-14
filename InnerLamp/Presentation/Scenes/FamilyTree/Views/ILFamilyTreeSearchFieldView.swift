@@ -29,8 +29,25 @@ final class ILFamilyTreeSearchFieldView: UIView, UITextFieldDelegate {
     }
 
     // MARK: - UI Elements
-    private let textField = UITextField()
-    private let countLabel = UILabel()
+    private lazy var textField: UITextField = {
+        let field = UITextField()
+        field.font = ILTypography.fieldValue
+        field.textColor = Tree.ink
+        field.tintColor = Tree.selected
+        field.returnKeyType = .search
+        field.autocorrectionType = .no
+        return field
+    }()
+
+    private lazy var countLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subheadMedium
+        label.textColor = Tree.inkTertiary
+        label.isHidden = true
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return label
+    }()
 
     // MARK: - Initializer
     init(placeholder: String) {
@@ -50,23 +67,12 @@ final class ILFamilyTreeSearchFieldView: UIView, UITextFieldDelegate {
         layer.borderColor = Tree.border.cgColor
         accessibilityIdentifier = "familyTree.search.field"
 
-        textField.font = ILTypography.fieldValue
-        textField.textColor = Tree.ink
-        textField.tintColor = Tree.selected
-        textField.returnKeyType = .search
-        textField.autocorrectionType = .no
         textField.attributedPlaceholder = NSAttributedString(
             string: placeholder,
             attributes: [.font: ILTypography.fieldValue, .foregroundColor: Tree.searchPlaceholder]
         )
         textField.delegate = self
         textField.addTarget(self, action: #selector(handleEditingChanged), for: .editingChanged)
-
-        countLabel.font = ILTypography.subheadMedium
-        countLabel.textColor = Tree.inkTertiary
-        countLabel.isHidden = true
-        countLabel.setContentHuggingPriority(.required, for: .horizontal)
-        countLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         let stack = UIStackView(arrangedSubviews: [textField, countLabel])
         stack.axis = .horizontal

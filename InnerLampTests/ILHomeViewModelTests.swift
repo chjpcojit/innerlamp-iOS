@@ -23,6 +23,7 @@ final class ILHomeViewModelTests: XCTestCase {
     private var photosTappedSubject: PassthroughSubject<Void, Never>!
     private var bellTappedSubject: PassthroughSubject<Void, Never>!
     private var eventsTappedSubject: PassthroughSubject<Void, Never>!
+    private var eventTappedSubject: PassthroughSubject<String, Never>!
     private var articleTappedSubject: PassthroughSubject<String, Never>!
     private var articlesViewAllTappedSubject: PassthroughSubject<Void, Never>!
     private var templeTappedSubject: PassthroughSubject<String, Never>!
@@ -49,6 +50,7 @@ final class ILHomeViewModelTests: XCTestCase {
         photosTappedSubject = PassthroughSubject<Void, Never>()
         bellTappedSubject = PassthroughSubject<Void, Never>()
         eventsTappedSubject = PassthroughSubject<Void, Never>()
+        eventTappedSubject = PassthroughSubject<String, Never>()
         articleTappedSubject = PassthroughSubject<String, Never>()
         articlesViewAllTappedSubject = PassthroughSubject<Void, Never>()
         templeTappedSubject = PassthroughSubject<String, Never>()
@@ -70,6 +72,7 @@ final class ILHomeViewModelTests: XCTestCase {
         photosTappedSubject = nil
         bellTappedSubject = nil
         eventsTappedSubject = nil
+        eventTappedSubject = nil
         articleTappedSubject = nil
         articlesViewAllTappedSubject = nil
         templeTappedSubject = nil
@@ -94,6 +97,7 @@ final class ILHomeViewModelTests: XCTestCase {
             photosTapped: photosTappedSubject.eraseToAnyPublisher(),
             bellTapped: bellTappedSubject.eraseToAnyPublisher(),
             eventsTapped: eventsTappedSubject.eraseToAnyPublisher(),
+            eventTapped: eventTappedSubject.eraseToAnyPublisher(),
             articleTapped: articleTappedSubject.eraseToAnyPublisher(),
             articlesViewAllTapped: articlesViewAllTappedSubject.eraseToAnyPublisher(),
             templeTapped: templeTappedSubject.eraseToAnyPublisher(),
@@ -484,6 +488,28 @@ final class ILHomeViewModelTests: XCTestCase {
         eventsTappedSubject.send(())
 
         XCTAssertEqual(receivedEvent, .openFestivals)
+    }
+
+    func test_eventTapped_firesOpenFestivalDetailNavigationEvent() {
+        let day = Date(timeIntervalSince1970: 0)
+        mockUseCase.stubEntity.eventMonths = [
+            ILHomeEventMonthEntity(id: "1970-01", monthLabel: "Tháng 1", events: [
+                ILHomeEventItemEntity(
+                    id: "vu-lan-1970-01-01", date: day, title: "Vu Lan", lunarLabel: "Rằm · Tháng Bảy",
+                    tone: .gold, eventCode: "vu-lan"
+                )
+            ])
+        ]
+        sut = ILHomeViewModel(useCase: mockUseCase, calendarImageUseCase: mockCalendarImage)
+        _ = sut.transform(input: makeInput())
+        var receivedEvent: ILHomeNavEvent?
+        sut.navigationEventPublisher
+            .sink { receivedEvent = $0 }
+            .store(in: &cancellables)
+
+        eventTappedSubject.send("vu-lan-1970-01-01")
+
+        XCTAssertEqual(receivedEvent, .openFestivalDetail(code: "vu-lan", date: day))
     }
 
     func test_articleTapped_firesOpenArticleNavigationEvent() {

@@ -12,14 +12,52 @@ import UIKit
 final class ILTempleStatusCardView: UIView {
 
     // MARK: - UI Elements
-    private let statusDot = UIView()
-    private let statusLabel = UILabel()
-    private let noteLabel = UILabel()
-    private let distanceLabel = UILabel()
-    private let statusRow = UIStackView()
+    private lazy var statusDot: UIView = {
+        let v = UIView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.layer.cornerRadius = 4
+        return v
+    }()
+    private lazy var statusLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmallMedium
+        v.setContentHuggingPriority(.required, for: .horizontal)
+        return v
+    }()
+    private lazy var noteLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmall
+        v.textColor = ILColors.inkTertiary
+        v.setContentHuggingPriority(.required, for: .horizontal)
+        return v
+    }()
+    private lazy var distanceLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.label
+        v.textColor = ILColors.inkTertiary
+        v.setContentHuggingPriority(.required, for: .horizontal)
+        v.textAlignment = .right
+        return v
+    }()
+    private lazy var statusRow: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = 8
+        v.alignment = .center
+        return v
+    }()
 
-    private let divider = UIView()
-    private let hoursStack = UIStackView()
+    private lazy var divider: UIView = {
+        let v = UIView()
+        v.backgroundColor = ILColors.borderSoft
+        return v
+    }()
+    private lazy var hoursStack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = 8
+        return v
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -55,38 +93,16 @@ final class ILTempleStatusCardView: UIView {
         layer.borderWidth = 1
         layer.borderColor = ILColors.border.cgColor
 
-        statusDot.translatesAutoresizingMaskIntoConstraints = false
-        statusDot.layer.cornerRadius = 4
         NSLayoutConstraint.activate([
             statusDot.widthAnchor.constraint(equalToConstant: 8),
             statusDot.heightAnchor.constraint(equalToConstant: 8)
         ])
 
-        statusLabel.font = ILTypography.bodySmallMedium
-        statusLabel.setContentHuggingPriority(.required, for: .horizontal)
-
-        noteLabel.font = ILTypography.bodySmall
-        noteLabel.textColor = ILColors.inkTertiary
-        noteLabel.setContentHuggingPriority(.required, for: .horizontal)
-
-        distanceLabel.font = ILTypography.label
-        distanceLabel.textColor = ILColors.inkTertiary
-        distanceLabel.setContentHuggingPriority(.required, for: .horizontal)
-        distanceLabel.textAlignment = .right
-
-        statusRow.axis = .horizontal
-        statusRow.spacing = 8
-        statusRow.alignment = .center
         statusRow.addArrangedSubview(statusDot)
         statusRow.addArrangedSubview(statusLabel)
         statusRow.addArrangedSubview(noteLabel)
         statusRow.addArrangedSubview(UIView())
         statusRow.addArrangedSubview(distanceLabel)
-
-        divider.backgroundColor = ILColors.borderSoft
-
-        hoursStack.axis = .vertical
-        hoursStack.spacing = 8
 
         let contentStack = UIStackView(arrangedSubviews: [statusRow, divider, hoursStack])
         contentStack.axis = .vertical

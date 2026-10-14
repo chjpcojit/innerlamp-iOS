@@ -18,7 +18,16 @@ final class ILLunarDayDetailDirectionsView: UIView {
     }
 
     // MARK: - UI Elements
-    private let columnsStack = UIStackView()
+    private lazy var columnsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.distribution = .fillEqually
+        stack.alignment = .fill
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+
     private var cards: [UIView] = []
 
     // MARK: - Initializer
@@ -33,11 +42,6 @@ final class ILLunarDayDetailDirectionsView: UIView {
 
     private func setupViews() {
         translatesAutoresizingMaskIntoConstraints = false
-        columnsStack.axis = .horizontal
-        columnsStack.distribution = .fillEqually
-        columnsStack.alignment = .fill
-        columnsStack.spacing = 8
-        columnsStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(columnsStack)
 
         NSLayoutConstraint.activate([

@@ -15,11 +15,46 @@ final class ILFamilyTreeNodeView: UIControl {
     let memberID: String
     var onTap: (() -> Void)?
 
-    private let medallion = ILFamilyTreeMedallionView()
+    private lazy var medallion: ILFamilyTreeMedallionView = {
+        let view = ILFamilyTreeMedallionView()
+        return view
+    }()
+
     private let haloLayer = CAGradientLayer()
-    private let livingDot = UIView()
-    private let nameLabel = HaloLabel()
-    private let metaLabel = HaloLabel()
+
+    private lazy var livingDot: UIView = {
+        let view = UIView()
+        view.backgroundColor = ILColors.FamilyTree.forestLight
+        view.layer.cornerRadius = ILMetrics.FamilyTree.livingDotSize / 2
+        view.layer.borderColor = ILColors.FamilyTree.cream.cgColor
+        view.layer.borderWidth = 2
+        view.isUserInteractionEnabled = false
+        return view
+    }()
+
+    private lazy var nameLabel: HaloLabel = {
+        let label = HaloLabel()
+        label.font = ILTypography.treeNodeName
+        label.textAlignment = .center
+        label.padding = ILMetrics.FamilyTree.labelHaloPadding
+        label.haloColor = ILColors.FamilyTree.labelHalo
+        label.blurs = ILMetrics.FamilyTree.labelHaloBlurs
+        label.isUserInteractionEnabled = false
+        label.backgroundColor = .clear
+        return label
+    }()
+
+    private lazy var metaLabel: HaloLabel = {
+        let label = HaloLabel()
+        label.textAlignment = .center
+        label.padding = ILMetrics.FamilyTree.labelHaloPadding
+        label.haloColor = ILColors.FamilyTree.labelHalo
+        label.blurs = ILMetrics.FamilyTree.labelHaloBlurs
+        label.isUserInteractionEnabled = false
+        label.backgroundColor = .clear
+        return label
+    }()
+
     private var endedMarker: UIView?
     private var mePill: UILabel?
 
@@ -81,13 +116,8 @@ final class ILFamilyTreeNodeView: UIControl {
         }
 
         if model.look.isLiving {
-            livingDot.backgroundColor = Tree.forestLight
-            livingDot.layer.cornerRadius = metrics.livingDotSize / 2
-            livingDot.layer.borderColor = Tree.cream.cgColor
-            livingDot.layer.borderWidth = 2
             livingDot.frame = CGRect(x: (width - metrics.livingDotSize) / 2, y: height - 3,
                                      width: metrics.livingDotSize, height: metrics.livingDotSize)
-            livingDot.isUserInteractionEnabled = false
             addSubview(livingDot)
         }
 
@@ -137,20 +167,10 @@ final class ILFamilyTreeNodeView: UIControl {
         let x = (width - labelWidth) / 2 - pad
 
         nameLabel.text = model.name
-        nameLabel.font = ILTypography.treeNodeName
-        nameLabel.textAlignment = .center
         metaLabel.attributedText = NSAttributedString(
             string: model.meta,
             attributes: [.font: ILTypography.treeNodeMeta, .foregroundColor: Tree.inkTertiary, .kern: 0.72]
         )
-        metaLabel.textAlignment = .center
-        [nameLabel, metaLabel].forEach {
-            $0.padding = pad
-            $0.haloColor = Tree.labelHalo
-            $0.blurs = metrics.labelHaloBlurs
-            $0.isUserInteractionEnabled = false
-            $0.backgroundColor = .clear
-        }
 
         let nameTop = height + metrics.nodeLabelGap
         let nameHeight = ceil(ILTypography.treeNodeName.lineHeight)

@@ -352,6 +352,9 @@ public enum ILColors {
     /// Viền chip đang chọn trên nền immersive (goldBright 50%).
     public static let medGoldChipBorder = goldBright.withAlphaComponent(0.50)
 
+    /// Nền thẻ mã QR chuyển khoản: luôn trắng ở cả light/dark để app ngân hàng quét được.
+    public static let qrBackground = UIColor.white
+
     /// Quầng sáng quanh pad khi gõ mõ / thỉnh chuông (goldBright 32%).
     public static let medGoldHalo = goldBright.withAlphaComponent(0.32)
 
@@ -659,6 +662,10 @@ public enum ILColors {
         public static let closeGlyph = ILColors.ink.withAlphaComponent(0.38)
         /// Sheet grabber + dialog secondary pill border (alpha 0.14 of `ink`)
         public static let hairline = ILColors.ink.withAlphaComponent(0.14)
+        /// Dimming layer behind the confirm dialog (alpha 0.40 of `scrim`)
+        public static let scrimConfirm = ILColors.scrim.withAlphaComponent(0.40)
+        /// Pressed state of a confirm dialog cell (alpha 0.04 of `ink`)
+        public static let confirmCellPressed = ILColors.ink.withAlphaComponent(0.04)
         /// Dialog secondary pill label (alpha 0.62 of `ink`)
         public static let secondaryLabel = ILColors.ink.withAlphaComponent(0.62)
         /// Shadow color of the light toast (`ink`, alpha applied by `ILMetrics.shadowToast`)
@@ -772,6 +779,47 @@ public enum ILColors {
         public static let oledBackground = asset("ILReaderOLEDBackground")
         public static let oledInk = asset("ILReaderOLEDInk")
         public static let oledPanel = asset("ILReaderOLEDPanel")
+    }
+
+    // MARK: - Lamp artwork (LightLamp)
+    /// Fixed palette of the lamp illustrations (oil lamp, lotus candle, floating lantern). They are
+    /// artwork, so — like the Gia phả tree — the colors do not change with dark mode.
+    public enum Lamp {
+        /// Outer flame (design `#E6A94E`), tints `ILIcons.tabLampFlame`
+        public static let flameOuter = ILColors.asset("ILLampFlameOuter")
+        /// Inner flame core (design `#F3C673`), tints `ILIcons.tabLampCore`
+        public static let flameCore = ILColors.asset("ILLampFlameCore")
+
+        public static let oilBaseTop = ILColors.asset("ILLampOilBaseTop")
+        public static let oilBaseBottom = ILColors.asset("ILLampOilBaseBottom")
+        public static let oilStemLight = ILColors.asset("ILLampOilStemLight")
+        public static let oilStemMid = ILColors.asset("ILLampOilStemMid")
+        public static let oilStemDark = ILColors.asset("ILLampOilStemDark")
+        public static let oilBowlTop = ILColors.asset("ILLampOilBowlTop")
+        public static let oilRim = ILColors.asset("ILLampOilRim")
+
+        public static let lotusBaseTop = ILColors.asset("ILLampLotusBaseTop")
+        public static let lotusBaseBottom = ILColors.asset("ILLampLotusBaseBottom")
+        public static let lotusPetalTop = ILColors.asset("ILLampLotusPetalTop")
+        public static let lotusPetalBottom = ILColors.asset("ILLampLotusPetalBottom")
+        public static let lotusTop = ILColors.asset("ILLampLotusTop")
+
+        public static let floatPetalTop = ILColors.asset("ILLampFloatPetalTop")
+        public static let floatPetalBottom = ILColors.asset("ILLampFloatPetalBottom")
+        public static let floatBoatTop = ILColors.asset("ILLampFloatBoatTop")
+        public static let floatBoatBottom = ILColors.asset("ILLampFloatBoatBottom")
+
+        /// Water ripples under the floating lantern (alpha .45 / .25 of `green`)
+        public static let rippleInner = ILColors.green.withAlphaComponent(0.45)
+        public static let rippleOuter = ILColors.green.withAlphaComponent(0.25)
+        /// Flame halo behind the lamp (alpha .50 / .14 of `goldBright`)
+        public static let haloCore = ILColors.goldBright.withAlphaComponent(0.50)
+        public static let haloMid = ILColors.goldBright.withAlphaComponent(0.14)
+        /// Warm wash over the hero stage once lit (alpha .40 / .12 of design `#E6A94E` / `#D9963C`)
+        public static let stageWarmCore = flameOuter.withAlphaComponent(0.40)
+        public static let stageWarmMid = ILColors.goldBright.withAlphaComponent(0.12)
+        /// Garden card: "Tại chùa" chip fill (alpha .14 of `gold`)
+        public static let templeChipFill = ILColors.gold.withAlphaComponent(0.14)
     }
 }
 

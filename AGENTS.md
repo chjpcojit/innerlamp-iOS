@@ -2,7 +2,7 @@
 
 This document serves as the specification & guidelines for AI Agents reading, maintaining, and building new features in the **InnerLamp** project.
 
-**Language rule**: All documentation and code comments must be written in **English**, regardless of the language used in the conversation with the user. **Sole exception**: `Docs/Tech-Debt/` and `Docs/Assumptions/` entries are bilingual English + Vietnamese (see Section 10).
+**Language rule**: All Markdown documentation must be written in **English**, regardless of the language used in the conversation with the user. **Exceptions (bilingual English + Vietnamese)**: (1) all **code comments** (see Section 2, item 6); (2) `Docs/Tech-Debt/` and `Docs/Assumptions/` entries (see Section 10).
 
 ---
 
@@ -41,7 +41,12 @@ This document serves as the specification & guidelines for AI Agents reading, ma
 3. **Modular by Feature**: Group by feature rather than grouping everything by data type (avoid splitting controller/model/viewmodel into scattered global folders).
 4. **No UIKit import in ViewModel/Domain**: [`BaseViewModel`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Core/Base/BaseViewModel.swift) and the Domain Layer may only `import Foundation`, to stay independent and easily unit-testable.
 5. **Declarative AI Comments**: Prefer AI-directive comments, e.g.: `// @ai: write unit test for this function`.
-6. **English-only documentation & comments**: All Markdown docs and in-code comments must be written in English, even when the request or conversation is in another language (except the bilingual entries in Section 10).
+6. **English docs, bilingual code comments**: All Markdown docs must be written in English, even when the request or conversation is in another language (except the bilingual entries in Section 10). Every in-code comment (`//`, `///`, `/* */`) is **bilingual English + Vietnamese**: an `EN:` line followed by a `VI:` line carrying the same meaning, e.g.:
+   ```swift
+   /// EN: Sticky header band pinned above the scroll view.
+   /// VI: Dải header dán cố định phía trên scroll view.
+   ```
+   Short trailing comments may use one line `// EN: ... — VI: ...`. Directive comments (`// @ai: ...`, `// swiftlint:disable`, `// TODO:`/`// FIXME:` tags) and `// MARK:` section names stay as-is. New or edited comments follow this rule; do not mass-rewrite untouched existing comments (see 9.3).
 
 ---
 
@@ -145,9 +150,11 @@ final class SampleViewModel: ViewModelType {
   - Converts DTOs (from Network/Storage) into Domain Entities before returning them to the UseCase.
 
 ### 4.5. Design System (`UI Tokens & Components`)
+- **Use the `ui-builder` skill for all UI work** — creating a new screen/view **and** editing an existing one (ViewController, `Views/*`, layout, styling). Invoke it (or read `.claude/skills/ui-builder/SKILL.md` + the relevant `references/*.md`) *before* writing UI code, in both work lanes (9.5). Non-negotiable parts to check before finishing: every subview is a `private lazy var` configured in its own initializer closure (`setupViews()` only adds/wires — `references/mvvm_pattern.md` §Subview declaration rule); standalone UI pieces are split into `Views/` files or promoted to `DesignSystem/Components/` (`references/naming_conventions.md` §3); no hardcoded text/font/color; Combine Input/Output with no `.receive(on:)`.
 - No hardcoding in any screen/view: font size must come from [`ILTypography`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Tokens/ILTypography.swift) presets, color must come from [`ILColors`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Tokens/ILColors.swift) constants (itself only loads from `Assets.xcassets/Colors`), spacing/radius/shadow must come from [`ILMetrics`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Tokens/ILMetrics.swift), and icons/images must come from [`ILIcons`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Tokens/ILIcons.swift) constants (itself the only place that calls `UIImage(named:)`, loading from `Assets.xcassets/Icons`).
 - Icons: never call `UIImage(named:)` in a screen/view, and never set the rendering mode at the call site — it is baked into the token (template icons are tinted with an `ILColors` constant via `tintColor`; full-color illustrations render as-is). Don't redraw an icon with `CAShapeLayer`/`UIBezierPath` when an asset exists.
 - If no existing preset/constant fits, add a new one to the token file itself (a new color asset under `Assets.xcassets/Colors` for a new base color, or a new `.imageset` under `Assets.xcassets/Icons` + an `ILIcons` constant for a new icon) — never inline a one-off value in a screen.
+- **Screen header — mandatory pattern** (recurring mistake: the user has seen headers built wrong many times). A sticky header is always `ILStickyHeaderBand` + `ILNavBar` (pushed/sub screens, `showBack: true`) or `ILStickyHeaderBand` + a `displayMedium` title label (tab-root screens, like Library) — never `ILNavBar` or a title inside a plain `UIView` with `ILColors.canvas` and a hand-made divider. The scroll view/collection view is pinned to `view.topAnchor` (runs under the band), the band is `bind(to:)` the scroll view, `contentInsetAdjustmentBehavior = .never`, and the band height is applied as `contentInset.top` in `viewDidLayoutSubviews` (copy `applyHeaderInset()` from `ILSutrasViewController` / `ILDeitiesViewController`). Extra header rows (chips, search) go **inside** the band. Before writing any header, open `ILLibraryViewController` or `ILSutrasViewController` and match it.
 - Prefer assembling new screens from the 9 existing components in [`Presentation/Common/DesignSystem/Components`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Components/) before building a new custom view.
 - Full token reference, values, and component usage examples: [`Tokens/DESIGN_SYSTEM.md`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Presentation/Common/DesignSystem/Tokens/DESIGN_SYSTEM.md) — read it when building or reviewing any UI.
 
@@ -264,6 +271,8 @@ State the lane in your first response of a task. The documentation chain is size
 | **Docs required** | None beyond section 10 — still record every Assumption and Tech Debt you create | SRS (with Gherkin acceptance criteria), `requirements.md` / `design.md` / `tasks.md` + `changelog.md`, then OKF concepts |
 | **Never skipped** | Section 10 records, build verification, the final-response list of new or changed Assumption/Tech Debt entries | Same, plus every unanswered question recorded as `⚠️ Not confirmed` |
 
+**UI work always goes through `ui-builder`**: the light lane does not exempt a UI change from the `ui-builder` rules (see 4.5) — it only skips the SRS/spec/OKF chain.
+
 **Escalate to the full lane** (stop, say so, then continue in that lane) as soon as a light-lane task would: change behavior described in `Docs/Specs/<Feature>/`, need a network call or contract that is not confirmed, or add a screen or entity. If a spec already exists for the feature, update it with `spec-writer` instead of leaving it describing old behavior.
 
 **When unsure, choose the full lane.** A skipped light-lane check costs a note; a skipped full-lane step costs a wrong feature.
@@ -274,7 +283,7 @@ State the lane in your first response of a task. The documentation chain is size
 
 These rules apply to **every** task, however small. Never leave tech debt or assumptions only in chat or in your head.
 
-**Language exception**: Files under `Docs/Tech-Debt/` and `Docs/Assumptions/` are **bilingual (English + Vietnamese)** — this is the only exception to the English-only rule. Frontmatter keys/values stay English (except `title_vi`); every body section carries an `EN:` block followed by a `VI:` block. Code comments stay English.
+**Language exception**: Files under `Docs/Tech-Debt/` and `Docs/Assumptions/` are **bilingual (English + Vietnamese)** — together with code comments (Section 2, item 6), this is an exception to the English-only Markdown rule. Frontmatter keys/values stay English (except `title_vi`); every body section carries an `EN:` block followed by a `VI:` block. Code comments are likewise bilingual (`EN:` line + `VI:` line).
 
 ### 10.1. Tech Debt → `Docs/Tech-Debt/<Feature>/`
 Whenever you knowingly take a shortcut, leave a workaround, skip a test, hardcode a value, stub an API, or notice debt you are not fixing now, record it in `Docs/Tech-Debt/<Feature>/`.

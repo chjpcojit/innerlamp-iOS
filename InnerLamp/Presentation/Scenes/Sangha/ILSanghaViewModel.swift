@@ -26,8 +26,8 @@ protocol ILSanghaViewModelProtocol: ViewModelType {
     var navigationEventPublisher: AnyPublisher<ILSanghaNavEvent, Never> { get }
 }
 
-/// Tab Chùa — chùa người dùng đang tu tập. Hiện chỉ là UI: dữ liệu mẫu đồng bộ, không có
-/// loading / lỗi mạng. Có chùa: thẻ chùa, thông báo, khóa tu & lễ sắp tới,
+/// Tab Chùa — chùa người dùng đang tu tập (chùa tự chọn trong app, nếu không thì chùa trong hồ sơ
+/// tài khoản); nội dung còn lại là dữ liệu mẫu, không có loading / lỗi mạng. Có chùa: thẻ chùa, thông báo, khóa tu & lễ sắp tới,
 /// pháp thoại, cúng dường, số Phật tử. Chưa có: chùa gần bạn (chọn), chùa trực tuyến, khóa tu.
 /// Cả hai trạng thái đều có khối "Ngày lễ & ngày chay sắp tới".
 final class ILSanghaViewModel: ILSanghaViewModelProtocol {
@@ -71,6 +71,7 @@ final class ILSanghaViewModel: ILSanghaViewModelProtocol {
     private let useCase: ILSanghaUseCase
     private let now: () -> Date
     private var cancellables = Set<AnyCancellable>()
+    private var loadTask: Task<Void, Never>?
 
     private var myTemple: ILSanghaMyTempleEntity?
     private var chooser: ILSanghaChooserEntity?
@@ -161,11 +162,19 @@ final class ILSanghaViewModel: ILSanghaViewModelProtocol {
     }
 
     // MARK: - Loading
+    /// Chùa tu tập có thể cần gọi mạng (hồ sơ tài khoản) nên nạp bất đồng bộ; nội dung đang hiển thị
+    /// được giữ nguyên cho tới khi có kết quả mới, lần nạp cũ còn dở bị hủy.
     private func load() {
-        myTemple = useCase.loadMyTemple()
-        chooser = myTemple == nil ? useCase.loadChooser() : nil
-        days = useCase.loadUpcomingDays(limit: Self.upcomingDaysLimit)
-        publishState()
+        loadTask?.cancel()
+        loadTask = Task { [weak self] in
+            guard let self else { return }
+            let loadedTemple = await useCase.loadMyTemple()
+            guard !Task.isCancelled else { return }
+            myTemple = loadedTemple
+            chooser = loadedTemple == nil ? useCase.loadChooser() : nil
+            days = useCase.loadUpcomingDays(limit: Self.upcomingDaysLimit)
+            publishState()
+        }
     }
 
     private func publishState() {
@@ -187,6 +196,7 @@ final class ILSanghaViewModel: ILSanghaViewModelProtocol {
             id: temple.id,
             name: name,
             place: temple.address,
+            imageURL: temple.imageURL,
             statusText: status?.text ?? "",
             isOpen: status?.isOpen ?? false,
             abbotText: String(format: "sangha.abbot.format".localized, abbot),

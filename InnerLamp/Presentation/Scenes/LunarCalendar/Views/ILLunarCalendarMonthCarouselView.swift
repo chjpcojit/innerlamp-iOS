@@ -193,11 +193,14 @@ private final class ILLunarCalendarMonthCell: UICollectionViewCell {
         didSet { cardView.onDayTap = onDayTap }
     }
 
-    private let cardView = ILLunarCalendarMonthCardView()
+    private lazy var cardView: ILLunarCalendarMonthCardView = {
+        let view = ILLunarCalendarMonthCardView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        cardView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(cardView)
         NSLayoutConstraint.activate([
             cardView.topAnchor.constraint(equalTo: contentView.topAnchor),

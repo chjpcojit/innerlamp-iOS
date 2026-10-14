@@ -21,10 +21,32 @@ final class ILPlayerArtworkView: UIView {
     }
 
     // MARK: - UI Elements
-    private let outerRing = UIView()
-    private let innerRing = UIView()
+    private lazy var outerRing: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.borderWidth = 1
+        view.layer.borderColor = ILColors.goldRingBorder.cgColor
+        view.layer.cornerRadius = Artwork.outerDiameter / 2
+        view.clipsToBounds = false
+        return view
+    }()
+
+    private lazy var innerRing: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.borderWidth = 1
+        view.layer.borderColor = ILColors.goldRingInnerBorder.cgColor
+        view.layer.cornerRadius = Artwork.innerDiameter / 2
+        return view
+    }()
+
     private let glowLayer = CAGradientLayer()
-    private let flameView = ILFlameView(height: Artwork.flameHeight, topColor: ILColors.goldBright)
+
+    private lazy var flameView: ILFlameView = {
+        let view = ILFlameView(height: Artwork.flameHeight, topColor: ILColors.goldBright)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     // MARK: - Initializer
     init() {
@@ -41,12 +63,6 @@ final class ILPlayerArtworkView: UIView {
         translatesAutoresizingMaskIntoConstraints = false
         backgroundColor = .clear
 
-        outerRing.translatesAutoresizingMaskIntoConstraints = false
-        outerRing.layer.borderWidth = 1
-        outerRing.layer.borderColor = ILColors.goldRingBorder.cgColor
-        outerRing.layer.cornerRadius = Artwork.outerDiameter / 2
-        outerRing.clipsToBounds = false
-
         // Radial glow inside the outer ring (`radial-gradient(circle at 50% 58%, gold, transparent 68%)`).
         glowLayer.type = .radial
         glowLayer.colors = [ILColors.goldGlow.cgColor, ILColors.goldGlowClear.cgColor]
@@ -54,13 +70,6 @@ final class ILPlayerArtworkView: UIView {
         glowLayer.startPoint = CGPoint(x: 0.5, y: 0.58)
         glowLayer.endPoint = CGPoint(x: 1.0, y: 1.0)
         outerRing.layer.addSublayer(glowLayer)
-
-        innerRing.translatesAutoresizingMaskIntoConstraints = false
-        innerRing.layer.borderWidth = 1
-        innerRing.layer.borderColor = ILColors.goldRingInnerBorder.cgColor
-        innerRing.layer.cornerRadius = Artwork.innerDiameter / 2
-
-        flameView.translatesAutoresizingMaskIntoConstraints = false
 
         outerRing.addSubview(innerRing)
         outerRing.addSubview(flameView)

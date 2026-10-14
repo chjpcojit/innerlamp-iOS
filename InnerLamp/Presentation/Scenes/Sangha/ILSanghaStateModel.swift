@@ -69,6 +69,8 @@ struct ILSanghaMyTempleModel: Equatable {
     let id: String
     let name: String
     let place: String
+    /// Ảnh bìa của chùa; `nil` thì thẻ giữ ô nền placeholder.
+    let imageURL: String?
     /// "Đang mở · đến 18:00" / "Đã đóng · mở 6:00"; rỗng khi không có giờ mở cửa hợp lệ.
     let statusText: String
     let isOpen: Bool

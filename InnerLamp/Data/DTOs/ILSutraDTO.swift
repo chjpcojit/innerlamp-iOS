@@ -10,8 +10,8 @@ import Foundation
 /// 2026-10-07.
 ///
 /// No `CodingKeys`: `NetworkServiceImpl` decodes with `.convertFromSnakeCase`. List and detail share
-/// one DTO — the detail only adds fields (`review_status`, per-translation `source_*`, `note`,
-/// `sections`), declared optional here. The list wrapper reuses `ILCatalogPageDTO`. A DTO never
+/// one DTO — the detail only adds fields (`summary`, `deities`, `author`, `han_*`, `review_status`,
+/// per-translation `source_*`, `license_*`, `note`, `sections`), declared optional here. The list wrapper reuses `ILCatalogPageDTO`. A DTO never
 /// escapes the Data layer.
 nonisolated struct ILSutraDTO: Decodable, Sendable {
     let id: String
@@ -32,6 +32,26 @@ nonisolated struct ILSutraDTO: Decodable, Sendable {
     let translations: [ILSutraTranslationDTO]
     /// Empty string when the sutra has no audio; optional so an older server never fails the page.
     let audioUrl: String?
+    // Detail-only fields (BE contract confirmed 2026-10-11). All optional: the list endpoint omits
+    // some of them and an unexpected shape must never fail the whole page.
+    /// AI-drafted introduction; `""` until the backend seeds it.
+    let summary: String?
+    let deities: [ILSutraDeityDTO]?
+    let originalTitle: String?
+    let author: String?
+    let hanTranslator: String?
+    let hanTranslationYear: Int?
+    let referenceNote: String?
+    /// Decoded as text: `"UNREVIEWED"` today, other values may be added.
+    let reviewStatus: String?
+}
+
+nonisolated struct ILSutraDeityDTO: Decodable, Sendable {
+    /// Id in `GET /v1/deities`.
+    let deityId: String
+    /// `SPEAKER` | `SUBJECT` | `MENTIONED` — decoded as text.
+    let role: String?
+    let nameVi: String?
 }
 
 nonisolated struct ILSutraTranslationDTO: Decodable, Sendable {
@@ -45,6 +65,11 @@ nonisolated struct ILSutraTranslationDTO: Decodable, Sendable {
     let sourceName: String?
     let sourceUrl: String?
     let sections: [ILSutraSectionDTO]?
+    /// `translation` | `chant` | `meaning` | `poem` — decoded as text.
+    let variant: String?
+    let licenseUrl: String?
+    let licenseNote: String?
+    let note: String?
 }
 
 nonisolated struct ILSutraSectionDTO: Decodable, Sendable {

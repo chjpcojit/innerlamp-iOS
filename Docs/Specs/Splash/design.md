@@ -1,6 +1,6 @@
 # Design — Splash
 
-Version: 1.5
+Version: 1.6
 Last updated: 2026-10-10
 Status: implemented — branding animation and session-based routing done
 
@@ -23,8 +23,8 @@ own stack with `setViewControllers([...], animated: false)`.
 | Layer | File | Responsibility |
 |---|---|---|
 | Domain / Model | `Domain/Entities/ILSplashModel.swift` | `ILSplashStateModel` — empty marker struct (Splash has no dynamic content). Foundation only. |
-| Domain / UseCase | `Domain/UseCases/Splash/ILSplashUseCase.swift` | `getInitialState()`; `isOnboardingCompleted()` (delegates to the injected `ILOnboardingUseCase`; picks Login vs Onboarding when there is no session); `hasSession()` — Keychain access-token existence check, plus the fresh-install and legacy-credential cleanup. Injects `ILOnboardingUseCase`, `KeychainService`, `UserDefaultsService`. |
-| Presentation / ViewModel | `Presentation/Scenes/Splash/ILSplashViewModel.swift` | `Input -> Output` per `ViewModelType`; owns `ILSplashNavEvent` (`.goToOnboarding`, `.goToLogin`, `.goToMain`) and `navigationEventPublisher`. |
+| Domain / UseCase | `Domain/UseCases/Splash/ILSplashUseCase.swift` | `getInitialState()`; `isOnboardingCompleted()` (delegates to the injected `ILOnboardingUseCase`; picks SignUp vs Onboarding when there is no session); `hasSession()` — Keychain access-token existence check, plus the fresh-install and legacy-credential cleanup. Injects `ILOnboardingUseCase`, `KeychainService`, `UserDefaultsService`. |
+| Presentation / ViewModel | `Presentation/Scenes/Splash/ILSplashViewModel.swift` | `Input -> Output` per `ViewModelType`; owns `ILSplashNavEvent` (`.goToOnboarding`, `.goToSignup`, `.goToMain`) and `navigationEventPublisher`. |
 | Presentation / Coordinator | `Presentation/Scenes/Splash/ILSplashCoordinator.swift` | `setViewControllers`; forwards nav events to `ILSplashCoordinatorDelegate` (3 methods). |
 | Presentation / ViewController | `Presentation/Scenes/Splash/ILSplashViewController.swift` | `setupViews`/`setupConstraints`/`bindViewModel` per `BaseViewController`; runs the branding animation and schedules auto-advance. |
 | Feature-scoped views | `Presentation/Scenes/Splash/Views/ILSplashBrandBackdropView.swift`, `ILSplashAmbienceView.swift`, `ILSplashEmberFieldView.swift`, `ILSplashWordmarkLabel.swift` | Splash-specific branding views, themed via the `--il-spl-*` token family. |
@@ -39,7 +39,7 @@ AppCoordinator
   └─ showSplash() → ILSplashCoordinator                  (owned top-level)
        setViewControllers([ILSplashViewController], animated: false)
        (auto-advance) → .goToOnboarding → showOnboarding()   [finish — no session, onboarding not completed]
-       (auto-advance) → .goToLogin      → showLogin()        [finish — no session, onboarding completed]
+       (auto-advance) → .goToSignup     → showSignUp(asRoot: true) [finish — no session, onboarding completed]
        (auto-advance) → .goToMain       → showMain()         [finish — stored session]
 ```
 
@@ -50,7 +50,7 @@ AppCoordinator
 2. On timer elapse, `splashFinishedSubject` fires.
 3. `ILSplashViewModel.handleSplashFinished()` calls `useCase.hasSession()`, then
    `isOnboardingCompleted()` when there is no session, and emits `.goToMain`,
-   `.goToLogin` or `.goToOnboarding` (see Routing decision below).
+   `.goToSignup` or `.goToOnboarding` (see Routing decision below).
 
 ## Routing decision
 
@@ -58,7 +58,7 @@ AppCoordinator
 
 ```swift
 if useCase.hasSession() { .goToMain }
-else if useCase.isOnboardingCompleted() { .goToLogin }
+else if useCase.isOnboardingCompleted() { .goToSignup }
 else { .goToOnboarding }
 ```
 
@@ -84,7 +84,7 @@ Both nav events are wired in the coordinator and `AppCoordinator`
   recovered outside Splash: the 401 on the first authenticated request makes
   `NetworkServiceImpl` call `AuthSessionRefresher`; if the refresh fails the
   session is cleared and `AppCoordinator` routes to Login.
-- Onboarding vs Login keys on the completed-onboarding flag. A user who quits
+- Onboarding vs SignUp keys on the completed-onboarding flag. A user who quits
   mid-Onboarding sees Onboarding again on the next launch (`AS-Splash-001`).
 
 ## Design reference

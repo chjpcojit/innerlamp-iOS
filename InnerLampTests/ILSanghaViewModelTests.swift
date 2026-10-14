@@ -77,12 +77,18 @@ final class ILSanghaViewModelTests: XCTestCase {
 
     /// Transforms, sends `viewDidLoad`; returns a getter for the latest successful state (updated by
     /// later toggles too). Everything is synchronous — the tab is UI-only.
-    private func loadSuccessfully() -> () -> ILSanghaStateModel? {
+    /// `load()` runs in a `Task`; yield until it has published (the mock use case returns at once).
+    private func settle() async {
+        for _ in 0..<20 { await Task.yield() }
+    }
+
+    private func loadSuccessfully() async -> () -> ILSanghaStateModel? {
         var latest: ILSanghaStateModel?
         sut.transform(input: makeInput()).state.sink { state in
             if case .success(let model) = state { latest = model }
         }.store(in: &cancellables)
         viewDidLoadSubject.send(())
+        await settle()
         return { latest }
     }
 
@@ -95,9 +101,9 @@ final class ILSanghaViewModelTests: XCTestCase {
 
     // MARK: - Loading
 
-    func test_viewDidLoad_withChosenTemple_buildsMyTempleModel_andNoChooser() {
+    func test_viewDidLoad_withChosenTemple_buildsMyTempleModel_andNoChooser() async {
         mockUseCase.myTempleID = "temple_1"
-        let state = loadSuccessfully()()
+        let state = await loadSuccessfully()()
 
         XCTAssertNil(state?.chooser)
         XCTAssertEqual(state?.myTemple?.id, "temple_1")
@@ -109,8 +115,8 @@ final class ILSanghaViewModelTests: XCTestCase {
         XCTAssertTrue(state?.myTemple?.peersText.contains("1.248") == true)
     }
 
-    func test_viewDidLoad_withoutChosenTemple_buildsChooserModel_andNoMyTemple() {
-        let state = loadSuccessfully()()
+    func test_viewDidLoad_withoutChosenTemple_buildsChooserModel_andNoMyTemple() async {
+        let state = await loadSuccessfully()()
 
         XCTAssertNil(state?.myTemple)
         XCTAssertEqual(state?.chooser?.nearby.map(\.id), ["near_1"])
@@ -119,8 +125,8 @@ final class ILSanghaViewModelTests: XCTestCase {
         XCTAssertEqual(state?.chooser?.retreats.count, 1)
     }
 
-    func test_upcomingDays_areMappedWithSuggestionAndReminderLabel() {
-        let state = loadSuccessfully()()
+    func test_upcomingDays_areMappedWithSuggestionAndReminderLabel() async {
+        let state = await loadSuccessfully()()
 
         XCTAssertEqual(state?.days.count, 2)
         XCTAssertEqual(state?.days.first?.title, "Vía Quan Âm")
@@ -131,20 +137,21 @@ final class ILSanghaViewModelTests: XCTestCase {
 
     // MARK: - Choose / change temple
 
-    func test_pickTapped_savesTemple_andSwitchesToMyTempleState() {
-        let state = loadSuccessfully()
+    func test_pickTapped_savesTemple_andSwitchesToMyTempleState() async {
+        let state = await loadSuccessfully()
         XCTAssertNotNil(state()?.chooser)
 
         pickTappedSubject.send("temple_1")
+        await settle()
 
         XCTAssertEqual(mockUseCase.myTempleID, "temple_1")
         XCTAssertNotNil(state()?.myTemple)
         XCTAssertNil(state()?.chooser)
     }
 
-    func test_changeTempleTapped_opensTempleFinder_andKeepsTheCurrentTemple() {
+    func test_changeTempleTapped_opensTempleFinder_andKeepsTheCurrentTemple() async {
         mockUseCase.myTempleID = "temple_1"
-        let state = loadSuccessfully()
+        let state = await loadSuccessfully()
         var events: [ILSanghaNavEvent] = []
         sut.navigationEventPublisher.sink { events.append($0) }.store(in: &cancellables)
 
@@ -155,22 +162,23 @@ final class ILSanghaViewModelTests: XCTestCase {
         XCTAssertNotNil(state()?.myTemple)
     }
 
-    func test_viewWillAppear_reloadsTheTempleChosenElsewhere() {
+    func test_viewWillAppear_reloadsTheTempleChosenElsewhere() async {
         mockUseCase.myTempleID = "temple_1"
-        let state = loadSuccessfully()
+        let state = await loadSuccessfully()
         XCTAssertEqual(state()?.myTemple?.id, "temple_1")
 
         mockUseCase.myTempleID = "temple_2"
         viewWillAppearSubject.send(())
+        await settle()
 
         XCTAssertEqual(state()?.myTemple?.id, "temple_2")
     }
 
     // MARK: - Toggles
 
-    func test_eventActionTapped_togglesLabelBetweenRemindAndReminded() {
+    func test_eventActionTapped_togglesLabelBetweenRemindAndReminded() async {
         mockUseCase.myTempleID = "temple_1"
-        let state = loadSuccessfully()
+        let state = await loadSuccessfully()
         XCTAssertEqual(state()?.myTemple?.events.first?.actionLabel, "sangha.action.remind".localized)
 
         eventActionTappedSubject.send("event-weekly")
@@ -181,8 +189,8 @@ final class ILSanghaViewModelTests: XCTestCase {
         XCTAssertEqual(state()?.myTemple?.events.first?.actionLabel, "sangha.action.remind".localized)
     }
 
-    func test_dayReminderTapped_togglesReminderOnTheDay() {
-        let state = loadSuccessfully()
+    func test_dayReminderTapped_togglesReminderOnTheDay() async {
+        let state = await loadSuccessfully()
         let dayID = state()?.days.first?.id ?? ""
 
         dayReminderTappedSubject.send(dayID)
@@ -192,9 +200,9 @@ final class ILSanghaViewModelTests: XCTestCase {
 
     // MARK: - Navigation
 
-    func test_myTempleTapped_opensChosenTemple() {
+    func test_myTempleTapped_opensChosenTemple() async {
         mockUseCase.myTempleID = "temple_1"
-        _ = loadSuccessfully()
+        _ = await loadSuccessfully()
         XCTAssertEqual(navigationEvent { self.myTempleTappedSubject.send(()) }, .openTemple(id: "temple_1"))
     }
 
@@ -244,7 +252,7 @@ final class MockILSanghaUseCase: ILSanghaUseCase {
         self.now = now
     }
 
-    func loadMyTemple() -> ILSanghaMyTempleEntity? {
+    func loadMyTemple() async -> ILSanghaMyTempleEntity? {
         guard let myTempleID else { return nil }
         let day: TimeInterval = 24 * 60 * 60
         return ILSanghaMyTempleEntity(

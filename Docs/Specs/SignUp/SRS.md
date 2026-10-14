@@ -5,8 +5,8 @@
 | Document type | Software Requirements Specification (SRS) — IEEE 29148-2018 |
 | Feature | SignUp |
 | Product | InnerLamp |
-| Version | 0.1 (draft) |
-| Last updated | 2026-09-27 |
+| Version | 0.2 (draft) |
+| Last updated | 2026-10-11 |
 | Status | retroactive — reconstructed from `requirements.md` / `design.md` / `tasks.md` |
 | Owner / author | ba-writer (Business Analyst) |
 | Downstream handoff | `spec-writer` → `requirements.md` / `design.md` / `tasks.md` |
@@ -26,8 +26,8 @@ engineering spec.
 
 **In scope:**
 
-- A registration screen where a new visitor enters a dharma name (or nickname), an optional ordination
-  place, a phone number, a required email, and a password (min 8), then requests an OTP.
+- A registration screen where a new visitor enters a required full name, a dharma name (or nickname), an
+  optional ordination place, a phone number, a required email, and a password (min 8), then requests an OTP.
 - Live field feedback (phone validity, email format, password strength) and inline validation errors.
 - The Terms of Service / Privacy Policy side-navigation (public URL in a web view).
 
@@ -46,8 +46,9 @@ starts the OTP flow; the email lets the user receive donation receipts later.
 
 | Term | Definition |
 |---|---|
-| Dharma name (Pháp danh) | The user's Buddhist name; selected from a fixed suggestion list (not free-text). |
-| Ordination place (Nơi xuất gia) | The temple/monastery where a monastic was ordained — optional, free-text. |
+| Full name (Họ và tên) | The user's real name — required, free-text, sent as `full_name`. |
+| Dharma name (Pháp danh) | The user's Buddhist name or nickname; free-text, with a "Gợi ý" button that cycles a fixed suggestion list. |
+| Ordination place (Nơi xuất gia) | The temple/monastery where a monastic was ordained — optional, picked from the server's temple list (`GET /v1/temples/options`) and sent as `ordination_temple_id`. |
 | E.164 | The international phone format; the client sends a grouped, dial-code-prefixed display string the server normalizes to E.164. |
 | OTP | One-time password sent by SMS to verify the phone number. |
 
@@ -76,7 +77,7 @@ legal-content URLs (ToS / Privacy).
 
 ### 2.2 Product functions
 
-- Show the form with a pre-filled dharma name and a disabled submit (`FR-001`).
+- Show the form with an empty required full name, a pre-filled dharma name and a disabled submit (`FR-001`, `FR-020`).
 - Provide dharma-name suggestion, country picker, and live field feedback (`FR-002`–`FR-007`).
 - Validate and submit the form (`FR-008`–`FR-012`).
 - Navigate to Login, Onboarding, and the legal screens (`FR-013`–`FR-019`).
@@ -124,7 +125,7 @@ legal-content URLs (ToS / Privacy).
 
 #### 3.1.1 User interfaces
 
-A single scrolling screen: dharma-name suggestion field, ordination-place field, phone field (with
+A single scrolling screen: full-name field (`ILField`, first), dharma-name suggestion field, ordination-place field, phone field (with
 country picker), email field, password field (with strength meter), a terms checkbox row, and the submit
 CTA ("Gửi mã xác thực"). Reuses `ILCheckboxRow`, `ILStrengthMeterView`, `ILPhoneField`,
 `ILCountryPickerViewController`, `ILField`, `ILButton`, plus a `ILLegalContentViewController` (not yet
@@ -140,7 +141,7 @@ Confirmed contract (`Docs/Specs/API/openapi.yaml` v3.9):
 
 | Route | Request | Success data | Confirmed failures |
 |---|---|---|---|
-| `POST /v1/auth/register/request-otp` | `dharma_name`, `ordination_place` (optional), `phone_number`, `email`, `password` | `message`, `expires_in_seconds` (90), `resend_after_seconds` (60) | `400` VALIDATION_ERROR / INVALID_EMAIL / INVALID_PHONE / INVALID_PASSWORD; `409` PHONE_TAKEN / EMAIL_TAKEN; `413` PAYLOAD_TOO_LARGE; `429` OTP_LOCKED / OTP_RESEND_TOO_SOON / OTP_SEND_LIMITED; `500` SMS_SEND_FAILED / INTERNAL_ERROR |
+| `POST /v1/auth/register/request-otp` | `full_name` (⚠️ not yet in backend contract — AS-SignUp-004), `dharma_name`, `ordination_temple_id` (optional), `phone_number`, `email`, `password` | `message`, `expires_in_seconds` (90), `resend_after_seconds` (60) | `400` VALIDATION_ERROR / INVALID_EMAIL / INVALID_PHONE / INVALID_PASSWORD / INVALID_DHARMA_NAME / INVALID_TEMPLE; `409` PHONE_TAKEN / EMAIL_TAKEN; `413` PAYLOAD_TOO_LARGE; `429` OTP_LOCKED / OTP_RESEND_TOO_SOON / OTP_SEND_LIMITED; `500` SMS_SEND_FAILED / INTERNAL_ERROR |
 
 Public (`requiresAuth = false`), speaking the standard `ApiResponse` envelope. Account creation is **not**
 here — it happens in `verify-otp` (Otp).
@@ -154,16 +155,17 @@ here — it happens in `verify-otp` (Otp).
 
 **FR-001 — Load state**
 - **Priority:** Must
-- **Description:** WHEN the SignUp screen loads, THE SYSTEM SHALL pre-fill the display-name field with
-  the first suggested dharma name and show the submit button disabled until the terms checkbox is
-  checked.
+- **Description:** WHEN the SignUp screen loads, THE SYSTEM SHALL show the full-name field empty,
+  pre-fill the display-name field with the first suggested dharma name and show the submit button
+  disabled until the terms checkbox is checked.
 - **Verification method:** Unit test + manual QA.
 - **Source:** EARS acceptance criterion (load state).
 
 **FR-002 — Dharma-name suggestion**
 - **Priority:** Must
 - **Description:** WHEN the user taps "Gợi ý" (suggest), THE SYSTEM SHALL cycle through a fixed list of
-  10 dharma name suggestions; free-text input is not allowed for this field.
+  10 dharma name suggestions; the user MAY also type the dharma name freely, and a typed value SHALL be
+  kept until the next "Gợi ý" tap.
 - **Verification method:** Unit test.
 - **Source:** EARS acceptance criterion (dharma name).
 
@@ -184,9 +186,11 @@ here — it happens in `verify-otp` (Otp).
 
 **FR-005 — Ordination place (optional)**
 - **Priority:** Must
-- **Description:** WHEN the user types an ordination place (optional free-text "Nơi xuất gia"), THE
-  SYSTEM SHALL accept any text (including empty) without showing an error and SHALL NOT block submit on
-  it; an empty value SHALL be sent as an empty string.
+- **Description:** WHEN the user opens the optional "Nơi xuất gia" picker, THE SYSTEM SHALL load temples
+  from `GET /v1/temples/options` (paged, server-side `?q=` search) with "Chưa xuất gia" first; WHEN the
+  user picks a temple, THE SYSTEM SHALL send its id as `ordination_temple_id`, and for "Chưa xuất gia" or
+  a proposal pending approval SHALL omit the field. The choice SHALL NOT block submit. Details:
+  `requirements.md` v1.14.
 - **Verification method:** Unit test.
 - **Source:** EARS acceptance criterion (ordination place).
 
@@ -213,7 +217,8 @@ here — it happens in `verify-otp` (Otp).
 
 **FR-009 — Submit validation**
 - **Priority:** Must
-- **Description:** WHEN the user taps "Gửi mã xác thực" with invalid or missing fields (empty/bad email,
+- **Description:** WHEN the user taps "Gửi mã xác thực" with invalid or missing fields (empty full name,
+  empty/bad email,
   phone below the country minimum, password under 8), THE SYSTEM SHALL show an inline error per field
   and SHALL NOT call the backend.
 - **Verification method:** Unit test.
@@ -225,7 +230,8 @@ here — it happens in `verify-otp` (Otp).
   state and call `POST /v1/auth/register/request-otp`, then: on success (HTTP 200), navigate to the OTP
   screen carrying the phone number in grouped format plus the server's `expires_in_seconds` /
   `resend_after_seconds`; on failure, show an error and stay on the SignUp screen (no navigation to
-  Login).
+  Login). The request body SHALL carry the full name (`full_name`) and the dharma name (`dharma_name`)
+  as separate fields.
 - **Verification method:** Unit test (success/failure) + manual QA.
 - **Source:** EARS acceptance criterion (submit).
 
@@ -294,6 +300,17 @@ here — it happens in `verify-otp` (Otp).
 - **Verification method:** Manual QA.
 - **Source:** EARS acceptance criterion (offline).
 
+**FR-020 — Full name (required)**
+- **Priority:** Must
+- **Description:** WHEN the user taps submit and the trimmed full name is empty, THE SYSTEM SHALL show
+  "Vui lòng nhập họ và tên" under the field and SHALL NOT call the backend; WHEN the user edits the
+  field, THE SYSTEM SHALL clear that error; WHEN the form is submitted, THE SYSTEM SHALL send the trimmed
+  value as `full_name`.
+  > ⚠️ Not confirmed: the backend's `request-otp` body (strict decoding) does not list `full_name` yet —
+  > see `Docs/Assumptions/SignUp/AS-SignUp-004-full-name-sent-as-full-name.md`.
+- **Verification method:** Unit test (`ILSignUpViewModelTests`, `ILSignUpRepositoryTests`) + manual QA.
+- **Source:** Prototype `isSignup` "Họ và tên"; product owner decision 2026-10-11 (required, `full_name`).
+
 ### 3.3 Performance requirements
 
 - **NFR-001 — Submit responsiveness:** the `request-otp` call should complete within a target to be
@@ -357,6 +374,7 @@ here — it happens in `verify-otp` (Otp).
 | FR-017 | Dismiss legal | → spec-writer | TBD |
 | FR-018 | Legal content source | → spec-writer | TBD |
 | FR-019 | Legal offline state | → spec-writer | TBD |
+| FR-020 | Full name (required) | `design.md` v1.15 | `ILSignUpViewModelTests` (3), `ILSignUpRepositoryTests` |
 | NFR-001 | Submit responsiveness | → spec-writer | TBD |
 
 ---
@@ -370,6 +388,9 @@ here — it happens in `verify-otp` (Otp).
 > ⚠️ Not confirmed: the design handoff has no ordination-place field — its final Vietnamese
 > label/placeholder/hint and position are unconfirmed — blocks final copy in `vi.json` and a
 > design-accurate layout.
+
+> ⚠️ Not confirmed: the backend has not accepted `full_name` on `request-otp` yet (strict body decoding →
+> `400 VALIDATION_ERROR` on an unknown key) — blocks a real sign-up; tracked by AS-SignUp-004.
 
 > ⚠️ Not confirmed: the real ToS / Privacy Policy URL strings have not been provided; placeholder/mock
 > URLs must not be silently invented in their place.
@@ -387,5 +408,7 @@ here — it happens in `verify-otp` (Otp).
 | Minimum password length | 8 characters | 2026-09-21 |
 | Phone-uniqueness check | Same `request-otp` endpoint (no separate check) | 2026-09-15 |
 | Phone validation Vietnam-only? | No — per selected country | 2026-09-21 |
-| Dharma name free-text? | No — fixed suggestion list | 2026-09-15 |
+| Dharma name free-text? | Yes, typing is allowed (supersedes 2026-09-15: suggestion list only) — prototype + `ILDharmaNameSuggestionField` | 2026-10-11 |
+| Full name required? | Yes, required, sent as `full_name` | 2026-10-11 |
+| Ordination place sent as | `ordination_temple_id` (supersedes free-text `ordination_place`, rejected by backend) | 2026-10-11 |
 | ToS/Privacy content source | Public URL in a web view | 2026-09-15 |

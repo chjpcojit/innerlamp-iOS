@@ -5,36 +5,32 @@
 
 import Foundation
 
-/// Danh sách chùa cho bộ chọn "Nơi xuất gia" của màn Đăng ký — đọc `GET /v1/temples` (endpoint
-/// công khai, không cần đăng nhập) qua `ILTempleRepository`.
+/// Danh sách chùa cho bộ chọn "Nơi xuất gia" của màn Đăng ký — đọc `GET /v1/temples/options`
+/// (endpoint công khai, không cần đăng nhập) qua `ILTempleOptionRepository`, từng trang một.
 protocol ILOrdinationPlaceUseCase {
-    /// Toàn bộ chùa của danh bạ, theo thứ tự server, đã loại trùng id.
-    func loadPlaces() async throws -> [ILOrdinationPlaceEntity]
+    /// Một trang (bắt đầu từ 1) theo thứ tự server. `query` rỗng = không lọc; có từ khoá thì server
+    /// tìm theo tên chùa (không phân biệt hoa thường và dấu).
+    func loadPlaces(query: String, page: Int) async throws -> ILCatalogPageEntity<ILOrdinationPlaceEntity>
 }
 
 final class ILOrdinationPlaceUseCaseImpl: ILOrdinationPlaceUseCase {
 
-    /// Chốt an toàn cho vòng phân trang — phòng server báo còn trang mãi.
-    private static let maxPages = 50
+    private let templeOptionRepository: ILTempleOptionRepository
 
-    private let templeRepository: ILTempleRepository
-
-    init(templeRepository: ILTempleRepository) {
-        self.templeRepository = templeRepository
+    init(templeOptionRepository: ILTempleOptionRepository) {
+        self.templeOptionRepository = templeOptionRepository
     }
 
-    func loadPlaces() async throws -> [ILOrdinationPlaceEntity] {
-        var temples: [ILTempleSummaryEntity] = []
-        var page = 1
-        while page <= Self.maxPages {
-            let result = try await templeRepository.loadTemples(page: page)
-            temples += result.items
-            guard result.hasMore else { break }
-            page += 1
-        }
+    func loadPlaces(query: String, page: Int) async throws -> ILCatalogPageEntity<ILOrdinationPlaceEntity> {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let result = try await templeOptionRepository.loadTempleOptions(
+            query: trimmed.isEmpty ? nil : trimmed,
+            page: page
+        )
         var seen = Set<String>()
-        return temples
+        let places = result.items
             .filter { seen.insert($0.id).inserted }
-            .map { ILOrdinationPlaceEntity(id: $0.id, name: $0.name, subtitle: $0.location.address) }
+            .map { ILOrdinationPlaceEntity(id: $0.id, name: $0.name, subtitle: $0.province) }
+        return ILCatalogPageEntity(items: places, page: result.page, hasMore: result.hasMore)
     }
 }

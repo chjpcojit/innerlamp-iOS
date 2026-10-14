@@ -4,9 +4,9 @@ title: Ordination place is sent as the temple name
 title_vi: Nơi xuất gia được gửi bằng tên chùa
 feature: SignUp
 level: Medium
-status: Unvalidated
+status: Invalidated
 created: 2026-10-10
-updated: 2026-10-10
+updated: 2026-10-11
 files:
   - InnerLamp/Presentation/Scenes/SignUp/ILSignUpViewModel.swift
   - InnerLamp/Domain/UseCases/SignUp/ILOrdinationPlaceUseCase.swift
@@ -31,5 +31,5 @@ EN: Confirm with backend whether `ordination_place` should carry a temple id or 
 VI: Xác nhận với backend `ordination_place` có cần mang id chùa hay giữ dạng văn bản.
 
 ## Outcome / Kết luận
-EN: _(fill in when Validated/Invalidated: decision, date, who confirmed)_
-VI: _(điền khi Validated/Invalidated: quyết định, ngày, người xác nhận)_
+EN: Invalidated 2026-10-11 by the backend session. `POST /v1/auth/register/request-otp` rejects `ordination_place` (strict body decoding → `400 VALIDATION_ERROR`) and only accepts `ordination_temple_id`, an id from `GET /v1/temples/options`. The picker now sends that id (omitted for "Chưa xuất gia"). See `Docs/Specs/SignUp/` v1.14.
+VI: Bị bác bỏ ngày 2026-10-11 bởi session backend. `POST /v1/auth/register/request-otp` từ chối `ordination_place` (giải mã body chặt → `400 VALIDATION_ERROR`) và chỉ nhận `ordination_temple_id`, là id lấy từ `GET /v1/temples/options`. Bộ chọn giờ gửi id đó (bỏ field khi chọn "Chưa xuất gia"). Xem `Docs/Specs/SignUp/` v1.14.

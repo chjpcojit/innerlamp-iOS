@@ -34,11 +34,31 @@ final class ILHomeGreetingHeaderView: UIView {
     var onAvatarTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private let greetingLabel = UILabel()
-    private let dateLabel = UILabel()
-    private let bellButton = ILNotificationBellButton()
-    private let avatarView = ILAvatarView(initials: "", tone: .gold, size: 38)
-    private let avatarControl = UIControl()
+    private lazy var greetingLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.displayMedium
+        v.textColor = ILColors.ink
+        v.numberOfLines = 1
+        return v
+    }()
+    private lazy var dateLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.bodySmall
+        v.textColor = ILColors.inkTertiary
+        v.numberOfLines = 1
+        return v
+    }()
+    private lazy var bellButton: ILNotificationBellButton = ILNotificationBellButton()
+    private lazy var avatarView: ILAvatarView = {
+        let v = ILAvatarView(initials: "", tone: .gold, size: 38)
+        v.isUserInteractionEnabled = false
+        return v
+    }()
+    private lazy var avatarControl: UIControl = {
+        let v = UIControl()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     // MARK: - Initializer
     init() {
@@ -52,23 +72,13 @@ final class ILHomeGreetingHeaderView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        greetingLabel.font = ILTypography.displayMedium
-        greetingLabel.textColor = ILColors.ink
-        greetingLabel.numberOfLines = 1
-
-        dateLabel.font = ILTypography.bodySmall
-        dateLabel.textColor = ILColors.inkTertiary
-        dateLabel.numberOfLines = 1
-
         let textStack = UIStackView(arrangedSubviews: [greetingLabel, dateLabel])
         textStack.axis = .vertical
         textStack.spacing = 5
         textStack.alignment = .leading
         textStack.translatesAutoresizingMaskIntoConstraints = false
 
-        avatarControl.translatesAutoresizingMaskIntoConstraints = false
         avatarControl.addTarget(self, action: #selector(handleAvatarTap), for: .touchUpInside)
-        avatarView.isUserInteractionEnabled = false
         avatarControl.addSubview(avatarView)
 
         let actionsStack = UIStackView(arrangedSubviews: [bellButton, avatarControl])

@@ -15,10 +15,28 @@ final class ILReaderSettingsPanelView: UIView {
     var onThemeSelect: ((Int) -> Void)?
 
     // MARK: - UI Elements
-    private let fontSizeTitleLabel = UILabel()
-    private let backgroundTitleLabel = UILabel()
-    private let fontSizeRow = UIStackView()
-    private let themeRow = UIStackView()
+    private lazy var fontSizeTitleLabel: UILabel = {
+        let v = UILabel()
+        return v
+    }()
+    private lazy var backgroundTitleLabel: UILabel = {
+        let v = UILabel()
+        return v
+    }()
+    private lazy var fontSizeRow: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = 6
+        v.distribution = .fillEqually
+        return v
+    }()
+    private lazy var themeRow: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.spacing = 6
+        v.distribution = .fillEqually
+        return v
+    }()
     private var fontSizeTiles: [ILReaderOptionTile] = []
     private var themeTiles: [ILReaderOptionTile] = []
 
@@ -36,12 +54,6 @@ final class ILReaderSettingsPanelView: UIView {
     private func setupViews() {
         layer.cornerRadius = ILMetrics.radiusCardSmall
         layer.borderWidth = 1
-
-        [fontSizeRow, themeRow].forEach {
-            $0.axis = .horizontal
-            $0.spacing = 6
-            $0.distribution = .fillEqually
-        }
 
         let stack = UIStackView(arrangedSubviews: [fontSizeTitleLabel, fontSizeRow, backgroundTitleLabel, themeRow])
         stack.axis = .vertical
@@ -132,13 +144,16 @@ private final class ILReaderOptionTile: UIControl {
     /// system appearance rather than the Reader's forced one.
     var pinsToSystemAppearance = false
 
-    private let titleLabel = UILabel()
+    private lazy var titleLabel: UILabel = {
+        let v = UILabel()
+        v.textAlignment = .center
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     init(height: CGFloat) {
         super.init(frame: .zero)
         layer.cornerRadius = ILMetrics.radiusOptionTile
-        titleLabel.textAlignment = .center
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
         NSLayoutConstraint.activate([
             heightAnchor.constraint(equalToConstant: height),

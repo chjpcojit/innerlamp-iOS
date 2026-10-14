@@ -15,18 +15,22 @@ final class ILTempleFinderAddFormView: UIView {
     var onSubmit: ((ILTempleFinderProposal) -> Void)?
 
     // MARK: - UI Elements
-    private let nameField = ILField(
+    private lazy var nameField = ILField(
         label: "templeFinder.form.name.label".localized, placeholder: "templeFinder.form.name.placeholder".localized
     )
-    private let addressField = ILField(
+    private lazy var addressField = ILField(
         label: "templeFinder.form.address.label".localized, placeholder: "templeFinder.form.address.placeholder".localized
     )
-    private let provinceField = ILField(
+    private lazy var provinceField = ILField(
         label: "templeFinder.form.province.label".localized, placeholder: "templeFinder.form.province.placeholder".localized
     )
-    private let phoneField = ILField(
-        label: "templeFinder.form.phone.label".localized, placeholder: "templeFinder.form.phone.placeholder".localized
-    )
+    private lazy var phoneField: ILField = {
+        let field = ILField(
+            label: "templeFinder.form.phone.label".localized, placeholder: "templeFinder.form.phone.placeholder".localized
+        )
+        field.innerTextField.keyboardType = .phonePad
+        return field
+    }()
     private lazy var cancelButton = ILButton(title: "templeFinder.form.cancel".localized, variant: .ghost)
     private lazy var submitButton = ILButton(title: "templeFinder.form.submit".localized, variant: .primary)
 
@@ -81,7 +85,6 @@ final class ILTempleFinderAddFormView: UIView {
 
         cancelButton.onTap = { [weak self] in self?.onCancel?() }
         submitButton.onTap = { [weak self] in self?.handleSubmit() }
-        phoneField.innerTextField.keyboardType = .phonePad
         let buttons = UIStackView(arrangedSubviews: [cancelButton, submitButton])
         buttons.axis = .horizontal
         buttons.spacing = ILMetrics.rowSpacing

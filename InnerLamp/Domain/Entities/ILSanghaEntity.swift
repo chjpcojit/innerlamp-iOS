@@ -60,6 +60,8 @@ struct ILSanghaTempleEntity: Equatable, Identifiable {
     let operatingHours: String
     /// Khoảng cách tới người dùng (km) — chỉ dùng cho danh sách "Chùa gần bạn".
     let distanceKm: Double
+    /// Ảnh bìa — chuỗi URL đúng như server trả; `nil` với chùa mẫu hoặc chùa không có ảnh.
+    var imageURL: String? = nil
 }
 
 /// Chùa người dùng đang tu tập cùng nội dung của chùa đó.

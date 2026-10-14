@@ -19,7 +19,12 @@ final class ILLunarDayDetailInfoCardView: UIView {
 
     // MARK: - UI Elements
     private let gradientLayer = CAGradientLayer()
-    private let rowsStack = UIStackView()
+    private lazy var rowsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -42,8 +47,6 @@ final class ILLunarDayDetailInfoCardView: UIView {
         gradientLayer.endPoint = CGPoint(x: 0.9, y: 1)
         layer.insertSublayer(gradientLayer, at: 0)
 
-        rowsStack.axis = .vertical
-        rowsStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(rowsStack)
 
         NSLayoutConstraint.activate([

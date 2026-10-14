@@ -18,10 +18,42 @@ final class ILPhotosPhotoCardView: UIView {
     static let imageAspectRatio: CGFloat = 0.75
 
     // MARK: - UI Elements
-    private let imageTile = ILRemoteImageView(frame: .zero)
-    private let titleLabel = UILabel()
-    private let placeLabel = UILabel()
-    private let stack = UIStackView()
+    private lazy var imageTile: ILRemoteImageView = {
+        let view = ILRemoteImageView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = ILColors.tint2
+        view.layer.cornerRadius = ILMetrics.radiusCardSmall
+        view.clipsToBounds = true
+        return view
+    }()
+
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.photoCaptionTitle
+        label.textColor = ILColors.ink
+        label.numberOfLines = 2
+        label.lineBreakMode = .byTruncatingTail
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
+        return label
+    }()
+
+    private lazy var placeLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.label
+        label.textColor = ILColors.inkTertiary
+        label.numberOfLines = 1
+        label.lineBreakMode = .byTruncatingTail
+        return label
+    }()
+
+    private lazy var stack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.alignment = .fill
+        stack.spacing = Self.titleToPlaceSpacing
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
     // MARK: - Initializer
     init() {
@@ -44,26 +76,6 @@ final class ILPhotosPhotoCardView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        imageTile.translatesAutoresizingMaskIntoConstraints = false
-        imageTile.backgroundColor = ILColors.tint2
-        imageTile.layer.cornerRadius = ILMetrics.radiusCardSmall
-        imageTile.clipsToBounds = true
-
-        titleLabel.font = ILTypography.photoCaptionTitle
-        titleLabel.textColor = ILColors.ink
-        titleLabel.numberOfLines = 2
-        titleLabel.lineBreakMode = .byTruncatingTail
-        titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
-
-        placeLabel.font = ILTypography.label
-        placeLabel.textColor = ILColors.inkTertiary
-        placeLabel.numberOfLines = 1
-        placeLabel.lineBreakMode = .byTruncatingTail
-
-        stack.axis = .vertical
-        stack.alignment = .fill
-        stack.spacing = Self.titleToPlaceSpacing
-        stack.translatesAutoresizingMaskIntoConstraints = false
         stack.addArrangedSubview(imageTile)
         stack.addArrangedSubview(titleLabel)
         stack.addArrangedSubview(placeLabel)

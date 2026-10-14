@@ -24,24 +24,42 @@ final class ILFamilyTreeChroniclePlaqueView: UIView {
     }
 
     // MARK: - UI Elements
-    private let plaqueView = PlaqueBox()
-    private let hanLabel = UILabel()
-    private let meaningLabel = UILabel()
-    private let coupletRow = UIStackView()
-    private let stack = UIStackView()
+    private lazy var plaqueView = PlaqueBox()
+    private lazy var hanLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.treeSheetName
+        v.textColor = Tree.founderGold
+        v.textAlignment = .center
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var meaningLabel: UILabel = {
+        let v = UILabel()
+        v.font = ILTypography.subheadMedium
+        v.textColor = Tree.cream.withAlphaComponent(0.8)
+        v.textAlignment = .center
+        v.numberOfLines = 0
+        return v
+    }()
+    private lazy var coupletRow: UIStackView = {
+        let v = UIStackView()
+        v.axis = .horizontal
+        v.distribution = .fillEqually
+        v.alignment = .fill
+        v.spacing = Layout.coupletGap
+        return v
+    }()
+    private lazy var stack: UIStackView = {
+        let v = UIStackView()
+        v.axis = .vertical
+        v.spacing = Layout.coupletGap
+        v.translatesAutoresizingMaskIntoConstraints = false
+        return v
+    }()
 
     // MARK: - Initializer
     override init(frame: CGRect) {
         super.init(frame: frame)
-        hanLabel.font = ILTypography.treeSheetName
-        hanLabel.textColor = Tree.founderGold
-        hanLabel.textAlignment = .center
-        hanLabel.numberOfLines = 0
-        meaningLabel.font = ILTypography.subheadMedium
-        meaningLabel.textColor = Tree.cream.withAlphaComponent(0.8)
-        meaningLabel.textAlignment = .center
-        meaningLabel.numberOfLines = 0
-
         let plaqueStack = UIStackView(arrangedSubviews: [hanLabel, meaningLabel])
         plaqueStack.axis = .vertical
         plaqueStack.spacing = Layout.meaningGap
@@ -54,14 +72,6 @@ final class ILFamilyTreeChroniclePlaqueView: UIView {
             plaqueStack.trailingAnchor.constraint(equalTo: plaqueView.trailingAnchor, constant: -Layout.plaquePadding.right)
         ])
 
-        coupletRow.axis = .horizontal
-        coupletRow.distribution = .fillEqually
-        coupletRow.alignment = .fill
-        coupletRow.spacing = Layout.coupletGap
-
-        stack.axis = .vertical
-        stack.spacing = Layout.coupletGap
-        stack.translatesAutoresizingMaskIntoConstraints = false
         [plaqueView, coupletRow].forEach { stack.addArrangedSubview($0) }
         addSubview(stack)
         NSLayoutConstraint.activate([

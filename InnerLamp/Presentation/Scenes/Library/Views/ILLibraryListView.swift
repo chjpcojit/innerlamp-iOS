@@ -15,8 +15,19 @@ final class ILLibraryListView: UIView {
     var onViewAllTapped: (() -> Void)?
 
     // MARK: - UI Elements
-    private let sectionHeader = ILSectionHeaderView(title: "")
-    private let rowsStack = UIStackView()
+    private lazy var sectionHeader: ILSectionHeaderView = {
+        let header = ILSectionHeaderView(title: "")
+        header.translatesAutoresizingMaskIntoConstraints = false
+        return header
+    }()
+
+    private lazy var rowsStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = ILMetrics.rowSpacing
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
     // MARK: - Initializer
     init() {
@@ -30,12 +41,7 @@ final class ILLibraryListView: UIView {
 
     // MARK: - Setup
     private func setupViews() {
-        sectionHeader.translatesAutoresizingMaskIntoConstraints = false
         sectionHeader.onTrailingTap = { [weak self] in self?.onViewAllTapped?() }
-
-        rowsStack.axis = .vertical
-        rowsStack.spacing = ILMetrics.rowSpacing
-        rowsStack.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(sectionHeader)
         addSubview(rowsStack)

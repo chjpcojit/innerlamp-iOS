@@ -1,8 +1,8 @@
 # Tasks — Profile
 
-Version: 1.1
-Last updated: 2026-10-10
-Status: in-progress (Phase 1–2 done; Phase 2b done except cover photo asset; Phase 3–4 pending)
+Version: 1.5
+Last updated: 2026-10-11
+Status: in-progress (Phase 1–2 done; Phase 2b done except cover photo asset; Phase 2c done — device check pending; Phase 3–4 pending)
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -42,15 +42,15 @@ Status: in-progress (Phase 1–2 done; Phase 2b done except cover photo asset; P
       `row_journal`, `row_gear`, `row_notif`, `row_temple`, `row_lotus`
 - [ ] Add default cover imageset `profile_cover_default` + `ILIcons` constant + `setCoverImage` call (blocked: no photo asset — TD-Profile-001)
 - [x] `ILSettingRow`: optional leading `icon` (additive; Settings unaffected)
-- [x] `ILProfileHeaderView`: 250pt cover, gradient fade, edit pill on cover,
-      84pt overlapping avatar, 28pt name
+- [x] `ILProfileHeaderView`: 250pt cover, gradient fade, 84pt overlapping
+      avatar, 28pt name (v1.2: edit pill removed)
 - [x] `ILProfileCompactBarView` (new) + scroll-driven alpha / parallax / stretch
       in `ILProfileViewController`
 - [x] Heatmap: 21 columns × 4 rows (`ILHeatmapGridView` / `ILProfileHeatmapCardView`)
 - [x] Rename `ILProfilePremiumCardView` → `ILProfileDonateCardView`; always
       shown; remove `showsPremiumUpsell`
-- [x] `ILProfileMenuCardView`: 7 icon rows (Gia phả dòng họ, Tạo gia phả mới,
-      Chuông tỉnh thức, Sổ công đức, Cài đặt, Thông báo, Chùa tu tập)
+- [x] `ILProfileMenuCardView`: 7 icon rows (v1.2: Sửa hồ sơ, Gia phả dòng họ,
+      Tạo gia phả mới, Chuông tỉnh thức, Cài đặt, Thông báo, Chùa tu tập)
 - [x] `ILProfileVersionFooterView` + `versionText` from bundle
 - [x] `ILProfileNavEvent`: `.openPaywall` → `.openDonate`; add `.openMeritBook`,
       `.createFamilyTree`; coordinator wires `.createFamilyTree`
@@ -61,6 +61,20 @@ Status: in-progress (Phase 1–2 done; Phase 2b done except cover photo asset; P
 - [x] Record Assumption (cover image source) + Tech Debt (static cover,
       TODO destinations) under `Docs/Assumptions|Tech-Debt/Profile/`
 - [x] `xcodebuild build` (generic/platform=iOS) green
+
+## Phase 2c — v1.4 logout + no-flash render
+
+- [x] `LogoutEndpoint` + `ILLogoutRepository` / `ILLogoutRepositoryImpl`
+- [x] `ILSessionDataCleaner` / `ILSessionDataCleanerImpl` (Core Data `User`, `UserBirthProfile`, `Memorial`, `Lamp`)
+- [x] `ILProfileUseCase.logout()` (best-effort revoke, clear tokens, local user, birth profile, memorial cache, lamps, chosen temple)
+- [x] `ILAlert.confirm` + `ILConfirmDialogViewController` (+ tokens) and `ILAlertTests` cases
+- [x] `ILProfileLogoutButtonView`; `ILProfileViewController` button + popup + error toast
+- [x] `ILProfileViewModel`: `logoutConfirmed` Input, `.loggedOut` event, `isLoggingOut`, `logoutError` Output
+- [x] Wire `ILProfileCoordinator.onLogout` → `ILMainTabCoordinator.onLogout` → `AppCoordinator.handleLoggedOut()`
+- [x] `ILProfileViewController.updateUI`: per-section diff (no rebuild of unchanged cells); gradient layers no longer animate `frame` implicitly (header, merit card)
+- [x] Tests: `ILProfileLogoutTests`, `ILProfileViewModelTests` logout cases — written; not executed (`InnerLampTests` does not build here: "Clang dependency scanning failure")
+- [x] `xcodebuild build` (generic/platform=iOS) green
+- [ ] Device check: logout flow end-to-end, scroll up/down right after first entering Profile shows no flash
 
 ## Phase 3 — API integration (pending; blocked on contract)
 
@@ -82,10 +96,9 @@ Status: in-progress (Phase 1–2 done; Phase 2b done except cover photo asset; P
 ## Phase 4 — Unbuilt destinations (pending, separate scope)
 
 - [ ] Build the Awards screen and wire `.openAwards`
-- [ ] Build the Offering screen and wire `.openOffering`
+- [x] Build the MeritBook ("Sổ công đức") screen and wire `.openMeritBook` (v1.3; see `Docs/Specs/MeritBook/`)
 - [ ] Build the Ủng hộ InnerLamp (donate) screen and wire `.openDonate`
       (replaces the former Sen Vàng paywall item)
-- [ ] Build the Sổ công đức (merit book) screen and wire `.openMeritBook`
 - [ ] Replace the bundled default cover with the per-user cover (source ⚠️)
 - [ ] Build the Reminder screen and wire `.openReminder`
 - [ ] Build/find the Temple screen and wire `.openCommunity(id:)`

@@ -13,8 +13,9 @@ import Foundation
 nonisolated enum ILSignUpMapper {
     static func toDTO(_ entity: ILSignUpEntity) -> ILSignUpRequestOTPRequestDTO {
         ILSignUpRequestOTPRequestDTO(
+            fullName: entity.fullName,
             dharmaName: entity.displayName,
-            ordinationPlace: entity.ordinationPlace,
+            ordinationTempleId: entity.ordinationTempleID,
             phoneNumber: entity.phoneNumber,
             email: entity.email,
             password: entity.password

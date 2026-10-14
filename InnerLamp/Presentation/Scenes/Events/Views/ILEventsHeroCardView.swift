@@ -27,7 +27,15 @@ final class ILEventsHeroCardView: UIView {
     private let gradientLayer = CAGradientLayer()
     private let glowLayer = CAGradientLayer()
 
-    private let dateTile = UIView()
+    private lazy var dateTile: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = ILColors.inkOnDark.withAlphaComponent(0.08)
+        view.layer.cornerRadius = Layout.tileRadius
+        view.layer.borderWidth = 1
+        view.layer.borderColor = ILColors.goldBright.withAlphaComponent(0.30).cgColor
+        return view
+    }()
 
     private lazy var dayLabel: UILabel = {
         let label = UILabel()
@@ -117,12 +125,6 @@ final class ILEventsHeroCardView: UIView {
         glowLayer.startPoint = CGPoint(x: 0.5, y: 0.5)
         glowLayer.endPoint = CGPoint(x: 1, y: 1)
         layer.insertSublayer(glowLayer, above: gradientLayer)
-
-        dateTile.translatesAutoresizingMaskIntoConstraints = false
-        dateTile.backgroundColor = ILColors.inkOnDark.withAlphaComponent(0.08)
-        dateTile.layer.cornerRadius = Layout.tileRadius
-        dateTile.layer.borderWidth = 1
-        dateTile.layer.borderColor = ILColors.goldBright.withAlphaComponent(0.30).cgColor
 
         let dateStack = UIStackView(arrangedSubviews: [dayLabel, monthLabel])
         dateStack.axis = .vertical

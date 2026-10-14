@@ -31,17 +31,43 @@ final class ILBellViewController: BaseViewController {
     private var hasBuiltStaticControls = false
 
     // MARK: - UI Elements
-    private lazy var backgroundView = ILImmersiveBackgroundView()
+    private lazy var backgroundView: ILImmersiveBackgroundView = {
+        let view = ILImmersiveBackgroundView()
+        return view
+    }()
 
-    private lazy var headerView = ILNavBar()
+    private lazy var headerView: ILNavBar = {
+        let navBar = ILNavBar()
+        return navBar
+    }()
 
-    private let presetScrollView = UIScrollView()
-    private let presetStack = UIStackView()
+    private lazy var presetScrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        return scrollView
+    }()
+
+    private lazy var presetStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.alignment = .center
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+
     private var presetChips: [ILBellChipView] = []
 
-    private let modeSegmentedView = ILBellModeSegmentedView()
+    private lazy var modeSegmentedView: ILBellModeSegmentedView = {
+        let view = ILBellModeSegmentedView()
+        return view
+    }()
 
-    private lazy var padView = ILBellPadView()
+    private lazy var padView: ILBellPadView = {
+        let view = ILBellPadView()
+        return view
+    }()
 
     private lazy var moCountLabel: UILabel = {
         let label = UILabel()
@@ -75,8 +101,15 @@ final class ILBellViewController: BaseViewController {
         return stack
     }()
 
-    private lazy var rateCardView = ILBellRateCardView()
-    private lazy var actionBarView = ILBellActionBarView()
+    private lazy var rateCardView: ILBellRateCardView = {
+        let view = ILBellRateCardView()
+        return view
+    }()
+
+    private lazy var actionBarView: ILBellActionBarView = {
+        let view = ILBellActionBarView()
+        return view
+    }()
 
     // MARK: - Initializer
     init(viewModel: ILBellViewModel) {
@@ -111,14 +144,8 @@ final class ILBellViewController: BaseViewController {
         headerView.onBack = { [weak self] in self?.backTappedSubject.send(()) }
         view.addSubview(headerView)
 
-        presetScrollView.showsHorizontalScrollIndicator = false
-        presetScrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(presetScrollView)
 
-        presetStack.axis = .horizontal
-        presetStack.alignment = .center
-        presetStack.spacing = 8
-        presetStack.translatesAutoresizingMaskIntoConstraints = false
         presetScrollView.addSubview(presetStack)
 
         modeSegmentedView.onSelect = { [weak self] index in

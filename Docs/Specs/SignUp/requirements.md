@@ -1,7 +1,7 @@
 # Requirements — SignUp
 
-Version: 1.13
-Last updated: 2026-09-23
+Version: 1.16
+Last updated: 2026-10-11
 Status: in-progress — UI, local logic and API integration done (Phase 3); the
 OTP-timing ⚠️ is resolved and recorded under Open questions (resolved), and the
 prose below now matches the shipped call. Only the manual real-backend test
@@ -24,22 +24,46 @@ email lets me receive donation receipts later.
 
 ## Acceptance Criteria (EARS notation)
 
+- WHEN the SignUp screen loads, THE SYSTEM SHALL show a free-text
+  "Họ và tên" (full name) field as the first form field, empty. The field
+  is required: WHEN the user taps submit and the trimmed value is empty,
+  THE SYSTEM SHALL show "Vui lòng nhập họ và tên" under the field and
+  SHALL NOT call the API; otherwise THE SYSTEM SHALL send the trimmed value
+  as `full_name`, separately from the dharma name (`dharma_name`).
+
+  > Backend confirmed (2026-10-11): `full_name` is required, trimmed + NFC,
+  > max 300 characters; blank / too long -> `400 INVALID_FULL_NAME`, shown as
+  > the generic invalid-input message. See
+  > `Docs/Assumptions/SignUp/AS-SignUp-004-full-name-sent-as-full-name.md`.
+
 - WHEN the SignUp screen loads, THE SYSTEM SHALL pre-fill the display
   name field with the first suggested dharma name and show the submit
   button disabled until the terms checkbox is checked.
 - WHEN the user taps "Gợi ý" (suggest), THE SYSTEM SHALL cycle through a
-  fixed list of 10 dharma name suggestions; free-text input is not
-  allowed for this field.
+  fixed list of 10 dharma name suggestions; the user MAY also type the
+  dharma name freely (a typed value is kept until the next tap).
 - WHEN the user taps the country flag/dial code, THE SYSTEM SHALL present
   a country picker (search + list of 12 countries); selecting a country
   SHALL update the dial code and the phone validity hint immediately.
 - WHEN the user types a phone number, THE SYSTEM SHALL show a live valid/
   invalid hint based on the selected country's minimum national digit
   count (not hardcoded to Vietnam).
-- WHEN the user types an ordination place (optional free-text field,
-  "Nơi xuất gia", for monastics), THE SYSTEM SHALL accept any text
-  (including empty) without showing an error, and SHALL NOT block
-  submit on it. An empty value SHALL be sent as an empty string.
+- WHEN the user opens the ordination-place picker (optional field,
+  "Nơi xuất gia", for monastics), THE SYSTEM SHALL load temples from
+  `GET /v1/temples/options` one page at a time (server page size 100),
+  list "Chưa xuất gia" first, and WHEN the list is scrolled near its end
+  while the server has another page THE SYSTEM SHALL load and append the
+  next page without rebuilding the rows already shown.
+- WHEN the user types in the picker's search box, THE SYSTEM SHALL, after
+  a short pause, ask the server (`?q=`, name only, accent- and
+  case-insensitive) for page 1 of that keyword and replace the list with
+  the answer; an empty box SHALL load the unfiltered list and SHALL NOT
+  send an empty `q`. A response for a keyword the user has since changed
+  SHALL be ignored.
+- WHEN the user picks a temple, THE SYSTEM SHALL send its server id as
+  `ordination_temple_id`; WHEN the user picks "Chưa xuất gia" or a temple
+  proposal that is still pending approval, THE SYSTEM SHALL omit the
+  field. The choice SHALL NOT block submit.
 
   > ⚠️ Not confirmed: the design handoff has no ordination-place field —
   > its final Vietnamese label/placeholder/hint and its position
@@ -137,7 +161,7 @@ email lets me receive donation receipts later.
   > API integration is **done** as of v1.13: `sendVerificationCode` builds an
   > `ILSignUpEntity`, maps it via `ILSignUpMapper`, and calls
   > `POST /v1/auth/register/request-otp` (snake_case `dharma_name`,
-  > `ordination_place` optional, `phone_number`, `email`, `password`)
+  > `ordination_temple_id` optional, `phone_number`, `email`, `password`)
   > through `ILSignUpRepositoryImpl`, which maps every `NetworkError` to an
   > `ILSignUpError` case. The server's `expires_in_seconds` /
   > `resend_after_seconds` ride along to the OTP screen. This call only
@@ -176,7 +200,8 @@ email lets me receive donation receipts later.
   path/snake_case fields differ from the `/auth/signup/send-code` name
   this spec assumed?~~ → Resolved: the real route is
   `POST /v1/auth/register/request-otp`, body `dharma_name` /
-  `ordination_place` (optional) / `phone_number` / `email` / `password`;
+  `ordination_temple_id` (optional; was `ordination_place` until v1.13) /
+  `phone_number` / `email` / `password`;
   a successful response carries
   `{message, expires_in_seconds: 90, resend_after_seconds: 60}`. The
   superseded `/auth/signup/send-code` name is dropped everywhere. Also
@@ -201,6 +226,12 @@ email lets me receive donation receipts later.
   submit. Confirmed as-is by the user, so it matches the existing
   implementation and `ordination_place` (nullable) in
   `Docs/Specs/API/openapi.yaml`. Resolved 2026-09-21 (user).
+- ~~Does the backend still accept `ordination_place`, and what does the
+  picker send?~~ → Resolved 2026-10-11 (backend session): `request-otp`
+  decodes the body strictly and only knows `ordination_temple_id`; any
+  `ordination_place` (even `""`/`null`) is `400 VALIDATION_ERROR`. The
+  id comes from `GET /v1/temples/options`; an absent/empty/`null` id
+  means no temple; an unknown id is `400 INVALID_TEMPLE`.
 - ~~Is the email field optional?~~ → No, required (empty or malformed
   email blocks submit). Reverses the v1.5 behavior, which had followed
   the design handoff's `signupNext` (gated only on the terms checkbox).
@@ -222,8 +253,9 @@ email lets me receive donation receipts later.
   re-confirmed 2026-09-22 against `Docs/Specs/API/openapi.yaml` v3.9.
 - ~~Should phone validation be Vietnam-only?~~ → No, generalized per
   selected country's `nationalDigitCount`.
-- ~~Is the dharma name field a free-text input?~~ → No, design shows a
-  fixed suggestion list with a "reroll" button, not an `<input>`.
+- ~~Is the dharma name field a free-text input?~~ → Yes (2026-10-11,
+  supersedes 2026-09-15). The prototype's `isSignup` block has an `<input>`
+  plus a "Gợi ý" reroll chip, and `ILDharmaNameSuggestionField` accepts typing.
 - ~~What is the content source for Terms of Service / Privacy Policy?~~
   → A public URL, loaded in a web view (not bundled static text, not a
   custom backend/CMS API). Resolved 2026-09-15.

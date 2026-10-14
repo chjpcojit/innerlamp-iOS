@@ -5,8 +5,8 @@
 
 import UIKit
 
-/// Thẻ "Công đức đã hồi hướng": nền tối luôn tối ở cả light/dark (theo design handoff), vòng tròn
-/// viền vàng chứa ngọn lửa, tiêu đề + tóm tắt số lần cúng dường / đèn Vu Lan, mũi tên. Cả thẻ là
+/// Thẻ "Công đức đã hồi hướng": nền gradient thẻ nổi bật (`--il-feat-bg`, đổi theo light/dark),
+/// icon đèn 44pt (tone rose), tiêu đề + tóm tắt số lần cúng dường / đèn Vu Lan, mũi tên. Cả thẻ là
 /// 1 vùng chạm (mở Cúng dường). Nội dung riêng màn Tôi.
 final class ILProfileMeritCardView: UIControl {
 
@@ -14,8 +14,6 @@ final class ILProfileMeritCardView: UIControl {
     private enum Layout {
         static let horizontalPadding: CGFloat = 20
         static let verticalPadding: CGFloat = 18
-        static let ringSize: CGFloat = 40
-        static let flameHeight: CGFloat = 16
     }
 
     // MARK: - Properties
@@ -28,34 +26,37 @@ final class ILProfileMeritCardView: UIControl {
     // MARK: - UI Elements
     private let gradientLayer = CAGradientLayer()
 
-    private lazy var ringView: UIView = {
-        let view = UIView()
-        view.layer.cornerRadius = Layout.ringSize / 2
-        view.layer.borderWidth = 1
-        view.layer.borderColor = ILColors.goldBorderOnDark.cgColor
-        view.isUserInteractionEnabled = false
-        view.translatesAutoresizingMaskIntoConstraints = false
+    private lazy var iconTile: UIView = {
+        let tile = UIView()
+        tile.backgroundColor = ILColors.Tone.rose.tintBackground
+        tile.layer.cornerRadius = ILMetrics.radiusIconTile
+        tile.isUserInteractionEnabled = false
 
-        let flame = ILFlameView(height: Layout.flameHeight, topColor: ILColors.goldLight)
-        view.addSubview(flame)
+        let glyph = UIImageView(image: ILIcons.rowLamp)
+        glyph.tintColor = ILColors.Tone.rose.accentColor
+        glyph.contentMode = .scaleAspectFit
+        glyph.translatesAutoresizingMaskIntoConstraints = false
+        tile.addSubview(glyph)
         NSLayoutConstraint.activate([
-            flame.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            flame.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            glyph.topAnchor.constraint(equalTo: tile.topAnchor),
+            glyph.bottomAnchor.constraint(equalTo: tile.bottomAnchor),
+            glyph.leadingAnchor.constraint(equalTo: tile.leadingAnchor),
+            glyph.trailingAnchor.constraint(equalTo: tile.trailingAnchor)
         ])
-        return view
+        return tile
     }()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.font = ILTypography.headerTitle
-        label.textColor = ILColors.inkOnDark
+        label.textColor = ILColors.ink
         return label
     }()
 
     private lazy var summaryLabel: UILabel = {
         let label = UILabel()
         label.font = ILTypography.subhead
-        label.textColor = ILColors.inkOnDarkSecondary
+        label.textColor = ILColors.featSub
         label.numberOfLines = 0
         return label
     }()
@@ -63,7 +64,7 @@ final class ILProfileMeritCardView: UIControl {
     private lazy var chevronLabel: UILabel = {
         let label = UILabel()
         label.font = ILTypography.chevron
-        label.textColor = ILColors.inkOnDarkTertiary
+        label.textColor = ILColors.featSub
         label.text = "›"
         label.setContentHuggingPriority(.required, for: .horizontal)
         return label
@@ -73,6 +74,8 @@ final class ILProfileMeritCardView: UIControl {
     init() {
         super.init(frame: .zero)
         setupViews()
+        applyDynamicColors()
+        registerForAppearanceChanges()
     }
 
     required init?(coder: NSCoder) {
@@ -81,7 +84,11 @@ final class ILProfileMeritCardView: UIControl {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        // A bare sublayer animates `frame` implicitly — without this the gradient grows in on first layout.
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         gradientLayer.frame = bounds
+        CATransaction.commit()
     }
 
     // MARK: - Setup
@@ -89,7 +96,7 @@ final class ILProfileMeritCardView: UIControl {
         layer.cornerRadius = ILMetrics.radiusCardSmall + 2
         clipsToBounds = true
 
-        gradientLayer.colors = [ILColors.darkBackgroundTop.cgColor, ILColors.darkBackground.cgColor]
+        layer.borderWidth = 1
         gradientLayer.startPoint = CGPoint(x: 0.2, y: 0)
         gradientLayer.endPoint = CGPoint(x: 0.8, y: 1)
         layer.insertSublayer(gradientLayer, at: 0)
@@ -98,7 +105,7 @@ final class ILProfileMeritCardView: UIControl {
         textStack.axis = .vertical
         textStack.spacing = 3
 
-        let contentStack = UIStackView(arrangedSubviews: [ringView, textStack, chevronLabel])
+        let contentStack = UIStackView(arrangedSubviews: [iconTile, textStack, chevronLabel])
         contentStack.axis = .horizontal
         contentStack.alignment = .center
         contentStack.spacing = ILMetrics.spaceMedium
@@ -107,8 +114,8 @@ final class ILProfileMeritCardView: UIControl {
         addSubview(contentStack)
 
         NSLayoutConstraint.activate([
-            ringView.widthAnchor.constraint(equalToConstant: Layout.ringSize),
-            ringView.heightAnchor.constraint(equalToConstant: Layout.ringSize),
+            iconTile.widthAnchor.constraint(equalToConstant: ILMetrics.iconTileSize),
+            iconTile.heightAnchor.constraint(equalToConstant: ILMetrics.iconTileSize),
 
             contentStack.topAnchor.constraint(equalTo: topAnchor, constant: Layout.verticalPadding),
             contentStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Layout.verticalPadding),
@@ -124,6 +131,21 @@ final class ILProfileMeritCardView: UIControl {
     // MARK: - Configure
     func configure(summary: String) {
         summaryLabel.text = summary
+    }
+
+    // `CGColor` tĩnh (viền, gradient) không tự đảo theo trait — dựng lại khi đổi light/dark.
+    private func applyDynamicColors() {
+        gradientLayer.colors = [
+            ILColors.featBackgroundStart.resolvedColor(with: traitCollection).cgColor,
+            ILColors.featBackgroundEnd.resolvedColor(with: traitCollection).cgColor
+        ]
+        layer.borderColor = ILColors.featBorder.resolvedColor(with: traitCollection).cgColor
+    }
+
+    private func registerForAppearanceChanges() {
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in
+            self.applyDynamicColors()
+        }
     }
 
     // MARK: - Touch
