@@ -4,6 +4,27 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v2.0 (2026-10-14)
+
+Rewritten against the product spec innerlamp-be `docs/product/onboarding/product.md` @ v1.2 (ADR-0003
+Accepted: email + email code, no SMS) and the backend onboarding spec v8.0. Docs only; no code changed.
+
+- Scope widened from the intro alone to the whole first run and registration: splash, intro, SignUp,
+  email code, temple proposal. Replaces `Docs/Specs/{Splash,SignUp,Otp}/` (deleted in the clean-up step).
+- `requirements.md`: header `Product spec` / `Contract` / `Architecture` / `Implements`; criteria 1–29
+  tagged with product IDs. Changes from the old specs: launch with the intro seen and no session opens
+  Login (was SignUp); "Tôi đã có tài khoản" marks the intro seen; dharma name optional and empty;
+  password 8–64 characters after NFC; phone sent as `phone_country` + typed digits; email is the
+  identifier and an existing email looks like a new one; temple
+  proposal sent (public route, live in the backend) after the account exists; code screen by email with a live countdown, lock state,
+  "Đổi email", no voice-call banner; registration expired returns to the filled form.
+- `design.md`: one layers table over the five scenes with a State column; Step-by-step Flow 1–6.
+- `tasks.md`: Phases 1–7; `[x]` only where the code was read and still matches.
+- Review (anh Đức, 2026-10-14): the terms part is left for later (bundled sheet kept, criterion 12);
+  launch routing confirmed (first launch → intro → SignUp, later launches → Login).
+- Hand-offs: product — BR-ONB-11 "one text" deferred on iOS (tell `ba-writer` when it is picked up). Backend — none.
+- Reason: anh Đức dropped SMS (2026-10-14).
+
 ## v1.0 (initial)
 
 - Initial spec written retroactively from the already-implemented Onboarding

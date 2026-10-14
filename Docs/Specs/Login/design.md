@@ -1,126 +1,117 @@
 # Design — Login
 
-Version: 1.1
-Last updated: 2026-09-27
-Status: in-progress — UI + local validation + navigation done; login contract
-confirmed (`POST /v1/auth/login`), Data layer not yet implemented
+Version: 2.0
+Last updated: 2026-10-14
+Status: in-progress (drift) — phone sign-in, session store, refresh and sign-out built; email sign-in, forgot password, session-ended message and guest prompt planned
 
 > See `changelog.md` in this folder for the version history of this spec.
 
 ## Overview
 
-Login follows MVVM-C + Clean Architecture per `AGENTS.md`, matching the
-canonical `Onboarding` / `SignUp` feature shape. It is a **cross-section
-navigation** (Onboarding ↔ SignUp ↔ ForgotPassword ↔ Main), so
-`ILLoginCoordinator` is owned and wired by `AppCoordinator` (via
-`showLogin()`), not by a parent feature coordinator. Unlike SignUp (which is
-pushed onto the Onboarding stack), Login is set as the **root of its own
-stack** with `setViewControllers`, so "Tạo tài khoản mới" pushes SignUp on top
-of Login rather than replacing it.
+MVVM-C + Clean Architecture per `AGENTS.md`. `Login` and `ForgotPassword` are cross-section scenes
+owned by `AppCoordinator`. Session handling is app-wide: `NetworkService` + `AuthSessionRefresher`
+(Core), `AppCoordinator` (routing on session end), `ILProfileUseCase.logout` (sign-out).
+
+v2.0 changes:
+
+- **Email replaces phone** on Login; the country picker and the SMS button go.
+- **One session store.** Token saving is duplicated today in `ILLoginUseCase` and `ILOtpUseCase`;
+  it moves to `ILAuthSessionStore` (save / clear), which sign-in, registration, sign-out, session end
+  and password reset all use.
+- **Session end is explained and cleaned.** `.authSessionDidExpire` carries the reason; `AppCoordinator`
+  runs the full user-scoped cleanup (today only the user row is deleted) and opens Login with the
+  message. A guest's `401` is not a session end.
+- **New UI:** the session-ended / password-changed banner on Login has no prototype screen; its look is
+  agreed with anh Đức before it is built (anh Đức, 2026-10-14: "sẽ cần thêm UI").
+- **Forgot password** becomes two views in the `ForgotPassword` scene: request (email) and reset (code +
+  new password), reusing the code-timer view of the Otp scene.
+- **Guest prompt** is one shared component that account features show instead of their screen.
 
 ## Layers & components
 
-| Layer | File | Responsibility |
-|---|---|---|
-| Domain / Entity | `Domain/Entities/ILLoginEntity.swift` | Pure business fields only: `phone` (E.164 grouped display string), `password`. No UI-only state. |
-| Domain / Entity (shared) | `Domain/Entities/ILAuthSessionEntity.swift` | Return type of `ILLoginRepository.login`: `accessToken`, `refreshToken`, `user`. Shared with Otp/SignUp; not Login-specific. |
-| Domain / UseCase | `Domain/UseCases/Login/ILLoginUseCase.swift` | `getInitialState()`, `validatePhone(nationalDigits:country:)`, `validatePassword(_:)` (non-empty only), and `login(_ credential: ILLoginEntity) async throws` — **stub only** (see "Deliberately stubbed for now"). Also owns `ILLoginError` (`.invalidCredentials`). |
-| Domain / Repository | `Domain/Repositories/ILLoginRepository.swift` | Entity in / Entity out: `login(_ entity: ILLoginEntity) async throws -> ILAuthSessionEntity`. **No Data-layer implementation exists yet.** |
-| Presentation / State | `Presentation/Scenes/Login/ILLoginStateModel.swift` | UI-only state: `selectedCountry`, `phone`, `password`, field errors, `submitError`, `isSubmitting`; derived `nationalDigits` / `isPhoneValid` / `phoneE164` (grouped display string, same rule as `ILSignUpStateModel.phoneE164`). No UIKit import. |
-| Presentation / ViewModel | `Presentation/Scenes/Login/ILLoginViewModel.swift` | `Input -> Output` per `ViewModelType`; owns `ILLoginNavEvent` (`.goToOnboarding`, `.goToSignup`, `.goToForgotPassword`, `.didLoginSuccessfully`, `.goToGuestPreview`) and `navigationEventPublisher`. |
-| Presentation / Coordinator | `Presentation/Scenes/Login/ILLoginCoordinator.swift` | `setViewControllers([ILLoginViewController])`; subscribes `navigationEventPublisher`, forwards to `ILLoginCoordinatorDelegate` (5 methods). |
-| Presentation / ViewController | `Presentation/Scenes/Login/ILLoginViewController.swift` | `setupViews`/`setupConstraints`/`bindViewModel` per `BaseViewController`; `TransitionProviding` → `CrossFadeTransition`. |
-| Shared Design System component | `Presentation/Common/DesignSystem/Components/ILDividerRow.swift` | Generic "or" divider row (two rules + centered label). Added for Login's footer, reused across auth screens. |
-
-Reused (not owned by Login): `ILNavBar`, `ILPhoneField`, `ILField`,
-`ILButton`, `ILLampGlowView`, `ILCountryPickerViewController` — all generic,
-already added by SignUp.
+| Layer | File | Responsibility | State |
+|---|---|---|---|
+| Login / Entity | `Domain/Entities/ILLoginEntity.swift` | `email`, `password`. | **change**: `phone` → `email` |
+| Login / UseCase | `Domain/UseCases/Login/ILLoginUseCase.swift` | `validateEmail` (non-empty), `validatePassword` (non-empty), `login(_:)` → `ILAuthSessionStore.save`; `ILLoginError`. | **change**: email; drop `invalidPhone`; add `rateLimited(retryAfter:)`; storage via the store |
+| Login / Data | `Data/DTOs/ILLoginDTO.swift`, `Data/DataSources/Remote/LoginEndpoint.swift`, `Data/Repositories/ILLoginRepositoryImpl.swift` | Request `{email, password, device}`; device built from `UIDevice` / `Bundle` (`platform: "ios"`); user DTO. | **change**: `email`; user DTO reads `ordination_temple_id` (TD-SignUp-004) |
+| Login / State + ViewModel | `Presentation/Scenes/Login/ILLoginStateModel.swift`, `ILLoginViewModel.swift` | Email, password, errors, submitting, `banner` (`.sessionEnded` / `.passwordChanged`), `isRoot`; nav events `.goToSignup`, `.goToForgotPassword(email:)`, `.didLoginSuccessfully`, `.goToGuestPreview`. | **change**: drop phone/country; clear password on failure; banner; drop `.goToOnboarding` |
+| Login / ViewController | `Presentation/Scenes/Login/ILLoginViewController.swift` | Email `ILField` (email keyboard, no autocapitalisation), password reveal, "Quên mật khẩu?", banner. | **change**: remove `ILPhoneField`, `handleSmsCodeTapped`, the SMS button and its divider |
+| Login / Coordinator | `Presentation/Scenes/Login/ILLoginCoordinator.swift` | `start(banner:prefilledEmail:)`; root with no back when started by `AppCoordinator.showLogin`. | **change** |
+| Session store (shared) | new `Domain/Repositories/ILAuthSessionStore.swift` + `Data/Repositories/ILAuthSessionStoreImpl.swift` | `save(_ session: ILAuthSessionEntity)` → Keychain tokens + `ILUserRepository.saveUser`; `clear()` → delete tokens + `ILSessionDataCleaner.clearUserScopedData()` + account-scoped `UserDefaults` keys; keeps device keys. | **planned** — moves code out of `ILLoginUseCase`, `ILOtpUseCase`, `ILProfileUseCase` |
+| Refresh | `Core/Networking/AuthSessionRefresher.swift` | Single-flight refresh, rotated pair saved, `.authSessionDidExpire` on refusal. | built; **change**: post only when a refresh token existed (a guest has none — criterion 12) |
+| App routing | `App/AppCoordinator.swift` | `handleSessionExpired` → `ILAuthSessionStore.clear()` → `showLogin(banner: .sessionEnded)`; `showLogin(banner:prefilledEmail:)`; `showForgotPassword(email:)`. | **change**: full cleanup (today `deleteUser()` only), banner |
+| Sign-out | `Domain/UseCases/Profile/ILProfileUseCase.swift`, `Presentation/Scenes/Profile/Views/ILProfileLogoutButtonView.swift` | Confirm, revoke (result ignored), clear, `onLogout` → Login. | built; **change**: use `ILAuthSessionStore.clear()` |
+| Forgot / Entity + UseCase | `Domain/Entities/ILForgotPasswordEntity.swift`, `Domain/UseCases/ForgotPassword/ILForgotPasswordUseCase.swift` | `requestCode(email:) -> ILOtpTimingEntity`, `confirm(email:code:newPassword:)` (validates with `ILSignUpRules`, then on success `ILAuthSessionStore.clear()` if a session is stored); `ILForgotPasswordError`. | **change**: replace the print stub and the phone/email-summary entity |
+| Forgot / Data | new `Data/DataSources/Remote/PasswordResetRequestEndpoint.swift`, `PasswordResetConfirmEndpoint.swift`, `Data/DTOs/ILPasswordResetDTO.swift`, `Data/Repositories/ILPasswordResetRepositoryImpl.swift` + `Domain/Repositories/ILPasswordResetRepository.swift` | The two public calls; error mapping. | **planned** |
+| Forgot / Request view | `Presentation/Scenes/ForgotPassword/ILForgotPasswordViewController.swift`, `ILForgotPasswordViewModel.swift`, `ILForgotPasswordStateModel.swift` | Email, "Gửi mã", "Trở lại đăng nhập". | **change**: remove phone field, notice, email summary |
+| Forgot / Reset view | new `Presentation/Scenes/ForgotPassword/ILResetPasswordViewController.swift`, `ILResetPasswordViewModel.swift`, `ILResetPasswordStateModel.swift` | "Nếu email này có tài khoản, mã đã được gửi", email, code entry, new password (reveal), timers, lock state, "Gửi lại mã". | **planned** |
+| Shared code timers | `Presentation/Scenes/Otp/Views/ILOtpResendRowView.swift` → move to `Presentation/Common/Auth/ILCodeTimerView.swift` | Validity countdown + resend wait, used by Otp and Reset. | **change** |
+| Forgot / Coordinator | `Presentation/Scenes/ForgotPassword/ILForgotPasswordCoordinator.swift` | Push reset view after request; on confirm success → `AppCoordinator.showLogin(banner: .passwordChanged, prefilledEmail:)`; back → Login. | **change**: drop `forgotPasswordDidRequestOtp` / `…EmailReset` |
+| Guest prompt | new `Presentation/Common/Auth/ILSignInPromptView.swift` + `ILAuthGate` (reads `KeychainService.exists(accessTokenKey)`) | Shown by account features for a guest; actions route through `AppCoordinator` to Login / SignUp. | **planned**; each feature wires it in its own spec (Memorial already lists it) |
+| Strings | `Resources/Localization/vi.json` (+ `en.json` if present) | `login.field.email.*`, "Email hoặc mật khẩu không đúng", "Quên mật khẩu?", session-ended and password-changed banners, forgot / reset copy, rate-limited; remove phone, SMS and forgot-by-phone keys. | **change** |
 
 ## Navigation flow
 
 ```
-AppCoordinator
-  ├─ showLogin() → ILLoginCoordinator            (owned by AppCoordinator)
-  │    setViewControllers([ILLoginViewController])   ← root of its own stack
-  │    (back)                → .goToOnboarding      → showOnboarding()   [finish]
-  │    ("Tạo tài khoản mới") → .goToSignup          → showSignUp()       [no finish — pushed]
-  │    ("Quên?")             → .goToForgotPassword  → showForgotPassword() [no finish — pushed]
-  │    (login success)       → .didLoginSuccessfully → showMain()         [finish]
-  │    ("Xem trước...")      → .goToGuestPreview    → showMain()         [finish]
+AppCoordinator.showLogin(banner:, prefilledEmail:)   (root, no back)
+  ├─ "Đăng nhập" ✓ → showMain()
+  ├─ "Quên mật khẩu?" → showForgotPassword(email:)   (pushed)
+  │     ├─ "Gửi mã" ✓ → push ILResetPasswordViewController
+  │     │     └─ confirm ✓ → showLogin(banner: .passwordChanged, prefilledEmail:)
+  │     └─ "Trở lại đăng nhập" → pop
+  ├─ "Tạo tài khoản mới" → showSignUp()   (pushed)
+  └─ "Vào xem trước, chưa đăng nhập" → showMain()   (guest)
+
+Main (signed in)
+  ├─ Me tab "Đăng xuất" → confirm → ILAuthSessionStore.clear() → showLogin()
+  └─ refresh refused → .authSessionDidExpire → clear() → showLogin(banner: .sessionEnded)
+
+Main (guest)
+  └─ account feature → ILSignInPromptView → showLogin() / showSignUp()
 ```
 
-Entry points into Login:
-- `Onboarding` → "Đã có tài khoản" → `onboardingDidRequestLogin`
-- `SignUp` → "Tôi đã có tài khoản" → `signUpDidRequestLogin`
+## Step-by-step Flow — Session renewal and session end
 
-## Data flow (submit)
+```
+Step 1 — Authenticated call
+- Where: NetworkServiceImpl, any requiresAuth endpoint.
+- 401 with a stored refresh token → Step 2. 401 with none (guest) → return unauthorized to the caller;
+  no notification (criterion 12).
 
-1. `ILLoginViewController.handleSubmitTapped()` → `submitTappedSubject`.
-2. `ILLoginViewModel.handleSubmit()`:
-   - Guard `!isSubmitting` (blocks double-tap).
-   - Validate `phone` (country-aware) and `password` (non-empty only)
-     synchronously via `useCase.validateXxx`.
-   - On validation error → emit state with per-field errors, stop.
-   - On valid → `isSubmitting = true`, emit loading state, spawn `Task`
-     calling `useCase.login(ILLoginEntity(phone: currentState.phoneE164,
-     password: currentState.password))`.
-   - Success → `isSubmitting = false`, emit state, emit
-     `.didLoginSuccessfully`.
-   - Failure → `isSubmitting = false`, `submitError =
-     error.localizedDescription`, emit state → `showError` alert; **no nav
-     event**, stay on screen.
+Step 2 — Refresh (single-flight)
+- API: POST /v1/auth/refresh {refresh_token}
+    - Success → save the rotated pair, retry the original call once.
+    - 401 REFRESH_TOKEN_INVALID → Step 3.
+    - Offline / timeout / 5xx → keep the session; the original call fails with its transport error.
+
+Step 3 — Session ended
+- AuthSessionRefresher clears the tokens and posts .authSessionDidExpire.
+- AppCoordinator (main thread): ILAuthSessionStore.clear() (user-scoped Core Data, account-scoped
+  UserDefaults) → remove Main → showLogin(banner: .sessionEnded).
+```
+
+## Step-by-step Flow — Forgot password
+
+```
+Step 1 — Ask for a code
+- Trigger: "Gửi mã" with a valid email.
+- API: POST /v1/auth/password-reset/request-otp {email}
+    - Success → push the reset view with the email and the timing (always the same message).
+    - 400 INVALID_EMAIL → error under the field.
+    - 429 OTP_RESEND_TOO_SOON / OTP_SEND_LIMITED / OTP_LOCKED / RATE_LIMITED → message with the wait or unlock time.
+
+Step 2 — Resend (repeatable) — Step 1 again after the resend wait; clear the code, restart the timers.
+
+Step 3 — Set the new password
+- Pre-condition: 6 digits; new password passes ILSignUpRules (BR-ONB-06).
+- API: POST /v1/auth/password-reset/confirm {email, otp_code, new_password}
+    - Success → if a session is stored: ILAuthSessionStore.clear() (no logout call — the backend already
+      ended every session) → showLogin(banner: .passwordChanged, prefilledEmail: email).
+    - 400 OTP_INVALID / OTP_EXPIRED / INVALID_PASSWORD, 429 OTP_LOCKED / RATE_LIMITED → stay, clear the
+      new password, show the error; OTP_LOCKED disables the entry until locked_until.
+```
 
 ## Deliberately stubbed for now
 
-`ILLoginUseCaseImpl.login` is a one-line `print("TODO: …")` — see
-`requirements.md` Pending. `ILLoginRepository` exists as a Domain protocol
-(`login → ILAuthSessionEntity`), but:
-
-- There is **no `ILLoginRepositoryImpl`** under `Data/Repositories/`.
-- `ILLoginUseCaseImpl.init()` injects nothing (the README notes the real
-  `NetworkService`/repository must be injected when the call is implemented).
-- No `ILLoginDTO`, mapper, or `LoginEndpoint` exists.
-
-This is intentional per the project's "never a guessed real implementation"
-rule (see `ui-builder`'s `references/data_layer_boundaries.md`). The
-stub means the submit button always reports success at runtime. Completing
-this is `tasks.md` Phase 3.
-
-## Login API contract (confirmed)
-
-The login endpoint is confirmed in `Docs/Specs/API/openapi.yaml` v3.9 — this
-is **not** an open question; only the Data-layer implementation is pending.
-
-| Route | Request | Success data | Confirmed failures |
-|---|---|---|---|
-| `POST /v1/auth/login` | `LoginRequest` = `phone_number` (any `IsValidPhone` shape, normalized to E.164 server-side), `password` (non-empty only), `device` {platform, device_model, os_version?, app_version?, device_name?} | `VerifyOTPData` = `access_token`, `refresh_token` (stored SHA-256), `user` | `400` VALIDATION_ERROR / INVALID_PHONE / INVALID_PASSWORD / INVALID_DEVICE (none count as a failed attempt), `401` INVALID_CREDENTIALS (wrong password / unknown number / number only in pending_registration all collapse here; 5 consecutive failures lock the number 15 min — the fifth still answers 401, the next answers 429 even with the correct password), `413` PAYLOAD_TOO_LARGE, `429` LOGIN_LOCKED (`details.locked_until`), `500` INTERNAL_ERROR |
-
-Public (`requiresAuth = false`). Success returns the standard `ApiResponse`
-envelope (`{"success": true, "data": …}`), handled centrally by
-`NetworkService` (see `Docs/Specs/Networking/design.md`).
-
-Two gaps in the current Domain layer the Data layer must close when it lands:
-
-1. **`ILLoginEntity` lacks `device`.** The entity has only `phone`/`password`;
-   the contract requires a `device` object (at minimum `platform` +
-   `device_model`). Either the entity gains a `device` field, or the repository
-   derives it from `UIDevice`/bundle info at the Data boundary (the latter
-   keeps Device details out of Domain).
-2. **`ILLoginError` is incomplete.** It has only `.invalidCredentials`; the
-   mapped failures above need cases, and the 429 lock timing must be read from
-   `details.locked_until` (mirroring `ILSignUpError`'s use of
-   `ILUnlockTimeFormatter`).
-
-## SMS-code login (not implemented)
-
-`ILLoginViewController.handleSmsCodeTapped()` is an empty TODO. The design
-handoff's `isLogin` block includes a "Đăng nhập bằng mã SMS" CTA, but there is
-no OTP-for-login flow. The existing OTP feature (`Docs/Specs/Otp/`) only serves
-post-registration `verify-otp` / `resend-otp`; wiring it for login is a
-separate scope (`tasks.md` Phase 4).
-
-## Design reference
-
-Matches `Docs/design_handoff_innerlamp/design/InnerLamp Prototype.dc.html`,
-block `isLogin`. See `InnerLamp/Presentation/Scenes/Login/README.md` for the
-full design-vs-implementation comparison and changelog.
+- Email sign-in and `password-reset/*` work only once the backend ships them (innerlamp-be
+  `docs/specs/features/login/tasks.md`); until then iOS v2.0 is built and unit-tested against mocks.

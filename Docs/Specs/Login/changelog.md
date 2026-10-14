@@ -4,6 +4,26 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v2.0 (2026-10-14)
+
+Rewritten against the product spec innerlamp-be `docs/product/login/product.md` @ v1.2 (ADR-0003
+Accepted) and the backend login spec v2.2. Docs only; no code changed.
+
+- Scope: sign-in, session, sign-out, forgot password and guest mode. Merges `Docs/Specs/ForgotPassword/`
+  (deleted in the clean-up step).
+- `requirements.md`: header `Product spec` / `Contract` / `Architecture` / `Implements`; criteria 1–23
+  tagged with product IDs. Email replaces phone; SMS button removed; password cleared after a failed
+  sign-in; Login as root has no back; session end clears every user-scoped data and shows "Phiên đăng
+  nhập đã hết"; a guest's 401 is not a session end; forgot password by email code with new password,
+  ends a stored session and returns to Login with the email pre-filled; shared guest prompt.
+- `design.md`: shared `ILAuthSessionStore`; layers table with a State column; Step-by-step Flows for
+  session renewal / end and forgot password.
+- `tasks.md`: Phases 1–7; `[x]` only where the code was read and still matches (Keychain, refresh,
+  device object, lock time, sign-out, guest entry).
+- Review (anh Đức, 2026-10-14): the session-ended message needs new UI → design note + task.
+- Hand-offs: product — none. Backend — none.
+- Reason: anh Đức dropped SMS (2026-10-14).
+
 ## v1.2 (2026-09-28)
 
 - `tasks.md`: Phase 3 (API integration) implemented by `il-data-layer-builder`
