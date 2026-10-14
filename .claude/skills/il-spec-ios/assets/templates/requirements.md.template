@@ -4,6 +4,9 @@ Version: 1.0
 Last updated: {{date}}
 Status: <!-- e.g. "in-progress — UI done, API integration pending" or "not started" -->
 Feature folder: `InnerLamp/Presentation/Scenes/{{Feature}}/`
+Product spec: innerlamp-be `docs/product/<feature>/product.md` @ v<!-- MAJOR.MINOR --> <!-- or: none yet (legacy) -->
+Contract: innerlamp-be `docs/specs/api/openapi.yaml` @ <!-- commit sha or info.version; "n/a" if no API call -->
+Implements: <!-- BR-XXX-01, FR-XXX-001..004 — the IDs whose iOS column is in scope -->
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -27,7 +30,18 @@ a check happens and what the user sees; the *how* (which API, in what order) bel
 Step-by-step Flow.
 -->
 
-- WHEN <!-- trigger -->, THE SYSTEM SHALL <!-- behavior -->.
+- WHEN <!-- trigger -->, THE SYSTEM SHALL <!-- behavior -->. (<!-- FR-XXX-001 / BR-XXX-01 / platform -->)
+
+## Error → UI mapping
+
+<!--
+One row per failure case of the contract operations this feature calls (cite the operation; do not
+copy the schema). Only what the screen does with it. Delete if the feature makes no API call.
+-->
+
+| Operation | Failure case | What the user sees |
+|---|---|---|
+| <!-- POST /v1/... --> | <!-- 401 INVALID_CREDENTIALS --> | <!-- inline error, stays on screen --> |
 
 ## Out of scope (this feature boundary, not backend work)
 

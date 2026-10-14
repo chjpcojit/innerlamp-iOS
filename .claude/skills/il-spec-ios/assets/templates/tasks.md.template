@@ -41,7 +41,8 @@ Only include this phase if design.md's Step-by-step Flow (or Data flow) names at
 call not yet backed by a real contract. Otherwise delete this phase.
 -->
 
-- [ ] Define the API contract with the backend team — request/response shape, error cases
+- [ ] Confirm the operation exists in innerlamp-be `docs/specs/api/openapi.yaml` (else hand off to
+      the backend) — cite it, never copy the schema
       <!-- reference the exact endpoint from design.md's Step-by-step Flow -->
 - [ ] Create `IL{{Feature}}DTO` + `IL{{Feature}}Mapper` (only once the contract above is confirmed
       — never created speculatively "for later")
@@ -53,6 +54,8 @@ call not yet backed by a real contract. Otherwise delete this phase.
 - [ ] Update `IL{{Feature}}ViewModelTests` + add a mock repository to cover real success/failure
       paths
 - [ ] Manual test against a real/staging backend once available
+- [ ] <!-- only if a BR the app computes has vectors --> Run every case of innerlamp-be
+      `docs/product/<feature>/rules/<rule>.json` in `InnerLampTests` (BR-XXX-NN)
 
 ## Phase 4 — Documentation
 

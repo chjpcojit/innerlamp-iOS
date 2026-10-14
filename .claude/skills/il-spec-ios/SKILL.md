@@ -1,10 +1,10 @@
 ---
-name: spec-writer
-description: This skill should be used when the user wants a written spec (requirements, design, or task breakdown) for an InnerLamp iOS feature — before, during, or retroactively after building it — covering the three-file convention under Docs/Specs/<Feature>/ (requirements.md, design.md, tasks.md) plus a changelog.md, matching the existing Docs/Specs/SignUp/ example. It enforces a strict one-way cascade (requirements → design → tasks: a requirement change always updates design, which always updates tasks, never the reverse), EARS-notation acceptance criteria in requirements.md, a mandatory "Step-by-step Flow" section in design.md for any flow with 2+ sequential API/network calls (spelling out trigger/pre-condition/API/success-failure per step so hidden steps like a duplicate check or a secondary verification call are never silently assumed), version headers + changelog entries on every file for every update, and a hard rule that any unanswered question from the user is recorded inline as "⚠️ Not confirmed" — never skipped, never guessed, never silently defaulted. It is a docs-only skill: it never writes Swift code (that is `ui-builder`'s job) and never writes to Docs/Knowledge/ (the separate, post-implementation-only OKF convention described in Docs/Specs/OKF.md).
+name: il-spec-ios
+description: This skill should be used when the user wants a written spec (requirements, design, or task breakdown) for an InnerLamp iOS feature (the iOS platform spec, layer 2 — it starts from the cross-platform product spec innerlamp-be `docs/product/<feature>/product.md` written by `ba-writer` and the backend contract innerlamp-be `docs/specs/api/openapi.yaml`, citing both instead of copying them) — before, during, or retroactively after building it — covering the three-file convention under Docs/Specs/<Feature>/ (requirements.md, design.md, tasks.md) plus a changelog.md, matching the existing Docs/Specs/SignUp/ example. It enforces a strict one-way cascade (requirements → design → tasks: a requirement change always updates design, which always updates tasks, never the reverse), EARS-notation acceptance criteria in requirements.md, a mandatory "Step-by-step Flow" section in design.md for any flow with 2+ sequential API/network calls (spelling out trigger/pre-condition/API/success-failure per step so hidden steps like a duplicate check or a secondary verification call are never silently assumed), a header citing the product spec version and the BR-/FR- IDs it implements with every acceptance criterion tagged by ID, version headers + changelog entries on every file for every update, and a hard rule that any unanswered question from the user is recorded inline as "⚠️ Not confirmed" — never skipped, never guessed, never silently defaulted. It is a docs-only skill: it never writes Swift code (that is `ui-builder`'s job) and never writes to Docs/Knowledge/ (the separate, post-implementation-only OKF convention described in Docs/Specs/OKF.md).
 model: claude-sonnet-5-5
 ---
 
-# InnerLamp Spec Writer
+# InnerLamp iOS Spec Writer (`il-spec-ios`)
 
 ## Overview
 
@@ -19,6 +19,17 @@ Generates and maintains the three-file spec convention for an InnerLamp feature 
   organized into numbered Phases, each item a checkbox (`[ ]` pending / `[x]` done).
 - `changelog.md` — one shared version history for all three files above (they change together as
   one spec unit).
+
+These files are **layer 2** of InnerLamp's documentation stack. Above them sit the cross-platform
+product spec in the backend repo, innerlamp-be `docs/product/<feature>/product.md` (layer 0, owned
+by `ba-writer`, which exists only in that repo), and the API contract innerlamp-be
+`docs/specs/api/openapi.yaml` (layer 1, owned by the backend). The backend, website and Android
+repos have their own layer-2 spec skills (`il-spec-be`, `il-spec-web`, `il-spec-android`) citing the
+same documents. Read `references/upstream_product_spec.md` once — it is the shared rulebook.
+
+**Contract source.** The contract is the backend's `openapi.yaml`, read from an innerlamp-be
+checkout (usually `../innerlamp-be`). `Docs/Specs/API/openapi.yaml` in this repo is a stale copy:
+never use it as a source and never update it.
 
 This skill is modeled on the existing `Docs/Specs/SignUp/` files — read them first as the
 canonical worked example before generating a new spec, especially to see the exact tone/format
@@ -57,7 +68,15 @@ trusted reference artifact, not a work-order spec.
    `references/step_by_step_flow.md` for why and how — this is the mechanism that prevents hidden
    steps (a duplicate-check call, a secondary verification step) from being silently assumed away
    in a one-sentence user story.
-6. **Questions asked to the user must be short, concrete, and easy to answer** — one topic per
+6. **Start from the product spec, cite it, never restate or decide it.** A new feature needs
+   innerlamp-be `docs/product/<feature>/product.md` first — if there is none, stop and send the user
+   to `ba-writer` in innerlamp-be. `requirements.md` carries the `Product spec:` / `Contract:` /
+   `Implements:` header, every EARS criterion ends with the `FR-*`/`BR-*` it implements or
+   `(platform)`, and a product gap or ambiguity becomes `⚠️ Not confirmed (product)` handed back to
+   `ba-writer` — never decided here, never recorded only as an iOS assumption (`Docs/Assumptions/`
+   is for iOS implementation choices, not product rules). Legacy features without a product spec may
+   be updated with `Product spec: none yet (legacy)`. See `references/upstream_product_spec.md`.
+7. **Questions asked to the user must be short, concrete, and easy to answer** — one topic per
    question, with an example or a suggested default where possible. See
    `references/gathering_questions.md` for the required question set and phrasing style.
 
@@ -67,6 +86,7 @@ Read these as needed — don't load all upfront if the task is narrow.
 
 | Reference | Covers |
 |---|---|
+| `references/upstream_product_spec.md` | Layer 0/1/2 rules shared by all four platform spec skills: finding the product spec, the required header, ID tags on criteria, what a platform spec may not say, hand-back to `ba-writer`, test vectors |
 | `references/modes.md` | The two operating modes — **Prospective** (spec written before code exists) vs **Retroactive** (spec written from an already-implemented feature) — and how each changes the generation process |
 | `references/gathering_questions.md` | The exact question set to ask before generating anything, phrasing rules, and the "never skip, mark ⚠️" rule for unanswered ones |
 | `references/ears_notation.md` | How to phrase `requirements.md` acceptance criteria in EARS notation, with good/bad examples |
@@ -74,6 +94,15 @@ Read these as needed — don't load all upfront if the task is narrow.
 | `references/versioning_and_changelog.md` | Version bump rule (patch vs minor), required header format, and the `changelog.md` entry format with a worked multi-version example |
 
 ## Workflow
+
+### 0. Read the product spec and the contract
+
+Per `references/upstream_product_spec.md`: open innerlamp-be `docs/product/<feature>/product.md`,
+note its version, the IDs whose iOS column is not `n/a`, §3.6 rows naming iOS (e.g. an OS
+Reminders integration), open `⚠️` items naming iOS, and any `rules/*.json` vectors for BRs the app
+computes. Then open innerlamp-be `docs/specs/api/openapi.yaml` for the operations the feature calls.
+No product spec and a new feature → stop and send the user to `ba-writer`. Questions already
+answered in the product spec are not asked again below.
 
 ### 1. Determine mode and gather required decisions
 
@@ -90,9 +119,10 @@ generation until each question has either an answer or an explicit "skip, mark u
 5. **Does the main flow involve more than one sequential API/network call** (e.g. this feature's
    own call plus a follow-on call owned by another feature, like SignUp → OTP)? If yes, the
    Step-by-step Flow section (rule 5 above) is mandatory.
-6. **Confirmed backend contracts?** For each API call identified in step 5, is the exact contract
-   (endpoint, request/response shape, error cases) already confirmed, or still unknown? Unknown
-   ones become `⚠️ Not confirmed` items, not assumed shapes.
+6. **Confirmed backend contracts?** For each API call identified in step 5, is the operation in
+   innerlamp-be `docs/specs/api/openapi.yaml`? If yes, cite it (method + path) and record the
+   `Contract:` version in the header; if not, it is a `⚠️ Not confirmed` item and a hand-off to the
+   backend — never an assumed shape, never a local copy of the schema.
 
 ### 2. Populate the three files + changelog
 
@@ -131,6 +161,15 @@ If `Docs/Specs/<Feature>/` already exists, this is an **update**, not a fresh ge
    expands, or leaves unchanged the affected part of `design.md`/`tasks.md`.
 
 ### 4. Verify before reporting done
+
+- `requirements.md` has the `Product spec:` / `Contract:` / `Implements:` header (or
+  `Product spec: none yet (legacy)`), every EARS criterion carries an `FR-*`/`BR-*`/`(platform)`
+  tag, and every product ID in scope for iOS appears on at least one criterion.
+- Nothing restates a product rule's outcome or decides a product question; product gaps are
+  `⚠️ Not confirmed (product)` and listed in the report for `ba-writer`.
+- No schema or error list copied from `openapi.yaml`; operations are cited, and the error → UI
+  mapping table names only what the screen does with each case.
+- Every computational BR the app implements has a `tasks.md` item to run its vector file.
 
 - Every acceptance criterion in `requirements.md` is phrased in EARS notation (WHEN/THE SYSTEM
   SHALL), not vague prose.

@@ -51,5 +51,8 @@ Variants used in this project's specs (see `Docs/Specs/SignUp/requirements.md` f
    its own explicit clause — see `step_by_step_flow.md` for how this maps into `design.md`'s
    technical detail. `requirements.md` states *that* the check happens and what the user sees;
    `design.md` states *how* it's implemented (which API, in which order).
-4. **Out of scope / Pending / Open questions are not EARS-phrased** — those are plain prose
+4. **Tag every criterion with the product ID it implements** — `(FR-MEM-002)`, `(BR-MEM-04)`, or
+   `(platform)` for iOS-only behavior with no product counterpart (navigation, a system permission
+   prompt, a transition). See `upstream_product_spec.md`.
+5. **Out of scope / Pending / Open questions are not EARS-phrased** — those are plain prose
    sections; EARS applies specifically to the "Acceptance Criteria" section.

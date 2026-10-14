@@ -29,7 +29,7 @@ names on the Entity does **not**.
 
 `Docs/Specs/<Feature>/design.md` — in this order:
 
-1. The **Step-by-step Flow** section (`references/step_by_step_flow.md` in `spec-writer`) — this
+1. The **Step-by-step Flow** section (`references/step_by_step_flow.md` in `il-spec-ios`) — this
    is where per-step `API:` lines live, each naming method + path + success/failure branches.
 2. The **Deliberately stubbed for now** section — names what is *not* yet real and why.
 3. `requirements.md`'s **Pending** section — the canonical `⚠️ Not confirmed` markers.
@@ -38,7 +38,7 @@ names on the Entity does **not**.
 
 Stop and report if any holds:
 
-- No `Docs/Specs/<Feature>/` folder exists. (Run `spec-writer` first — say so.)
+- No `Docs/Specs/<Feature>/` folder exists. (Run `il-spec-ios` first — say so.)
 - `design.md` has no Step-by-step Flow / Data flow naming a real endpoint for the stubbed method.
 - Any of the six rows above is missing or hedged. Quote the line you're missing in your report.
 - A `⚠️ Not confirmed` marker covers the contract you'd be implementing.
@@ -47,7 +47,7 @@ Stop and report if any holds:
   field the Entity lacks → this is a Domain change (`ui-builder`'s layer), not something to
   quietly widen here.
 - The ViewModel switches on an `IL<Feature>Error` case whose behaviour would have to change →
-  that's a `design.md` + ViewModel change, so hand back to `spec-writer`/`ui-builder`.
+  that's a `design.md` + ViewModel change, so hand back to `il-spec-ios`/`ui-builder`.
 
 ## Worked example — SignUp Phase 3 is a stop, not a green light
 
@@ -76,6 +76,6 @@ Chưa implement được: contract chưa confirmed.
 - Thiếu: response shape của POST /auth/signup/send-code (chỉ có request).
 - Nguồn: Docs/Specs/SignUp/design.md Step 1 — "Success → emit .didRequestVerification"
   không nói body trả gì.
-- Cần: chạy spec-writer để chốt contract, hoặc bạn cho tôi response thật.
+- Cần: chạy il-spec-ios để chốt contract, hoặc bạn cho tôi response thật.
 Không viết DTO/Endpoint nào cho tới lúc đó.
 ```

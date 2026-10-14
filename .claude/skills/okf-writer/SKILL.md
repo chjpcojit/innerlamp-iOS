@@ -1,6 +1,6 @@
 ---
 name: okf-writer
-description: This skill should be used when the user wants to create or update a knowledge concept in the InnerLamp OKF (Open Knowledge Format) bundle under Docs/Knowledge/ — a post-implementation reference document describing a feature, API endpoint, domain entity, UseCase, architecture pattern, or design-system token/component, with YAML frontmatter (type, title, resource, tags, status, generated, sources, verified), a resource: path pointing at the real code location, and cross-links to related concepts. It enforces that concepts are generated only AFTER the code is implemented and verified (never as a work order — that is spec-writer's job under Docs/Specs/), that every resource: path is checked against the filesystem rather than guessed, that status stays draft until the flow is exercised end-to-end, that the verified: field is never written by the AI (only a human adds it during PR review), and that every create/update also refreshes index.md and log.md. It never writes Swift code and never touches Docs/Specs/. Replaces the dangling "Docs/Knowledge/features/<feature>.md (OKF concept)" task item left open in spec-writer's Phase 4 template.
+description: This skill should be used when the user wants to create or update a knowledge concept in the InnerLamp OKF (Open Knowledge Format) bundle under Docs/Knowledge/ — a post-implementation reference document describing a feature, API endpoint, domain entity, UseCase, architecture pattern, or design-system token/component, with YAML frontmatter (type, title, resource, tags, status, generated, sources, verified), a resource: path pointing at the real code location, and cross-links to related concepts. It enforces that concepts are generated only AFTER the code is implemented and verified (never as a work order — that is il-spec-ios's job under Docs/Specs/), that every resource: path is checked against the filesystem rather than guessed, that status stays draft until the flow is exercised end-to-end, that the verified: field is never written by the AI (only a human adds it during PR review), and that every create/update also refreshes index.md and log.md. It never writes Swift code and never touches Docs/Specs/. Replaces the dangling "Docs/Knowledge/features/<feature>.md (OKF concept)" task item left open in il-spec-ios's Phase 4 template.
 model: claude-sonnet-5-5
 ---
 
@@ -24,7 +24,7 @@ Read these first, in this order, before generating anything:
 
 **This skill is post-implementation only.** A concept documents code that exists and works. It is
 not a spec and must never be used as a work order — writing specs before/during implementation is
-`spec-writer`'s job under `Docs/Specs/<Feature>/`. The one documented exception is a complex
+`il-spec-ios`'s job under `Docs/Specs/<Feature>/`. The one documented exception is a complex
 business rule (e.g. a multi-step OTP flow) drafted as a concept *before* coding without a
 `resource:` field; once implemented, that same concept gains `resource:` and is reconciled against
 the real code (see `Docs/Specs/OKF.md` §3).
@@ -81,7 +81,7 @@ Establish, asking the user only for what cannot be determined from the code and 
 2. **Create or update?** Check whether the target file already exists under `Docs/Knowledge/`. An
    existing file means update — go to step 4.
 3. **Is the thing actually implemented?** If it is not built yet, stop: this is spec work for
-   `spec-writer`, not OKF work. The only exception is the complex-business-rule draft described
+   `il-spec-ios`, not OKF work. The only exception is the complex-business-rule draft described
    in the Overview.
 
 See `references/gathering_questions.md` for exact phrasing. Ask no more than necessary — most
