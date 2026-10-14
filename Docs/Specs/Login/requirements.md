@@ -1,123 +1,114 @@
 # Requirements — Login
 
-Version: 1.1
-Last updated: 2026-09-27
-Status: in-progress — UI + local validation + navigation done; login contract
-confirmed (`POST /v1/auth/login`), Data layer not yet implemented (stub)
-Feature folder: `InnerLamp/Presentation/Scenes/Login/`
+Version: 2.0
+Last updated: 2026-10-14
+Status: in-progress (drift) — sign-in by phone, Keychain session, single-flight refresh and sign-out are built and call the real backend; v2.0 moves sign-in to email, adds forgot password by email code, explains an ended session and gates account features for guests. No code for v2.0 yet (`tasks.md` Phase 1–7)
+Feature folder: `InnerLamp/Presentation/Scenes/{Login,ForgotPassword}/`, `Core/Networking/AuthSessionRefresher.swift`, `App/AppCoordinator.swift`, `Domain/UseCases/Profile/ILProfileUseCase.swift` (sign-out)
+Product spec: innerlamp-be `docs/product/login/product.md` @ v1.2
+Contract: innerlamp-be `docs/specs/features/login/requirements.md` @ v2.2 §API contract (47122d1); refresh and logout unchanged from `openapi.yaml`. `openapi.yaml` has neither email sign-in nor `password-reset/*` yet — the backend updates it when the handlers ship.
+Architecture: ADR-0003 — Accepted
+Implements: BR-LGN-01, BR-LGN-02, BR-LGN-03, BR-LGN-04, BR-LGN-05, BR-LGN-06, BR-LGN-07, FR-LGN-001, FR-LGN-002, FR-LGN-003, FR-LGN-004, FR-LGN-005, FR-LGN-006, FR-LGN-008, FR-LGN-009, FR-LGN-010, NFR-LGN-01, NFR-LGN-02, NFR-LGN-03
+Not on iOS: FR-LGN-007 (website only)
 
 > See `changelog.md` in this folder for the version history of this spec.
 
-> This spec is written retroactively from the already-implemented Login
-> feature. It documents what the shipped code actually does — including the
-> one-line stub `login` call — not an idealized version of it.
+iOS platform spec (layer 2) of sign-in, session, sign-out, forgot password and guest mode. The rules —
+uniform wrong-credentials message, the 5-attempt lock, 7-day sliding session, reset policy, what a
+guest may open — live in the product spec and are **not** restated here.
+
+v2.0 merges the former `Docs/Specs/ForgotPassword/` into this folder (deleted in the clean-up step).
 
 ## User Story
 
-As a returning user (or a visitor coming from Onboarding / SignUp), I want
-to sign in with my phone number and password — or continue straight into the
-app as a guest — so that I can reach the main app without re-registering.
+As a member, I want to sign in with my email and password, stay signed in, be told when my session has
+ended, and reset a forgotten password with a code sent to my email — or browse as a guest — so that I
+can reach InnerLamp on my iPhone without help.
 
 ## Acceptance Criteria (EARS notation)
 
-- WHEN the Login screen loads, THE SYSTEM SHALL show a phone field (country
-  flag + dial code + national number) and a password field, both empty, with
-  the default country selected and the submit button enabled.
-- WHEN the user taps the country flag/dial code, THE SYSTEM SHALL present the
-  shared country picker (search + list of 12 countries); selecting a country
-  SHALL update the dial code shown in the phone field.
-- WHEN the user types into the phone or password field, THE SYSTEM SHALL NOT
-  re-render the field's text (to avoid moving the cursor), and SHALL clear any
-  previously shown field error for that field.
-- WHEN the user taps "Đăng nhập" (submit) with an empty or invalid phone
-  number (below the selected country's minimum digit count) or an empty
-  password, THE SYSTEM SHALL show an inline error on the offending field and
-  SHALL NOT call the login use case. Password is validated as "non-empty only"
-  — no minimum length is enforced at login.
-- WHEN the user taps "Đăng nhập" with all fields valid, THE SYSTEM SHALL show
-  a loading state on the submit button and call the login use case with the
-  phone number in grouped, dial-code-prefixed display format (`+84 912 345
-  678`), then either:
-  - on success: navigate to the main app, or
-  - on failure: show the returned error message and stay on the Login screen,
-    with no navigation event emitted.
+### Sign-in
 
-  The confirmed failure branches (from `Docs/Specs/API/openapi.yaml` v3.9,
-  `POST /v1/auth/login`) that the future Data layer must map are:
-  - wrong password / unknown number / number only in `pending_registration`
-    → `401 INVALID_CREDENTIALS` (all three collapse to one code); five
-    consecutive failures lock the number for 15 minutes (the fifth still
-    answers 401, the next answers 429 even with the correct password);
-  - `400` VALIDATION_ERROR / INVALID_PHONE / INVALID_PASSWORD / INVALID_DEVICE
-    (none count as a failed attempt);
-  - `429 LOGIN_LOCKED` — `details.locked_until` is when the lock lifts;
-  - `413 PAYLOAD_TOO_LARGE`, `500 INTERNAL_ERROR`, and the transport cases
-    (offline / timeout).
+1. WHEN Login opens, THE SYSTEM SHALL show the email field, the password field with "Hiện/Ẩn", "Đăng nhập", "Quên mật khẩu?", "Tạo tài khoản mới" and "Vào xem trước, chưa đăng nhập"; there is no phone field, no country picker and no "Gửi mã một lần qua SMS". (FR-LGN-001, FR-LGN-010)
+2. WHEN the user submits with an empty email or an empty password, THE SYSTEM SHALL show the error under that field and SHALL NOT call the backend; no length rule applies to the password here. (BR-LGN-01)
+3. WHEN the user submits, THE SYSTEM SHALL call `POST /v1/auth/login` with the trimmed email, the password and `device {platform: "ios", device_model, os_version, app_version}`, then:
+   - on success: store the session (criterion 8) and open Main;
+   - on failure: stay, keep the email, clear the password, show the error per the Error → UI table. (FR-LGN-001, FR-LGN-002)
+4. WHEN the backend answers `INVALID_CREDENTIALS`, THE SYSTEM SHALL show "Email hoặc mật khẩu không đúng". (FR-LGN-002, BR-LGN-01, NFR-LGN-01)
+5. WHEN the backend answers `LOGIN_LOCKED`, THE SYSTEM SHALL show the lock message with the unlock time from `locked_until` in device local time. (FR-LGN-003, BR-LGN-02)
+6. WHEN a sign-in is in flight, THE SYSTEM SHALL ignore another tap. (platform)
+7. WHEN Login is the root (launch without a session, after sign-out, session ended), THE SYSTEM SHALL show no back control; when pushed from SignUp, back returns to SignUp. (FR-ONB-002, platform)
 
-  These branches are **not implemented yet** — see Pending.
-- WHEN a login request is already in flight, THE SYSTEM SHALL ignore a second
-  tap on "Đăng nhập" and SHALL NOT submit the form twice.
-- WHEN the user taps the back control, THE SYSTEM SHALL navigate to Onboarding.
-- WHEN the user taps "Tạo tài khoản mới" (create account), THE SYSTEM SHALL
-  navigate to the SignUp screen, keeping the Login screen on the navigation
-  stack underneath.
-- WHEN the user taps "Quên?" (forgot) next to the password field, THE SYSTEM
-  SHALL navigate to the ForgotPassword screen.
-- WHEN the user taps "Xem trước, đăng nhập sau" (guest preview), THE SYSTEM
-  SHALL navigate to the main app without authenticating.
+### Session
 
-## Out of scope (this feature boundary, not backend work)
+8. WHEN sign-in or registration succeeds, THE SYSTEM SHALL keep the access and refresh tokens only in the Keychain with a `ThisDeviceOnly` accessibility (today `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`), never synced or backed up, and the user in Core Data. (NFR-LGN-03, BR-LGN-03)
+9. WHEN the app launches with a stored session, THE SYSTEM SHALL open Main without asking for the password. (FR-LGN-004)
+10. WHEN an authenticated call answers `401`, THE SYSTEM SHALL refresh once (single-flight across concurrent calls, the rotated pair saved before the retry) and retry the call; an offline / timeout / 5xx refresh leaves the session for a later try. (FR-LGN-004, BR-LGN-03)
+11. WHEN the refresh is refused (`REFRESH_TOKEN_INVALID`) or no refresh token is stored while a session existed, THE SYSTEM SHALL clear the tokens and every user-scoped local data (the same cleanup as sign-out), open Login as the root and show "Phiên đăng nhập đã hết, vui lòng đăng nhập lại."; it SHALL NOT drop the user silently. (FR-LGN-005, BR-LGN-04)
+12. WHEN a guest (no session ever stored) hits a `401`, THE SYSTEM SHALL NOT treat it as an ended session (no clean-up, no message); the guest prompt of criterion 21 applies instead. (BR-LGN-06, platform)
 
-- Password recovery — owned by the ForgotPassword feature (see
-  `Docs/Specs/ForgotPassword/`).
-- Account creation — owned by the SignUp feature.
-- The actual authentication request (`login`): the use case method is a
-  one-line stub today (see Pending below). Building the real endpoint,
-  repository implementation, and error mapping is Data-layer work that
-  depends on a confirmed backend contract.
+### Sign-out
 
-## Pending (not yet implemented — see `tasks.md`)
+13. WHEN the user chooses "Đăng xuất" on the Me tab, THE SYSTEM SHALL ask for confirmation; cancel keeps the session; confirm calls `POST /v1/auth/logout` (result ignored), deletes the tokens and user-scoped local data, keeps device settings (`has_completed_onboarding`, intro choices) and opens Login as the root, also when offline. (FR-LGN-006, BR-LGN-07)
 
-- The real `login` network call. `ILLoginUseCaseImpl.login` is currently
-  `print("TODO: implement login — network/repository call, not built by
-  ui-builder")`, which means the submit button **always succeeds** at
-  runtime (it never throws `ILLoginError.invalidCredentials`). A Domain
-  repository protocol `ILLoginRepository` exists, but there is no
-  `Data/` implementation and the use case does not inject it yet.
+### Forgot password
 
-  > The login API contract **is** confirmed — see `Docs/Specs/API/openapi.yaml`
-  > v3.9, `POST /v1/auth/login` (`LoginRequest`: `phone_number`, `password`
-  > non-empty, `device` {platform, device_model, os_version?, app_version?,
-  > device_name?}; success `data` = `VerifyOTPData` {access_token,
-  > refresh_token, user}). What is missing is the Data-layer implementation
-  > and two entity/error gaps, not the contract:
-  > - `ILLoginEntity` has only `phone`/`password`; the contract requires a
-  >   `device` object (platform + device_model) that the entity does not carry.
-  > - `ILLoginError` has only `.invalidCredentials`; the contract's mapped
-  >   failures (VALIDATION_ERROR / INVALID_PHONE / INVALID_PASSWORD /
-  >   INVALID_DEVICE / INVALID_CREDENTIALS / LOGIN_LOCKED / PAYLOAD_TOO_LARGE /
-  >   INTERNAL_ERROR + transport) need matching cases.
-  > (`tasks.md` Phase 3.)
+14. WHEN the user chooses "Quên mật khẩu?", THE SYSTEM SHALL open the request view with the email field (pre-filled from Login when typed), "Gửi mã" and "Trở lại đăng nhập"; the phone field, the "đổi số điện thoại" notice and "Gửi hướng dẫn" are removed. (FR-LGN-008)
+15. WHEN the user submits a valid email, THE SYSTEM SHALL call `POST /v1/auth/password-reset/request-otp` and, whatever the email, open the new-password view with "Nếu email này có tài khoản, mã đã được gửi", the email, a live countdown of the code's validity and the resend wait, both from the response. (FR-LGN-008, BR-LGN-05, NFR-LGN-01)
+16. WHEN the user chooses "Gửi lại mã" after the wait, THE SYSTEM SHALL call the same request again, clear the code and restart both timers. (FR-LGN-008)
+17. WHEN the user enters 6 digits and a new password, THE SYSTEM SHALL check the password with the BR-ONB-06 rule (the onboarding validator) and then call `POST /v1/auth/password-reset/confirm`; on success, if this device holds a session it is cleared as in criterion 13 (without the logout call), and Login opens as the root with "Đã đổi mật khẩu, vui lòng đăng nhập lại." and the email pre-filled. (FR-LGN-009, BR-LGN-05)
+18. WHEN confirm fails, THE SYSTEM SHALL stay on the new-password view, keep the code, clear the new password and show the error; `OTP_LOCKED` disables the entry until `locked_until`. (FR-LGN-009)
+19. WHEN the password was reset on another device, THE SYSTEM SHALL handle this device's next `401` per criteria 10–11. (FR-LGN-005, FR-LGN-009)
 
-- "Đăng nhập bằng mã SMS" (login via SMS OTP). The button renders but
-  `handleSmsCodeTapped()` is an empty TODO; there is no OTP-for-login flow
-  wired yet. The existing OTP feature (`Docs/Specs/Otp/`) only serves
-  post-registration verification, not login. (`tasks.md` Phase 4.)
+### Guest
 
-  > ⚠️ Not confirmed: whether the SMS-code login should reuse the OTP feature's
-  > screen/flow (the contract's `ResendOTPRequest.purpose` enum already lists
-  > `login`, but the note states "US-001 only implements register; the other
-  > three return UNSUPPORTED_OTP_PURPOSE") — blocks `tasks.md` Phase 4.
+20. WHEN the user chooses "Vào xem trước, chưa đăng nhập", THE SYSTEM SHALL open Main as a guest; public content opens normally. (FR-LGN-010, BR-LGN-06)
+21. WHEN a guest opens something that belongs to an account (memorial book, family tree, practice records, profile, notifications), THE SYSTEM SHALL show the shared sign-in prompt (explanation, "Đăng nhập", "Tạo tài khoản") instead of the screen and SHALL NOT call the backend for it. (FR-LGN-010, BR-LGN-06)
 
-## Open questions (resolved during implementation)
+### General
 
-- ~~Is the email field part of login?~~ → No. Login is phone + password only
-  (`login.title`/`login.subtitle` and the design handoff block `isLogin`).
-  The design handoff has no email input. Resolved during implementation (see
-  `Presentation/Scenes/Login/README.md`).
-- ~~Is a password minimum length enforced at login?~~ → No, deliberately.
-  `ILLoginUseCase.validatePassword` only rejects an empty password (matching
-  `LoginRequest.password` in `Docs/Specs/API/openapi.yaml` v3.9: "Only checked
-  for non-empty — the length floor is a registration rule"). The server is the
-  authority on credentials. Resolved 2026-09-21 (recorded in
-  `Docs/Specs/SignUp/` Password rule section).
+22. WHEN an error is shown, THE SYSTEM SHALL use only localized strings, never the backend's `error.message`; `RATE_LIMITED` shows "try again later" with the wait from `retry_after_seconds`. (NFR-LGN-02)
+23. WHEN the app logs requests or errors, THE SYSTEM SHALL never log passwords, codes or tokens. (NFR-LGN-03)
+
+## Data & API
+
+| Action | Operation | Note |
+|---|---|---|
+| Sign in | `POST /v1/auth/login` | `email` instead of `phone_number` |
+| Refresh | `POST /v1/auth/refresh` | Unchanged |
+| Sign out | `POST /v1/auth/logout` | Unchanged |
+| Ask for a reset code | `POST /v1/auth/password-reset/request-otp` | New |
+| Set a new password | `POST /v1/auth/password-reset/confirm` | New |
+
+Request and response shapes: the contract in the header. This file copies no schema.
+
+## Error → UI mapping
+
+| Case | What the user sees |
+|---|---|
+| `INVALID_CREDENTIALS` | "Email hoặc mật khẩu không đúng" |
+| `LOGIN_LOCKED` | Lock message with the unlock time |
+| `INVALID_EMAIL` | Error under the email field |
+| `INVALID_PASSWORD` (reset) | Error under the new password |
+| `OTP_INVALID` / `OTP_EXPIRED` / `OTP_LOCKED` / `OTP_RESEND_TOO_SOON` / `OTP_SEND_LIMITED` | As the registration code screen (`../Onboarding/requirements.md` Error → UI) |
+| `RATE_LIMITED` | Try again later, with the wait |
+| `REFRESH_TOKEN_INVALID`, `401` after refresh | Session ended (criterion 11) |
+| `INVALID_DEVICE`, 5xx | Generic error |
+| Offline / timeout | Shared no-internet / retry message |
+
+## Out of scope
+
+- Registration and the email code → `../Onboarding/`.
+- Sign-in by code, Google / Apple, sign out of every device, change password while signed in → later (product §1.2).
+- Each feature's own guest handling beyond showing the shared prompt (e.g. `Docs/Specs/Memorial/`).
+
+## Pending (not yet implemented)
+
+`tasks.md` Phase 1–7.
+
+## Open questions (resolved)
+
+- ~~Folder layout?~~ → One `Login/` spec per product slug; `ForgotPassword/` merged here and deleted in the clean-up step. Claude's default, reviewed with this PR. Resolved 2026-10-14.
+- ~~Keep the password after a failed sign-in?~~ → Clear it, keep the email (product §3.7 keeps the email only). Resolved 2026-10-14.
+- ~~"Gửi mã một lần qua SMS"?~~ → Removed (no sign-in by code). Resolved 2026-10-14.
+- ~~Is a guest's `401` a session end?~~ → No; a guest never had a session, so the guest prompt applies (criteria 12, 21). Resolved 2026-10-14.
+- ~~After a successful reset, signed in automatically?~~ → No (BR-LGN-05); Login opens with the email pre-filled. Resolved 2026-10-14.
