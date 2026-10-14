@@ -20,6 +20,7 @@ Accepted) and the backend login spec v2.2. Docs only; no code changed.
   session renewal / end and forgot password.
 - `tasks.md`: Phases 1–7; `[x]` only where the code was read and still matches (Keychain, refresh,
   device object, lock time, sign-out, guest entry).
+- Review (anh Đức, 2026-10-14): the session-ended message needs new UI → design note + task.
 - Hand-offs: product — none. Backend — none.
 - Reason: anh Đức dropped SMS (2026-10-14).
 

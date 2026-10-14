@@ -34,7 +34,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 ## Phase 4 — SignUp screen
 
 - [ ] `ILSignUpViewController` + state: dharma name empty by default, email hint (sign-in + code), button "Đăng ký", phone error with Login link (criteria 7, 15)
-- [ ] Remove `ILSignUpLegalSheetViewController` and the bundled legal strings; `ILSignUpCoordinator.presentLegal` with `SFSafariViewController` on `<websiteBaseURL>/terms` and `/privacy`; `websiteBaseURL` per build configuration (criterion 12) — production value ⚠️
+- [x] Terms links open the bundled legal sheet without touching the form (`ILSignUpLegalSheetViewController`) — kept as is in v2.0 (criterion 12)
 - [x] Terms unchecked keeps the button disabled (`ILSignUpStateModel.isSubmitEnabled`) (criterion 11)
 - [x] AddTemple: name, province and ward from the administrative-unit list, optional street line (`ILAddTempleUseCase`) (criterion 18)
 

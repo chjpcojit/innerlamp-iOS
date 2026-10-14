@@ -30,6 +30,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 - [x] Single-flight refresh, rotated pair saved, offline / 5xx keeps the session (`AuthSessionRefresher`) (criterion 10)
 - [ ] `AuthSessionRefresher`: post `.authSessionDidExpire` only when a refresh token existed (criterion 12)
 - [ ] `AppCoordinator.handleSessionExpired`: `ILAuthSessionStore.clear()` (not only `deleteUser()`), `showLogin(banner: .sessionEnded)` (criterion 11)
+- [ ] UI for the "Phiên đăng nhập đã hết" and "Đã đổi mật khẩu" banner on Login — not in the design prototype; agree the look with anh Đức before building (criteria 11, 17)
 - [ ] Unit tests: refusal → full cleanup + banner; guest 401 → no notification
 
 ## Phase 4 — Sign-out

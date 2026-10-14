@@ -15,12 +15,14 @@ Accepted: email + email code, no SMS) and the backend onboarding spec v8.0. Docs
   tagged with product IDs. Changes from the old specs: launch with the intro seen and no session opens
   Login (was SignUp); "Tôi đã có tài khoản" marks the intro seen; dharma name optional and empty;
   password 8–64 characters after NFC; phone sent as `phone_country` + typed digits; email is the
-  identifier and an existing email looks like a new one; terms shown from the website pages; temple
-  proposal sent after the account exists; code screen by email with a live countdown, lock state,
+  identifier and an existing email looks like a new one; temple
+  proposal sent (public route, live in the backend) after the account exists; code screen by email with a live countdown, lock state,
   "Đổi email", no voice-call banner; registration expired returns to the filled form.
 - `design.md`: one layers table over the five scenes with a State column; Step-by-step Flow 1–6.
 - `tasks.md`: Phases 1–7; `[x]` only where the code was read and still matches.
-- Hand-offs: product — none. Backend — none (contract v8.0 covers every call).
+- Review (anh Đức, 2026-10-14): the terms part is left for later (bundled sheet kept, criterion 12);
+  launch routing confirmed (first launch → intro → SignUp, later launches → Login).
+- Hand-offs: product — BR-ONB-11 "one text" deferred on iOS (tell `ba-writer` when it is picked up). Backend — none.
 - Reason: anh Đức dropped SMS (2026-10-14).
 
 ## v1.0 (initial)

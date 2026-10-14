@@ -17,7 +17,7 @@ from SignUp. v2.0 keeps the scene structure and changes what flows through it:
 - **Phone is sent as typed.** `phone_country` (ISO from `ILCountry.iso`) + `phone_number` (the digits
   the user typed); the app stops building the grouped `+84 912 345 678` string for the wire.
 - **Launch routing** ends on Login, not SignUp, when the intro was seen and no session is stored.
-- **One terms text**: the website pages, shown with `SFSafariViewController`.
+- **Terms unchanged** for now: the bundled legal sheet stays (BR-ONB-11 one-text part deferred).
 - **Temple proposal is sent** after the account exists (was kept on the device only).
 
 ## Layers & components
@@ -34,12 +34,12 @@ from SignUp. v2.0 keeps the scene structure and changes what flows through it:
 | SignUp / UseCase | `Domain/UseCases/SignUp/ILSignUpUseCase.swift` | `validate…` via `ILSignUpRules`, suggestions, strength (3 levels, advice), `sendVerificationCode(_:) -> ILSignUpOTPEntity`; `ILSignUpError`. | **change**: dharma name no longer required or pre-filled; errors: drop `emailTaken` / `smsSendFailed` / `otpLocked`; add `emailSendFailed`, `rateLimited(retryAfter:)` |
 | SignUp / Data | `Data/DTOs/ILSignUpDTO.swift`, `Data/DTOs/Mappers/ILSignUpMapper.swift`, `Data/DataSources/Remote/RequestOTPEndpoint.swift`, `Data/Repositories/ILSignUpRepositoryImpl.swift` | Request DTO with `email`, `password`, `phone_country`, `phone_number`, `full_name`, `dharma_name?`, `ordination_temple_id?` (omitted when nil); error-code mapping. | **change**: DTO fields; mapping per the Error → UI table |
 | SignUp / State | `Presentation/Scenes/SignUp/ILSignUpStateModel.swift` | Field values and errors, strength, submitting, kept proposal. | **change**: drop `phoneE164`; dharma name empty by default; `phoneError` can carry the Login link |
-| SignUp / ViewModel | `Presentation/Scenes/SignUp/ILSignUpViewModel.swift` | Submit (criteria 9, 13, 16), `.didRequestVerification(email:timing:)`, `.goToLogin`, `.openLegal(.terms / .privacy)`, restore from a returned form. | **change** |
+| SignUp / ViewModel | `Presentation/Scenes/SignUp/ILSignUpViewModel.swift` | Submit (criteria 9, 13, 16), `.didRequestVerification(email:timing:)`, `.goToLogin`, restore from a returned form. | **change** |
 | SignUp / ViewController | `Presentation/Scenes/SignUp/ILSignUpViewController.swift`, `Views/ILDharmaNameSuggestionField.swift`, `Views/ILOrdinationPlaceFieldView.swift` | Form, button "Đăng ký", email hint, terms links. | **change**: copy (§3.1.1), dharma name empty, email hint |
-| SignUp / Legal | `Views/ILSignUpLegalSheetViewController.swift` → removed; `ILSignUpCoordinator.presentLegal(_:)` with `SFSafariViewController` | Opens `<websiteBaseURL>/terms` and `/privacy`; base URL from `APIConfig` (per build configuration). | **change** — ⚠️ production URL |
-| SignUp / Coordinator | `Presentation/Scenes/SignUp/ILSignUpCoordinator.swift` | Forwards nav events; presents AddTemple and the legal pages; keeps the SignUp VC alive under Otp so "Đổi email" pops back to the filled form. | built (pop-back), **change**: legal |
+| SignUp / Legal | `Views/ILSignUpLegalSheetViewController.swift` | Bundled terms and privacy text in a sheet; "Tôi đồng ý" ticks the box. | built — unchanged in v2.0 (one shared text deferred) |
+| SignUp / Coordinator | `Presentation/Scenes/SignUp/ILSignUpCoordinator.swift` | Forwards nav events; presents AddTemple and the legal sheet; keeps the SignUp VC alive under Otp so "Đổi email" pops back to the filled form. | built |
 | AddTemple | `Presentation/Scenes/AddTemple/*`, `Domain/UseCases/AddTemple/ILAddTempleUseCase.swift`, `Domain/Entities/ILTempleProposalEntity.swift` | Name, province and ward from the administrative-unit list, optional street line; returns an `ILTempleProposalEntity`. | built |
-| Temple proposal / Data | `Data/DataSources/Remote/TempleSuggestionEndpoint.swift` (exists, unused), new `Domain/Repositories/ILTempleSuggestionRepository.swift` + `Data/Repositories/ILTempleSuggestionRepositoryImpl.swift` | `submit(_ proposal:)`, authenticated; errors swallowed and logged without personal data. | **planned** (criterion 19, closes TD-SignUp-002) |
+| Temple proposal / Data | `Data/DataSources/Remote/TempleSuggestionEndpoint.swift` (exists, unused), new `Domain/Repositories/ILTempleSuggestionRepository.swift` + `Data/Repositories/ILTempleSuggestionRepositoryImpl.swift` | `submit(_ proposal:)`, public (no token); errors swallowed and logged without personal data. | **planned** (criterion 19, closes TD-SignUp-002) |
 | Otp / Entities | `Domain/Entities/ILOtpTimingEntity.swift`, `ILSignUpOTPEntity.swift` | `expiresInSeconds`, `resendAfterSeconds`. | built |
 | Otp / UseCase | `Domain/UseCases/Otp/ILOtpUseCase.swift` | `verifyCode(email:code:)` (stores the session via the shared session store, then submits the kept proposal), `resendCode(email:)`; `ILOtpError`. | **change**: email instead of phone; drop `voiceCallUnsupported`; add `rateLimited`, `sendLimited(until:)`, `locked(until:)`, `pendingExpired` |
 | Otp / Data | `Data/DTOs/ILOtpDTO.swift`, `Data/DTOs/Mappers/ILOtpMapper.swift`, `VerifyOTPEndpoint.swift`, `ResendOTPEndpoint.swift`, `Data/Repositories/ILOtpRepositoryImpl.swift` | Verify `{email, otp_code}`; resend `POST /v1/auth/register/resend-otp {email}`; user DTO `ordination_temple_id`. | **change**: bodies, resend path, drop `purpose`, user DTO field (closes TD-SignUp-004) |
@@ -63,7 +63,7 @@ AppCoordinator.start → Splash
 SignUp
   ├─ "Đăng ký" ✓ → showOtp(email:, timing)   (pushed; SignUp stays underneath)
   ├─ link to Login → showLogin()
-  ├─ terms links → SFSafariViewController (modal)
+  ├─ terms links → ILSignUpLegalSheetViewController (bundled text, unchanged)
   └─ "Không tìm thấy chùa?" → AddTemple (modal) → proposal kept in SignUp state
 
 Otp
@@ -110,7 +110,7 @@ Step 5 — Registration expired
 - Effect: message of FR-ONB-010; pop to SignUp with every value kept.
 
 Step 6 — Send the temple proposal (only when one is kept)
-- API: POST /v1/temple-suggestions (Bearer, the new access token)
+- API: POST /v1/temple-suggestions (public, no token; live in backend temple-suggestion v3.4)
     - Any result → ignored for the user; Main opens either way.
 - Effect: AppCoordinator.showMain().
 ```
@@ -120,4 +120,3 @@ Step 6 — Send the temple proposal (only when one is kept)
 - The email-code routes exist only in the backend spec; until the backend ships them, iOS v2.0 can be
   built and unit-tested against mocks, and E2E waits for the backend (`innerlamp-be`
   `docs/specs/features/onboarding/tasks.md`).
-- The production website address for the terms pages (⚠️ in `requirements.md`).

@@ -21,6 +21,8 @@ v2.0 changes:
 - **Session end is explained and cleaned.** `.authSessionDidExpire` carries the reason; `AppCoordinator`
   runs the full user-scoped cleanup (today only the user row is deleted) and opens Login with the
   message. A guest's `401` is not a session end.
+- **New UI:** the session-ended / password-changed banner on Login has no prototype screen; its look is
+  agreed with anh Đức before it is built (anh Đức, 2026-10-14: "sẽ cần thêm UI").
 - **Forgot password** becomes two views in the `ForgotPassword` scene: request (email) and reset (code +
   new password), reusing the code-timer view of the Otp scene.
 - **Guest prompt** is one shared component that account features show instead of their screen.

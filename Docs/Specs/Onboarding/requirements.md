@@ -45,7 +45,7 @@ email, so that I am signed in and my practice journey is kept on every device.
 9. WHEN the user submits, THE SYSTEM SHALL check every field with the rules of BR-ONB-04…07 — phone digits exactly the country's length after dropping spaces, dots, dashes and one leading 0; email trimmed and matched; password 8–64 **characters** after NFC; full name 1–300 and dharma name 0–255 characters after trimming — and on any error show it under the field, keep every value and SHALL NOT call the backend. (FR-ONB-003, BR-ONB-04, BR-ONB-05, BR-ONB-06, BR-ONB-07)
 10. WHEN the user types a password, THE SYSTEM SHALL show the 3-level strength hint as advice only; it SHALL NOT block submitting. (BR-ONB-06, §3.6)
 11. WHILE the terms are not accepted, THE SYSTEM SHALL keep "Đăng ký" disabled. (BR-ONB-11)
-12. WHEN the user opens "Điều khoản sử dụng" or "Chính sách bảo mật" from the terms row, THE SYSTEM SHALL show the website's `/terms` or `/privacy` page in an in-app browser sheet and, on dismiss, return to SignUp with every value and the checkbox unchanged; the bundled legal text is removed. (BR-ONB-11, §3.6)
+12. WHEN the user opens the terms of use or the privacy policy from the terms row, THE SYSTEM SHALL keep today's in-app sheet with the bundled text and, on dismiss, return to SignUp with every value and the checkbox unchanged. Moving to the one shared text (BR-ONB-11) is deferred. (BR-ONB-11, platform)
 13. WHEN the user submits a valid form, THE SYSTEM SHALL call `POST /v1/auth/register/request-otp` with `email` (trimmed), `password`, `phone_country` (ISO code of the picked country) and `phone_number` (digits as typed, not rebuilt into E.164), `full_name`, `dharma_name` only when not empty and `ordination_temple_id` only when a listed temple is picked, then:
     - on success: open the code screen with the email and the server's `expires_in_seconds` / `resend_after_seconds`;
     - on failure: stay on SignUp, keep every value, show the error per the Error → UI table. (FR-ONB-003, BR-ONB-08, BR-ONB-09)
@@ -57,7 +57,7 @@ email, so that I am signed in and my practice journey is kept on every device.
 
 17. WHEN the user opens the ordination temple field, THE SYSTEM SHALL list `GET /v1/temples/options` page by page with "Chưa xuất gia — Cư sĩ tu tại gia" first and server search by name (debounced; a stale answer is dropped). (FR-ONB-004, BR-ONB-10)
 18. WHEN the user proposes a missing temple, THE SYSTEM SHALL require its name and a province and ward picked from the administrative-unit list, the street line optional; the proposal is kept with the registration, never sent as `ordination_temple_id`. (FR-ONB-006, BR-ONB-10)
-19. WHEN the account has just been created and a proposal is kept, THE SYSTEM SHALL send it once with `POST /v1/temple-suggestions` using the new access token; a failure SHALL NOT affect the registration and is not shown as an error. (FR-ONB-006)
+19. WHEN the account has just been created and a proposal is kept, THE SYSTEM SHALL send it once with `POST /v1/temple-suggestions` (public, no token); a failure SHALL NOT affect the registration and is not shown as an error. (FR-ONB-006)
 
 ### Email code (Otp)
 
@@ -114,16 +114,18 @@ Request and response shapes: the contract in the header. This file copies no sch
 
 ## Pending (not yet implemented)
 
-Everything moving from phone + SMS to email, the launch routing change, the website terms pages and
+Everything moving from phone + SMS to email, the launch routing change and
 sending the temple proposal — `tasks.md` Phase 1–7.
 
-> ⚠️ Not confirmed: the production website address for `/terms` and `/privacy` (the website has no
-> deployed domain yet) — blocks shipping criterion 12; development builds use a config value.
+> Deferred (anh Đức, 2026-10-14): the terms part of BR-ONB-11 (one shared text) is left for later;
+> SignUp keeps its bundled legal sheet until then.
 
 ## Open questions (resolved)
 
 - ~~Folder layout?~~ → One `Onboarding/` spec per product slug, like the backend and website; the old `Splash/`, `SignUp/`, `Otp/` spec folders are deleted in the clean-up step. Claude's default, reviewed with this PR. Resolved 2026-10-14.
-- ~~Where does the terms text come from?~~ → The website `/terms` and `/privacy` pages, shown in an in-app browser (decided in website onboarding v1.0, approved 2026-10-14). Resolved 2026-10-14.
+- ~~Where does the terms text come from?~~ → Left for later; the bundled sheet stays for now (anh Đức: "bỏ qua phần điều khoản, chúng ta sẽ làm sau"). Resolved 2026-10-14.
+- ~~Does the backend accept the temple proposal?~~ → Yes: `POST /v1/temple-suggestions` is live and public (no access token; rate limited per device address), backend temple-suggestion v3.4 US-TSG-01. iOS sends it (criterion 19). Resolved 2026-10-14.
+- ~~Launch routing?~~ → First launch: intro, flag set, then SignUp. Any later launch (app killed and reopened) without a session: Login (anh Đức, 2026-10-14; criteria 1, 4). Resolved 2026-10-14.
 - ~~Does "Tôi đã có tài khoản" mark the intro as seen?~~ → Yes (product FR-ONB-001 scenario). Resolved 2026-10-14.
 - ~~Keep the password on "Đổi email" / registration expired?~~ → Keep every field (FR-ONB-009, FR-ONB-010). Resolved 2026-10-14.
 - ~~Live countdown or a fixed "valid for" text?~~ → Live countdown of the time left (FR-ONB-008). Resolved 2026-10-14.
