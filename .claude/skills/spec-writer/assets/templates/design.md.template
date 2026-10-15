@@ -37,7 +37,7 @@ mode) rather than omitting it.
 
 <!--
 ASCII diagram of which coordinator owns this screen and where it's reached from / navigates to.
-See Docs/Specs/SignUp/design.md for the exact style to reuse.
+See Docs/Specs/Onboarding/design.md for the exact style to reuse.
 -->
 
 ```

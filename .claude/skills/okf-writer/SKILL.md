@@ -19,7 +19,7 @@ Read these first, in this order, before generating anything:
 
 1. `Docs/Specs/OKF.md` — the format rationale and the workflow rules this skill implements.
 2. `Docs/Knowledge/index.md` — the bundle's table of contents (current sections + concept table).
-3. `Docs/Knowledge/features/signup.md` and `features/login.md` — the canonical worked examples.
+3. `Docs/Knowledge/features/main.md` and `features/temple.md` — worked examples (the former `signup.md` / `login.md` were deleted 2026-10-15).
    Copy their tone, section ordering, and frontmatter shape.
 
 **This skill is post-implementation only.** A concept documents code that exists and works. It is

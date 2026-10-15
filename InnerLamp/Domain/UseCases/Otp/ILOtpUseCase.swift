@@ -102,11 +102,11 @@ protocol ILOtpUseCase {
     /// Gửi lại mã cho `phoneNumber` — trả về timing mới của server để màn hình đếm lại từ đó.
     ///
     /// `.voiceCall` **chưa được hỗ trợ**: hợp đồng `resend-otp` đã xác nhận không có tham số kênh,
-    /// nên ném `ILOtpError.voiceCallUnsupported` mà không gọi mạng. Xem `Docs/Specs/Otp/`.
+    /// nên ném `ILOtpError.voiceCallUnsupported` mà không gọi mạng. Xem `Docs/Specs/Onboarding/`.
     func resendCode(phoneNumber: String, channel: ILOtpChannel) async throws -> ILOtpTimingEntity
 
     /// Xác thực `code` với mã đã gửi cho `phoneNumber`. Thành công lưu luôn phiên đăng nhập
-    /// (token vào Keychain, user vào `ILUserRepository`) — xem `Docs/Specs/Otp/design.md`.
+    /// (token vào Keychain, user vào `ILUserRepository`) — xem `Docs/Specs/Onboarding/design.md`.
     func verifyCode(phoneNumber: String, code: String) async throws
 }
 
@@ -136,7 +136,7 @@ final class ILOtpUseCaseImpl: ILOtpUseCase {
 
     func resendCode(phoneNumber: String, channel: ILOtpChannel) async throws -> ILOtpTimingEntity {
         // The confirmed resend-otp contract has no channel field. Refuse rather than silently
-        // sending an SMS for a "call me instead" request — see Docs/Specs/Otp/requirements.md.
+        // sending an SMS for a "call me instead" request — see Docs/Specs/Onboarding/requirements.md.
         guard channel == .sms else {
             throw ILOtpError.voiceCallUnsupported
         }

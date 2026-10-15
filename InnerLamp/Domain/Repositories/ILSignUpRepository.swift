@@ -9,7 +9,7 @@ import Foundation
 ///
 /// Entity in, `ILSignUpOTPEntity` out — the confirmed `POST /v1/auth/register/request-otp` success
 /// response carries the OTP-delivery metadata (`message`, `expires_in_seconds`,
-/// `resend_after_seconds`) that the OTP screen's countdown needs. See `Docs/Specs/SignUp/design.md`.
+/// `resend_after_seconds`) that the OTP screen's countdown needs. See `Docs/Specs/Onboarding/design.md`.
 ///
 /// No `ILSignUpDTO` may appear in this file or anywhere else under `Domain/` — the wire format is
 /// a Data-layer detail that stops at this boundary. No `ILSignUpStateModel` either.

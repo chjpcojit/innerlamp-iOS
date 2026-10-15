@@ -1,7 +1,7 @@
 # Tasks — Login
 
-Version: 2.0
-Last updated: 2026-10-14
+Version: 2.1
+Last updated: 2026-10-15
 Status: in-progress (drift) — Phase 1–7 not started for v2.0; items marked `[x]` were read in code on 2026-10-14 and still match
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -59,4 +59,4 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 - [ ] Check `NetworkLogger` never prints `/v1/auth/*` bodies or `Authorization` (criterion 23)
 - [ ] Manual run against the backend dev build: sign-in, wrong credentials, lock, reset on another device ends this session with the message, guest prompt
 - [ ] Update the iOS column of product §4.2 when done (tell `ba-writer`)
-- [ ] Delete `Docs/Specs/ForgotPassword/`, `Login/SRS.md` and the related `Docs/Knowledge`, `Docs/Assumptions`, `Docs/Tech-Debt` files in the docs clean-up step
+- [x] Delete `Docs/Specs/ForgotPassword/`, `Login/SRS.md` and the related `Docs/Knowledge`, `Docs/Assumptions`, `Docs/Tech-Debt` files in the docs clean-up step (2026-10-15)

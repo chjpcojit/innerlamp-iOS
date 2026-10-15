@@ -9,7 +9,7 @@ import Foundation
 /// Domain layer only.
 ///
 /// Drives the OTP screen's countdown and its "code expires in …" copy, replacing the fixed values
-/// the design handoff used (47s / "10 phút"). See `Docs/Specs/Otp/design.md`.
+/// the design handoff used (47s / "10 phút"). See `Docs/Specs/Onboarding/design.md`.
 struct ILOtpTimingEntity: Equatable {
     /// How long the code stays valid.
     var expiresInSeconds: Int = 0

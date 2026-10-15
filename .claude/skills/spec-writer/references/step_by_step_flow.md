@@ -37,7 +37,7 @@ Steps belonging to a different feature than the one this spec is for must say so
 "Step 3 — Verify OTP (OTP feature, out of this feature's scope)") and should point to that other
 feature's own `design.md` for its full detail rather than duplicating it.
 
-## Worked example (from Docs/Specs/SignUp/design.md)
+## Worked example (from the former Docs/Specs/SignUp/design.md, now merged into Docs/Specs/Onboarding/)
 
 ```
 Step 1 — Submit SignUp form (this feature)

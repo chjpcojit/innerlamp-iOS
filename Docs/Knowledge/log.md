@@ -1,5 +1,13 @@
 # Knowledge Bundle Update Log
 
+## 2026-10-15
+
+- Deleted `features/{signup,otp,login,forgot-password,onboarding,splash}.md` and `api/{auth-request-otp,
+  auth-verify-otp,auth-resend-otp}.md`, and removed them from `index.md`. Reason: registration and sign-in
+  move to email + email code (ADR-0003); the specs `Docs/Specs/Onboarding/` and `Docs/Specs/Login/` v2.0
+  replace them. Links in `features/main.md` and `architecture/networking.md` now name those specs. New
+  concepts are written with `okf-writer` once v2.0 is built and verified.
+
 ## 2026-10-10
 
 - `features/splash.md`: first-launch-only Onboarding confirmed by the user

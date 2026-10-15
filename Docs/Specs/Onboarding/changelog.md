@@ -4,6 +4,17 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v2.1 (2026-10-15)
+
+- Docs clean-up done after the four platform specs were approved (Android merged 2026-10-15). Deleted:
+  `Docs/Specs/{SignUp,Otp,Splash,ForgotPassword}/`, `Login/SRS.md`, `Onboarding/SRS.md`,
+  `Docs/Knowledge/features/{signup,otp,login,forgot-password,onboarding,splash}.md`, `Docs/Knowledge/api/`
+  (three `auth-*` concepts), `Docs/Assumptions/{SignUp,Splash}/`, `TD-SignUp-001`, `TD-SignUp-005`.
+  Kept: `TD-SignUp-002/003/004`, `TD-Splash-001/002` (still true of the code; closed when it changes).
+  Links to the deleted files (Knowledge, scene READMEs, code comments, the `spec-writer` / `okf-writer` /
+  `data-builder` skills) now point to this folder or say the file is in git history.
+- `tasks.md`: the clean-up item ticked. `requirements.md` / `design.md` unchanged apart from the version.
+
 ## v2.0 (2026-10-14)
 
 Rewritten against the product spec innerlamp-be `docs/product/onboarding/product.md` @ v1.2 (ADR-0003

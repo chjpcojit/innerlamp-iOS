@@ -83,7 +83,7 @@ out. Failures are discriminated by `error.code`, and `details` carries extra dat
 `Data/Repositories/ILSignUpRepositoryImpl.swift` is the representative consumer:
 it builds `RequestRegistrationOTPEndpoint`, calls `NetworkService`, maps the
 response via `ILSignUpMapper`, and converts `NetworkError` → `ILSignUpError` via
-an exhaustive `ILSignUpError.from(_:)` (see `features/signup.md`). `ILOtpRepositoryImpl`
+an exhaustive `ILSignUpError.from(_:)` (see `Docs/Specs/Onboarding/`). `ILOtpRepositoryImpl`
 is the second, verify/resend-aware example.
 
 # Common mistakes
@@ -108,5 +108,5 @@ is the second, verify/resend-aware example.
 
 - [Logging groups](logging-groups.md) — `NetworkLogger` routes to `LoggingService`
   (Group 1) and `CorrelationContext` ties request headers to Flow Tracking.
-- [Sign Up](../features/signup.md), [OTP Verification](../features/otp.md) — the
+- Sign Up and OTP Verification (`Docs/Specs/Onboarding/`) — the
   consumers whose error mapping is the canonical example.
