@@ -6,7 +6,7 @@ feature: PhotoViewer
 level: High
 status: Open
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-15
 files:
   - InnerLamp/Presentation/Scenes/PhotoViewer/ILPhotoViewerViewModel.swift:100
 ---
@@ -26,6 +26,10 @@ VI: Toast báo thành công dù chưa làm gì — gây hiểu nhầm nếu phá
 ## Proposed fix / Hướng xử lý
 EN: Save via `PHPhotoLibrary` (add-only permission), share via `UIActivityViewController` (iOS cannot set the wallpaper programmatically — replace or remove that action), persist favorites locally.
 VI: Lưu bằng `PHPhotoLibrary` (quyền chỉ thêm), chia sẻ bằng `UIActivityViewController` (iOS không đặt hình nền bằng code — đổi hoặc bỏ nút này), lưu yêu thích cục bộ.
+
+## Tracked by / Theo dõi tại
+EN: The fix is planned in `Docs/Specs/Gallery/tasks.md` (Phases 2–4, product spec gallery v1.0); close this entry when it ships.
+VI: Hướng sửa đã nằm trong `Docs/Specs/Gallery/tasks.md` (Phase 2–4, product spec gallery v1.0); đóng entry này khi phát hành.
 
 ## Resolution / Kết quả xử lý
 EN: _(fill in when Resolved)_

@@ -6,7 +6,7 @@ feature: PhotoViewer
 level: Low
 status: Open
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-15
 files:
   - InnerLamp/Presentation/Scenes/Photos/ILPhotosCoordinator.swift:49
 ---
@@ -26,6 +26,10 @@ VI: Người dùng không lật quá số ảnh đã tải (20 ảnh/trang) nế
 ## Proposed fix / Hướng xử lý
 EN: Feed the viewer the grid's `ILPhotosViewModel` state stream and trigger load-more near the end.
 VI: Cho viewer theo dõi state của `ILPhotosViewModel` và gọi load-more khi gần cuối.
+
+## Tracked by / Theo dõi tại
+EN: The fix is planned in `Docs/Specs/Gallery/tasks.md` (Phases 2–4, product spec gallery v1.0); close this entry when it ships.
+VI: Hướng sửa đã nằm trong `Docs/Specs/Gallery/tasks.md` (Phase 2–4, product spec gallery v1.0); đóng entry này khi phát hành.
 
 ## Resolution / Kết quả xử lý
 EN: _(fill in when Resolved)_

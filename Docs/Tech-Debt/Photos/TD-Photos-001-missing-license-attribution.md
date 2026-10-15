@@ -6,7 +6,7 @@ feature: Photos
 level: High
 status: Open
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-10-15
 files:
   - InnerLamp/Presentation/Scenes/Photos/Views/ILPhotosPhotoCardView.swift
 ---
@@ -26,6 +26,10 @@ VI: Rủi ro vi phạm giấy phép trước khi phát hành.
 ## Proposed fix / Hướng xử lý
 EN: Add a photo detail screen (tap a cell) calling `/v1/gallery/{id}` and showing author, license and a link to `source_url`.
 VI: Thêm màn chi tiết ảnh (chạm vào ô) gọi `/v1/gallery/{id}` và hiển thị tác giả, giấy phép, liên kết `source_url`.
+
+## Tracked by / Theo dõi tại
+EN: The fix is planned in `Docs/Specs/Gallery/tasks.md` (Phases 2–4, product spec gallery v1.0); close this entry when it ships.
+VI: Hướng sửa đã nằm trong `Docs/Specs/Gallery/tasks.md` (Phase 2–4, product spec gallery v1.0); đóng entry này khi phát hành.
 
 ## Resolution / Kết quả xử lý
 EN: _(fill in when Resolved)_

@@ -1,6 +1,6 @@
 # Requirements — Home
 
-Version: 1.12
+Version: 1.13
 Last updated: 2026-10-15
 Status: in-progress — full UI + local logic with mock data; no dashboard API
 yet (all content is stubbed in the UseCase)
@@ -56,11 +56,9 @@ app's main sections, so that I can get oriented and start a session quickly.
 
 ## Pending (not yet implemented — see `tasks.md`)
 
-- WHEN Home loads, THE SYSTEM SHALL request the featured gallery photos
-  (`GET /v1/gallery/top`, 10 photos) and show the first 3 as the "Ảnh chùa đẹp"
-  tiles with the "+N ảnh" overlay for the rest; IF the request fails, THEN THE
-  SYSTEM SHALL keep the placeholder tiles and hide the overlay without failing
-  Home. (Contract: `Docs/Specs/Photos/design.md` → "API contract".)
+- The "Ảnh đẹp Phật giáo" photo block is specified in `Docs/Specs/Gallery/`
+  (FR-GAL-001, BR-GAL-07, FR-GAL-008; criteria 1–6), which supersedes the
+  criterion this spec carried up to v1.12.
 
 - The "Sự kiện Phật giáo" events block is specified in `Docs/Specs/Calendar/`
   (FR-CAL-006, BR-CAL-15, FR-CAL-007, FR-CAL-008; criteria 16–18 and 21), which

@@ -1,6 +1,6 @@
 # Design — Home
 
-Version: 1.12
+Version: 1.13
 Last updated: 2026-10-15
 Status: in-progress — full UI + local logic with mock data; no dashboard API
 

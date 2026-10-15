@@ -1,6 +1,6 @@
 # Tasks — Gallery
 
-Version: 2.0
+Version: 2.0.1
 Last updated: 2026-10-15
 Status: in-progress — Phase 1 (built and still matching product v1.0) done; Phase 2–8 pending; Phase 2 blocked on backend gallery v2.0 (credit in the lists, `total` on `top`); save and error copy blocked on ⚠️ product
 
@@ -81,7 +81,8 @@ Status: in-progress — Phase 1 (built and still matching product v1.0) done; Ph
 - [ ] Build (`xcodebuild build`, `generic/platform=iOS`) and test run (physical device per AGENTS.md); record the result here
 - [ ] Manual QA on device against the prototype (`photos`, `pvOpen`, home section): chips, paging to the end, viewer paging past the loaded photos ("21 / 86"), "12 / 12" with no next on "Lễ hội", credit link, save (allow / deny / Settings), no connection on each surface, dark mode
 - [ ] `InnerLamp/Presentation/Scenes/Photos/README.md` and `PhotoViewer/README.md`: status tables + changelog for these changes, and a pointer to `Docs/Specs/Gallery/`
-- [ ] Separate change (not this one): delete `Docs/Specs/Photos/` and `Docs/Specs/PhotoViewer/`; set `AS-Photos-001` and `AS-PhotoViewer-001` to Validated (product BR-GAL-05); close `TD-Photos-001`, `TD-PhotoViewer-001`, `TD-PhotoViewer-002` when Phases 2–4 ship; update `Docs/Specs/Home/` (its photo criterion still says "Ảnh chùa đẹp", "+N for the rest" of the featured photos, placeholders on failure, and cites `Docs/Specs/Photos/design.md`) and the OKF `Docs/Knowledge/features/home.md`
+- [x] Cleanup (2026-10-15): deleted `Docs/Specs/Photos/` and `Docs/Specs/PhotoViewer/`; `AS-Photos-001` and `AS-PhotoViewer-001` set to Validated (BR-GAL-05); `Docs/Specs/Home/` v1.13 points its photo criterion here; the three open TD entries point to this file
+- [ ] Close `TD-Photos-001`, `TD-PhotoViewer-001`, `TD-PhotoViewer-002` when Phases 2–4 ship; point the `ILPhotosDTO.swift` contract comment at `Docs/Specs/Gallery/design.md` with the Phase 2 DTO change
 - [ ] `Docs/Knowledge/features/gallery.md` (OKF) — with `okf-writer` after Phase 2–6 are verified on device
 
 ## Deferred (not blocking Gallery)
