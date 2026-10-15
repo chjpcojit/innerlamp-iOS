@@ -4,6 +4,41 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v3.0 (2026-10-15)
+
+Moves the spec to the cross-platform product spec innerlamp-be `docs/product/temple/product.md` @ v1.1
+and the contract `docs/specs/api/openapi.yaml` @ a8a016b, and merges the directory list (formerly
+`Docs/Specs/Temples/` v1.0) into this folder, as product §1.5 asks. Docs only; no code changed.
+
+- `requirements.md`: rewritten. Header cites product @ v1.1, the contract (with what it still lacks:
+  `q` / `region`, page size 12, four detail fields) and `Implements` BR-TPL-01…09, FR-TPL-001…009,
+  NFR-TPL-01/02 (FR-TPL-010 backend only). New "Constraints from the product spec". 38 numbered EARS
+  criteria, each tagged: home block (1–3), directory with server search / region / continuous paging /
+  count of temples found (4–14, replacing the `Temples` v1.0 "load all, filter by name or address on the
+  device"), temple page (15–23), hidden follow / offering / report (24), open status in Vietnam time with
+  Rằm & Mùng Một hours (25–28), distance only with location permission (29–31, replacing the fixed
+  Quận 1 reference), directions and contacts (32–34), events empty state without the follow hint (35),
+  picker via Onboarding (36), offline copy (37–38). New Error → UI mapping table (adds a not-found state).
+  Out of scope now lists follow, report, offering, temple suggestion, TempleFinder / AddTemple. Five
+  `⚠️ Not confirmed (product)` markers (search placeholder, "Kinh sách" tile, footer month copy, Rằm &
+  Mùng Một row without holiday hours, when to ask for location + purpose text) and one contract marker
+  (backend v2.0 not shipped). Resolved list updated with the product decisions.
+- `design.md`: rewritten. Overview of the three surfaces; Layers & components with a State column
+  (built / change / planned): directory query, page `total`, `ILTempleOpenStatus` and `ILTempleDistance`
+  as pure Domain functions, location provider, new DTO / entity fields, removals for BR-TPL-08.
+  Step-by-step Flows for the directory (first page, next page, query change with 400 ms debounce and
+  stale-response drop) and the temple page (load, status, distance). Caching: directory pages move
+  from local-first to network-first, only unfiltered pages cached. Product vectors section (distance +
+  open status; order and search are backend-only).
+- `tasks.md`: restructured into Phase 1 (built and still matching — `[x]`, verified in code) and
+  Phase 2–8 (contract adoption, directory, temple page, distance, cards, vectors, docs), all `[ ]`.
+  Work that exists but no longer matches product v1.1 (device filtering, follow / offer / report,
+  device-time status, "5:00" hour format, "Chưa rõ giờ mở cửa", `https://` prefix on contacts, follow
+  hint in the events empty state, generic error on 404) is a change task, not `[x]`.
+- Reason: product spec v1.0/v1.1 for `temple` (anh Đức, 2026-10-15). Major bump: scope change (list
+  merged in, actions removed), new Phases, flow structure changed (server search / paging).
+- Not deleted here (later docs PR): `SRS.md` in this folder and every file of `Docs/Specs/Temples/`.
+
 ## v2.5.2 — Hero shows temple photo (2026-10-06)
 
 Code-only entry; no requirement/design prose change.
