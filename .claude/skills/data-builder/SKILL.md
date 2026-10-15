@@ -1,6 +1,6 @@
 ---
 name: data-builder
-description: This skill should be used when a feature's Presentation/Domain layers already exist (built by ui-builder) but its API integration is still a stub — i.e. an `IL<Feature>UseCase` method whose body is a one-line `print("TODO: ...")` because it needs a network call. It takes a feature from stub to real Data layer: creates `IL<Feature>DTO` + `IL<Feature>Mapper` (Data), the `<Action>Endpoint` conformance (`Data/DataSources/Remote/`), the `IL<Feature>Repository` protocol (Domain/Repositories) + `IL<Feature>RepositoryImpl` (Data/Repositories), injects that Repository into `IL<Feature>UseCaseImpl.init`, replaces the stub body with the real call, maps `NetworkError` (and any local-storage failure) to feature-specific `IL<Feature>Error` cases, and updates the unit tests to mock the Repository instead of the UseCase. It reads the confirmed API contract out of `Docs/Specs/<Feature>/design.md`'s Step-by-step Flow section and refuses to run without one — it never invents an endpoint path, request/response field, or error case. It is allowed to tick the API-integration checkboxes in `Docs/Specs/<Feature>/tasks.md` and append an implementation entry to `changelog.md`, but never to edit the prose of `requirements.md`/`design.md` (if the design turns out to be wrong, it stops and hands back to `il-spec-ios`). It never writes UI, ViewModel, Coordinator, or Entity/StateModel code — that is `ui-builder`'s job.
+description: This skill should be used when a feature's Presentation/Domain layers already exist (built by ui-builder) but its API integration is still a stub — i.e. an `IL<Feature>UseCase` method whose body is a one-line `print("TODO: ...")` because it needs a network call. It takes a feature from stub to real Data layer: creates `IL<Feature>DTO` + `IL<Feature>Mapper` (Data), the `<Action>Endpoint` conformance (`Data/DataSources/Remote/`), the `IL<Feature>Repository` protocol (Domain/Repositories) + `IL<Feature>RepositoryImpl` (Data/Repositories), injects that Repository into `IL<Feature>UseCaseImpl.init`, replaces the stub body with the real call, maps `NetworkError` (and any local-storage failure) to feature-specific `IL<Feature>Error` cases, and updates the unit tests to mock the Repository instead of the UseCase. It reads the confirmed API contract out of `Docs/Specs/<Feature>/design.md`'s Step-by-step Flow section and refuses to run without one — it never invents an endpoint path, request/response field, or error case. It is allowed to tick the API-integration checkboxes in `Docs/Specs/<Feature>/tasks.md` and append an implementation entry to `changelog.md`, but never to edit the prose of `requirements.md`/`design.md` (if the design turns out to be wrong, it stops and hands back to `spec-writer`). It never writes UI, ViewModel, Coordinator, or Entity/StateModel code — that is `ui-builder`'s job.
 ---
 
 # InnerLamp Data Layer Builder
@@ -9,7 +9,7 @@ description: This skill should be used when a feature's Presentation/Domain laye
 
 `ui-builder` builds a feature up to the **UseCase** layer and stops: any method whose real
 implementation would need to talk to the network or to persistent storage is generated as a
-one-line-TODO stub, by design (see its `references/data_layer_boundaries.md`). `il-spec-ios`
+one-line-TODO stub, by design (see its `references/data_layer_boundaries.md`). `spec-writer`
 writes the spec that says what that stub should eventually do. **This skill is the missing third
 step — it turns the stub into a real, tested implementation.**
 
@@ -41,10 +41,10 @@ protocol itself, `NetworkService`, or `HTTPMethod`.
    If `design.md` still carries a `⚠️ Not confirmed` marker (or no `design.md` exists at all),
    stop and report what is missing — do not proceed with a plausible-looking guess. See
    `references/contract_requirements.md`.
-2. **Never edit `requirements.md` or `design.md`.** Those belong to `il-spec-ios`. If
+2. **Never edit `requirements.md` or `design.md`.** Those belong to `spec-writer`. If
    implementing the contract reveals the design is wrong (a field the server doesn't actually
    return, a step missing from the flow), **stop, do not work around it in code**, and report the
-   discrepancy so the user can run `il-spec-ios` to correct the design first.
+   discrepancy so the user can run `spec-writer` to correct the design first.
    *Single, narrow exception:* the `Version`/`Last updated`/`Status` header lines of those two
    files may be synced mechanically when this skill bumps the spec version — never a line of prose.
 3. **`tasks.md` checkboxes may be ticked; `changelog.md` may be appended to.** This skill is the one

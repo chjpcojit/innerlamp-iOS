@@ -1,10 +1,10 @@
 ---
-name: il-spec-ios
+name: spec-writer
 description: This skill should be used when the user wants a written spec (requirements, design, or task breakdown) for an InnerLamp iOS feature (the iOS platform spec, layer 2 — it starts from the cross-platform product spec innerlamp-be `docs/product/<feature>/product.md` written by `ba-writer` and the backend contract innerlamp-be `docs/specs/api/openapi.yaml`, citing both instead of copying them) — before, during, or retroactively after building it — covering the three-file convention under Docs/Specs/<Feature>/ (requirements.md, design.md, tasks.md) plus a changelog.md, matching the existing Docs/Specs/Onboarding/ example. It enforces a strict one-way cascade (requirements → design → tasks: a requirement change always updates design, which always updates tasks, never the reverse), EARS-notation acceptance criteria in requirements.md, a mandatory "Step-by-step Flow" section in design.md for any flow with 2+ sequential API/network calls (spelling out trigger/pre-condition/API/success-failure per step so hidden steps like a duplicate check or a secondary verification call are never silently assumed), a header citing the product spec version and the BR-/FR- IDs it implements with every acceptance criterion tagged by ID, version headers + changelog entries on every file for every update, and a hard rule that any unanswered question from the user is recorded inline as "⚠️ Not confirmed" — never skipped, never guessed, never silently defaulted. It is a docs-only skill: it never writes Swift code (that is `ui-builder`'s job) and never writes to Docs/Knowledge/ (the separate, post-implementation-only OKF convention described in Docs/Specs/OKF.md).
 model: claude-sonnet-5-5
 ---
 
-# InnerLamp iOS Spec Writer (`il-spec-ios`)
+# InnerLamp iOS Spec Writer (`spec-writer`)
 
 ## Overview
 
@@ -24,7 +24,7 @@ These files are **layer 2** of InnerLamp's documentation stack. Above them sit t
 product spec in the backend repo, innerlamp-be `docs/product/<feature>/product.md` (layer 0, owned
 by `ba-writer`, which exists only in that repo), and the API contract innerlamp-be
 `docs/specs/api/openapi.yaml` (layer 1, owned by the backend). The backend, website and Android
-repos have their own layer-2 spec skills (`il-spec-be`, `il-spec-web`, `il-spec-android`) citing the
+repos have their own layer-2 spec skills (each also named `spec-writer`) citing the
 same documents. Read `references/upstream_product_spec.md` once — it is the shared rulebook.
 
 **Contract source.** The contract is the backend's `openapi.yaml`, read from an innerlamp-be

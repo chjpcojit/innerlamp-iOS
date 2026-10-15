@@ -267,15 +267,15 @@ State the lane in your first response of a task. The documentation chain is size
 | | **Light lane** | **Full lane** |
 |---|---|---|
 | **Use for** | Bug fix, visual/UX tweak, copy change, performance fix, refactor with no behavior change — touching existing code only | New feature or screen, any change to documented behavior or a confirmed requirement, new or changed API integration, new domain entity, anything spanning several features |
-| **Chain** | Surgical change (9.3) → verify → `/handoff` | Product spec in innerlamp-be (`ba-writer` there) → `il-spec-ios` → `ui-builder` → `data-builder` → verify → `okf-writer` (after verification) → `/handoff` |
+| **Chain** | Surgical change (9.3) → verify → `/handoff` | Product spec in innerlamp-be (`ba-writer` there) → `spec-writer` → `ui-builder` → `data-builder` → verify → `okf-writer` (after verification) → `/handoff` |
 | **Docs required** | None beyond section 10 — still record every Assumption and Tech Debt you create | Product spec `docs/product/<feature>/product.md` in innerlamp-be (with Gherkin acceptance criteria), `requirements.md` / `design.md` / `tasks.md` + `changelog.md` citing it, then OKF concepts |
 | **Never skipped** | Section 10 records, build verification, the final-response list of new or changed Assumption/Tech Debt entries | Same, plus every unanswered question recorded as `⚠️ Not confirmed` |
 
 **UI work always goes through `ui-builder`**: the light lane does not exempt a UI change from the `ui-builder` rules (see 4.5) — it only skips the product-spec/spec/OKF chain.
 
-**Escalate to the full lane** (stop, say so, then continue in that lane) as soon as a light-lane task would: change behavior described in `Docs/Specs/<Feature>/`, need a network call or contract that is not confirmed, or add a screen or entity. If a spec already exists for the feature, update it with `il-spec-ios` instead of leaving it describing old behavior.
+**Escalate to the full lane** (stop, say so, then continue in that lane) as soon as a light-lane task would: change behavior described in `Docs/Specs/<Feature>/`, need a network call or contract that is not confirmed, or add a screen or entity. If a spec already exists for the feature, update it with `spec-writer` instead of leaving it describing old behavior.
 
-**Product spec lives in the backend repo.** Since 2026-10-14 the business-analysis step writes one cross-platform product spec per feature at innerlamp-be `docs/product/<feature>/product.md` (skill `ba-writer`, which exists only in that repo; see its `docs/product/README.md`). This repo no longer has a BA skill. `il-spec-ios` starts from that product spec and the backend's `docs/specs/api/openapi.yaml`; the existing `Docs/Specs/<Feature>/SRS.md` files are legacy and are not updated — when a feature is reworked, its product spec is written in innerlamp-be instead.
+**Product spec lives in the backend repo.** Since 2026-10-14 the business-analysis step writes one cross-platform product spec per feature at innerlamp-be `docs/product/<feature>/product.md` (skill `ba-writer`, which exists only in that repo; see its `docs/product/README.md`). This repo no longer has a BA skill. `spec-writer` starts from that product spec and the backend's `docs/specs/api/openapi.yaml`; the existing `Docs/Specs/<Feature>/SRS.md` files are legacy and are not updated — when a feature is reworked, its product spec is written in innerlamp-be instead.
 
 **When unsure, choose the full lane.** A skipped light-lane check costs a note; a skipped full-lane step costs a wrong feature.
 

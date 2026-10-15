@@ -1,6 +1,6 @@
 # What This Skill May Write to `Docs/Specs/<Feature>/`
 
-Two skills already own these files: `il-spec-ios` writes them, and it is the only thing allowed
+Two skills already own these files: `spec-writer` writes them, and it is the only thing allowed
 to change what they *say*. This skill implemented the work, so it is the one place allowed to
 record that the work happened. The split is exactly:
 
@@ -12,7 +12,7 @@ record that the work happened. The split is exactly:
 | `design.md` | sync the `Version` / `Last updated` / `Status` header lines | touch any line of prose |
 
 The header-only exception exists because the three files share one version number (see
-`il-spec-ios`'s `references/versioning_and_changelog.md`) — bumping the changelog without
+`spec-writer`'s `references/versioning_and_changelog.md`) — bumping the changelog without
 bumping the headers would leave the spec self-inconsistent. It is a mechanical sync, nothing more.
 
 ## 1. Ticking `tasks.md`
@@ -37,7 +37,7 @@ phase look complete.
 
 Two items are **not** this skill's to tick, even though they sit in the same phase:
 
-- *"Define the API contract with the backend team"* — that is `il-spec-ios`'s
+- *"Define the API contract with the backend team"* — that is `spec-writer`'s
   `gathering_questions` step. It must already be `[x]` before this skill runs at all (it is the
   confirmed contract from `references/contract_requirements.md`). If it is somehow still `[ ]`,
   stop — the pre-flight failed.
@@ -64,7 +64,7 @@ purpose is to show a file was checked, not forgotten.
 
 ## 3. Version bump
 
-Per `il-spec-ios`'s bump rule: a task-list correction is a **minor** bump (`+0.1`). Ticking off
+Per `spec-writer`'s bump rule: a task-list correction is a **minor** bump (`+0.1`). Ticking off
 an existing phase's items is a minor bump. Only a new Phase or a structural design change is major
 — and this skill cannot make those, because it cannot write prose.
 
@@ -81,7 +81,7 @@ not** record the discovery by editing `design.md`. Stop and report:
 Design không khớp contract thật — không tự sửa.
 - design.md Step 1 nói response chỉ có otpSessionId.
 - Contract thật trả thêm `expiresIn`.
-- Đây là design change → cần chạy il-spec-ios cập nhật design.md (và tasks.md nếu thêm việc),
+- Đây là design change → cần chạy spec-writer cập nhật design.md (và tasks.md nếu thêm việc),
   rồi tôi implement lại.
 Chưa tick task nào, chưa thêm changelog entry.
 ```
