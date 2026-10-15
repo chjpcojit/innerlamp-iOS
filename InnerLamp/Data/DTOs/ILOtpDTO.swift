@@ -32,7 +32,7 @@ nonisolated struct ILOtpVerifyResponseDTO: Decodable {
 /// The `user` object carried by a successful `verify-otp`.
 ///
 /// Only the fields the app actually stores are modelled; the server's `created_at` is omitted
-/// because `ILUserEntity` / the Core Data store do not model it (see `Docs/Specs/Otp/`).
+/// because `ILUserEntity` / the Core Data store do not model it (see `Docs/Specs/Onboarding/`).
 nonisolated struct ILOtpUserDTO: Decodable {
     let id: Int64
     let email: String

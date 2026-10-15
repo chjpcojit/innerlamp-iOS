@@ -107,9 +107,9 @@ no separate field for it.
 
 ```yaml
 sources:
-  - path: Docs/Specs/SignUp/requirements.md
+  - path: Docs/Specs/Onboarding/requirements.md
     kind: spec
-  - path: Docs/Specs/SignUp/design.md
+  - path: Docs/Specs/Onboarding/design.md
     kind: spec
   - path: InnerLamp/Presentation/Scenes/SignUp/README.md
     kind: implementation-notes
@@ -135,7 +135,7 @@ sparingly; most concepts go stale by code change, not by clock, and a date nobod
 
 ## Full example
 
-The canonical shape, from `Docs/Knowledge/features/signup.md`:
+The canonical shape, from the former `Docs/Knowledge/features/signup.md` (deleted 2026-10-15; paths updated):
 
 ```yaml
 ---
@@ -147,9 +147,9 @@ tags: [auth, onboarding, mvvm-c]
 status: draft
 generated: { by: copilot-cli, at: 2026-09-15T00:46:00+07:00 }
 sources:
-  - path: Docs/Specs/SignUp/requirements.md
+  - path: Docs/Specs/Onboarding/requirements.md
     kind: spec
-  - path: Docs/Specs/SignUp/design.md
+  - path: Docs/Specs/Onboarding/design.md
     kind: spec
   - path: InnerLamp/Presentation/Scenes/SignUp/README.md
     kind: implementation-notes

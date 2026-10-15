@@ -1,7 +1,7 @@
 # Tasks — Onboarding
 
-Version: 2.0
-Last updated: 2026-10-14
+Version: 2.1
+Last updated: 2026-10-15
 Status: in-progress (drift) — Phase 1–7 not started for v2.0; items marked `[x]` were read in code on 2026-10-14 and still match
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -58,4 +58,4 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 - [ ] Check `NetworkLogger` never prints request bodies of `/v1/auth/*` (password, code, tokens) (criterion 28)
 - [ ] Manual run against the backend dev build (fixed dev code): new email, existing email looks the same, phone taken, "Đổi email", expired registration, lock
 - [ ] Update the iOS column of product §4.2 when done (tell `ba-writer`)
-- [ ] Delete `Docs/Specs/{Splash,SignUp,Otp}/`, `Onboarding/SRS.md` and the related `Docs/Knowledge`, `Docs/Assumptions`, `Docs/Tech-Debt` files in the docs clean-up step
+- [x] Delete `Docs/Specs/{Splash,SignUp,Otp}/`, `Onboarding/SRS.md` and the related `Docs/Knowledge`, `Docs/Assumptions`, `Docs/Tech-Debt` files in the docs clean-up step (2026-10-15; `TD-SignUp-002`, `-003`, `-004` and `TD-Splash-001`, `-002` kept: they describe code that is still there and close when it changes)

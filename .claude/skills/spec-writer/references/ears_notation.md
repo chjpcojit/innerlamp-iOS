@@ -11,7 +11,7 @@ and an AI implementing them.
 WHEN <trigger/event>, THE SYSTEM SHALL <mandatory behavior>.
 ```
 
-Variants used in this project's specs (see `Docs/Specs/SignUp/requirements.md` for real examples):
+Variants used in this project's specs (see `Docs/Specs/Onboarding/requirements.md` for real examples):
 
 - `WHEN <event>, THE SYSTEM SHALL <behavior>.` — the default form for a single trigger → single
   response.

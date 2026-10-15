@@ -22,7 +22,7 @@ Use when: the feature doesn't exist in code yet; the spec is meant to be handed 
 
 Use when: the feature already exists in the codebase (fully or partially) and the user wants the
 spec to document it accurately — e.g. onboarding a new AI/human contributor, or catching up on
-documentation debt. This is how `Docs/Specs/SignUp/` was created.
+documentation debt. This is how the former `Docs/Specs/SignUp/` was created (merged into `Docs/Specs/Onboarding/` v2.0; old files in git history).
 
 - **Before writing `requirements.md`/`design.md`, read the actual code**:
   `InnerLamp/Presentation/Scenes/<Feature>/`, `InnerLamp/Domain/Entities/`,
@@ -41,11 +41,11 @@ documentation debt. This is how `Docs/Specs/SignUp/` was created.
   without spot-checking — retroactive specs exist specifically to correct documentation drift, not
   reproduce it.
 - `changelog.md`: still starts at `v1.0 (initial)`, but its entry should say "written retroactively
-  from the existing implementation" (see `Docs/Specs/SignUp/changelog.md` v1.0 for the exact
+  from the existing implementation" (see the former `Docs/Specs/SignUp/changelog.md` v1.0, in git history, for the exact
   wording pattern to reuse).
 
 ## Mixed case: feature partially built
 
 Common in practice — some phases done, others not. Treat it as Retroactive for the done parts and
-Prospective for the rest, in the same three files (this is exactly what `Docs/Specs/SignUp/` does:
+Prospective for the rest, in the same three files (this is exactly what the former `Docs/Specs/SignUp/` did:
 Phase 1–2 retroactive/done, Phase 3 prospective/pending). Don't split into two separate spec sets.

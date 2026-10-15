@@ -51,7 +51,7 @@ Stop and report if any holds:
 
 ## Worked example — SignUp Phase 3 is a stop, not a green light
 
-From `Docs/Specs/SignUp/tasks.md` Phase 3, the task *"Define `POST /auth/signup/send-code` (or
+From the former `Docs/Specs/SignUp/tasks.md` Phase 3 (in git history), the task *"Define `POST /auth/signup/send-code` (or
 equivalent) contract with backend team"* is **unchecked**, and `design.md` carries
 ```
 ⚠️ Chưa xác nhận: the actual URL string values for ToS/Privacy
@@ -74,7 +74,7 @@ Short and concrete — name the file, name the missing field, name what it block
 ```
 Chưa implement được: contract chưa confirmed.
 - Thiếu: response shape của POST /auth/signup/send-code (chỉ có request).
-- Nguồn: Docs/Specs/SignUp/design.md Step 1 — "Success → emit .didRequestVerification"
+- Nguồn: Docs/Specs/SignUp/design.md cũ (git history) Step 1 — "Success → emit .didRequestVerification"
   không nói body trả gì.
 - Cần: chạy il-spec-ios để chốt contract, hoặc bạn cho tôi response thật.
 Không viết DTO/Endpoint nào cho tới lúc đó.

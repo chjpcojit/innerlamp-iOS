@@ -1,7 +1,7 @@
 # Requirements — Onboarding
 
-Version: 2.0
-Last updated: 2026-10-14
+Version: 2.1
+Last updated: 2026-10-15
 Status: in-progress (drift) — splash, the three intro steps, the registration form, the code screen and the real register calls are built against the old phone + SMS contract; v2.0 moves registration to an email code (ADR-0003). No code for v2.0 yet (`tasks.md` Phase 1–7)
 Feature folder: `InnerLamp/Presentation/Scenes/{Splash,Onboarding,SignUp,Otp,AddTemple}/`
 Product spec: innerlamp-be `docs/product/onboarding/product.md` @ v1.2

@@ -37,21 +37,12 @@ Planned, not yet populated:
 
 | Concept | Type | Status |
 |---|---|---|
-| [features/signup.md](features/signup.md) | Feature | draft (real-backend verification pending; ToS/Privacy links unwired; ordination-place copy unconfirmed) |
-| [features/login.md](features/login.md) | Feature | draft (login stub; Data layer pending the confirmed contract) |
-| [features/otp.md](features/otp.md) | Feature | draft (manual real-backend test pending) |
-| [features/forgot-password.md](features/forgot-password.md) | Feature | draft (sendResetInstructions stub; no reset contract) |
-| [features/onboarding.md](features/onboarding.md) | Feature | stable (complete local flow, no backend) |
 | [features/home.md](features/home.md) | Feature | draft (mock data; no dashboard API) |
-| [features/splash.md](features/splash.md) | Feature | draft (Main / Login / Onboarding by session + onboarding flag) |
 | [features/bell.md](features/bell.md) | Feature | draft (memory-only; no persistence or sound picker) |
 | [features/library.md](features/library.md) | Feature | draft (mock catalog; search/item destinations TODO) |
 | [features/main.md](features/main.md) | Feature | stable (complete container, no backend) |
 | [features/temple.md](features/temple.md) | Feature | draft (mock catalog; SRS discovery scope unimplemented) |
 | [domain/usecases/deviceattestation.md](domain/usecases/deviceattestation.md) | UseCase | draft (server round-trips stubbed until backend contract lands) |
-| [api/auth-request-otp.md](api/auth-request-otp.md) | API Endpoint | draft (contract confirmed, not exercised against real backend) |
-| [api/auth-verify-otp.md](api/auth-verify-otp.md) | API Endpoint | draft (contract confirmed, not exercised against real backend) |
-| [api/auth-resend-otp.md](api/auth-resend-otp.md) | API Endpoint | draft (contract confirmed, not exercised against real backend) |
 | [architecture/networking.md](architecture/networking.md) | Architecture Pattern | stable (implemented + tested; 401 refresh deferred) |
 | [architecture/logging-groups.md](architecture/logging-groups.md) | Architecture Pattern | stable (implemented; 3 of 4 transports mocked by design) |
 

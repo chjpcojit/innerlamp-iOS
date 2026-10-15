@@ -11,7 +11,7 @@ Màn xác thực mã OTP 6 số gửi tới số điện thoại người dùng 
 "điện thoại" ở ForgotPassword). Được `ILOtpCoordinator` push lên trên stack hiện tại (SignUp/
 ForgotPassword VC vẫn còn bên dưới); xác thực thành công báo `delegate` rồi `finish()`.
 
-Spec: `Docs/Specs/Otp/` (requirements / design / tasks / changelog).
+Spec: `Docs/Specs/Onboarding/` (requirements / design / tasks / changelog; the code screen of registration).
 
 ## Status
 
@@ -44,7 +44,7 @@ Countdown "Gửi lại" và câu "Mã có hiệu lực trong …" lấy từ ser
 ## Known gaps / not implemented yet
 
 - Nhận mã qua **cuộc gọi thoại** chưa có backend (hợp đồng `resend-otp` không có tham số kênh):
-  bấm banner hiện alert "chưa khả dụng", không gọi mạng. Xem ⚠️ trong `Docs/Specs/Otp/requirements.md`.
+  bấm banner hiện alert "chưa khả dụng", không gọi mạng. Xem ⚠️ trong `Docs/Specs/Onboarding/requirements.md`.
 - `user.created_at` không được lưu (`ILUserEntity` / Core Data không mô hình field này).
 - Token refresh (`POST /v1/auth/refresh`) chưa có; `refresh_token` đã được lưu để dùng sau.
 - Không có UI test — chưa được yêu cầu.
@@ -55,7 +55,7 @@ Countdown "Gửi lại" và câu "Mã có hiệu lực trong …" lấy từ ser
   session (access/refresh token vào Keychain, user qua `ILUserRepository`); `resendCode` gọi
   `POST /v1/auth/resend-otp`; countdown/expiry theo timing server; voice-call để dành. Thêm
   `ILOtpRepository`/`ILOtpRepositoryImpl`, DTO/Mapper/Endpoints, `ILOtpTimingEntity`,
-  `ILOtpRepositoryTests`, `ILOtpUseCaseTests`; `ILOtpViewModelTests` cập nhật. Spec: `Docs/Specs/Otp/`.
+  `ILOtpRepositoryTests`, `ILOtpUseCaseTests`; `ILOtpViewModelTests` cập nhật. Spec: `Docs/Specs/Onboarding/`.
 - 2026-09-15 — sửa vi phạm hard scope limit trong `references/data_layer_boundaries.md`:
   `ILOtpUseCaseImpl` trước đó tự sinh/lưu/so khớp mã OTP qua `KeychainService` (một local
   Repository call, lẽ ra phải là stub một-dòng-TODO chứ không được implement thật kể cả dạng

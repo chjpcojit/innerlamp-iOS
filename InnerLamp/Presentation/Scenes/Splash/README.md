@@ -6,8 +6,8 @@ there is none but onboarding was completed, otherwise to `Onboarding`. Owned top
 
 Status, layers and flow live in one place each — do not duplicate them here:
 
-- Spec: `Docs/Specs/Splash/` (`SRS.md`, `requirements.md`, `design.md`, `tasks.md`)
-- Knowledge: `Docs/Knowledge/features/splash.md`
+- Spec: `Docs/Specs/Onboarding/` (splash is part of the first run; `requirements.md`, `design.md`, `tasks.md`)
+- Knowledge: none yet (the old concept was deleted 2026-10-15; rewritten after v2.0 ships)
 
 ## Known gaps vs. design
 

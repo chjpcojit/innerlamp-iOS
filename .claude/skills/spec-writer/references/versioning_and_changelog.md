@@ -53,7 +53,7 @@ rather than omitting it — this confirms it was checked, not forgotten (see `SK
 
 ## Worked example — resolving an open question two different ways
 
-From `Docs/Specs/SignUp/changelog.md`, showing that answering a `⚠️ Not confirmed` item can either
+From the former `Docs/Specs/SignUp/changelog.md` (in git history), showing that answering a `⚠️ Not confirmed` item can either
 simplify the design or leave it structurally unchanged — both are valid, and the entry states which
 happened:
 

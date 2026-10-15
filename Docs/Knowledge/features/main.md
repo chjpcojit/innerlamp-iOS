@@ -82,7 +82,7 @@ Main has no data flow of its own.
 # Related concepts
 
 - [Home](home.md), [Library](library.md) — two of the four owned tabs.
-- [Login](login.md), [Onboarding](onboarding.md), [OTP Verification](otp.md) —
+- Login, Onboarding and OTP (specs `Docs/Specs/Login/`, `Docs/Specs/Onboarding/`) —
   the flows that reach `showMain()`.
 - Sangha and Profile tabs have code but no OKF concepts yet (and no specs under
   `Docs/Specs/`).

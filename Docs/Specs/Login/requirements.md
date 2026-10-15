@@ -1,7 +1,7 @@
 # Requirements — Login
 
-Version: 2.0
-Last updated: 2026-10-14
+Version: 2.1
+Last updated: 2026-10-15
 Status: in-progress (drift) — sign-in by phone, Keychain session, single-flight refresh and sign-out are built and call the real backend; v2.0 moves sign-in to email, adds forgot password by email code, explains an ended session and gates account features for guests. No code for v2.0 yet (`tasks.md` Phase 1–7)
 Feature folder: `InnerLamp/Presentation/Scenes/{Login,ForgotPassword}/`, `Core/Networking/AuthSessionRefresher.swift`, `App/AppCoordinator.swift`, `Domain/UseCases/Profile/ILProfileUseCase.swift` (sign-out)
 Product spec: innerlamp-be `docs/product/login/product.md` @ v1.2
