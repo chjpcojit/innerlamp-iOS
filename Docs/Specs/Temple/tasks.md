@@ -1,14 +1,14 @@
 # Tasks — Temple
 
-Version: 3.1
+Version: 3.2
 Last updated: 2026-10-15
-Status: in-progress — Phase 1 (what is built and still matches product v1.1) done; Phase 2–8 pending; Phase 2–3 and the new-field tasks of Phase 4 blocked on the backend contract; Phase 5 location tasks blocked on a product ⚠️
+Status: in-progress — Phase 1 (what is built and still matches product v1.2) done; Phase 2–8 pending; Phase 2–3 and the new-field tasks of Phase 4 blocked on the backend contract; Phase 5 location tasks blocked on a product ⚠️
 
 > See `changelog.md` in this folder for the version history of this spec.
 
 > Every item traces to a row of `design.md` "Layers & components" or a step of its Step-by-step Flows.
 > `[x]` = verified in the code on 2026-10-15 **and** matching this spec v3.0; work that exists but no
-> longer matches product v1.1 is listed as a `[ ]` change task instead.
+> longer matches product v1.2 is listed as a `[ ]` change task instead.
 
 ## Phase 1 — Built and kept (retroactive record)
 
@@ -51,14 +51,15 @@ Status: in-progress — Phase 1 (what is built and still matches product v1.1) d
 - [ ] Hero place line from `ward` + `province` (province only when `ward` is `nil`); location section uses `full_address` (criteria 17, 33)
 - [ ] `ILTempleOpenStatus` (Domain): Vietnam calendar UTC+7, lunar day of the Vietnam date and of the next day, `"HH:MM - HH:MM"` parsing, zero-padded `HH:MM` labels; wire into `ILTempleViewModel`, replacing `parseOperatingHours` / `isOpen` / `formatMinuteOfDay` (criteria 25, 26 "Hôm nay")
 - [ ] Hide the status line when there are no hours (today: "Chưa rõ giờ mở cửa"); hours "Đang cập nhật" (criterion 27)
-- [ ] Rằm & Mùng Một row value when the temple has no holiday hours (criterion 26) — blocked on ⚠️ (product)
+- [ ] Rằm & Mùng Một row shows the normal hours when the temple has no holiday hours (today: "Đang cập nhật"); value from `ILTempleOpenStatus` (criterion 26)
 - [ ] Recompute the status on re-appear and on `UIApplication.willEnterForegroundNotification` (criterion 28)
 - [ ] Fill "Giáo hội" from `sangha_body` and the four contact rows from `contacts`; open fanpage / website URLs **as received** (stop prefixing `https://`), `tel:` without spaces, `mailto:` (criteria 17, 34) — needs Phase 2
 - [ ] Footer update month from `content_updated_month` (criterion 23) — needs Phase 2; copy blocked on ⚠️ (product)
-- [ ] "Kinh sách" tile (criterion 20) — blocked on ⚠️ (product)
+- [ ] "Kinh sách" tile always shown with "Đang cập nhật" while the contract has no value — never hidden, never "Không có"; the shipped `isAvailable: nil` tile already does this, keep it through the amenities rework and cover it in `ILTempleViewModelTests` (criterion 20)
+- [ ] Architecture style, materials and highlights rows and the photo set kept visible with "Đang cập nhật" (today: highlights empty → nothing rendered; no photo-set section) (criterion 19)
 - [ ] Events section: empty state "Chùa chưa đăng sự kiện nào." without the follow hint; remove `eventsTapped`, `sessionTapped`, `.events`, `.session` and the "Xem tất cả" link of the section (criterion 35)
 - [ ] `ILTempleCoordinator`: remove the `.offer` / `.events` / `.session` cases
-- [ ] `ILTempleViewModelTests`: hidden actions, not-found vs error, status hidden without hours, new fields filled / missing, contact URLs as received, foreground recompute
+- [ ] `ILTempleViewModelTests`: hidden actions, not-found vs error, status hidden without hours, Rằm & Mùng Một row with normal hours, later fields as "Đang cập nhật", new fields filled / missing, contact URLs as received, foreground recompute
 
 ## Phase 5 — Distance (BR-TPL-07)
 

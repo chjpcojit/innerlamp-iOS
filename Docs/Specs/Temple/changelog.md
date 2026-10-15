@@ -4,6 +4,33 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v3.2 (2026-10-15)
+
+Follows the product spec innerlamp-be `docs/product/temple/product.md` v1.1 → v1.2 (anh Đức's answers of
+2026-10-15 to the platform specs' product questions). Docs only; no code changed.
+
+- `requirements.md`: header cites product @ v1.2. Criterion 2: a failed `top` without a cached copy
+  shows the same Home block empty state as an empty `top` — no error text, no "Thử lại", no sample
+  temples (FR-TPL-001, new product scenario); Error → UI mapping row updated. Criteria 18–20: the
+  architecture details, the photo set and the "Kinh sách" tile stay visible with "Đang cập nhật", never
+  hidden, never "Không có" (BR-TPL-06, FR-TPL-007). Criterion 26: the Rằm & Mùng Một row shows the
+  normal hours when the temple has no holiday hours (BR-TPL-09). Two `⚠️ Not confirmed (product)`
+  markers resolved and moved to "Open questions (resolved)" ("Kinh sách" tile; Rằm & Mùng Một row
+  without holiday hours), plus the Home-block failure answer. Still open: search placeholder wording
+  (criterion 11), update-month footer wording (criterion 23), location permission timing and purpose
+  text (criterion 31), and the backend contract marker.
+- `design.md`: `ILTempleOpenStatus` also returns the Rằm & Mùng Một row value (holiday hours, else
+  normal hours); Temple page row lists the holiday row, the later fields and the "Kinh sách" tile as
+  "Đang cập nhật"; Home block row and the Home paragraph state the single empty state on failure.
+  Step-by-step Flow Step 2 updated. No structural change.
+- `tasks.md`: Phase 4 holiday-row task unblocked and reworded (normal hours); "Kinh sách" task unblocked
+  (the shipped tile already shows "Đang cập nhật" — keep and test it); new task for the architecture
+  details and photo set shown as "Đang cập nhật" (highlights render nothing today); ViewModel test task
+  extended. All stay `[ ]`. Phase 1 home-block task unchanged — the shipped failure path already sets
+  an empty list and shows the empty state (verified in `ILHomeViewModel.loadTopTemples`).
+- Reason: product v1.2 answered three product questions; resolving them unblocks two Phase 4 tasks and
+  adds one, without changing the flow.
+
 ## v3.1 (2026-10-15)
 
 Step 4 of the docs pipeline: removes the legacy temple docs now that product spec v1.1 and the four

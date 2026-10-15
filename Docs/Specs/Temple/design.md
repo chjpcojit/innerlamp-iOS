@@ -1,8 +1,8 @@
 # Design — Temple
 
-Version: 3.1
+Version: 3.2
 Last updated: 2026-10-15
-Status: in-progress — home block, directory screen shell, temple page, detail/top/page endpoints and Core Data cache built against the old contract; planned: server search + region + paging, hidden actions, Vietnam-time open status with Rằm & Mùng Một hours, distance with location permission, new detail fields, not-found state, product vectors
+Status: in-progress — home block, directory screen shell, temple page, detail/top/page endpoints and Core Data cache built against the old contract; planned: server search + region + paging, hidden actions, Vietnam-time open status with Rằm & Mùng Một hours (normal hours on that row when the temple has none), later fields shown as "Đang cập nhật", distance with location permission, new detail fields, not-found state, product vectors
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -38,7 +38,7 @@ How iOS meets the product constraints (see `requirements.md` "Constraints"):
 | Domain / Entity | `Domain/Entities/ILTempleCatalogEntity.swift` | `ILTempleType`, `ILTempleRegion`, `ILTempleHeritageRank` (open enums), `ILTempleLocationEntity`, `ILTempleFacilitiesEntity`, `ILTempleSummaryEntity`, `ILTempleDetailEntity`. Foundation only. | built; **add** to location: `province`, `ward?`, `fullAddress`; **add** to detail: `holidayOperatingHours`, `sanghaBody`, `ILTempleContactsEntity` {hotline, fanpage, website, email}, `contentUpdatedMonth: (year, month)?` |
 | Domain / Query | `Domain/Entities/ILTempleCatalogEntity.swift` (`ILTempleDirectoryQuery`) | `{ term: String?, region: ILTempleRegion? }` — the normalised request of criteria 6–8 (trimmed, cut to 100 characters, `nil` when empty). | planned |
 | Domain / Repository protocol | `Domain/Repositories/ILTempleRepository.swift` | `loadTopTemples()`, `loadTemples(page:query:)` → `ILCatalogPageEntity` **with `total`**, `loadTempleDetail(id:)`. `query` defaults to "none" so `ILTempleFinderUseCase` keeps compiling unchanged. | built; **change** `loadTemples(page:)` signature + page entity gains `total` |
-| Domain / Open status | `Domain/UseCases/Temple/ILTempleOpenStatus.swift` | Pure: `(now: Date, hours: ILTempleHours?, holidayHours: ILTempleHours?) → { status: open/closed/hidden, changeTime: HH:mm?, todayRow: normal/holiday/nil }`. Converts `now` to the Vietnam date and minute with a fixed `TimeZone(secondsFromGMT: 7 * 3600)` calendar, gets the lunar day of that date and of the next day from `ILLunarCalendar.solarToLunar(day:month:year:)`. Parses `"HH:MM - HH:MM"` (backend AC 46); `""` or unparseable → no hours. | planned (replaces `ILTempleViewModel.parseOperatingHours` / `isOpen`, which use the device time zone, ignore holiday hours and wrap past midnight) |
+| Domain / Open status | `Domain/UseCases/Temple/ILTempleOpenStatus.swift` | Pure: `(now: Date, hours: ILTempleHours?, holidayHours: ILTempleHours?) → { status: open/closed/hidden, changeTime: HH:mm?, todayRow: normal/holiday/nil }`. Converts `now` to the Vietnam date and minute with a fixed `TimeZone(secondsFromGMT: 7 * 3600)` calendar, gets the lunar day of that date and of the next day from `ILLunarCalendar.solarToLunar(day:month:year:)`. Parses `"HH:MM - HH:MM"` (backend AC 46); `""` or unparseable → no hours. Also returns the value of the Rằm & Mùng Một row: the holiday hours, or the normal hours when the temple has none (BR-TPL-09, product v1.2). | planned (replaces `ILTempleViewModel.parseOperatingHours` / `isOpen`, which use the device time zone, ignore holiday hours and wrap past midnight) |
 | Domain / Distance | `Domain/UseCases/Temple/ILTempleDistance.swift` | Pure: haversine km between two coordinates; `label(km: Double?) → String` (empty = hidden), formatting per BR-TPL-07 with a `vi_VN` comma decimal. | planned |
 | Domain / Location protocol | `Domain/Repositories/ILUserLocationProviding.swift` | `currentCoordinate() async -> (lat, lng)?` — `nil` when access is not granted or no fix arrives within a short timeout. No storage. | planned |
 | Domain / UseCase (directory) | `Domain/UseCases/Temples/ILTemplesUseCase.swift` | `loadPage(_ page: Int, query: ILTempleDirectoryQuery) → ILCatalogPageEntity` — one page, no loop, no de-dup across pages (the ViewModel appends). | built as "load all"; **rewrite** |
@@ -51,9 +51,9 @@ How iOS meets the product constraints (see `requirements.md` "Constraints"):
 | Data / Local | `Data/DataSources/Local/ILTempleLocalDataSource.swift`, `ILCatalogCache*`, Core Data `CachedTemple` / `CatalogListState` | Cached top list, unfiltered directory pages, temple details. | built; **change** only for the new fields (stored in the cached detail JSON) and the page-size change (reset of the cached layout, already done when `total`/`page_size` differ) |
 | Data / Location | `Data/DataSources/Device/ILUserLocationProvider.swift` | `CLLocationManager` wrapper implementing `ILUserLocationProviding`; asks "When In Use" at the moment decided by the location ⚠️ (requirements criterion 31); one-shot reduced-accuracy fix is enough; never persists or logs the coordinate. `Info.plist` `NSLocationWhenInUseUsageDescription`. | planned — blocked on ⚠️ |
 | Presentation / Directory | `Presentation/Scenes/Temples/ILTemplesViewModel.swift`, `ILTemplesStateModel.swift`, `ILTemplesViewController.swift`, `Views/ILTemplesRowCell.swift`, `ILTemplesCoordinator.swift` | VM: query state (`term`, `region`), debounced term (400 ms), page cursor, `hasMore`, in-flight guard, append-only rows de-duplicated by `id`, subtitle from `total`, footer state (loading / retry). VC: `ILStickyHeaderBand` + `ILNavBar` + `ILSearchInputView` + region `ILChip`s (reused `ILTempleFinderRegionFilter`), table under the band, load-more trigger near the end. | VC / coordinator / chips built; **rewrite** VM; row cell **change** (criterion 14); placeholder copy ⚠️ |
-| Presentation / Temple page | `Presentation/Scenes/Temple/ILTempleViewModel.swift`, `ILTempleStateModel.swift`, `ILTempleViewController.swift`, `Views/ILTempleHeroView.swift`, `Views/ILTempleStatusCardView.swift`, `Views/ILTempleSkeletonView.swift` | VM: load → state mapping (sections of criterion 17), open status via `ILTempleOpenStatus` with an injected `now`, distance via `ILTempleDistance` + `ILUserLocationProviding`, Maps / contact URLs, not-found vs error. VC: sections, error/offline/not-found states. | built; **change**: remove follow / offer / report / events tap / session tap; status hidden without hours; fill new fields; not-found state; hero image placeholder; recompute on foreground |
+| Presentation / Temple page | `Presentation/Scenes/Temple/ILTempleViewModel.swift`, `ILTempleStateModel.swift`, `ILTempleViewController.swift`, `Views/ILTempleHeroView.swift`, `Views/ILTempleStatusCardView.swift`, `Views/ILTempleSkeletonView.swift` | VM: load → state mapping (sections of criterion 17), open status via `ILTempleOpenStatus` with an injected `now`, distance via `ILTempleDistance` + `ILUserLocationProviding`, Maps / contact URLs, not-found vs error. VC: sections, error/offline/not-found states. | built; **change**: remove follow / offer / report / events tap / session tap; status hidden without hours; Rằm & Mùng Một row from `ILTempleOpenStatus` (normal hours when no holiday hours); architecture style / materials / highlights and the photo set kept visible as "Đang cập nhật"; "Kinh sách" tile kept as "Đang cập nhật" (BR-TPL-06); fill new fields; not-found state; hero image placeholder; recompute on foreground |
 | Presentation / Coordinator | `Presentation/Scenes/Temple/ILTempleCoordinator.swift` | `.back` → pop + `finish()`; `.openURL` → `UIApplication.shared.open`. | built; **remove** `.offer`, `.events`, `.session` cases |
-| Presentation / Home block | `Presentation/Scenes/Home/ILHomeViewModel.swift`, `Views/ILHomeTempleCarouselView.swift` | Featured cards, "Xem tất cả", empty / "updating" state. | built; card fields **change** (criterion 14) |
+| Presentation / Home block | `Presentation/Scenes/Home/ILHomeViewModel.swift`, `Views/ILHomeTempleCarouselView.swift` | Featured cards, "Xem tất cả", empty / "updating" state — one state for an empty `top` and a failed `top` without a copy: no error text, no retry, no sample temples (FR-TPL-001). | built; card fields **change** (criterion 14) |
 | Presentation / Labels | `Presentation/Common/Formatting/ILTempleCatalogLabels.swift` | Rank / sect / region / type labels shared by cards and the temple page. | built; **add** `typeLabel`; place line from `ward` + `province` instead of parsing `address` |
 | Localization | `Resources/Localization/vi.json` (+ `en`) | `temple.*`, `temples.*`, `home.temple.*`. | **remove** `temple.follow`, `temple.following`, `temple.offer`, `temple.footer.reportIssue`; **change** `temple.events.empty` to the FR-TPL-009 text; `temples.search.placeholder` (⚠️) |
 | DI | `App/DIContainer.swift` | `makeTemple*`, `makeTemples*`, location provider. | built; **add** location provider |
@@ -119,7 +119,7 @@ Step 1 — Load the profile (this feature)
 
 Step 2 — Open status (this feature, no network)
 - Trigger: Step 1 success; page re-appears; app enters foreground
-- Effect: ILTempleOpenStatus(now(), hours, holidayHours) → status line + "Hôm nay" row; hidden without hours
+- Effect: ILTempleOpenStatus(now(), hours, holidayHours) → status line + "Hôm nay" row + Rằm & Mùng Một row value (holiday hours, else normal hours); status hidden without hours
 
 Step 3 — Distance (this feature, device location — no network)
 - Trigger: Step 1 success
@@ -128,7 +128,8 @@ Step 3 — Distance (this feature, device location — no network)
 ```
 
 The Home block makes a single call (`GET /v1/temples/top`, network-first, cached copy on failure, empty
-state otherwise) and needs no step list.
+state otherwise — the same empty state as an empty `top`, with no error text and no retry, FR-TPL-001)
+and needs no step list.
 
 ## Caching
 

@@ -1,10 +1,10 @@
 # Requirements — Temple
 
-Version: 3.1
+Version: 3.2
 Last updated: 2026-10-15
-Status: in-progress — home block, directory screen shell and temple page are built against the old contract; product spec v1.1 alignment pending: server search + region filter + pages of 12 (instead of loading every page and filtering on the device), follow / offering / report removed, open status in Vietnam time with Rằm & Mùng Một hours, distance with location permission, new detail fields, not-found state, product vectors (`tasks.md` Phase 2–8). Blocked in part on the backend contract (q / region / new fields not yet in `openapi.yaml`).
+Status: in-progress — home block, directory screen shell and temple page are built against the old contract; product spec v1.1 / v1.2 alignment pending: server search + region filter + pages of 12 (instead of loading every page and filtering on the device), follow / offering / report removed, open status in Vietnam time with Rằm & Mùng Một hours (normal hours on that row when the temple has none), later fields shown as "Đang cập nhật", distance with location permission, new detail fields, not-found state, product vectors (`tasks.md` Phase 2–8). Blocked in part on the backend contract (q / region / new fields not yet in `openapi.yaml`).
 Feature folders: `InnerLamp/Presentation/Scenes/Temple/` (temple page), `InnerLamp/Presentation/Scenes/Temples/` (directory), home block in `InnerLamp/Presentation/Scenes/Home/`
-Product spec: innerlamp-be `docs/product/temple/product.md` @ v1.1
+Product spec: innerlamp-be `docs/product/temple/product.md` @ v1.2
 Contract: innerlamp-be `docs/specs/api/openapi.yaml` @ a8a016b (info.version 1.0.0) — `GET /v1/temples` there still has page size 20 and no `q` / `region`; `TempleDetail` has no `holiday_operating_hours`, `sangha_body`, `contacts`, `content_updated_month`. The backend spec `docs/specs/features/temple/` v2.0 (AC 5, 39–50) defines them; the `openapi.yaml` update is pending backend work (`tasks.md` Phase 13 there).
 Architecture: none (product §2.7 — no ADR)
 Implements: BR-TPL-01, BR-TPL-02, BR-TPL-03, BR-TPL-04, BR-TPL-05, BR-TPL-06, BR-TPL-07, BR-TPL-08, BR-TPL-09, FR-TPL-001, FR-TPL-002, FR-TPL-003, FR-TPL-004, FR-TPL-005 (through `Docs/Specs/Onboarding/`), FR-TPL-006, FR-TPL-007, FR-TPL-008, FR-TPL-009, NFR-TPL-01, NFR-TPL-02
@@ -17,7 +17,7 @@ covers both the directory list (formerly `Docs/Specs/Temples/`) and the temple p
 asks. Product behavior — order, featured list, page size, regions, search matching, missing values,
 distance, hidden actions, open status — lives in the product spec and is **not** restated here; this
 file only says how the iOS app implements those `BR-TPL-*` / `FR-TPL-*`. Written retroactively from the
-built screens (v1.0–v2.5.2 of this folder, `Temples` v1.0) and prospectively for the v1.1 changes.
+built screens (v1.0–v2.5.2 of this folder, `Temples` v1.0) and prospectively for the v1.1 and v1.2 changes.
 
 > Layout source: the design prototype (product §1.5), screens `temple` ("Trang chùa") and `temples`
 > ("Tất cả chùa") and the home block "Chùa Việt Nam". Copy source: product §3.1.1 and the criteria of
@@ -48,7 +48,7 @@ open a temple's page, so that I can find a temple, learn about it and get direct
 ### Home block "Chùa Việt Nam"
 
 1. WHEN Home loads, THE SYSTEM SHALL request `GET /v1/temples/top` and show the returned temples as cards in the order received, without signing in. (FR-TPL-001, BR-TPL-01, BR-TPL-02)
-2. WHEN `top` returns no temple, or fails and no cached copy exists, THE SYSTEM SHALL show the block's empty state and SHALL NOT fail the Home screen. (FR-TPL-001, BR-TPL-02)
+2. WHEN `top` returns no temple, or fails (server error or no connection) and no cached copy exists, THE SYSTEM SHALL show the same block empty state in both cases — no error text, no "Thử lại", no sample temples — and SHALL NOT fail the rest of the Home screen. (FR-TPL-001, BR-TPL-02)
 3. WHEN the user taps "Xem tất cả" in the block header, THE SYSTEM SHALL open the directory screen; WHEN the user taps a card, THE SYSTEM SHALL open that temple's page. (FR-TPL-001, FR-TPL-006)
 
 ### Directory screen ("Chùa Việt Nam")
@@ -71,10 +71,9 @@ open a temple's page, so that I can find a temple, learn about it and get direct
 15. WHEN the temple page opens for an id, THE SYSTEM SHALL request `GET /v1/temples/{id}` without signing in and show the loading state until it answers. (FR-TPL-006)
 16. WHEN the response is `404 TEMPLE_NOT_FOUND`, THE SYSTEM SHALL show a "temple not found" state with a way back and no "Thử lại"; WHEN loading fails otherwise, THE SYSTEM SHALL show the error state (offline variant when offline) with "Thử lại". (FR-TPL-006)
 17. WHEN the page is shown, THE SYSTEM SHALL show its sections in the prototype's order as listed in FR-TPL-007: image header (heritage-rank chip, sect chip, name, "Còn gọi: …", place as ward and province), status card (open status, distance, both hour rows), facts grid (founding year, heritage rank, sect, region), introduction, organisation (abbot, founder, Buddhist sangha body), architecture & heritage, amenities, visiting notes, events, location & contacts, footer. (FR-TPL-007)
-18. WHEN a value of a section is missing, THE SYSTEM SHALL keep the row and show it as BR-TPL-06 says ("Đang cập nhật" for text, "Không có" for amenities, the events empty state, an image placeholder), and SHALL hide the "Còn gọi" line when there is no alias. (BR-TPL-06, FR-TPL-007)
-19. WHEN the temple's architecture style, materials, highlights or photo set are shown, THE SYSTEM SHALL show them as missing values (BR-TPL-06), since the contract does not carry them yet. (BR-TPL-06)
-20. WHEN the amenities grid is shown, THE SYSTEM SHALL show car parking, motorbike parking, vegetarian meals and retreats from the response; for "Kinh sách" see the marker below. (FR-TPL-007, BR-TPL-06)
-    > ⚠️ Not confirmed (product): while the directory has no "Kinh sách" value, is its tile hidden (FR-TPL-007: "and 'Kinh sách' when known") or shown as "Không có" / "Đang cập nhật" (BR-TPL-06)? — blocks the "Kinh sách" tile task in `tasks.md` Phase 4; hand back to ba-writer in innerlamp-be. (The shipped app shows "Đang cập nhật".)
+18. WHEN a value of a section is missing, THE SYSTEM SHALL keep the row and show it as BR-TPL-06 says ("Đang cập nhật" for text, "Không có" for amenities except "Kinh sách" (criterion 20), the events empty state, an image placeholder), and SHALL hide the "Còn gọi" line when there is no alias. (BR-TPL-06, FR-TPL-007)
+19. WHEN the temple page is shown, THE SYSTEM SHALL keep the architecture style, materials and highlights rows and the photo set visible and show them as "Đang cập nhật" — never hidden — since the contract does not carry them yet. (BR-TPL-06, FR-TPL-007)
+20. WHEN the amenities grid is shown, THE SYSTEM SHALL show car parking, motorbike parking, vegetarian meals and retreats from the response, and SHALL show the "Kinh sách" tile with "Đang cập nhật" while the contract has no value for it — never hidden and never "Không có". (FR-TPL-007, BR-TPL-06)
 21. WHEN the introduction is taller than the collapsed height, THE SYSTEM SHALL collapse it with "Đọc thêm" and toggle "Đọc thêm" / "Thu gọn" on tap; WHEN it fits, THE SYSTEM SHALL show no toggle. (FR-TPL-007)
 22. WHEN visiting notes exist, THE SYSTEM SHALL number them "01", "02", … in the order received. (FR-TPL-007)
 23. WHEN the footer is shown and the response has an update month, THE SYSTEM SHALL show it; WHEN it has none, THE SYSTEM SHALL show an empty footer (no report link, BR-TPL-08). (FR-TPL-007, BR-TPL-08)
@@ -87,8 +86,7 @@ open a temple's page, so that I can find a temple, learn about it and get direct
 ### Open status and hours (BR-TPL-09)
 
 25. WHEN the temple has opening hours, THE SYSTEM SHALL show the open status line computed by BR-TPL-09 from the current instant in Vietnam time (UTC+7), whatever the device's time zone, using the Rằm & Mùng Một hours on lunar days 1 and 15 of the Vietnam date when the temple has them. (BR-TPL-09)
-26. WHEN the status card is shown, THE SYSTEM SHALL show the normal-hours row and the Rằm & Mùng Một row, marking the row in force today "Hôm nay" per BR-TPL-09. (BR-TPL-09)
-    > ⚠️ Not confirmed (product): what the Rằm & Mùng Một row shows when the temple has no holiday hours — "Đang cập nhật" (BR-TPL-06) or the normal hours, which BR-TPL-09 applies on those days (the backend sends `""` meaning "normal hours also apply", backend AC 46) — blocks the holiday-row task in `tasks.md` Phase 4; hand back to ba-writer in innerlamp-be.
+26. WHEN the status card is shown, THE SYSTEM SHALL show the normal-hours row and the Rằm & Mùng Một row, marking the row in force today "Hôm nay" per BR-TPL-09; WHEN the temple has opening hours but no Rằm & Mùng Một hours (the backend sends `""`, backend AC 46), THE SYSTEM SHALL show the normal hours on the Rằm & Mùng Một row, not "Đang cập nhật". (BR-TPL-09)
 27. WHEN the temple has no opening hours, THE SYSTEM SHALL hide the status line and show the hours as "Đang cập nhật". (BR-TPL-09, BR-TPL-06)
 28. WHEN the page returns to the screen or the app returns to the foreground, THE SYSTEM SHALL recompute the open status from the current instant. (BR-TPL-09, platform)
 
@@ -124,7 +122,7 @@ Operations are cited, not copied; the contract is innerlamp-be `docs/specs/api/o
 
 | Operation | Failure case | What the user sees |
 |---|---|---|
-| `GET /v1/temples/top` | any failure, no cached copy | Home block empty state; Home still loads (criterion 2) |
+| `GET /v1/temples/top` | any failure, no cached copy | the same Home block empty state as an empty `top` — no error text, no "Thử lại"; Home still loads (criterion 2) |
 | `GET /v1/temples/top` | any failure, cached copy | the cached cards (criterion 37) |
 | `GET /v1/temples` page 1 | offline / unreachable, no copy (or a search / region request) | full error state, offline title, "Thử lại" (criteria 12, 38) |
 | `GET /v1/temples` page 1 | `500`, other failure | full error state, generic title, "Thử lại" |
@@ -182,3 +180,14 @@ Operations are cited, not copied; the contract is innerlamp-be `docs/specs/api/o
   (BR-TPL-05, product v1.0); replaces `Temples` v1.0. Resolved 2026-10-15.
 - ~~Four region chips or five ("Tây Nguyên")?~~ → Three regions plus "Tất cả" (BR-TPL-04);
   AS-Temples-001 is confirmed by the product spec. Resolved 2026-10-15.
+- ~~While the directory has no "Kinh sách" value, is its tile hidden, "Không có" or "Đang cập nhật"?~~
+  → Shown with "Đang cập nhật", never hidden, never "Không có"; the same holds for the architecture
+  details and the photo set (BR-TPL-06, FR-TPL-007, product v1.2; criteria 19–20). The shipped app
+  already shows the tile as "Đang cập nhật"; the highlights and photo set are not shown today, so
+  `tasks.md` Phase 4 gains a task. Resolved 2026-10-15.
+- ~~What does the Rằm & Mùng Một row show when the temple has no holiday hours?~~ → The normal hours
+  (BR-TPL-09, product v1.2; criterion 26). Unblocks the holiday-row task in `tasks.md` Phase 4 (the
+  shipped app shows "Đang cập nhật", which must change). Resolved 2026-10-15.
+- ~~What does the Home block show when `top` cannot be loaded?~~ (not a marker here) → The same empty
+  state as an empty directory, with no error text, no retry and no sample temples (FR-TPL-001, product
+  v1.2; criterion 2). Already the shipped behavior; no design or task change. Resolved 2026-10-15.
