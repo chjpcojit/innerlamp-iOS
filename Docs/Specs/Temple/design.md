@@ -1,6 +1,6 @@
 # Design — Temple
 
-Version: 3.0
+Version: 3.1
 Last updated: 2026-10-15
 Status: in-progress — home block, directory screen shell, temple page, detail/top/page endpoints and Core Data cache built against the old contract; planned: server search + region + paging, hidden actions, Vietnam-time open status with Rằm & Mùng Một hours, distance with location permission, new detail fields, not-found state, product vectors
 
