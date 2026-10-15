@@ -1,6 +1,6 @@
 # Requirements — Calendar
 
-Version: 1.0
+Version: 1.1
 Last updated: 2026-10-15
 Status: in-progress — festival calendar, event detail and Home's events block are built against `GET /v1/calendar/events` (signed-in only, build-verified, tests not run); product spec v1.1 alignment pending: server-only Rằm / Mùng Một, filters by group, 2100 limit, retry and device copy, hidden empty sections, home-block window and tiers, product vectors; public route and major mark wait on the backend (`tasks.md` Phase 4–9)
 Feature folders: `InnerLamp/Presentation/Scenes/Festivals/` (festival calendar), `InnerLamp/Presentation/Scenes/FestivalDetail/` (event detail), the events block of `InnerLamp/Presentation/Scenes/Home/`

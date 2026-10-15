@@ -1,7 +1,7 @@
 # Tasks — Home
 
-Version: 1.11
-Last updated: 2026-10-11
+Version: 1.12
+Last updated: 2026-10-15
 Status: in-progress (Phase 1–2 done; Phase 3 pending — mock data, no API)
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -84,9 +84,8 @@ Status: in-progress (Phase 1–2 done; Phase 3 pending — mock data, no API)
       `ILCalendarEventsDTO`, `ILCalendarEventMapper`, `ILCalendarEventRepository(+Impl)`,
       `ILHomeUseCaseImpl` takes `calendarEventRepository`; tests in `ILHomeUseCaseTests`
       and `ILCalendarEventsTests`
-- [ ] Offline cache for the events carousel (TD-Home-003)
-- [ ] Manual device test of the events carousel against the dev backend (current month
-      first, Rằm/Mùng 1 density — AS-Home-003)
+- Events block follow-up (device copy, six-month window and tiers, failure UI, manual
+  device test) moved to `Docs/Specs/Calendar/tasks.md` Phase 4–6
 - [ ] Loading / error UI for the server-backed carousels
 - [ ] Manual test against a real/staging backend once available
 

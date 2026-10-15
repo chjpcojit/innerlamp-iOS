@@ -14,7 +14,7 @@ skeleton, without re-reading every file.
 Rằm/Mùng Một — ngày trai giới) theo từng năm dương lịch: mở màn tải năm hiện tại (tháng 1 → 12, cuộn tới tháng hiện tại), cuộn xuống gần cuối thì tải tiếp năm kế tiếp; tính theo âm lịch và gom theo tháng dương. Các nơi mở màn (Trang chủ, Sangha, Deity) không truyền năm — màn luôn bắt đầu từ năm hiện tại.
 Được đẩy lên từ Trang chủ ("Tất cả" / chạm 1 lễ / "+N sự kiện khác" ở mục "Sự kiện Phật giáo").
 `ILFestivalsCoordinator` là child của
-`ILHomeCoordinator`.
+`ILHomeCoordinator`. Spec: `Docs/Specs/Calendar/`.
 
 ## Status
 
@@ -37,8 +37,8 @@ Rằm/Mùng Một — ngày trai giới) theo từng năm dương lịch: mở m
 ## Known gaps / not implemented yet
 
 - Màn hiện mọi sự kiện server trả về (mọi nhóm, gồm Tết dân gian) giống carousel Trang chủ;
-  chưa có cờ "lễ lớn" nên tab "Lễ lớn" = mọi lễ có tên (bỏ ngày trai giới). Xem AS-Festivals-002.
-- Không có cache: mở lại màn là gọi lại server; mất mạng ở lần tải đầu hiện lỗi (TD-Home-003).
+  chưa có cờ "lễ lớn" nên tab "Lễ lớn" = mọi lễ có tên (bỏ ngày trai giới). Lệch so với `Docs/Specs/Calendar/` (BR-CAL-05, BR-CAL-10, FR-CAL-003) — xem `tasks.md` Phase 4.
+- Không có cache: mở lại màn là gọi lại server; mất mạng ở lần tải đầu hiện lỗi. Bản lưu trên máy: `Docs/Specs/Calendar/` FR-CAL-007, `tasks.md` Phase 5.
 - Lệch có chủ đích so với prototype: lễ không lặp lại trong tháng âm nhuận (prototype không phân
   biệt); ngày 1/15 của tháng nhuận vẫn hiện là ngày trai giới "(nhuận)".
 - Chưa có chùa tổ chức / chip chùa: không có nguồn dữ liệu thật (đã bỏ dữ liệu mẫu). Cần sự kiện chùa đăng ký để làm lại.
@@ -61,4 +61,5 @@ Rằm/Mùng Một — ngày trai giới) theo từng năm dương lịch: mở m
   header dùng token mới `ILColors.borderSoft` (`--il-ink-06`).
 - 2026-09-30 — bỏ dữ liệu mẫu: lễ lấy từ Core Data qua `ILBuddhistEventUseCase`; bỏ `festivals.event.*`, `.major`, chip chùa + `openTemple`; seeding Core Data bổ sung template thiếu theo id.
 - 2026-10-11 — đổi từ tải 3 năm một lần sang tải theo năm: mở màn hiện năm hiện tại (1→12), cuộn xuống tải năm kế tiếp (`loadMonths(year:today:)`, `loadMoreTriggered`, render nối thêm); phụ đề header thành "2026 · N ngày" / "2026–2027 · N ngày".
+- 2026-10-15 — trỏ spec sang `Docs/Specs/Calendar/` (đã xoá AS-Festivals-001/002, TD-Home-003 cũ); không đổi code.
 - 2026-10-11 — đổi nguồn dữ liệu từ Core Data (`ILBuddhistEventUseCase`) sang `GET /v1/calendar/events?year=` qua `ILCalendarEventRepository`: năm hiện tại 1→12 (mở ở tháng hiện tại), cuộn xuống tải năm kế tiếp; ngày âm lịch lấy từ server (`ILFestivalDayEntity.lunarDay/lunarMonth/isLeapMonth`); bỏ lọc folk/Nam tông.

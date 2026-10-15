@@ -1,6 +1,6 @@
 # Tasks — Calendar
 
-Version: 1.0
+Version: 1.1
 Last updated: 2026-10-15
 Status: in-progress — Phase 1–3 built (build-verified, tests not run) except the items left `[ ]`; Phase 4 (product spec v1.1 drift), Phase 5 (device copy) and Phase 7 (product vectors) not started; Phase 6 waits on backend v3.0 (backend `tasks.md` Phase 14–18); Phase 8 (copy) blocked on ⚠️ product
 
@@ -89,8 +89,8 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 ## Phase 9 — Documentation
 
 - [ ] Refresh `Presentation/Scenes/Festivals/README.md` (still says "Lễ lớn" = named events, local Rằm / Mùng Một, 2200, no cache) and `Presentation/Scenes/FestivalDetail/README.md` (cites `Docs/Specs/FestivalDetail/`, "Chưa có…" sections) to cite this spec
-- [ ] `Docs/Specs/Home/`: replace the events-carousel criterion and the "API contract — calendar events" section with a pointer to `Docs/Specs/Calendar/` (`il-spec-ios` update of Home)
-- [ ] Remove the superseded iOS docs (later docs-pipeline step, after this spec is approved): `Docs/Specs/FestivalDetail/`, `Docs/Assumptions/Festivals/AS-Festivals-001…002`, `Docs/Assumptions/FestivalDetail/AS-FestivalDetail-001…002`, `Docs/Assumptions/Home/AS-Home-003`, `Docs/Tech-Debt/FestivalDetail/TD-FestivalDetail-001…002`, `Docs/Tech-Debt/Home/TD-Home-003`; update the code comments and READMEs that cite them
+- [x] `Docs/Specs/Home/`: replace the events-carousel criterion and the "API contract — calendar events" section with a pointer to `Docs/Specs/Calendar/` (`il-spec-ios` update of Home)
+- [x] Remove the superseded iOS docs (later docs-pipeline step, after this spec is approved): `Docs/Specs/FestivalDetail/`, `Docs/Assumptions/Festivals/AS-Festivals-001…002`, `Docs/Assumptions/FestivalDetail/AS-FestivalDetail-001…002`, `Docs/Assumptions/Home/AS-Home-003`, `Docs/Tech-Debt/FestivalDetail/TD-FestivalDetail-001…002`, `Docs/Tech-Debt/Home/TD-Home-003`; update the code comments and READMEs that cite them
 - [ ] `Docs/Knowledge/features/calendar.md` (OKF) — after Phase 4–7 are verified end to end (`Docs/Specs/OKF.md`)
 
 ## Deferred (separate feature or later version, not blocking Calendar)
