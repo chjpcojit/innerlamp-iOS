@@ -1,135 +1,187 @@
 # Design — Article
 
-Version: 1.3
-Last updated: 2026-10-06
-Status: in-progress — full reading screen backed by the articles API, hero loads `image_url` (v1.3);
-Share not built
+Version: 2.0
+Last updated: 2026-10-15
+Status: in-progress — Home block, all articles, article page, shared Data layer (`ILArticleRepository`, three endpoints) built network-only; planned: Save removed, page states (not-found, empty block), summary notice, page image order, missing values, language, "Đọc tiếp" (read next) from the related endpoint (contract not yet in `openapi.yaml`), Share with the website link, Universal Links routing (domain open, ADR-0004)
 
 > See `changelog.md` in this folder for the version history of this spec.
 
 ## Overview
 
-Article ("Bài viết Phật pháp") follows MVVM-C + Clean Architecture per
-`AGENTS.md`. It is a **leaf screen** — `ILArticleCoordinator` has no delegate.
-It is created by `ILHomeCoordinator` (tapping an article card on Home →
-`ILHomeNavEvent.openArticle(id:)`) and pushed onto the Home tab's
-`BaseNavigationController`. It is parameterized by an `articleID` passed through
-the coordinator and ViewModel. The UseCase reads the
-server through `ILArticleRepository` (contract below); there is no static catalog
-any more.
+MVVM-C + Clean Architecture per `AGENTS.md`. Three entry surfaces share one Data layer
+(`ILArticleRepository`, network-only — no Core Data, no cache):
+
+- **Home block** "Bài viết Phật pháp hay" (good Dharma articles) — part of `Presentation/Scenes/Home/`
+  (`ILHomeArticleListView`), fed by `ILHomeUseCase.loadTopArticles()`.
+- **All articles** — `Presentation/Scenes/Articles/` (`ILArticlesCoordinator`, child of
+  `ILHomeCoordinator`). Code folder name stays `Articles` (product §1.5).
+- **Article page** — `Presentation/Scenes/Article/` (`ILArticleCoordinator`, leaf), pushed by Home and
+  all articles with a server article `id`; planned: also by the Universal Link router.
+
+How iOS meets the product constraints (see `requirements.md` "Constraints"):
+
+- **Server orders, pages and picks related articles** (BR-ART-01…04). The app keeps items in the order
+  received. `ILArticleUseCaseImpl.loadNextArticles(excluding:)` (first 2 of `top`, client-side) is
+  replaced by the related endpoint; no client-side selection survives.
+- **No offline copy** (product §2.4): failures show the empty block; nothing is stored.
+- **No Save** (BR-ART-09): `toggleSave`, `savedArticleIDs`, the Save button and its strings are
+  deleted, not hidden.
+- **Shared links** (ADR-0004): one pure link builder / parser in `Core/Links/` is the only place that
+  knows the URL shape, so Share and the Universal Link router cannot disagree, and later shareable
+  features add a route there.
 
 ## Layers & components
 
-| Layer | File | Responsibility |
-|---|---|---|
-| Domain / Entity | `Domain/Entities/ILArticleEntity.swift` | `ILArticleItemEntity` (detail: category, title, author, authorInitials, `publishedDate?`, readMinutes, bodyParagraphs, quote, quoteSource, sourceName, `sourceURL?`, `imageURL?`), `ILArticleSummaryEntity` (Home / list / "Đọc tiếp"), `ILArticlePageEntity` and `ILArticleEntity` (`currentArticleID`, loaded `article?`, `nextArticles`, `savedArticleIDs`). No UI-only state. |
-| Domain / Repository | `Domain/Repositories/ILArticleRepository.swift` | `loadTopArticles()`, `loadArticles(page:)`, `loadArticle(id:)` — Entities in/out, `ILCatalogError` on failure. Implemented by `Data/Repositories/ILArticleRepositoryImpl.swift` (DTOs in `Data/DTOs/ILArticleDTO.swift`, `Mappers/ILArticleMapper.swift`, endpoints `TopArticlesEndpoint` / `ArticlesPageEndpoint` / `ArticleDetailEndpoint`). |
-| Domain / UseCase | `Domain/UseCases/Article/ILArticleUseCase.swift` | `getInitialState(articleID:)`, `loadArticle(id:)`, `loadNextArticles(excluding:)` (best effort, 2 items from top), `toggleSave(_:in:)` (in-memory). |
-| Presentation / State | `Presentation/Scenes/Article/ILArticleStateModel.swift` | UI-only state: header labels, title/author/initials/date-read text, body paragraphs, quote, saved flag + button title, read-more title, `nextArticles`. No UIKit import. |
-| Presentation / ViewModel | `Presentation/Scenes/Article/ILArticleViewModel.swift` | `Input -> Output` per `ViewModelType`; owns `ILArticleNavEvent` (`.back`, `.share`); Entity→StateModel mapping. |
-| Presentation / Coordinator | `Presentation/Scenes/Article/ILArticleCoordinator.swift` | Leaf — `pushViewController`; `.back` → pop + `finish()`; `.share` → TODO. No delegate. |
-| Presentation / ViewController | `Presentation/Scenes/Article/ILArticleViewController.swift` | `setupViews`/`setupConstraints`/`bindViewModel` per `BaseViewController`. |
-| Feature-scoped views | `Presentation/Scenes/Article/Views/ILArticleHeroImageView.swift`, `ILArticleQuoteView.swift`, `ILArticleNextArticleListView.swift` | Hero, quote, and read-next list views. The hero layers a shared `ILRemoteImageView` (loads `heroImageURL`) over the tint + category placeholder; a nil URL or a failed load leaves the placeholder visible. |
-| Shared tokens | `DesignSystem/Tokens/ILTypography.swift` + `ILColors.swift` | `articleBody` (Lora 16px), `articleQuote` (Lora 18px italic), `ILColors.inkStrong`. |
+| Layer | File | Responsibility | State |
+|---|---|---|---|
+| Domain / Entity (summary) | `Domain/Entities/ILArticleEntity.swift` → `ILArticleSummaryEntity` | Card row of `top` / list / related: id, category, title, author, authorInitials, readMinutes, `publishedDate?`, `imageURL?`, `thumbnailURL?`. | built; unchanged |
+| Domain / Entity (detail) | `Domain/Entities/ILArticleEntity.swift` → `ILArticleItemEntity` | Article page content. Empty string = missing value (BR-ART-07). | built; **add** `thumbnailURL?`, `summary`, `language` |
+| Domain / Entity (page) | `Domain/Entities/ILArticleEntity.swift` → `ILArticlePageEntity` | `items`, `page`, `totalCount`, `hasMore`. | built; unchanged |
+| Domain / Entity (screen) | `Domain/Entities/ILArticleEntity.swift` → `ILArticleEntity` | `currentArticleID`, `article?`, `nextArticles` (now: related). | built; **remove** `savedArticleIDs` |
+| Domain / Entity (list) | `Domain/Entities/ILArticlesEntity.swift` | `ILArticlesItemEntity` rows, `loadedCount`, `totalCount`, `lastLoadedPage`, `hasMore`. | built; unchanged |
+| Domain / Entity (Home) | `Domain/Entities/ILHomeEntity.swift` → `ILHomeArticleEntity` | Home card row; `thumbnailURL` already = thumbnail ?? cover. | built; unchanged |
+| Domain / Repository protocol | `Domain/Repositories/ILArticleRepository.swift` | `loadTopArticles()`, `loadArticles(page:)`, `loadArticle(id:)`; failures are `ILCatalogError` (`.notFound`, `.offline`, `.invalidPage`, `.loadFailed`). | built; **add** `loadRelatedArticles(id:) -> [ILArticleSummaryEntity]` (planned, contract pending) |
+| Domain / UseCase (page) | `Domain/UseCases/Article/ILArticleUseCase.swift` | `getInitialState(articleID:)`, `loadArticle(id:)`, `loadRelatedArticles(id:)` (best effort: failure → `[]`), `shareContent(for:)` → title + link from `ILWebLink`. | built; **replace** `loadNextArticles(excluding:)` by `loadRelatedArticles(id:)`; **remove** `toggleSave`; **add** `shareContent` |
+| Domain / UseCase (list) | `Domain/UseCases/Articles/ILArticlesUseCase.swift` | `loadFirstPage()`, `loadNextPage(after:)` — de-duplicates by `id`, card image = thumbnail ?? cover. | built; unchanged |
+| Domain / UseCase (Home) | `Domain/UseCases/Home/ILHomeUseCase.swift` → `loadTopArticles()`, `makeArticle(from:)` | Featured cards. | built; unchanged |
+| Data / DTO | `Data/DTOs/ILArticleDTO.swift` | `ILArticleSummaryDTO`, `ILArticleDetailDTO` (flat). `.convertFromSnakeCase`, no `CodingKeys`. | built; **add** optional `thumbnailUrl` to `ILArticleDetailDTO` (the detail is Summary + content in `openapi.yaml`, so the field is already sent) |
+| Data / DTO (lists) | `ILCatalogTopListDTO<ILArticleSummaryDTO>`, `ILCatalogPageDTO<ILArticleSummaryDTO>` (shared) | `{items}` / `{items, page, page_size, total, total_pages}`. | built; `{items}` is reused for related |
+| Data / Mapper | `Data/DTOs/Mappers/ILArticleMapper.swift` | DTO → Entity; date-only `published_date` (GMT, Gregorian, POSIX); only `http(s)` `source_url` kept; trims. | built; **map** `thumbnailUrl`, `summary`, `language` (trimmed; empty → `nil`, and no language is set on the text) |
+| Data / Endpoints | `Data/DataSources/Remote/TopArticlesEndpoint.swift`, `ArticlesPageEndpoint.swift`, `ArticleDetailEndpoint.swift` | `GET /v1/articles/top`, `GET /v1/articles?page=N`, `GET /v1/articles/{id}`; `requiresAuth == false`. | built |
+| Data / Endpoint (related) | `Data/DataSources/Remote/RelatedArticlesEndpoint.swift` (new) | `GET /v1/articles/{id}/related`, public. | planned — blocked on contract |
+| Data / Repository | `Data/Repositories/ILArticleRepositoryImpl.swift`, `ILCatalogErrorMapping.swift` | Wraps `NetworkService`; maps errors (`ARTICLE_NOT_FOUND` → `.notFound`). | built; **add** `loadRelatedArticles(id:)` |
+| Core / Config | `Core/Networking/APIConfig.swift` | Per-environment `serverBaseURL`. | built; **add** `webBaseURL` per environment (⚠️ domain) |
+| Core / Links | `Core/Links/ILWebLink.swift` (new) | Pure Foundation. `articleURL(id:)` → `https://<web-domain>/articles/<id>` (id percent-encoded as a path segment); `route(for: URL) -> ILWebLinkRoute?` accepts the environment's host only, `/articles/<id>` and `/en/articles/<id>` → `.article(id:)`, anything else → `nil`. | planned |
+| App / Universal Links | `App/SceneDelegate.swift`, `App/AppCoordinator.swift`, `Presentation/Scenes/Main/ILMainTabCoordinator.swift`, `Presentation/Scenes/Home/ILHomeCoordinator.swift` | `scene(_:continue:)` and `connectionOptions.userActivities` (cold start) take `NSUserActivityTypeBrowsingWeb`; `ILWebLink.route` → `AppCoordinator.open(route:)` → main tab selects Home → `ILHomeCoordinator.showArticle(id)`; `nil` route → `UIApplication.shared.open(url)` (Safari). | planned (⚠️ landing during the auth flow) |
+| App / Entitlements | `InnerLamp/InnerLamp.entitlements` | Today: App Attest only. Add `com.apple.developer.associated-domains` = `applinks:<web-domain>` per environment; Associated Domains capability on the App ID `weedigital.vn.InnerLamp`. | planned (⚠️ domain, environment mapping) |
+| Presentation / Article page | `Presentation/Scenes/Article/ILArticleViewModel.swift`, `ILArticleStateModel.swift`, `ILArticleViewController.swift`, `Views/ILArticleHeroImageView.swift`, `Views/ILArticleQuoteView.swift`, `Views/ILArticleNextArticleListView.swift` | VM: load detail, then related (best effort, stale responses dropped); `content` / `notFound` / `empty block` states; StateModel fields for notice, no-body text, language, visibility of author / quote / source / "Đọc tiếp"; hero URL = cover ?? thumbnail; share event. VC: sticky header band (category + read time), hero, title, author, body, quote, source + notice, "Chia sẻ" alone, "Đọc tiếp"; text views get the article language (`accessibilityLanguage` + `.languageIdentifier` attribute on the attributed strings); not-found and empty-block views. | built; **change** (Phase 3) |
+| Presentation / Article coordinator | `Presentation/Scenes/Article/ILArticleCoordinator.swift` | Leaf. `.back` → pop + `finish()`; `.openURL` → Safari; `.share(title:url:)` → `UIActivityViewController` (today a TODO). | built; **change** `.share` |
+| Presentation / All articles | `Presentation/Scenes/Articles/ILArticlesViewModel.swift`, `ILArticlesStateModel.swift`, `ILArticlesViewController.swift`, `ILArticlesCoordinator.swift`, `Views/ILArticlesListView.swift` | Header "{loaded} / {total} bài", load-more at 120 pt from the end, in-flight guard, append-only cards, footer `ILLoadMoreFooterView` (loading / end). | built; **change**: first-page failure / `total` 0 → empty block (today a toast + the footer's end line); footer `.end` only after a loaded last page; later-page failure without toast |
+| Presentation / Home block | `Presentation/Scenes/Home/ILHomeViewModel.swift`, `ILHomeStateModel.swift`, `Views/ILHomeArticleListView.swift`, `Views/ILHomeSkeletonCards.swift` | Featured cards, "Xem tất cả" (See all), skeleton while loading, empty text when none / failed. | built; **change** empty block copy / action (⚠️ A3) |
+| Presentation / Card | `Presentation/Common/DesignSystem/Components/ILArticleCardView.swift` | Shared card (Home + all articles): `ILRemoteImageView` thumbnail, category eyebrow, 2-line title, "author · read time". | built; **change** meta line without empty author, category label hidden when empty |
+| Localization | `Resources/Localization/vi.json` | `article.*`, `articles.*`, `home.article.*`. | **add** `article.summaryNotice`, `article.noBody`, `article.notFound.*` (⚠️ copy), empty-block keys (⚠️ A3); **remove** `article.save`, `article.saved`, the mock `article.article.*` and `home.article.N.*` keys |
+| DI | `App/DIContainer.swift` | `makeArticleRepository`, `makeArticle{UseCase,ViewModel,Coordinator}`, `makeArticles{UseCase,ViewModel,Coordinator}`. | built; unchanged (the use case gets no new dependency; `ILWebLink` is static) |
+| Tests | `InnerLampTests/ILArticleViewModelTests.swift`, `ILArticleUseCaseTests.swift`, `ILArticleRepositoryTests.swift`, `ILArticlesViewModelTests.swift`, `ILHomeViewModelTests.swift`, `ILHomeUseCaseTests.swift` | Stub repositories / use cases. Written and type-checked 2026-09-30, never run. | built (old behavior); **rewrite** per phase; **add** `ILWebLinkTests.swift` |
 
 ## Navigation flow
 
 ```
+SceneDelegate (Universal Link, planned)
+  └─ ILWebLink.route(url)
+       ├─ .article(id) → AppCoordinator.open(route:) → ILMainTabCoordinator (select Home)
+       │                   → ILHomeCoordinator.showArticle(id)            (⚠️ during auth flow)
+       └─ nil          → UIApplication.shared.open(url)                    (Safari)
+
 ILHomeCoordinator (Home tab)
-  └─ showArticle(id) → ILArticleCoordinator               (leaf, no delegate)
-       push ILArticleViewController
-       (.back) → pop + finish()
-       (.share) → TODO (Share screen not built)
+  ├─ (.openArticle(id)) → showArticle(id)  → ILArticleCoordinator (leaf)
+  └─ (.openArticles)    → showArticles()   → ILArticlesCoordinator
+                            push ILArticlesViewController
+                            (.openArticle(id)) → ILArticleCoordinator (leaf)
+                            (.back) → pop + finish()
+
+ILArticleCoordinator
+  push ILArticleViewController
+  (.back)              → pop + finish()
+  (.openURL(url))      → Safari (source link)
+  (.share(title, url)) → UIActivityViewController            (today: TODO, no-op)
+  "Đọc tiếp" tap       → same screen, new id (ViewModel), scroll to top
 ```
 
-## Data flow
+## Step-by-step Flow — Article page
 
-1. `ILArticleViewModel` loads `useCase.getInitialState(articleID:)` and maps the
-   current article to `ILArticleStateModel` (with "N phút đọc" formatting).
-2. `handleSaveTapped()` → `toggleSave` mutates `savedArticleIDs` in memory.
-3. `handleNextArticleTapped(id)` → `selectArticle` switches the current article
-   in place.
-4. `handleShareTapped` → emits `.share`.
+```
+Step 1 — Load the article (this feature)
+- Trigger: article page `viewDidLoad`, a tap on a "Đọc tiếp" card, or a routed Universal Link
+- Pre-condition: id from a card / related item / link path; the previous article's content is cleared
+  and the skeleton is shown
+- API: GET /v1/articles/{id} (articlesGet, public) — exists at a8a016b
+    - Success → map to ILArticleItemEntity → ILArticleStateModel (FR-ART-004 order, BR-ART-05…08);
+      "Chia sẻ" enabled; go to Step 2
+    - Failure (404 ARTICLE_NOT_FOUND → ILCatalogError.notFound) → not-found state with back; no Step 2
+    - Failure (offline / unreachable / 500 / other) → empty block with back; no Step 2 (⚠️ retry, A3)
+    - A response whose id is no longer current is dropped (user tapped another "Đọc tiếp" card)
 
-The flow below is implemented (`ILArticleUseCaseImpl` → `ILArticleRepositoryImpl`).
+Step 2 — Load "Đọc tiếp" (this feature)
+- Trigger: Step 1 succeeded
+- Pre-condition: the id is still current
+- API: GET /v1/articles/{id}/related (articlesRelated, public, {items: [ArticleSummary]}, 0–2 items)
+  ⚠️ Not confirmed: planned contract — backend article requirements / design v3.0 (AC 20–25), not
+  built, not yet in openapi.yaml (backend tasks.md Phase 7). Until it ships, today's code keeps
+  GET /v1/articles/top and takes the first 2 other ids (drift, BR-ART-04).
+    - Success (1–2 items) → "Đọc tiếp" cards in the order received
+    - Success (0 items) → section hidden
+    - Failure (any, incl. 404) → section hidden; Step 1's content unchanged
+    - A response whose id is no longer current is dropped
 
-## API contract ("Phật pháp hay" articles) — confirmed 2026-09-30
+Step 3 — Share (this feature, no network)
+- Trigger: tap "Chia sẻ" on a loaded article
+- Pre-condition: Step 1 succeeded
+- Effect: ILArticleUseCase.shareContent → (title, ILWebLink.articleURL(id)) → .share(title:url:) →
+  UIActivityViewController([title, url]). ⚠️ Not confirmed: web domain per environment (ADR-0004).
 
-Source: [BE-Developer], verified against the real dev server (30 articles in
-the DB). This section is the single canonical contract; `Articles` and `Home`
-specs reference it.
+Step 4 — Open the source (this feature, no network)
+- Trigger: tap "Nguồn: …" when sourceURL is http(s)
+- Effect: .openURL → Safari. No in-app browser.
+```
 
-- **Host**: `APIConfig.serverBaseURL` (dev = the Mac's LAN IP, port 8080). All
-  three endpoints are **public** — no `Authorization` header.
-- **Envelope**: success `{"success":true,"data":{...}}`; failure
-  `{"success":false,"error":{"code","message","type"},"details":{...}}`.
-  Keys are snake_case (decoded with `.convertFromSnakeCase`).
-- **Common errors**: `500 INTERNAL_ERROR` (no detail leaked); unknown
-  route / wrong method → 404 / 405, also in the envelope.
+## Step-by-step Flow — All articles
 
-**Summary object** (Home cards + list rows, no body):
+```
+Step 1 — First page (this feature)
+- Trigger: `viewDidLoad`
+- API: GET /v1/articles?page=1 (articlesList) — page size fixed by the server (10), never sent
+    - Success, total > 0 → cards in order, header "{loaded} / {total} bài",
+      hasMore = page < total_pages && items non-empty; hasMore false → end line
+    - Success, total == 0 → empty block
+    - Failure (any) → empty block; no end line, no count (⚠️ retry, A3)
 
-| Field | Type | Notes |
-|---|---|---|
-| `id` | string | Stable slug, e.g. `vipassana-nghe-thuat-song` |
-| `title`, `category`, `author`, `author_initials`, `summary` | string | Non-null |
-| `published_date` | string? | Date-only `yyyy-MM-dd`, no time/zone; `null` for most articles |
-| `read_minutes` | int | |
-| `tags` | [string] | Never `null` |
-| `image_url` | string? | string or `null` (all 60 articles have a URL as of 2026-10-06; hotlinked from publisher sites, all https) |
+Step 2 — Next page (this feature)
+- Trigger: scroll within 120 pt of the end, hasMore == true, no request in flight
+- API: GET /v1/articles?page=<last + 1>
+    - Success → append cards whose id is not shown yet; update count and hasMore; last / empty page →
+      end line "Bạn đã xem hết bài viết"
+    - Failure → keep cards, remove the loading line; the next reach of the end repeats this step
+```
 
-| # | Call | Params | 200 `data` | Failures |
-|---|---|---|---|---|
-| 1 | `GET /v1/articles/top` | none (no `limit`; server returns 5 in curated `sort_order`, not by date/popularity) | `{"items":[Summary ×5]}` | — |
-| 2 | `GET /v1/articles?page=N` | `page` 1-based, default 1; fixed `page_size` = 10; no size/filter/search/category | `{"items":[Summary],"page","page_size","total","total_pages"}` — a page past the end is `200` with empty `items` | `400 INVALID_PAGE` (`details.field = "page"`) for a non-positive-integer page |
-| 3 | `GET /v1/articles/{id}` | path `id` = slug | Summary + `body_paragraphs` ([string], **plain text**, one element per paragraph — no HTML/markdown), `quote`, `quote_source`, `language` (`"vi"`), `source_name` (e.g. "Báo Giác Ngộ"), `source_url` (original article), `license` | `404 ARTICLE_NOT_FOUND` |
+The Home block makes a single call (`GET /v1/articles/top`, no cache, empty block on failure or no
+item) and needs no step list.
 
-There is no related-articles field and no `publishedAt` datetime. Stop load-more
-when `page >= total_pages` (or when `items` is empty).
+## Step-by-step Flow — Open a shared link (ADR-0004)
 
-## Step-by-step Flow
+```
+Step 1 — Receive the link (App)
+- Trigger: iOS opens the app for https://<web-domain>/articles/<id> (warm: scene(_:continue:);
+  cold: connectionOptions.userActivities in scene(_:willConnectTo:options:))
+- Pre-condition: associated domain verified by iOS for this build (entitlement + website
+  apple-app-site-association listing the app and /articles/*, /en/articles/*)
+    - Route .article(id) → Step 2
+    - Route nil (other host or path) → UIApplication.shared.open(url); stop
 
-The screen makes up to two sequential calls, so each step is spelled out:
+Step 2 — Show the page (App → this feature)
+- Trigger: Step 1 routed .article(id)
+- Pre-condition: main tab shown
+  ⚠️ Not confirmed: behavior while splash / onboarding / sign-up / login is on screen (hold the
+  route until the main tab appears, or present over the auth flow).
+- Effect: select the Home tab, ILHomeCoordinator.showArticle(id) → Article page Step 1 (above);
+  unknown id → not-found state (never another article, ADR-0004 convention 3)
+```
 
-1. **Load detail** — Trigger: `viewDidLoad` (or tapping a "Đọc tiếp" row).
-   Pre-condition: `articleID` known. API: `GET /v1/articles/{id}`.
-   Success → map to `ILArticleItemEntity`, render. Failure `ARTICLE_NOT_FOUND`
-   → `ILCatalogError.notFound`; no connection / timeout → `.offline`; anything
-   else → `.loadFailed`. On failure the screen shows the localized error and no
-   article content.
-2. **Load "Đọc tiếp" candidates** — Trigger: step 1 succeeded.
-   Pre-condition: none beyond step 1. API: `GET /v1/articles/top`.
-   Success → the first 2 items whose `id` differs from the current article.
-   Failure → the "Đọc tiếp" section is hidden; the article itself stays
-   readable (best-effort, never blocks step 1).
+## Product vectors
 
-> Decision (not backend-confirmed): "Đọc tiếp" is derived client-side from
-> `/v1/articles/top` because the API exposes no related-articles field.
+- `rules/article-order.json` (BR-ART-01) and `rules/article-related.json` (BR-ART-04) are run by the
+  backend only (product §4.1; both rules "Applies to: Backend"). iOS neither sorts nor picks related
+  articles, so no iOS vector test and no `Scripts/sync-product-vectors.sh` entry for this feature.
 
-## Decisions
+## Deliberately stubbed for now
 
-- **Network-only, no Core Data cache** for articles in this version (the
-  Temple/Deity catalogs cache; articles do not — nothing asked for offline
-  reading). Failures surface as `ILCatalogError`.
-- **Error type**: reuse `ILCatalogError` (Domain); the Data-layer error mapping
-  adds `ARTICLE_NOT_FOUND` → `.notFound` next to the temple/deity codes.
-- `published_date` is parsed to an optional `Date` (fixed Gregorian calendar,
-  GMT, `en_US_POSIX`) in the Mapper and formatted for display in the ViewModel;
-  `image_url` maps to an optional `String` (`imageURL`), passed unchanged to
-  `ILArticleStateModel.heroImageURL` and loaded by `ILRemoteImageView` — the
-  host is never rebuilt on the client.
-- **Save** stays in-memory (`savedArticleIDs`); no backend endpoint exists.
-
-## Deliberately stub
-
-Save state is in-memory only (`savedArticleIDs`; no backend endpoint, no "Saved"
-screen). The Share destination is a TODO (`tasks.md` Phase 4). The hero image is a
-hotlink to the publisher's site; failures (e.g. a publisher blocking the
-request) silently keep the placeholder — no retry, no disk cache beyond `URLSession.shared`'s HTTP cache.
+- **"Đọc tiếp" source.** Until the related endpoint is in `openapi.yaml`, `loadNextArticles(excluding:)`
+  stays (first 2 featured, client-side). It is a known drift, not a fallback to keep: Phase 2 deletes it
+  in the same change that adds the endpoint.
+- **Share.** `ILArticleCoordinator` handles `.share` with a `// TODO`; it stays a no-op until the web
+  domain is known (Phase 6). Building the link with a guessed domain is not allowed.
 
 ## Design reference
 
-Matches `Docs/design_handoff_innerlamp/design/InnerLamp Prototype.dc.html`,
-screen `article` / `Component.ARTICLES`. See `InnerLamp/Presentation/Scenes/
-Article/README.md` for the full design-vs-implementation comparison and
-changelog.
+Prototype `InnerLamp Prototype.dc.html` (product §1.5): home §11 "Bài viết Phật pháp hay", screens
+"Tất cả bài viết" and "Bài viết Phật pháp". Per-screen implementation notes:
+`InnerLamp/Presentation/Scenes/Article/README.md`, `InnerLamp/Presentation/Scenes/Articles/README.md`.
