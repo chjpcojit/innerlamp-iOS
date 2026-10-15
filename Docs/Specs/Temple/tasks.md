@@ -1,6 +1,6 @@
 # Tasks — Temple
 
-Version: 3.0
+Version: 3.1
 Last updated: 2026-10-15
 Status: in-progress — Phase 1 (what is built and still matches product v1.1) done; Phase 2–8 pending; Phase 2–3 and the new-field tasks of Phase 4 blocked on the backend contract; Phase 5 location tasks blocked on a product ⚠️
 
@@ -95,4 +95,4 @@ Status: in-progress — Phase 1 (what is built and still matches product v1.1) d
 - Temple events in the events section — `sangha` (`Docs/Specs/Sangha/`, `Docs/Specs/Events/`).
 - Practice-temple picker still loading every page — `Docs/Specs/TempleFinder/` (TD-TempleFinder-002).
 - Temple proposal — `Docs/Specs/TempleFinder/`, `Docs/Specs/AddTemple/` (`temple-suggestion`).
-- Deleting the legacy files `Docs/Specs/Temple/SRS.md` and `Docs/Specs/Temples/*` — a later docs PR.
+- ~~Deleting the legacy files `Docs/Specs/Temple/SRS.md` and `Docs/Specs/Temples/*`~~ — done in v3.1.

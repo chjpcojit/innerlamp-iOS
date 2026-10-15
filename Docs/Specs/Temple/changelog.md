@@ -4,6 +4,20 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v3.1 (2026-10-15)
+
+Step 4 of the docs pipeline: removes the legacy temple docs now that product spec v1.1 and the four
+platform specs are approved. No requirement or design change.
+
+- Deleted `SRS.md` (v0.1 BA draft; superseded by innerlamp-be `docs/product/temple/product.md` @ v1.1)
+  and `Docs/Specs/Temples/` (`requirements.md`, `design.md`, `tasks.md`, `changelog.md`; merged
+  into this folder in v3.0).
+- `tasks.md` (3.0 → 3.1): the Deferred line about deleting these files is struck through.
+  `requirements.md`, `design.md` (3.0 → 3.1): no change needed, verified — header only.
+- `InnerLamp/Presentation/Scenes/Temples/README.md`: spec pointer now `Docs/Specs/Temple/`.
+- Kept on purpose: `Docs/Assumptions/Temple*/` (closed through Phase 8, not deleted);
+  `Docs/Knowledge/features/temple.md` still mentions `SRS.md` until the OKF refresh in Phase 8.
+
 ## v3.0 (2026-10-15)
 
 Moves the spec to the cross-platform product spec innerlamp-be `docs/product/temple/product.md` @ v1.1

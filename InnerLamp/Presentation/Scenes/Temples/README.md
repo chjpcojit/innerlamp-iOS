@@ -1,7 +1,7 @@
 # Temples
 
 Screen **"Tất cả chùa"** (prototype `temples`) — pushed from the Home block "Chùa Việt Nam" → "Xem tất cả".
-Leaf coordinator (`ILTemplesCoordinator`); tapping a card opens the Temple page. Spec: `Docs/Specs/Temples/`.
+Leaf coordinator (`ILTemplesCoordinator`); tapping a card opens the Temple page. Spec: `Docs/Specs/Temple/` (v3.0+ covers the directory list too).
 
 - Header: `ILStickyHeaderBand` + `ILNavBar` (subtitle "N ngôi chùa"), search, region chips.
 - Data: `ILTemplesUseCase.loadTemples()` (all pages, de-dup); search / region filter are client-side.

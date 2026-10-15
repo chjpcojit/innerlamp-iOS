@@ -1,6 +1,6 @@
 # Requirements — Temple
 
-Version: 3.0
+Version: 3.1
 Last updated: 2026-10-15
 Status: in-progress — home block, directory screen shell and temple page are built against the old contract; product spec v1.1 alignment pending: server search + region filter + pages of 12 (instead of loading every page and filtering on the device), follow / offering / report removed, open status in Vietnam time with Rằm & Mùng Một hours, distance with location permission, new detail fields, not-found state, product vectors (`tasks.md` Phase 2–8). Blocked in part on the backend contract (q / region / new fields not yet in `openapi.yaml`).
 Feature folders: `InnerLamp/Presentation/Scenes/Temple/` (temple page), `InnerLamp/Presentation/Scenes/Temples/` (directory), home block in `InnerLamp/Presentation/Scenes/Home/`
