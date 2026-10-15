@@ -1,8 +1,8 @@
 # Design — Deity
 
-Version: 1.0
+Version: 1.1
 Last updated: 2026-10-15
-Status: in-progress — carousels, catalogue screen, deity page, top/page/detail endpoints and Core Data cache built against the old contract; planned: server paging + `type` filter, vía from the backend with device-date countdown, related sutras endpoint, iconography + name block, single action row, prototype empty state, network-first cache, removal of the bundled catalogue
+Status: in-progress — carousels, catalogue screen, deity page, top/page/detail endpoints and Core Data cache built against the old contract; planned: server paging + `type` filter, vía (a deity's feast day, kept on a lunar date) from the backend with device-date countdown, related sutras endpoint, iconography + name block, single action row, prototype empty state, network-first cache, removal of the bundled catalogue
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -11,9 +11,9 @@ Status: in-progress — carousels, catalogue screen, deity page, top/page/detail
 MVVM-C + Clean Architecture per `AGENTS.md`. Four entry surfaces share one Data layer
 (`ILDeityCatalogRepository`):
 
-- **Home block** "Thư viện Phật & Bồ Tát" — part of `Presentation/Scenes/Home/` (`ILHomeDeityCarouselView`),
+- **Home block** "Thư viện Phật & Bồ Tát" (Library of Buddhas & Bodhisattvas) — part of `Presentation/Scenes/Home/` (`ILHomeDeityCarouselView`),
   fed by `ILHomeUseCase.loadTopDeities()`.
-- **Library block** "Chư Phật & Bồ Tát" + tile "Phật & Bồ Tát" — part of `Presentation/Scenes/Library/`,
+- **Library block** "Chư Phật & Bồ Tát" (Buddhas & Bodhisattvas) + tile "Phật & Bồ Tát" (Buddhas & Bodhisattvas) — part of `Presentation/Scenes/Library/`,
   same carousel view, fed by `ILLibraryUseCase.loadTopDeities()`.
 - **Catalogue** — `Presentation/Scenes/Deities/` (`ILDeitiesCoordinator`, child of `ILHomeCoordinator` /
   `ILLibraryCoordinator`). Code folder name stays `Deities` (product §1.5).
@@ -28,7 +28,7 @@ How iOS meets the product constraints (see `requirements.md` "Constraints"):
   / `deities(in:kind:)`) is removed.
 - **Server gives vía days and the next vía** (BR-DTY-05, 06). The on-device lunar scan
   (`ILDeityUseCaseImpl.upcomingMemorialDay` / `nextOccurrence`, 400-day window, UTC+7 calendar) and the
-  "Đản / Vía" name match (`ILDeityEntity.primaryMemorialDay`, `ILHomeUseCaseImpl.primaryMemorialDay`) are
+  "Đản / Vía" (birth anniversary / feast day) name match (`ILDeityEntity.primaryMemorialDay`, `ILHomeUseCaseImpl.primaryMemorialDay`) are
   deleted. The app only computes the countdown with `ILCalendarRules.countdown(today:solarDate:calendar:)`
   (planned in `Docs/Specs/Calendar/design.md`; created by whichever feature lands first) using the
   **device** calendar and date (BR-CAL-13), not a fixed UTC+7 calendar.
@@ -37,7 +37,7 @@ How iOS meets the product constraints (see `requirements.md` "Constraints"):
 - **Related sutras from the sutra library** (FR-DTY-007): `relatedSutras(for:)`, the `librarySutraIDs`
   table and `ILDeityEntity.canonicalSources` (comma split) are deleted; `canonical_source` is shown as a
   plain line (FR-DTY-005).
-- **Hidden actions** (BR-DTY-08): "· Báo thông tin sai" is removed from `deity.footnote`, not hidden.
+- **Hidden actions** (BR-DTY-08): "· Báo thông tin sai" (· Report incorrect information) is removed from `deity.footnote`, not hidden.
 
 ## Layers & components
 
@@ -58,17 +58,17 @@ How iOS meets the product constraints (see `requirements.md` "Constraints"):
 | Data / DTO | `Data/DTOs/ILDeitySummaryDTO.swift`, `Data/DTOs/ILDeityDTO.swift` | Summary + detail wire shapes. New fields (`next_via`, `via_events`) are **optional** so an old cached copy and the current server still decode. `lunar_memorial_days` is no longer read. | built; **add** `ILDeityViaDTO`, `ILDeityViaEventDTO`; **remove** `lunar_memorial_days` decoding and the `phat_botat.json` doc comment |
 | Data / DTO (sutras) | `Data/DTOs/ILSutraDTO.swift` (reuse) or `ILDeitySutraDTO` | Reads only `id` and `titles.vi` of each `SutraSummary` item of `GET /v1/deities/{id}/sutras`. | planned |
 | Data / Mapper | `Data/DTOs/Mappers/ILDeityMapper.swift` | DTO → Entity; `type` → `ILDeityKind`; `next_via` / `via_events` → vía entities; `YYYY-MM-DD` → y/m/d (invalid → `nil`); trims text. | built; **extend** |
-| Data / Endpoints | `Data/DataSources/Remote/TopDeitiesEndpoint.swift`, `DeitiesPageEndpoint.swift`, `DeityDetailEndpoint.swift` | `GET /v1/deities/top[?date=]`, `GET /v1/deities?page=N[&type=][&date=]`, `GET /v1/deities/{id}[?date=]`. `type` only when a chip other than "Tất cả" is selected. | built (no `type` / `date`); **add** query items |
+| Data / Endpoints | `Data/DataSources/Remote/TopDeitiesEndpoint.swift`, `DeitiesPageEndpoint.swift`, `DeityDetailEndpoint.swift` | `GET /v1/deities/top[?date=]`, `GET /v1/deities?page=N[&type=][&date=]`, `GET /v1/deities/{id}[?date=]`. `type` only when a chip other than "Tất cả" (All) is selected. | built (no `type` / `date`); **add** query items |
 | Data / Endpoint (sutras) | `Data/DataSources/Remote/DeitySutrasEndpoint.swift` (new) | `GET /v1/deities/{id}/sutras?page=1` (no `role`). | planned |
 | Data / Repository | `Data/Repositories/ILDeityCatalogRepositoryImpl.swift` | See "Caching" below. | built; **change** list policy to network-first; **add** sutras call; 404 evicts the cached detail |
 | Data / Local | `Data/DataSources/Local/ILDeityCatalogLocalDataSource.swift`, Core Data `ILCachedDeityMO` + list state | Cached top list, unfiltered pages, details. | built; **change**: store `next_via` / `via_events` (cached detail JSON), store `image_url` (TD-Deity-001), store the request date; reset cached pages when `page_size` / `total` differ |
 | Data / Local (dead) | `Data/DataSources/Local/ILDeityLocalDataSource.swift`, `ILDeityMO.swift`, `Data/Repositories/ILDeityRepositoryImpl.swift` | Seeds Core Data from the missing `phat_botat.json`. | built; **remove** (with its Core Data entity, if no other user — check the model) |
-| Presentation / Catalogue | `Presentation/Scenes/Deities/ILDeitiesViewModel.swift`, `ILDeitiesStateModel.swift`, `ILDeitiesViewController.swift`, `Views/ILDeitiesGridView.swift`, `ILDeitiesCardView.swift`, `ILDeitiesSkeletonView.swift`, `ILDeitiesCoordinator.swift` | VM: chip state, cancel in-flight + drop stale responses, page cursor + `hasMore`, in-flight guard, append-only cards de-duplicated by `id`, subtitle from `total`, footer state (loading / retry), prototype empty state with "Thử lại" + "Xem lịch lễ vía". VC: existing sticky header band + chips; load-more trigger near the end of the grid; incremental append (AGENTS.md §4.6). Coordinator: **add** `.openFestivals`. | VC / grid / skeleton / coordinator built; **rewrite** VM; **change** card vía line, empty / error state |
-| Presentation / Deity page | `Presentation/Scenes/Deity/ILDeityViewModel.swift`, `ILDeityStateModel.swift`, `ILDeityViewController.swift`, `Views/ILDeityHeroView.swift`, `ILDeityMemorialDayCardView.swift`, `ILDeityVowRowView.swift`, `ILDeityMantraCardView.swift` | VM: load detail + related sutras in parallel; state mapping in FR-DTY-005 order; vía card from `nextVia` + countdown; vía list from `viaEvents`; not-found vs error; reload on re-appear with a new device date. VC: name block (honorific, Sanskrit, Chinese as text), canonical source line, "Hình tượng" section (new `Views/ILDeityIconographyView.swift`), one chant + one share action under the mantra cards, sutra rows from the endpoint, not-found state. | built; **change** (see Phase 4) |
+| Presentation / Catalogue | `Presentation/Scenes/Deities/ILDeitiesViewModel.swift`, `ILDeitiesStateModel.swift`, `ILDeitiesViewController.swift`, `Views/ILDeitiesGridView.swift`, `ILDeitiesCardView.swift`, `ILDeitiesSkeletonView.swift`, `ILDeitiesCoordinator.swift` | VM: chip state, cancel in-flight + drop stale responses, page cursor + `hasMore`, in-flight guard, append-only cards de-duplicated by `id`, subtitle from `total`, footer state (loading / retry), prototype empty state with "Thử lại" (Retry) + "Xem lịch lễ vía" (See the feast-day calendar). VC: existing sticky header band + chips; load-more trigger near the end of the grid; incremental append (AGENTS.md §4.6). Coordinator: **add** `.openFestivals`. | VC / grid / skeleton / coordinator built; **rewrite** VM; **change** card vía line, empty / error state |
+| Presentation / Deity page | `Presentation/Scenes/Deity/ILDeityViewModel.swift`, `ILDeityStateModel.swift`, `ILDeityViewController.swift`, `Views/ILDeityHeroView.swift`, `ILDeityMemorialDayCardView.swift`, `ILDeityVowRowView.swift`, `ILDeityMantraCardView.swift` | VM: load detail + related sutras in parallel; state mapping in FR-DTY-005 order; vía card from `nextVia` + countdown; vía list from `viaEvents`; not-found vs error; reload on re-appear with a new device date. VC: name block (honorific, Sanskrit, Chinese as text), canonical source line, "Hình tượng" (Iconography) section (new `Views/ILDeityIconographyView.swift`), one chant + one share action under the mantra cards, sutra rows from the endpoint, not-found state. | built; **change** (see Phase 4) |
 | Presentation / Coordinator | `Presentation/Scenes/Deity/ILDeityCoordinator.swift` | `.back`, `.openFestivals` → Festivals, `.openMala(text)` → Mala, `.share(text)` → `UIActivityViewController`, `.openSutra(id)` → SutraDetail. | built; unchanged |
-| Presentation / Blocks | `Presentation/Scenes/Home/ILHomeViewModel.swift`, `ILHomeStateModel.swift` (`ILHomeDeityModel`), `Views/ILHomeDeityCarouselView.swift`; `Presentation/Scenes/Library/ILLibraryViewModel.swift`, `ILLibraryStateModel.swift`, `ILLibraryViewController.swift` | Featured cards, "Xem tất cả", tile, loading skeleton, empty state. | built; **change** vía line from `nextVia`, kind label, block empty state (⚠️) |
-| Presentation / Labels | `ILDeitiesViewModel.kindLabel(for:)` | "Phật" / "Bồ Tát" / "Chư Thiên" — the one source used by cards, the page and the blocks. | built; **change** `deva` copy |
-| Localization | `Resources/Localization/vi.json` | `deity.*`, `deities.*`, `home.deity.*`, `library.deity.*`. | **change** `deity.kind.deva` → "Chư Thiên", `deity.footnote` (drop "· Báo thông tin sai"), month format to "THÁNG %@" with Giêng / Chạp; **add** empty-state title / hint / actions (`deities.empty.*`), not-found, iconography labels (⚠️), leap marker, vía list; **remove** `deities.memorialUpdating`, `home.deity.memorialUpdating`, `deity.sutra.pending` / `available` / `open`, `deities.updating`, `deities.error.*` if unused |
+| Presentation / Blocks | `Presentation/Scenes/Home/ILHomeViewModel.swift`, `ILHomeStateModel.swift` (`ILHomeDeityModel`), `Views/ILHomeDeityCarouselView.swift`; `Presentation/Scenes/Library/ILLibraryViewModel.swift`, `ILLibraryStateModel.swift`, `ILLibraryViewController.swift` | Featured cards, "Xem tất cả" (See all), tile, loading skeleton, empty state. | built; **change** vía line from `nextVia`, kind label, block empty state (⚠️) |
+| Presentation / Labels | `ILDeitiesViewModel.kindLabel(for:)` | "Phật" (Buddha) / "Bồ Tát" (Bodhisattva) / "Chư Thiên" (devas) — the one source used by cards, the page and the blocks. | built; **change** `deva` copy |
+| Localization | `Resources/Localization/vi.json` | `deity.*`, `deities.*`, `home.deity.*`, `library.deity.*`. | **change** `deity.kind.deva` → "Chư Thiên", `deity.footnote` (drop "· Báo thông tin sai"), month format to "THÁNG %@" (MONTH %@) with Giêng (first lunar month) / Chạp (twelfth lunar month); **add** empty-state title / hint / actions (`deities.empty.*`), not-found, iconography labels (⚠️), leap marker, vía list; **remove** `deities.memorialUpdating`, `home.deity.memorialUpdating`, `deity.sutra.pending` / `available` / `open`, `deities.updating`, `deities.error.*` if unused |
 | DI | `App/DIContainer.swift` | `makeDeity*`, `makeDeities*`, `makeDeityCatalogRepository`. | built; **remove** `deityLocalDataSource`, `makeDeityRepository` |
 | Tests | `InnerLampTests/ILDeityViewModelTests.swift`, `ILDeitiesViewModelTests.swift`, `ILDeityCatalogRepositoryTests.swift`, `ILHomeViewModelTests.swift`, `ILLibraryViewModelTests.swift`, `ILDeityRepositoryTests.swift` | ViewModel / UseCase / repository tests with stub repositories. | built (old behavior); **rewrite** per phase; **remove** `ILDeityRepositoryTests` with the dead repository |
 | Product vectors | `InnerLampTests/ILDeityProductVectorTests.swift` + `InnerLampTests/ProductVectors/deity/deity-next-via.json` + `Scripts/sync-product-vectors.sh` | Countdown part of BR-DTY-06 (see "Product vectors"). | planned |
@@ -170,7 +170,7 @@ copy on failure, block empty state otherwise) and need no step list.
   iOS does not re-implement it. `ILDeityProductVectorTests` runs every case for the part iOS computes:
   for each case with a non-null `expected.next_via`, `ILCalendarRules.countdown(today:solarDate:)` with
   `input.today` and `expected.next_via.solar_date` must give `expected.days` and the label
-  (`today` → "Hôm nay", `tomorrow` → "Ngày mai", `days_left` → "Còn n ngày"); the null case asserts the
+  (`today` → "Hôm nay" (Today), `tomorrow` → "Ngày mai" (Tomorrow), `days_left` → "Còn n ngày" (n days left)); the null case asserts the
   mapper / ViewModel shows no vía card for `next_via: null`.
 - `Scripts/sync-product-vectors.sh` (shared with Memorial / Temple / Calendar, created by whichever lands
   first) copies `../innerlamp-be/docs/product/deity/rules/deity-next-via.json` into

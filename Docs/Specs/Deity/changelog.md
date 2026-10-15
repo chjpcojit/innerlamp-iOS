@@ -3,6 +3,15 @@
 Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in this folder. All three
 files share one changelog since they change together as one spec unit. Newest version first.
 
+## v1.1 (2026-10-15)
+
+- Translated to English per the repo Language policy; no requirement, design or task change.
+- `requirements.md`, `design.md`, `tasks.md`, `changelog.md`: the prose was already English; quoted
+  Vietnamese UI copy and Vietnamese domain terms (vía (feast day), Phật (Buddha), Bồ Tát
+  (bodhisattva), Chư Thiên (devas)) now carry an English gloss in parentheses on first use in each file. Copy text, localisation keys, IDs, criteria numbering,
+  `⚠️ Not confirmed` markers and task states are unchanged; version headers 1.0 → 1.1.
+- Reason: editorial change to meet the `AGENTS.md` language rule (English Markdown docs).
+
 ## v1.0 (initial)
 
 Initial spec written retroactively from the already-implemented Deity (deity page) and Deities
@@ -19,11 +28,11 @@ changed. 2026-10-15.
   (first page, next page, chip change) and the deity page (detail + related sutras in parallel, sutra
   page boundary); network-first caching; product vectors plan.
 - `tasks.md`: Phase 1 records what is built and still matches product v1.0 (`[x]`, verified in code);
-  Phase 2–8 list the drift to fix: deva label "Chư Thiên" (was "Thiên Nữ", AS-Deity-DEVA); server pages
-  of 12 + server `type` filter (was every page loaded, filtered on the device); vía from the backend with
-  device-date countdown (was a 400-day on-device lunar scan in UTC+7 and a "Đản/Vía" name match);
+  Phase 2–8 list the drift to fix: deva label "Chư Thiên" (devas; was "Thiên Nữ" (celestial maidens), AS-Deity-DEVA); server pages
+  of 12 + server `type` filter (was every page loaded, filtered on the device); vía (a deity's feast day, kept on a lunar date) from the backend with
+  device-date countdown (was a 400-day on-device lunar scan in UTC+7 and a "Đản/Vía" (birth anniversary / feast day) name match);
   related sutras from `GET /v1/deities/{id}/sutras` (was a hard-coded title table); iconography, name
-  block and canonical source shown; one chant / share action row; "Báo thông tin sai" removed; prototype
+  block and canonical source shown; one chant / share action row; "Báo thông tin sai" (Report incorrect information) removed; prototype
   empty / error state on the catalogue and a block empty state on Home / Library; cached list pages that
   never expired → network-first; dead bundled catalogue (`getAllDeities`, `ILDeityRepository`,
   `makeDeityRepository`, `ILDeityLocalDataSource`) removed.

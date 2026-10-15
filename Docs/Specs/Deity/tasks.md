@@ -1,8 +1,8 @@
 # Tasks — Deity
 
-Version: 1.0
+Version: 1.1
 Last updated: 2026-10-15
-Status: in-progress — Phase 1 (what is built and still matches product v1.0) done; Phase 2–8 pending; Phase 2 and the vía tasks of Phase 3, 4 and 6 blocked on backend deity v3.0 + `openapi.yaml`; several copy tasks blocked on product ⚠️
+Status: in-progress — Phase 1 (what is built and still matches product v1.0) done; Phase 2–8 pending; Phase 2 and the vía (a deity's feast day, kept on a lunar date) tasks of Phase 3, 4 and 6 blocked on backend deity v3.0 + `openapi.yaml`; several copy tasks blocked on product ⚠️
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -12,15 +12,15 @@ Status: in-progress — Phase 1 (what is built and still matches product v1.0) d
 
 ## Phase 1 — Built and kept (retroactive record)
 
-- [x] Home block "Thư viện Phật & Bồ Tát" and Library block "Chư Phật & Bồ Tát": featured cards from `GET /v1/deities/top` in server order through the shared `ILHomeDeityCarouselView`; loading skeleton; failure does not fail the screen (criteria 1 without `date`, 3 non-fatal part)
-- [x] Block "Xem tất cả" and Library tile "Phật & Bồ Tát" → `ILDeitiesCoordinator`; card tap → `ILDeityCoordinator` (criterion 2)
+- [x] Home block "Thư viện Phật & Bồ Tát" (Library of Buddhas & Bodhisattvas) and Library block "Chư Phật & Bồ Tát" (Buddhas & Bodhisattvas): featured cards from `GET /v1/deities/top` in server order through the shared `ILHomeDeityCarouselView`; loading skeleton; failure does not fail the screen (criteria 1 without `date`, 3 non-fatal part)
+- [x] Block "Xem tất cả" (See all) and Library tile "Phật & Bồ Tát" (Buddhas & Bodhisattvas) → `ILDeitiesCoordinator`; card tap → `ILDeityCoordinator` (criterion 2)
 - [x] `TopDeitiesEndpoint`, `DeitiesPageEndpoint` (page only), `DeityDetailEndpoint`, `ILDeitySummaryDTO`, `ILDeityDTO`, `ILDeityMapper`, `ILDeityCatalogRepository` + `ILDeityCatalogRepositoryImpl`, `ILDeityCatalogLocalDataSource` (Core Data), `ILCatalogError` mapping
 - [x] Top and detail network-first with cached copy on failure (criterion 30 for top / detail)
-- [x] Catalogue shell: `ILDeitiesCoordinator`, `ILDeitiesViewController` (sticky header band + `ILNavBar` + chips "Tất cả · Chư Phật · Bồ Tát", no "Chư Thiên" chip), `ILDeitiesGridView`, `ILDeitiesCardView` (thumbnail, else image, else placeholder; type badge; name; core virtue), `ILDeitiesSkeletonView`, card tap → deity page, back (criteria 4 image / name part, 7 chips, 11)
-- [x] Deity page shell: `ILDeityCoordinator` (leaf: back, festivals, mala with text, share sheet, sutra), `ILDeityViewController`, `ILDeityHeroView` (image + type label + pure land), loading, error and offline states with "Thử lại" (criteria 12 without `date`, 13 error branch, 23)
-- [x] Biography collapsed with "Đọc thêm" / "Thu gọn" only on overflow (criterion 16)
-- [x] Vows numbered from 1, first 5 + "Xem đủ N đại nguyện" / "Thu gọn" (criterion 17, BR-DTY-07)
-- [x] Mantra cards "Danh hiệu" / "Thần chú" (Sino-Vietnamese + Sanskrit) / "Đà-la-ni" (excerpt + name), a card without text left out (criterion 19 cards part, BR-DTY-04)
+- [x] Catalogue shell: `ILDeitiesCoordinator`, `ILDeitiesViewController` (sticky header band + `ILNavBar` + chips "Tất cả · Chư Phật · Bồ Tát" (All · Buddhas · Bodhisattvas), no "Chư Thiên" (devas) chip), `ILDeitiesGridView`, `ILDeitiesCardView` (thumbnail, else image, else placeholder; type badge; name; core virtue), `ILDeitiesSkeletonView`, card tap → deity page, back (criteria 4 image / name part, 7 chips, 11)
+- [x] Deity page shell: `ILDeityCoordinator` (leaf: back, festivals, mala with text, share sheet, sutra), `ILDeityViewController`, `ILDeityHeroView` (image + type label + pure land), loading, error and offline states with "Thử lại" (Retry; criteria 12 without `date`, 13 error branch, 23)
+- [x] Biography collapsed with "Đọc thêm" (Read more) / "Thu gọn" (Show less) only on overflow (criterion 16)
+- [x] Vows numbered from 1, first 5 + "Xem đủ N đại nguyện" (See all N great vows) / "Thu gọn" (criterion 17, BR-DTY-07)
+- [x] Mantra cards "Danh hiệu" (Honorific title) / "Thần chú" (Mantra; Sino-Vietnamese + Sanskrit) / "Đà-la-ni" (Dhāraṇī; excerpt + name), a card without text left out (criterion 19 cards part, BR-DTY-04)
 - [x] Mala opens with the given text (`.openMala(mantraText:)`); system share sheet (`.share(text:)`)
 - [x] DI: `DIContainer.makeDeity*`, `makeDeities*`, `makeDeityCatalogRepository`
 - [x] Unit tests written: `ILDeityViewModelTests` (+ `ILDeityUseCaseTests`), `ILDeitiesViewModelTests`, `ILDeityCatalogRepositoryTests`, Home / Library deity tests (they test the old behavior and are rewritten in Phase 2–7)
@@ -38,27 +38,27 @@ Status: in-progress — Phase 1 (what is built and still matches product v1.0) d
 
 ## Phase 3 — Catalogue: server filter and pages (FR-DTY-002, FR-DTY-003, FR-DTY-010, NFR-DTY-01/02)
 
-- [ ] `ILCatalogPageEntity.total` (shared with Temple — skip if already added) and `DeitiesPageEndpoint` `type` query item (only for "Chư Phật" / "Bồ Tát") (criteria 5, 7)
+- [ ] `ILCatalogPageEntity.total` (shared with Temple — skip if already added) and `DeitiesPageEndpoint` `type` query item (only for "Chư Phật" (Buddhas) / "Bồ Tát" (Bodhisattvas)) (criteria 5, 7)
 - [ ] `ILDeityCatalogRepository.loadDeities(page:kind:today:)`; repository list pages network-first, store and fall back only for unfiltered pages, reset on a `page_size` / `total` change, `404` evicts a cached detail ("Caching"; criteria 13, 30–32)
 - [ ] Rewrite `ILDeitiesUseCase` to `loadPage(_:kind:)` (one page) — removes `loadAllPages`, the 50-page cap, the `top` fallback, `uniqued` and `deities(in:kind:)`; delete `ILDeitiesEntity`
 - [ ] Rewrite `ILDeitiesViewModel`: chip state, cancel in-flight + drop stale responses, page cursor + `hasMore`, in-flight guard, append-only cards de-duplicated by `id`, subtitle N from `total` of the current chip (criteria 5–8)
 - [ ] `ILDeitiesViewController`: load-more trigger near the end of the grid; footer loading / "Thử lại" for a failed later page; incremental append in `ILDeitiesGridView` (AGENTS.md §4.6) (criteria 6, 10)
-- [ ] Empty / error state: one prototype state "Chưa có thông tin chư Phật" + hint + "Thử lại" + "Xem lịch lễ vía" (replaces "Đang cập nhật" and the separate error state); `ILDeitiesNavEvent.openFestivals` + coordinator → Festivals (criterion 9)
+- [ ] Empty / error state: one prototype state "Chưa có thông tin chư Phật" (No information on the Buddhas yet) + hint + "Thử lại" + "Xem lịch lễ vía" (See the feast-day calendar; replaces "Đang cập nhật" (Updating) and the separate error state); `ILDeitiesNavEvent.openFestivals` + coordinator → Festivals (criterion 9)
 - [ ] Filtered-empty copy (criterion 9 marker) — blocked on ⚠️ (product)
-- [ ] Card vía line "Vía dd/MM âm lịch" from `nextVia`, none when `nil`; remove the "Ngày vía: đang cập nhật" placeholder (criterion 4) — needs Phase 2; leap marker blocked on ⚠️ (product)
-- [ ] `ILDeitiesViewModelTests`: first page + count, next page append + stop, chip → page 1 with `type`, "Tất cả" → no `type`, stale response dropped, later-page failure keeps cards, empty state actions
+- [ ] Card vía line "Vía dd/MM âm lịch" (Feast day dd/MM lunar calendar) from `nextVia`, none when `nil`; remove the "Ngày vía: đang cập nhật" (Feast day: updating) placeholder (criterion 4) — needs Phase 2; leap marker blocked on ⚠️ (product)
+- [ ] `ILDeitiesViewModelTests`: first page + count, next page append + stop, chip → page 1 with `type`, "Tất cả" (All) → no `type`, stale response dropped, later-page failure keeps cards, empty state actions
 
 ## Phase 4 — Deity page alignment (FR-DTY-004…006, FR-DTY-008, FR-DTY-009, BR-DTY-01, 04, 06, 08)
 
 - [ ] `deity.kind.deva` → "Chư Thiên" (BR-DTY-01; used by cards, page and blocks through `kindLabel(for:)`)
-- [ ] Footer `deity.footnote` without "· Báo thông tin sai" (criterion 20, BR-DTY-08)
+- [ ] Footer `deity.footnote` without "· Báo thông tin sai" (· Report incorrect information; criterion 20, BR-DTY-08)
 - [ ] Not-found state for `ILCatalogError.notFound`: message + back, no "Thử lại" (criterion 13)
 - [ ] Name block: honorific title, Sanskrit name and Chinese name as text, each hidden when empty (criteria 14, 15)
 - [ ] Core virtue + canonical source line; delete `ILDeityEntity.canonicalSources` (criterion 14)
-- [ ] "Hình tượng" section: `Views/ILDeityIconographyView.swift` with posture, seat or mount, sacred objects, symbolic meaning, rows hidden when empty, section hidden when all are (criterion 18) — row labels blocked on ⚠️ (product)
-- [ ] One "Trì niệm với tràng hạt" + one "Chia sẻ" action under the mantra cards (remove the per-card buttons of `ILDeityMantraCardView`); chant only with a short mantra, passing `short_mantra_sino_vietnamese` (criteria 19, 28)
+- [ ] "Hình tượng" (Iconography) section: `Views/ILDeityIconographyView.swift` with posture, seat or mount, sacred objects, symbolic meaning, rows hidden when empty, section hidden when all are (criterion 18) — row labels blocked on ⚠️ (product)
+- [ ] One "Trì niệm với tràng hạt" (Recite with the mala) + one "Chia sẻ" (Share) action under the mantra cards (remove the per-card buttons of `ILDeityMantraCardView`); chant only with a short mantra, passing `short_mantra_sino_vietnamese` (criteria 19, 28)
 - [ ] Share text: name, short mantra Sino-Vietnamese, Sanskrit, missing values left out (criterion 29) — link in the text blocked on ⚠️ (product Appendix A item 3)
-- [ ] Vía card from `nextVia`: name, lunar day, month "THÁNG GIÊNG" / "THÁNG n" / "THÁNG CHẠP" + "nhuận", solar date with weekday (device calendar), countdown via `ILCalendarRules.countdown` (criterion 21) — needs Phase 2
+- [ ] Vía card from `nextVia`: name, lunar day, month "THÁNG GIÊNG" (FIRST MONTH) / "THÁNG n" (MONTH n) / "THÁNG CHẠP" (TWELFTH MONTH) + "nhuận" (leap), solar date with weekday (device calendar), countdown via `ILCalendarRules.countdown` (criterion 21) — needs Phase 2
 - [ ] Vía list from `viaEvents` in the order received (criterion 22) — needs Phase 2; rows without occurrence blocked on ⚠️ (product)
 - [ ] Delete `upcomingMemorialDay`, `nextOccurrence`, the 400-day window, the UTC+7 calendar, `ILDeityUpcomingMemorialDayEntity`, `ILDeityMemorialDayEntity`, `primaryMemorialDay` (Entity + `ILHomeUseCaseImpl`) — same release as Phase 2 ("Deliberately stubbed for now")
 - [ ] Reload on re-appear when the device date changed since the last load (criterion 24)
