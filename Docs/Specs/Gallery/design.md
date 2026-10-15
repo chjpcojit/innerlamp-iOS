@@ -1,8 +1,8 @@
 # Design — Gallery
 
-Version: 2.0
+Version: 2.1
 Last updated: 2026-10-15
-Status: in-progress — gallery grid, viewer and Home block built network-only on `ILPhotosRepository` (`top`, paged list); planned: credit and `total` from backend gallery v2.0 (not built), viewer paging through the grid's paging state, viewer without heart / wallpaper / share, real add-only save, Home block hidden on error with "+N" from `total`, grid error / empty states, name "Ảnh đẹp Phật giáo"
+Status: in-progress — gallery grid, viewer and Home block built network-only on `ILPhotosRepository` (`top`, paged list); planned: credit and `total` from backend gallery v2.0 (not built), viewer paging through the grid's paging state, viewer without heart / wallpaper / share, real add-only save with its error toasts, Home block error / empty states with "+N" from `total`, grid error / empty states, one shared load-error copy, name "Ảnh đẹp Phật giáo"; viewer release gated on backend gallery v2.0
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -30,7 +30,15 @@ How iOS meets the product constraints (see `requirements.md` "Constraints"):
   page loaded from the viewer also appears in the grid, the counter total is the server `total` and
   only one page request is ever in flight.
 - **Credit in the list item** (BR-GAL-04). The DTO / Entity / StateModel carry `author`, `license`,
-  `sourceURL` once backend v2.0 sends them; the viewer makes no detail call.
+  `sourceURL` once backend v2.0 sends them; the viewer makes no detail call. Without an `http(s)`
+  source the credit is a plain, non-tappable label (P6).
+- **Release gate** (product §2.7, A2). The viewer is not shipped to users before backend gallery v2.0;
+  there is no per-photo `GET /v1/gallery/{id}` fallback and no code path for one.
+- **One load-error copy** (FR-GAL-008). Every gallery load failure — Home block, grid first load,
+  later pages, topic change, viewer next page — shows the localised message
+  "Không tải được danh sách ảnh. Vui lòng thử lại sau." (one key), never `error.localizedDescription`.
+  Where nothing is shown yet (Home block, grid first load) it is an `ILStateView` error block with
+  "Thử lại" (`common.retry`); where photos are shown it is a toast.
 - **"+N" from the whole gallery** (BR-GAL-07). A pure Domain rule computes N from `top.total` and the
   tiles shown; the product vector file is run against it.
 - **Save is add-only** (FR-GAL-007). A Domain repository protocol hides the Photos framework; the Data
@@ -44,7 +52,7 @@ How iOS meets the product constraints (see `requirements.md` "Constraints"):
 | Domain / Entity (photo) | `Domain/Entities/ILPhotosEntity.swift` → `ILPhotosPhotoEntity` | id, `ILPhotosCategory`, title, place, `thumbnailURL?`, `imageURL?`. | built; **add** `author`, `license`, `sourceURL?` (only `http(s)` kept) |
 | Domain / Entity (page, screen) | `Domain/Entities/ILPhotosEntity.swift` → `ILPhotosPageEntity`, `ILPhotosEntity` | One page (`items`, `page`, `totalCount`, `hasMore`); the gallery state (`photos`, `selectedCategory`, `totalCount`, `lastLoadedPage`, `hasMore`). | built; unchanged |
 | Domain / Entity (featured) | `Domain/Entities/ILPhotosEntity.swift` → `ILPhotosTopEntity` (new) | `items: [ILPhotosPhotoEntity]`, `totalCount: Int?` (`nil` = backend before v2.0). | planned |
-| Domain / Entity (Home) | `Domain/Entities/ILHomeEntity.swift` → `ILHomePhotoEntity`, `ILHomeEntity.photos` | Home tile (id, thumbnail). | built; **add** `ILHomeEntity.photosTotalCount: Int?` and a load-failed flag so the block can be hidden |
+| Domain / Entity (Home) | `Domain/Entities/ILHomeEntity.swift` → `ILHomePhotoEntity`, `ILHomeEntity.photos` | Home tile (id, thumbnail). | built; **add** `ILHomeEntity.photosTotalCount: Int?` and a photos load status (`loading` / `loaded` / `failed`) so the block can show its error or empty state |
 | Domain / Rule (Home "+N") | `Domain/UseCases/Home/ILHomePhotoRules.swift` (new) | Pure: `tilesShown(photoCount:) = min(3, photoCount)`; `moreCount(totalPhotos:tilesShown:) = max(0, total − tiles)`; overlay shown when > 0. Unit of the product vectors. | planned |
 | Domain / Repository protocol | `Domain/Repositories/ILPhotosRepository.swift` | `loadTopPhotos()`, `loadPhotos(category:page:)`; failures are `ILCatalogError`. | built; **change** `loadTopPhotos() -> ILPhotosTopEntity` |
 | Domain / UseCase (gallery) | `Domain/UseCases/Photos/ILPhotosUseCase.swift` | `loadFirstPage(category:)`, `loadNextPage(after:)` (de-duplicates by id; no-op when `hasMore == false`). Used by the grid and, through the grid's ViewModel, by the viewer. | built; unchanged |
@@ -58,13 +66,13 @@ How iOS meets the product constraints (see `requirements.md` "Constraints"):
 | Data / Endpoints | `Data/DataSources/Remote/TopPhotosEndpoint.swift`, `PhotosPageEndpoint.swift` | `GET /v1/gallery/top`, `GET /v1/gallery?page=N[&type=T]`; `requiresAuth == false`. | built; unchanged |
 | Data / Repository | `Data/Repositories/ILPhotosRepositoryImpl.swift` | Wraps `NetworkService`; `ILCatalogError.from`; `hasMore` = non-empty raw page and `page < total_pages`. | built; **change** `loadTopPhotos()` decodes `ILPhotosTopDTO` |
 | Data / Repository (library) | `Data/Repositories/ILPhotoLibraryRepositoryImpl.swift` (new) | `PHPhotoLibrary.requestAuthorization(for: .addOnly)`; downloads `image_url` with `URLSession.shared` (shares the HTTP cache with `ILRemoteImageView`) off the main actor; `PHPhotoLibrary.shared().performChanges` + `PHAssetCreationRequest.forAsset().addResource(with: .photo, data:)`. The only file that imports `Photos`. | planned |
-| App / Info.plist | `InnerLamp/Info.plist` | `NSPhotoLibraryAddUsageDescription` (required before the first request; absent today). | planned (⚠️ copy) |
-| Presentation / Gallery | `Presentation/Scenes/Photos/ILPhotosViewModel.swift`, `ILPhotosStateModel.swift`, `ILPhotosViewController.swift`, `Views/ILPhotosMasonryGridView.swift`, `Views/ILPhotosPhotoCardView.swift`, `Views/ILPhotosSkeletonView.swift` | VM: page 1 on load, chip change (chip moves at once, old photos kept, stale responses dropped, chip reverted on failure), load-more with in-flight guard; StateModel: chips, photo models, subtitle, `isLoadingMore`, `hasMore`. VC: `ILNavBar` header + chips row, 2-column grid of 4:3 tiles (`imageAspectRatio = 0.75`), skeleton for the first load, `ILLoadMoreFooterView`, crossfade on chip change, errors as `showError` toasts. | built; **change** (Phase 3, 5): header title; `content` / `error` / `empty` screen state (`ILStateView` + "Thử lại"); conforms to `ILPhotoViewerPagingSource`; reveals the tile of the last shown photo on return; credit fields in `ILPhotosPhotoModel`; header rebuilt on `ILStickyHeaderBand` (AGENTS.md 4.5) while touching it |
+| App / Info.plist | `InnerLamp/Info.plist` | `NSPhotoLibraryAddUsageDescription` = "InnerLamp cần quyền thêm ảnh để lưu ảnh bạn chọn vào thư viện." (product §3.6; required before the first request; absent today). | planned |
+| Presentation / Gallery | `Presentation/Scenes/Photos/ILPhotosViewModel.swift`, `ILPhotosStateModel.swift`, `ILPhotosViewController.swift`, `Views/ILPhotosMasonryGridView.swift`, `Views/ILPhotosPhotoCardView.swift`, `Views/ILPhotosSkeletonView.swift` | VM: page 1 on load, chip change (chip moves at once, old photos kept, stale responses dropped, chip reverted on failure), load-more with in-flight guard; StateModel: chips, photo models, subtitle, `isLoadingMore`, `hasMore`. VC: `ILNavBar` header + chips row, 2-column grid of 4:3 tiles (`imageAspectRatio = 0.75`), skeleton for the first load, `ILLoadMoreFooterView`, crossfade on chip change, errors as `showError(error.localizedDescription)` toasts. | built; **change** (Phase 3, 5): header title; `content` / `error` / `empty` screen state (`ILStateView` error block with the shared copy + "Thử lại"); later-page and topic-change toasts use the shared copy instead of `localizedDescription`; conforms to `ILPhotoViewerPagingSource`; reveals the tile of the last shown photo on return; credit fields in `ILPhotosPhotoModel`; header rebuilt on `ILStickyHeaderBand` (AGENTS.md 4.5) while touching it |
 | Presentation / Viewer paging protocol | `Presentation/Scenes/PhotoViewer/ILPhotoViewerPagingSource.swift` (new) | `var pagingStatePublisher: AnyPublisher<ILPhotoViewerPagingState, Never>` (`items: [ILPhotoViewerItemModel]`, `totalCount`, `hasMore`, `isLoadingMore`, `lastError?`) and `func loadMore()`. Implemented by `ILPhotosViewModel`, held `weak` by the viewer. | planned |
-| Presentation / Viewer | `Presentation/Scenes/PhotoViewer/ILPhotoViewerViewModel.swift`, `ILPhotoViewerStateModel.swift`, `ILPhotoViewerViewController.swift`, `Views/ILPhotoViewerInfoPanelView.swift`, `Views/ILPhotoViewerIconButton.swift` | VM: current photo by id, previous / next, counter, toast timer. VC: dark UI, hero push / pop (`TransitionProviding`), swipe + arrows, 4:3 aspect-fill frame (`imageAspectRatio = 0.75`), info panel (topic eyebrow, title, place, actions, toast). | built; **change** (Phase 3, 4): items and total from `ILPhotoViewerPagingSource`; prefetch within 3 of the last loaded; pending-next state; credit row (tap → `.openURL`); only "Lưu ảnh" (save state: idle / saving / result); **remove** favourite input + button, `setWallpaper` / `share` actions, favourite / wallpaper / share toasts |
-| Presentation / Viewer coordinator | `Presentation/Scenes/PhotoViewer/ILPhotoViewerCoordinator.swift`; `Presentation/Scenes/Photos/ILPhotosCoordinator.swift` | Leaf; `.close` → pop + `finish()`. `ILPhotosCoordinator` maps the snapshot today. | built; **change**: `ILPhotosCoordinator` passes the paging source + start id; new nav events `.close(lastShownID:)` (grid reveals the tile before the pop), `.openURL(URL)` → `UIApplication.shared.open` (Safari), `.openSettings` → `UIApplication.openSettingsURLString` |
-| Presentation / Home block | `Presentation/Scenes/Home/ILHomeViewModel.swift` (`loadTopPhotos`, `makeState` "+N" at the `photos.count - 3` line), `ILHomeStateModel.swift`, `ILHomeViewController.swift`, `Views/ILHomePhotoGridView.swift` | 3 fixed tiles (1 large + 2 small), "+N ảnh" overlay on the last small tile, any tap → gallery; on failure `photos = []` and the tiles stay as placeholders. | built; **change** (Phase 6): "+N" from `ILHomePhotoRules`; `isPhotosBlockVisible` (hidden on failure); tiles collapse to the photos received (1–2); title copy |
-| Localization | `Resources/Localization/vi.json` | `home.photos.*`, `photos.*`, `photoViewer.*`. | **change** `home.photos.title`, `photos.header.title` → "Ảnh đẹp Phật giáo"; **add** `photos.empty`, `photos.error.*` + retry (⚠️ copy), `photoViewer.credit` ("Ảnh: %@ · %@"), `photoViewer.save.*` (⚠️ copy), `photoViewer.save.openSettings`; **remove** `photoViewer.action.setWallpaper`, `photoViewer.action.share`, `photoViewer.toast.wallpaperSet`, `photoViewer.toast.shared`, `photoViewer.toast.favoriteOn`, `photoViewer.toast.favoriteOff`, `photoViewer.a11y.favorite` |
+| Presentation / Viewer | `Presentation/Scenes/PhotoViewer/ILPhotoViewerViewModel.swift`, `ILPhotoViewerStateModel.swift`, `ILPhotoViewerViewController.swift`, `Views/ILPhotoViewerInfoPanelView.swift`, `Views/ILPhotoViewerIconButton.swift` | VM: current photo by id, previous / next, counter, toast timer. VC: dark UI, hero push / pop (`TransitionProviding`), swipe + arrows, 4:3 aspect-fill frame (`imageAspectRatio = 0.75`, cropped, never letterboxed — BR-GAL-05), info panel (topic eyebrow, title, place, actions, toast). | built; **change** (Phase 3, 4): items and total from `ILPhotoViewerPagingSource`; prefetch within 3 of the last loaded; pending-next state; next-page failure → shared load-error toast, stay, retry on the next move; credit row (tap → `.openURL` only with an `http(s)` source, otherwise a plain non-tappable label); only "Lưu ảnh" (save state: idle / saving / result; result toasts "Đã lưu vào thư viện ảnh", "Chưa có quyền lưu ảnh. Mở Cài đặt để cấp quyền." with an open-Settings action, "Không lưu được ảnh. Vui lòng thử lại."); **remove** favourite input + button, `setWallpaper` / `share` actions, favourite / wallpaper / share toasts |
+| Presentation / Viewer coordinator | `Presentation/Scenes/PhotoViewer/ILPhotoViewerCoordinator.swift`; `Presentation/Scenes/Photos/ILPhotosCoordinator.swift` | Leaf; `.close` → pop + `finish()`. `ILPhotosCoordinator` maps the snapshot today. | built; **change**: `ILPhotosCoordinator` passes the paging source + start id; new nav events `.close(lastShownID:)` (grid reveals the tile before the pop), `.openURL(URL)` → `UIApplication.shared.open` (Safari), `.openSettings` (from the denied toast's action) → `UIApplication.openSettingsURLString` |
+| Presentation / Home block | `Presentation/Scenes/Home/ILHomeViewModel.swift` (`loadTopPhotos`, `makeState` "+N" at the `photos.count - 3` line), `ILHomeStateModel.swift`, `ILHomeViewController.swift`, `Views/ILHomePhotoGridView.swift` | 3 fixed tiles (1 large + 2 small), "+N ảnh" overlay on the last small tile, any tap → gallery; on failure `photos = []` and the tiles stay as placeholders. | built; **change** (Phase 6): "+N" from `ILHomePhotoRules`; block state `tiles` / `empty` / `error` in `ILHomeStateModel` (title always shown); `ILHomePhotoGridView` (or the block container) shows an `ILStateView` error block with the shared copy + "Thử lại" (input `retryPhotosTrigger` → `loadTopPhotos()` again, block only) or "Chưa có ảnh nào." in place of the tiles; tiles collapse to the photos received (1–2); title copy |
+| Localization | `Resources/Localization/vi.json` | `home.photos.*`, `photos.*`, `photoViewer.*`. | **change** `home.photos.title`, `photos.header.title` → "Ảnh đẹp Phật giáo"; **add** `photos.error.load` ("Không tải được danh sách ảnh. Vui lòng thử lại sau.", used by Home, grid and viewer; retry label reuses `common.retry` "Thử lại"), `photos.empty` ("Chưa có ảnh nào trong chủ đề này."), `home.photos.empty` ("Chưa có ảnh nào."), `photoViewer.credit` ("Ảnh: %@ · %@"), `photoViewer.save.denied` ("Chưa có quyền lưu ảnh. Mở Cài đặt để cấp quyền."), `photoViewer.save.failed` ("Không lưu được ảnh. Vui lòng thử lại."), `photoViewer.save.openSettings` (action label — ⚠️ copy, `requirements.md` criterion 29 marker); **remove** `photoViewer.action.setWallpaper`, `photoViewer.action.share`, `photoViewer.toast.wallpaperSet`, `photoViewer.toast.shared`, `photoViewer.toast.favoriteOn`, `photoViewer.toast.favoriteOff`, `photoViewer.a11y.favorite` |
 | Tokens | `Presentation/Common/DesignSystem/Tokens/ILIcons.swift`, `Assets.xcassets/Icons` | `viewerClose`, `viewerHeart`, `viewerHeartFilled`, `viewerChevronLeft`, `viewerChevronRight`. | built; **remove** `viewerHeart`, `viewerHeartFilled` and their image sets |
 | DI | `App/DIContainer.swift` | `makePhotosRepository`, `makePhotos{UseCase,ViewModel,Coordinator}`, `makePhotoViewer{ViewModel,Coordinator}`; Home use case gets `makePhotosRepository()`. | built; **add** `makePhotoLibraryRepository`, `makePhotoViewerUseCase`; **change** `makePhotoViewer*` to take the paging source |
 | Tests | `InnerLampTests/ILPhotosRepositoryTests.swift` (14), `ILPhotosViewModelTests.swift` (15), `ILPhotoViewerViewModelTests.swift` (8), `ILHomeUseCaseTests.swift`, `ILHomeViewModelTests.swift` | Stub repositories / use cases. Written and type-checked, never run (no device / provisioning for the test runner). | built (old behavior); **rewrite** per phase; **add** `ILPhotosMapperTests`, `ILPhotoViewerUseCaseTests`, `ILGalleryProductVectorTests` |
@@ -97,7 +105,8 @@ Step 1 — First page (this feature)
     - Success, total > 0 → tiles in order, subtitle "{total} ảnh" / "{total} ảnh · {topic}";
       hasMore = items non-empty && page < total_pages; hasMore false → end line
     - Success, total == 0 → "Chưa có ảnh nào trong chủ đề này."
-    - Failure (any) with no photo shown → error state + "Thử lại" (⚠️ copy, product A5)
+    - Failure (any) with no photo shown → error block "Không tải được danh sách ảnh. Vui lòng thử lại
+      sau." + "Thử lại"
 
 Step 2 — Next page (this feature; also triggered by the viewer, Step 5)
 - Trigger: grid scrolled within 120 pt of the end, or the viewer within 3 of the last loaded photo
@@ -105,8 +114,8 @@ Step 2 — Next page (this feature; also triggered by the viewer, Step 5)
 - API: GET /v1/gallery?page=<last + 1>[&type=T]
     - Success → append photos whose id is not shown yet; update total and hasMore; last / empty page
       → end line "Bạn đã xem hết ảnh"
-    - Failure → keep photos, clear the loading line, show the error; the next reach of the end (or
-      the next viewer move) repeats this step
+    - Failure → keep photos, clear the loading line, shared load-error toast (grid) / viewer Step 5;
+      the next reach of the end (or the next viewer move) repeats this step
 
 Step 3 — Topic change (this feature)
 - Trigger: tap a chip other than the selected one (re-tapping the selected chip retries only when
@@ -115,8 +124,8 @@ Step 3 — Topic change (this feature)
 - API: GET /v1/gallery?page=1[&type=T]
     - Success → crossfade (0.25 s) to the new photos, scroll to the top, new subtitle
     - Success, total == 0 → empty text
-    - Failure with photos shown → photos kept, chip back to their topic, error shown
-    - Failure with no photo shown → error state + "Thử lại"
+    - Failure with photos shown → photos kept, chip back to their topic, shared load-error toast
+    - Failure with no photo shown → error block + "Thử lại"
     - A response for an older selection is dropped
 ```
 
@@ -137,30 +146,34 @@ Step 5 — Move and load more (this feature; reuses Step 2)
       photo and hasMore → source.loadMore() (Step 2; no-op while a request is in flight)
     - Target not loaded yet (its page in flight or not requested) → loadMore(); keep the current
       photo with a loading indicator on next; move when the items arrive
-    - Step 2 fails → stay, next still offered, error shown (⚠️ copy, product A5); the next move
-      retries
+    - Step 2 fails → stay on the current photo, next still offered, toast "Không tải được danh sách
+      ảnh. Vui lòng thử lại sau."; the next move to the next photo retries Step 2
 
 Step 6 — Credit (this feature, no network)
 - Trigger: tap "Ảnh: {author} · {licence}"
-- Pre-condition: sourceURL is http(s)
-- Effect: .openURL → Safari. No in-app browser, no detail call.
+- Pre-condition: sourceURL is http(s); otherwise the credit is a plain label with no tap handling,
+  no button trait and no feedback (P6) — this step never starts
+- Effect: .openURL → Safari. No in-app browser, no detail call (no GET /v1/gallery/{id} fallback,
+  product §2.7, A2).
   ⚠️ Not confirmed: author / license / source_url are not sent by today's server (backend gallery
-  v2.0 AC 11, not built) — until then the credit row is hidden (TD-Photos-001, licence breach,
-  blocks release of the viewer).
+  v2.0 AC 11, not built) — until then the credit row is hidden in development builds and the viewer
+  is not released to users (release gate, product §2.7; TD-Photos-001).
 
 Step 7 — Save (this feature; device photo library + image download)
 - Trigger: tap "Lưu ảnh"
 - Pre-condition: no save in progress for this photo; the button is disabled while saving
 - Call 1: PHPhotoLibrary.requestAuthorization(for: .addOnly) — system prompt only the first time
     - .authorized / .limited → Call 2
-    - .denied → "not saved" message + "open Settings" action (⚠️ copy, product A4); stop
-    - .restricted → "not saved" message, no Settings action; stop
+    - .denied → toast "Chưa có quyền lưu ảnh. Mở Cài đặt để cấp quyền." + open-Settings action
+      (.openSettings); stop
+    - .restricted → toast "Không lưu được ảnh. Vui lòng thử lại.", no Settings action
+      (AS-Gallery-001); stop
 - Call 2: GET <image_url> (large photo, URLSession.shared, off the main actor)
     - Success → Call 3
-    - Failure → "not saved" message; stop
+    - Failure → toast "Không lưu được ảnh. Vui lòng thử lại."; stop
 - Call 3: PHPhotoLibrary.shared().performChanges { PHAssetCreationRequest addResource(.photo, data) }
     - Success → toast "Đã lưu vào thư viện ảnh" (~1.8 s)
-    - Failure → "not saved" message
+    - Failure → toast "Không lưu được ảnh. Vui lòng thử lại."
 - A result that arrives after the user moved to another photo is still reported (the save concerns
   the photo it was started on); a move does not cancel a save in progress.
 
@@ -174,13 +187,15 @@ Step 8 — Close (this feature, no network)
 
 ```
 Step 9 — Featured photos (Home)
-- Trigger: Home load (in parallel with the other Home blocks)
+- Trigger: Home load (in parallel with the other Home blocks), or "Thử lại" in the block's error block
+  (re-runs this step only)
 - API: GET /v1/gallery/top (galleryTop, public)
     - Success, items ≥ 1 → tiles = first min(3, count) photos in order; "+N ảnh" with
       N = ILHomePhotoRules.moreCount(totalPhotos: total, tilesShown:) when total is present and N > 0;
       no total → no overlay
-    - Success, items empty → block hidden (⚠️ Not confirmed (product): Home empty state, criterion 3)
-    - Failure → block hidden (header + tiles), the rest of Home unaffected
+    - Success, items empty → title kept, "Chưa có ảnh nào." in place of the tiles
+    - Failure → title kept, error block "Không tải được danh sách ảnh. Vui lòng thử lại sau." +
+      "Thử lại" in place of the tiles; the rest of Home unaffected
   ⚠️ Not confirmed: `total` on top is backend gallery v2.0 AC 3 (not built); today's response has no
   total, so the overlay stays hidden after Phase 6 until the backend ships.
 ```
@@ -201,8 +216,7 @@ Step 9 — Featured photos (Home)
 
 - **Credit.** Until backend v2.0 sends the credit in the lists, the decoded fields are `nil` and the
   credit row is hidden. This is a known licence gap (`TD-Photos-001`, High), not a fallback to keep: the
-  viewer must not be released to users without it (product §2.5). Whether to bridge with a
-  `GET /v1/gallery/{id}` call is an open iOS decision (`requirements.md` Pending).
+  viewer must not be released to users without it (product §2.5, §2.7 release gate).
 - **"+N".** Until `top` carries `total`, Phase 6 shows no overlay (criterion 6) instead of today's count
   of the remaining featured photos. Shipping Phase 6 before the backend therefore removes the overlay
   for a while — acceptable, a wrong count is not.
@@ -210,6 +224,13 @@ Step 9 — Featured photos (Home)
   (`TD-PhotoViewer-001`, High). Phase 4 removes the stub; no step may claim success before Call 3.
 
 ## Decisions
+
+- **Release gate instead of a per-photo credit call** (product §2.7, A2, replaces the v2.0 open
+  question): the viewer ships to users only after backend gallery v2.0; iOS never fetches
+  `GET /v1/gallery/{id}` for the credit.
+- **Shared load-error copy, two presentations**: an `ILStateView` error block with "Thử lại" where no
+  photo is shown (Home block, grid first load), a toast where photos stay on screen (later page, topic
+  change, viewer next page) — FR-GAL-008, P1, P5.
 
 - **Server-side filter** (kept from Photos v1.1): a local filter over 20-photo pages would show a
   partial topic.
