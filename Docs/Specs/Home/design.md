@@ -1,7 +1,7 @@
 # Design — Home
 
-Version: 1.11
-Last updated: 2026-10-11
+Version: 1.12
+Last updated: 2026-10-15
 Status: in-progress — full UI + local logic with mock data; no dashboard API
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -74,19 +74,12 @@ Same pattern as the temple / deity carousels: `entity.articles` starts empty and
 The bead card no longer counts on Home (v1.9): the whole card opens Mala. `incrementBead` / `resetBeads` stay in the UseCase but are not wired (TD-Home-001). Legacy note: bead taps were synchronous — they mutated the entity and
 re-emit state — no persistence, no network.
 
-## API contract — calendar events
+## Events block — see `Docs/Specs/Calendar/`
 
-Source: backend `docs/specs/features/calendar/api-contract.md` v2.1 (confirmed against the dev server 2026-10-11).
-
-| | |
-|---|---|
-| Request | `GET /v1/calendar/events?year=YYYY` — **requires** `Authorization: Bearer <access_token>` (the `Endpoint` default). iOS always sends `year` (1900…2100; else `400 INVALID_YEAR`). |
-| Response | Envelope `data`: `year`, `groups[{code,name}]`, `events[{code,name,short_description,long_description,guidance,image_url?,groups[],is_public_holiday}]` (each once), `occurrences[{event_code,solar_date yyyy-MM-dd,lunar_date{day,month,year,is_leap_month}}]` sorted by `solar_date`. |
-| Mapping | `CalendarEventsEndpoint` → `ILCalendarEventsDTO` → `ILCalendarEventMapper` → `ILCalendarEventsEntity` → `ILCalendarEventRepository.loadEvents(year:)` (`ILCalendarEventRepositoryImpl`, network-only, errors → `ILCatalogError`). |
-| Home | `ILHomeUseCaseImpl.loadBuddhistEventMonths(around:)` asks for the year of `date`, joins each occurrence to its event by `event_code`, groups by `yyyy-MM`; id = `<code>-<yyyy-MM-dd>`; lunar label from `lunar_date` (+ leap month); tone from the event's groups (`buddhist` → gold, `folk` → green, else rose). `ILHomeViewModel` still opens on the current month and caps each month card at 3 rows (+ count badge). |
-| Not used yet | `short_description`, `long_description`, `guidance`, `image_url`, `is_public_holiday`, `groups[].name` — reserved for the Festivals / event-detail screens (updated later). |
-
-Festivals (`ILFestivalsUseCaseImpl`) reads the same endpoint since 2026-10-11 (one year per call: current year first, next year on scroll; server lunar date; Rằm/Mùng Một without a server event still computed locally). See `Presentation/Scenes/Festivals/README.md` and `AS-Festivals-002`.
+The "Sự kiện Phật giáo" block (contract `GET /v1/calendar/events`, data layer, home-block rule,
+failure and device-copy behavior) is specified in `Docs/Specs/Calendar/` (`design.md`, Step-by-step
+Flow H; FR-CAL-006, BR-CAL-15). The "API contract — calendar events" section this file carried up to
+v1.11 is superseded by it and removed.
 
 ## Deliberately stubbed / mock for now
 
@@ -94,7 +87,7 @@ Festivals (`ILFestivalsUseCaseImpl`) reads the same endpoint since 2026-10-11 (o
 quote (`home.lunar.verse.*`), session/streak statistics (hardcoded `12/20`,
 `42`, a fixed `[0.3, 0.5, …]` progress array), suggested sessions (3 fixed
 items), photos (loaded from `GET /v1/gallery/top` via `loadTopPhotos()` since v1.10; `ILHomeUseCaseImpl` takes an `ILPhotosRepository`), temples (8 fixed temples), articles (5 fixed
-articles). Events are no longer mock: v1.11 loads them from `GET /v1/calendar/events` (see "API contract — calendar events"). Each block carries a
+articles). Events are no longer mock: v1.11 loads them from `GET /v1/calendar/events` (see `Docs/Specs/Calendar/`). Each block carries a
 `// TODO: … networkService` comment. The greeting name currently has no source
 (empty → "khách"); the temporary `signup_pending_credentials` Keychain read was
 removed because it held a plaintext password (TD-Home-002). Completing this is `tasks.md` Phase 3.

@@ -4,6 +4,18 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v1.12 (2026-10-15) — events block moved to `Docs/Specs/Calendar/`
+
+- `requirements.md`: the "Sự kiện Phật giáo" events criterion is replaced by a pointer to
+  `Docs/Specs/Calendar/` (FR-CAL-006, BR-CAL-15, FR-CAL-007, FR-CAL-008).
+- `design.md`: the "API contract — calendar events" section (and its Festivals note citing
+  `AS-Festivals-002`) is replaced by a short "Events block" pointer to `Docs/Specs/Calendar/`;
+  the mock-content note now points there too.
+- `tasks.md`: the two open events-carousel items (offline cache `TD-Home-003`, manual device test
+  `AS-Home-003`) are replaced by a pointer to `Docs/Specs/Calendar/tasks.md` Phase 4–6.
+- Reason: the Calendar platform spec (v1.0) supersedes these sections; `AS-Home-003` and
+  `TD-Home-003` were deleted with the other superseded festival docs (Calendar `tasks.md` Phase 9).
+
 ## v1.11 (2026-10-11) — "Sự kiện Phật giáo" carousel reads the calendar-events API
 
 - `requirements.md`: new EARS criterion — load the whole current year from

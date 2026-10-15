@@ -3,6 +3,21 @@
 Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in this folder. All three
 files share one changelog since they change together as one spec unit. Newest version first.
 
+## v1.1 (2026-10-15) — superseded festival docs removed
+
+- `requirements.md`: no change needed (header re-synced). The resolved questions and Pending items
+  still name `AS-Festivals-001…002`, `AS-FestivalDetail-001…002`, `AS-Home-003`,
+  `TD-FestivalDetail-001…002` and `TD-Home-003` as history; those files now exist only in git history.
+- `design.md`: no change needed (header re-synced).
+- `tasks.md`: Phase 9 — ticked "`Docs/Specs/Home/` pointer" (Home spec v1.12) and "Remove the
+  superseded iOS docs" (deleted `Docs/Specs/FestivalDetail/`, the two Festivals and two
+  FestivalDetail assumptions, `AS-Home-003`, the two FestivalDetail tech-debt entries and
+  `TD-Home-003`; the Festivals / FestivalDetail / Home scene READMEs and the comments in
+  `ILCalendarEventRepository` and `ILFestivalDetailStateModel` now cite this spec). The README
+  refresh item stays open: only their citations changed, the behavior notes follow Phase 4.
+- Reason: the product owner asked to delete the old "Sự kiện Phật giáo" docs now that this spec
+  exists — last step of the docs pipeline. Docs only; no Swift logic changed.
+
 ## v1.0 (initial) (2026-10-15)
 
 Initial spec written retroactively from the already-implemented festival calendar (`Festivals`), event

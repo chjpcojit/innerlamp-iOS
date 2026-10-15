@@ -40,11 +40,11 @@ struct ILFestivalDetailStateModel: Equatable {
     var practices: [String] = []
     var practicesEmptyText: String = ""
 
-    // MARK: Sutra ("Kinh nên tụng") — chưa có nguồn dữ liệu (TD-FestivalDetail-001)
+    // MARK: Sutra ("Kinh nên tụng") — chưa có nguồn dữ liệu, ngoài phạm vi (Docs/Specs/Calendar/, BR-CAL-14)
     var sutraTitle: String = ""
     var sutraEmptyText: String = ""
 
-    // MARK: Hosts ("Chùa tổ chức") — chưa có nguồn dữ liệu (TD-FestivalDetail-001)
+    // MARK: Hosts ("Chùa tổ chức") — chưa có nguồn dữ liệu, ngoài phạm vi (Docs/Specs/Calendar/, BR-CAL-14)
     var hostsTitle: String = ""
     var hostsEmptyText: String = ""
 }

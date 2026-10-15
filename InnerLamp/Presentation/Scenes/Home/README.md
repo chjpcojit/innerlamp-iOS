@@ -86,7 +86,7 @@ Các màn con khác của Home (Đọc kinh/Cúng dường từ "Thời khóa g�
 
 - 2026-10-11 — thẻ tháng của carousel "Sự kiện Phật giáo" có thêm dòng "+N sự kiện khác" ở cuối khi tháng có hơn 3 sự kiện (khớp prototype `hasMore`): vạch kẻ trên, chữ `link`, chạm mở Lịch lễ (`eventsTapped`); key `home.events.moreFormat`.
 
-- 2026-10-11 — carousel "Sự kiện Phật giáo" đọc `GET /v1/calendar/events?year=<năm hiện tại>` (cần token) qua `ILCalendarEventRepository` thay cho catalog Core Data; vẫn gom theo tháng dương lịch cả năm 1/1→31/12 và mở ở tháng hiện tại. Màn Festivals chưa đổi. Xem `Docs/Specs/Home/design.md` → "API contract — calendar events", `AS-Home-003`, `TD-Home-003`.
+- 2026-10-11 — carousel "Sự kiện Phật giáo" đọc `GET /v1/calendar/events?year=<năm hiện tại>` (cần token) qua `ILCalendarEventRepository` thay cho catalog Core Data; vẫn gom theo tháng dương lịch cả năm 1/1→31/12 và mở ở tháng hiện tại. Màn Festivals chưa đổi. Xem `Docs/Specs/Calendar/` (từ 2026-10-15 thay cho mục "API contract — calendar events" của `Docs/Specs/Home/design.md` và AS-Home-003 / TD-Home-003 đã xoá).
 
 - 2026-09-28 — thêm carousel "Thư viện Phật & Bồ Tát" theo design handoff: tạo
   `ILHomeDeityCarouselView` (trước đó được tham chiếu nhưng chưa có file → build lỗi);
