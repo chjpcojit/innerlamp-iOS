@@ -4,6 +4,14 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v1.13 (2026-10-15) — photo block moved to `Docs/Specs/Gallery/`
+
+- `requirements.md`: the pending "Ảnh chùa đẹp" criterion is replaced by a pointer to
+  `Docs/Specs/Gallery/` (FR-GAL-001, BR-GAL-07, FR-GAL-008; criteria 1–6).
+- `tasks.md`: the done photo-block item now points to `Docs/Specs/Gallery/tasks.md` Phase 6 for the rest.
+- Reason: the Gallery platform spec v2.0 supersedes it; `Docs/Specs/Photos/` and
+  `Docs/Specs/PhotoViewer/` are deleted in the same change.
+
 ## v1.12 (2026-10-15) — events block moved to `Docs/Specs/Calendar/`
 
 - `requirements.md`: the "Sự kiện Phật giáo" events criterion is replaced by a pointer to

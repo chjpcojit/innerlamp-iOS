@@ -3,6 +3,12 @@
 Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in this folder. All three
 files share one changelog since they change together as one spec unit. Newest version first.
 
+## v2.0.1 (2026-10-15) — cleanup of the superseded docs
+
+- `tasks.md`: the cleanup item is done (old Photos / PhotoViewer specs deleted, the two 4:3 assumptions
+  Validated, Home spec v1.13 points here, open TD entries point here); closing the TD entries and the
+  `ILPhotosDTO.swift` comment stay open. No requirement or design change.
+
 ## v2.0 (2026-10-15) — merge Photos + PhotoViewer, align with product spec v1.0
 
 Docs only; no code changed. Major bump: new folder continuing the `Photos` history (last v1.3), the

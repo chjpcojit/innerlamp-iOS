@@ -22,7 +22,7 @@ Trang chủ.
 |---|---|---|---|
 | Domain — Entity | `ILPhotosEntity.swift` | Done | `ILPhotosCategory`, `ILPhotosPhotoEntity` (id, category, title, place, thumbnail/image URL), `ILPhotosPageEntity`, `ILPhotosEntity` (photos + `selectedCategory` + paging position). "Tất cả" = `selectedCategory == nil`. No UI fields. |
 | Presentation — StateModel | `ILPhotosStateModel.swift` | Done | Filter chips, photos (with thumbnail URL), formatted subtitle (server total), `isLoadingMore` / `hasMore`. |
-| Data — DTO + Mapper + Endpoint + Repository | `ILPhotosDTO.swift`, `ILPhotosMapper.swift`, `PhotosPageEndpoint.swift`, `ILPhotosRepositoryImpl.swift` | Done (build only) | `GET /v1/gallery?page=&type=` (contract: `Docs/Specs/Photos/design.md`); errors map to `ILCatalogError`. |
+| Data — DTO + Mapper + Endpoint + Repository | `ILPhotosDTO.swift`, `ILPhotosMapper.swift`, `PhotosPageEndpoint.swift`, `ILPhotosRepositoryImpl.swift` | Done (build only) | `GET /v1/gallery?page=&type=` (contract: `Docs/Specs/Gallery/design.md`); errors map to `ILCatalogError`. |
 | Domain — UseCase | `ILPhotosUseCase.swift` | Done | `loadFirstPage(category:)` / `loadNextPage(after:)` over `ILPhotosRepository`; de-duplicates by id. |
 | Presentation — ViewModel | `ILPhotosViewModel.swift` | Done | 4 `Input` publishers (viewDidLoad, categorySelected, loadMoreTriggered, backTapped); drops a response that belongs to a previous category. |
 | Presentation — ViewController | `ILPhotosViewController.swift` | Done | Header ‹ + hairline, dải chip lọc cuộn ngang, lưới masonry; dùng token `ILColors`/`ILTypography`/`ILMetrics`. UI chia `Views/` (thẻ ảnh, lưới masonry). |

@@ -1,6 +1,6 @@
 # Tasks — Home
 
-Version: 1.12
+Version: 1.13
 Last updated: 2026-10-15
 Status: in-progress (Phase 1–2 done; Phase 3 pending — mock data, no API)
 
@@ -75,7 +75,8 @@ Status: in-progress (Phase 1–2 done; Phase 3 pending — mock data, no API)
       with real repository calls (statistics, sessions)
 - [x] Load the "Ảnh chùa đẹp" block from `GET /v1/gallery/top`
       (`ILHomeUseCase.loadTopPhotos()`, `ILHomePhotoGridView` uses
-      `ILRemoteImageView`); unit tests written, not run
+      `ILRemoteImageView`); unit tests written, not run. The remaining work on this
+      block (name, "+N" from `total`, hidden on error) is `Docs/Specs/Gallery/tasks.md` Phase 6
 - [ ] Replace the `KeychainService` name read with a real session/current-user
       service
 - [x] Unit tests for the temple/deity carousels (`ILHomeUseCaseTests` with mock

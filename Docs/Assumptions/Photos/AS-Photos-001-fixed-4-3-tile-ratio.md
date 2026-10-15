@@ -4,12 +4,12 @@ title: Gallery tiles use a fixed 4:3 ratio
 title_vi: Ô ảnh gallery dùng tỉ lệ cố định 4:3
 feature: Photos
 level: Low
-status: Unvalidated
+status: Validated
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-10-15
 files:
   - InnerLamp/Presentation/Scenes/Photos/Views/ILPhotosPhotoCardView.swift
-source: Docs/Specs/Photos/design.md (API contract — no width/height in the response)
+source: docs/product/gallery/product.md in innerlamp-be (BR-GAL-05); formerly Docs/Specs/Photos/design.md
 owner: Backend / Product
 ---
 
@@ -30,5 +30,5 @@ EN: Ask the backend to add `width`/`height` to the gallery item, or review the f
 VI: Đề nghị BE thêm `width`/`height` vào item gallery, hoặc xem toàn bộ 86 ảnh trên thiết bị.
 
 ## Outcome / Kết luận
-EN: _(fill in when Validated/Invalidated)_
-VI: _(điền khi Validated/Invalidated)_
+EN: Validated 2026-10-15 — product spec gallery v1.0 BR-GAL-05 confirms uniform 4:3 tiles and viewer frame (anh Đức, be#35). Now covered by `Docs/Specs/Gallery/`.
+VI: Đã xác nhận 2026-10-15 — product spec gallery v1.0 BR-GAL-05 chốt ô ảnh và khung viewer đồng nhất 4:3 (anh Đức, be#35). Nay thuộc `Docs/Specs/Gallery/`.
