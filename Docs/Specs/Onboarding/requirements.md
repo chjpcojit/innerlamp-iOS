@@ -1,11 +1,11 @@
 # Requirements — Onboarding
 
-Version: 2.1
-Last updated: 2026-10-15
-Status: in-progress (drift) — splash, the three intro steps, the registration form, the code screen and the real register calls are built against the old phone + SMS contract; v2.0 moves registration to an email code (ADR-0003). No code for v2.0 yet (`tasks.md` Phase 1–7)
+Version: 2.2
+Last updated: 2026-10-16
+Status: in-progress (drift) — splash, the three intro steps, the registration form, the code screen and the real register calls are built against the old phone + SMS contract; v2.0 moves registration to an email code (ADR-0003). No code for v2.0 yet (`tasks.md` Phase 1–7). The backend shipped the email contract on 2026-10-16 (uncommitted on its branch, not yet exercised against a running server)
 Feature folder: `InnerLamp/Presentation/Scenes/{Splash,Onboarding,SignUp,Otp,AddTemple}/`
-Product spec: innerlamp-be `docs/product/onboarding/product.md` @ v1.2
-Contract: innerlamp-be `docs/specs/features/onboarding/requirements.md` @ v8.0 §API contract (6d8cd78). `openapi.yaml` does not have the email shapes yet — the backend updates it when the handlers ship.
+Product spec: innerlamp-be `docs/product/onboarding/product.md` @ v1.6
+Contract: innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 2.1.1 (Auth tag: `register/request-otp`, `register/resend-otp`, `register/verify-otp`, and the "Phiên bị thu hồi" note); backend feature spec `docs/specs/features/onboarding` @ v8.3.
 Architecture: ADR-0003 (accounts identified by email, verified by an email code; SMS removed) — Accepted
 Implements: BR-ONB-01, BR-ONB-02, BR-ONB-03, BR-ONB-04, BR-ONB-05, BR-ONB-06, BR-ONB-07, BR-ONB-08, BR-ONB-09, BR-ONB-10, BR-ONB-11, FR-ONB-001, FR-ONB-002, FR-ONB-003, FR-ONB-004, FR-ONB-005, FR-ONB-006, FR-ONB-007, FR-ONB-008, FR-ONB-009, FR-ONB-010, NFR-ONB-01, NFR-ONB-02, NFR-ONB-03
 Not on iOS: FR-ONB-003 website row of product §3.6 (signed-in visitor opening the registration page)
@@ -49,9 +49,10 @@ email, so that I am signed in and my practice journey is kept on every device.
 13. WHEN the user submits a valid form, THE SYSTEM SHALL call `POST /v1/auth/register/request-otp` with `email` (trimmed), `password`, `phone_country` (ISO code of the picked country) and `phone_number` (digits as typed, not rebuilt into E.164), `full_name`, `dharma_name` only when not empty and `ordination_temple_id` only when a listed temple is picked, then:
     - on success: open the code screen with the email and the server's `expires_in_seconds` / `resend_after_seconds`;
     - on failure: stay on SignUp, keep every value, show the error per the Error → UI table. (FR-ONB-003, BR-ONB-08, BR-ONB-09)
-14. WHEN the email already has an account, THE SYSTEM SHALL behave exactly as for a new email (the backend answers the same); there is no "email taken" message any more. (BR-ONB-08, NFR-ONB-01)
+14. WHEN the email already has an account, THE SYSTEM SHALL behave exactly as for a new email (the backend answers `200` with the same body and mails that address a notice instead of a code); there is no "email taken" message any more, and the code screen then answers `OTP_INVALID` whatever is typed. (BR-ONB-08, NFR-ONB-01)
 15. WHEN the backend answers `PHONE_TAKEN`, THE SYSTEM SHALL show "Số điện thoại này đã được đăng ký" under the phone field with a link to Login, and stay. (FR-ONB-005)
 16. WHEN a submit is already in flight, THE SYSTEM SHALL ignore another tap. (platform)
+16a. WHEN the backend answers `REGISTRATION_IN_PROGRESS` (another pending registration holds this email with a live code and different details), THE SYSTEM SHALL stay on SignUp, keep every value and show "Vui lòng chờ N giây rồi thử lại" with N = `details.retry_after_seconds` (never a client-chosen number); no email is sent, the pending registration is unchanged and the earlier code still works. Resubmitting the same details instead replaces the code and opens the code screen (criterion 13). (BR-ONB-08, FR-ONB-003; confirmed by anh Đức 2026-10-16, `Docs/Assumptions/Onboarding/AS-Onboarding-001-registration-in-progress-copy.md`)
 
 ### Ordination temple and temple proposal
 
@@ -73,14 +74,15 @@ email, so that I am signed in and my practice journey is kept on every device.
 
 27. WHEN an error is shown, THE SYSTEM SHALL use only localized strings, never the backend's `error.message`; `RATE_LIMITED` shows "try again later" with the wait from `retry_after_seconds`. (NFR-ONB-02)
 28. WHEN the app logs requests or errors, THE SYSTEM SHALL never log the password, the code or tokens. (NFR-ONB-03)
-29. WHEN unit tests run, THE SYSTEM SHALL pass every case of `rules/phone-number.json`, `rules/email.json`, `rules/password.json` and `rules/names.json` with the app's validators. (BR-ONB-04…07)
+29. WHEN the app calls any `/v1/auth/*` route, THE SYSTEM SHALL NOT send `X-API-Key` or `X-InnerLamp-Client-IP` (website-only headers; see `../Login/requirements.md` criterion 24). (platform)
+30. WHEN unit tests run, THE SYSTEM SHALL pass every case of `rules/phone-number.json`, `rules/email.json`, `rules/password.json` and `rules/names.json` with the app's validators. (BR-ONB-04…07)
 
 ## Data & API
 
 | Action | Operation | Note |
 |---|---|---|
 | Submit the form | `POST /v1/auth/register/request-otp` | Email + `phone_country` instead of a phone-keyed body |
-| Resend the code | `POST /v1/auth/register/resend-otp` | New path (was `/v1/auth/resend-otp` with `purpose`) |
+| Resend the code | `POST /v1/auth/register/resend-otp` | New path (was `/v1/auth/resend-otp` with `purpose`); body `{email}` only; answer adds `resend_remaining`, which iOS does not use |
 | Verify the code | `POST /v1/auth/register/verify-otp` | Email + code; returns a session like sign-in |
 | Temple list | `GET /v1/temples/options` | Unchanged |
 | Provinces / wards | administrative-unit routes used by AddTemple | Unchanged |
@@ -93,16 +95,17 @@ Request and response shapes: the contract in the header. This file copies no sch
 | Case | What the user sees |
 |---|---|
 | `INVALID_EMAIL` / `INVALID_PHONE` / `INVALID_PASSWORD` / `INVALID_FULL_NAME` / `INVALID_DHARMA_NAME` | Error under that field |
-| `INVALID_TEMPLE` | Error on the temple field, asks to pick again |
+| `INVALID_TEMPLE` | Error on the temple field, asks to pick again (also from `verify-otp`: the temple was removed meanwhile — back to SignUp with every value kept) |
 | `VALIDATION_ERROR` | Generic invalid-input message |
 | `PHONE_TAKEN` | Criterion 15 |
-| `OTP_RESEND_TOO_SOON` | Resend timer restarted from `retry_after_seconds` |
+| `REGISTRATION_IN_PROGRESS` | Criterion 16a |
+| `OTP_RESEND_TOO_SOON` | Resend timer restarted from `details.retry_after_seconds` |
 | `OTP_SEND_LIMITED` | Unlock time; last code still usable (criterion 24) |
-| `OTP_INVALID` | "Mã xác thực không đúng" |
+| `OTP_INVALID` | "Mã xác thực không đúng" (also what an email that already has an account always gets) |
 | `OTP_EXPIRED` | Expired message, "Gửi lại mã" emphasised |
 | `OTP_LOCKED` | Unlock time, entry disabled until then (criterion 24) |
 | `PENDING_REGISTRATION_EXPIRED` | Criterion 26 |
-| `RATE_LIMITED` | Try again later, with the wait |
+| `RATE_LIMITED` | Try again later, with the wait from `details.retry_after_seconds` (same as the `Retry-After` header); per-IP limit of the `/v1/auth/*` routes |
 | `EMAIL_SEND_FAILED`, 5xx | Generic error |
 | Offline / timeout | Shared no-internet / retry message |
 

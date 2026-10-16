@@ -1,7 +1,7 @@
 # Design — Onboarding
 
-Version: 2.1
-Last updated: 2026-10-15
+Version: 2.2
+Last updated: 2026-10-16
 Status: in-progress (drift) — splash, intro, SignUp and the code screen built on the phone + SMS contract; v2.0 changes are planned (email code, launch routing, website terms pages, temple proposal sent)
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -81,7 +81,8 @@ Step 1 — Submit the form
       The answer is the same for an email that already has an account (criterion 14).
     - 400 INVALID_* → error under the field; stay.
     - 409 PHONE_TAKEN → criterion 15; stay.
-    - 429 OTP_RESEND_TOO_SOON / OTP_SEND_LIMITED / RATE_LIMITED → message with the wait or unlock time; stay.
+    - 409 REGISTRATION_IN_PROGRESS → criterion 16a (wait `details.retry_after_seconds`); stay.
+    - 429 OTP_RESEND_TOO_SOON / OTP_SEND_LIMITED / RATE_LIMITED → message with the wait or unlock time; stay. (Four codes per cycle, then a 30-minute send lock.)
     - 500 EMAIL_SEND_FAILED / 5xx / offline → generic or no-internet message; stay.
 
 Step 2 — Show the code screen
@@ -90,7 +91,7 @@ Step 2 — Show the code screen
 Step 3 — Resend (repeatable)
 - Trigger: "Gửi lại mã" after the resend wait.
 - API: POST /v1/auth/register/resend-otp {email}
-    - Success → clear the entry, restart both timers from the response.
+    - Success → clear the entry, restart both timers from the response (`resend_remaining` is not used).
     - 429 OTP_RESEND_TOO_SOON → restart the resend timer from retry_after_seconds.
     - 429 OTP_SEND_LIMITED → unlock time; entry stays usable.
     - 400 PENDING_REGISTRATION_EXPIRED → Step 5.
@@ -105,6 +106,7 @@ Step 4 — Verify
     - 429 OTP_LOCKED → unlock time, entry disabled until locked_until.
     - 400 PENDING_REGISTRATION_EXPIRED → Step 5.
     - 409 PHONE_TAKEN (taken while pending) → back to SignUp with the phone error.
+    - 400 INVALID_TEMPLE (the picked temple was removed) → back to SignUp with the temple field error.
 
 Step 5 — Registration expired
 - Effect: message of FR-ONB-010; pop to SignUp with every value kept.
@@ -117,6 +119,6 @@ Step 6 — Send the temple proposal (only when one is kept)
 
 ## Deliberately stubbed for now
 
-- The email-code routes exist only in the backend spec; until the backend ships them, iOS v2.0 can be
-  built and unit-tested against mocks, and E2E waits for the backend (`innerlamp-be`
-  `docs/specs/features/onboarding/tasks.md`).
+- The email-code routes are in `openapi.yaml` 2.1.1 and implemented on the backend branch, but that
+  work is uncommitted and has not run against a real server (2026-10-16). Build and unit-test against
+  mocks; run E2E once the backend reports it merged.

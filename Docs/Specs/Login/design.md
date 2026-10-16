@@ -1,7 +1,7 @@
 # Design — Login
 
-Version: 2.1
-Last updated: 2026-10-15
+Version: 2.2
+Last updated: 2026-10-16
 Status: in-progress (drift) — phone sign-in, session store, refresh and sign-out built; email sign-in, forgot password, session-ended message and guest prompt planned
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -75,14 +75,18 @@ Main (guest)
 ```
 Step 1 — Authenticated call
 - Where: NetworkServiceImpl, any requiresAuth endpoint.
-- 401 with a stored refresh token → Step 2. 401 with none (guest) → return unauthorized to the caller;
-  no notification (criterion 12).
+- 401 UNAUTHORIZED with a stored refresh token → Step 2 (the backend checks the session on every call,
+  so this also fires at once after sign-out, a reset or a same-device sign-in elsewhere). 401 with none
+  (guest) → return unauthorized to the caller; no notification (criterion 12).
+- 503 SERVICE_UNAVAILABLE (backend could not check the session) → transient: generic error, no refresh,
+  no session end (criterion 10).
 
 Step 2 — Refresh (single-flight)
 - API: POST /v1/auth/refresh {refresh_token}
     - Success → save the rotated pair, retry the original call once.
     - 401 REFRESH_TOKEN_INVALID → Step 3.
     - Offline / timeout / 5xx → keep the session; the original call fails with its transport error.
+    - The refresh answer is `{access_token, refresh_token, expires_in}` with no `user`.
 
 Step 3 — Session ended
 - AuthSessionRefresher clears the tokens and posts .authSessionDidExpire.
@@ -113,5 +117,6 @@ Step 3 — Set the new password
 
 ## Deliberately stubbed for now
 
-- Email sign-in and `password-reset/*` work only once the backend ships them (innerlamp-be
-  `docs/specs/features/login/tasks.md`); until then iOS v2.0 is built and unit-tested against mocks.
+- Email sign-in and `password-reset/*` are in `openapi.yaml` 2.1.1 and implemented on the backend
+  branch, but that work is uncommitted and has not run against a real server (2026-10-16). Build and
+  unit-test against mocks; run E2E once the backend reports it merged.
