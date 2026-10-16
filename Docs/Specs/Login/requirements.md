@@ -1,11 +1,11 @@
 # Requirements — Login
 
-Version: 2.1
-Last updated: 2026-10-15
-Status: in-progress (drift) — sign-in by phone, Keychain session, single-flight refresh and sign-out are built and call the real backend; v2.0 moves sign-in to email, adds forgot password by email code, explains an ended session and gates account features for guests. No code for v2.0 yet (`tasks.md` Phase 1–7)
+Version: 2.2
+Last updated: 2026-10-16
+Status: in-progress (drift) — sign-in by phone, Keychain session, single-flight refresh and sign-out are built and call the real backend; v2.0 moves sign-in to email, adds forgot password by email code, explains an ended session and gates account features for guests. No code for v2.0 yet (`tasks.md` Phase 1–7). The backend shipped the email contract on 2026-10-16 (uncommitted on its branch, not yet exercised against a running server)
 Feature folder: `InnerLamp/Presentation/Scenes/{Login,ForgotPassword}/`, `Core/Networking/AuthSessionRefresher.swift`, `App/AppCoordinator.swift`, `Domain/UseCases/Profile/ILProfileUseCase.swift` (sign-out)
-Product spec: innerlamp-be `docs/product/login/product.md` @ v1.2
-Contract: innerlamp-be `docs/specs/features/login/requirements.md` @ v2.2 §API contract (47122d1); refresh and logout unchanged from `openapi.yaml`. `openapi.yaml` has neither email sign-in nor `password-reset/*` yet — the backend updates it when the handlers ship.
+Product spec: innerlamp-be `docs/product/login/product.md` @ v1.4
+Contract: innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 2.1.1 (Auth tag: `login`, `refresh`, `password-reset/request-otp`, `password-reset/confirm`, `logout`, and the "Phiên bị thu hồi" note); backend feature spec `docs/specs/features/login` @ v2.5.
 Architecture: ADR-0003 — Accepted
 Implements: BR-LGN-01, BR-LGN-02, BR-LGN-03, BR-LGN-04, BR-LGN-05, BR-LGN-06, BR-LGN-07, FR-LGN-001, FR-LGN-002, FR-LGN-003, FR-LGN-004, FR-LGN-005, FR-LGN-006, FR-LGN-008, FR-LGN-009, FR-LGN-010, NFR-LGN-01, NFR-LGN-02, NFR-LGN-03
 Not on iOS: FR-LGN-007 (website only)
@@ -30,7 +30,7 @@ can reach InnerLamp on my iPhone without help.
 
 1. WHEN Login opens, THE SYSTEM SHALL show the email field, the password field with "Hiện/Ẩn", "Đăng nhập", "Quên mật khẩu?", "Tạo tài khoản mới" and "Vào xem trước, chưa đăng nhập"; there is no phone field, no country picker and no "Gửi mã một lần qua SMS". (FR-LGN-001, FR-LGN-010)
 2. WHEN the user submits with an empty email or an empty password, THE SYSTEM SHALL show the error under that field and SHALL NOT call the backend; no length rule applies to the password here. (BR-LGN-01)
-3. WHEN the user submits, THE SYSTEM SHALL call `POST /v1/auth/login` with the trimmed email, the password and `device {platform: "ios", device_model, os_version, app_version}`, then:
+3. WHEN the user submits, THE SYSTEM SHALL call `POST /v1/auth/login` with the trimmed email, the password and `device {platform: "ios", device_model, os_version, app_version}` (the backend requires only `device_model`; an absent `platform` is stored as `mobile`, so iOS still sends `"ios"`), then:
    - on success: store the session (criterion 8) and open Main;
    - on failure: stay, keep the email, clear the password, show the error per the Error → UI table. (FR-LGN-001, FR-LGN-002)
 4. WHEN the backend answers `INVALID_CREDENTIALS`, THE SYSTEM SHALL show "Email hoặc mật khẩu không đúng". (FR-LGN-002, BR-LGN-01, NFR-LGN-01)
@@ -42,7 +42,7 @@ can reach InnerLamp on my iPhone without help.
 
 8. WHEN sign-in or registration succeeds, THE SYSTEM SHALL keep the access and refresh tokens only in the Keychain with a `ThisDeviceOnly` accessibility (today `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`), never synced or backed up, and the user in Core Data. (NFR-LGN-03, BR-LGN-03)
 9. WHEN the app launches with a stored session, THE SYSTEM SHALL open Main without asking for the password. (FR-LGN-004)
-10. WHEN an authenticated call answers `401`, THE SYSTEM SHALL refresh once (single-flight across concurrent calls, the rotated pair saved before the retry) and retry the call; an offline / timeout / 5xx refresh leaves the session for a later try. (FR-LGN-004, BR-LGN-03)
+10. WHEN an authenticated call answers `401 UNAUTHORIZED` (the backend checks the session on every request, so this also happens at once after sign-out, a password reset or a sign-in on the same device, not only when the token has expired), THE SYSTEM SHALL refresh once (single-flight across concurrent calls, the rotated `access_token` / `refresh_token` pair saved before the retry; the refresh answer has no `user`) and retry the call; an offline / timeout / 5xx refresh leaves the session for a later try. WHEN an authenticated call answers `503 SERVICE_UNAVAILABLE` (the backend could not check the session), THE SYSTEM SHALL treat it as a transient failure: no refresh, no session end, the generic error. (FR-LGN-004, BR-LGN-03)
 11. WHEN the refresh is refused (`REFRESH_TOKEN_INVALID`) or no refresh token is stored while a session existed, THE SYSTEM SHALL clear the tokens and every user-scoped local data (the same cleanup as sign-out), open Login as the root and show "Phiên đăng nhập đã hết, vui lòng đăng nhập lại."; it SHALL NOT drop the user silently. (FR-LGN-005, BR-LGN-04)
 12. WHEN a guest (no session ever stored) hits a `401`, THE SYSTEM SHALL NOT treat it as an ended session (no clean-up, no message); the guest prompt of criterion 21 applies instead. (BR-LGN-06, platform)
 
@@ -55,7 +55,7 @@ can reach InnerLamp on my iPhone without help.
 14. WHEN the user chooses "Quên mật khẩu?", THE SYSTEM SHALL open the request view with the email field (pre-filled from Login when typed), "Gửi mã" and "Trở lại đăng nhập"; the phone field, the "đổi số điện thoại" notice and "Gửi hướng dẫn" are removed. (FR-LGN-008)
 15. WHEN the user submits a valid email, THE SYSTEM SHALL call `POST /v1/auth/password-reset/request-otp` and, whatever the email, open the new-password view with "Nếu email này có tài khoản, mã đã được gửi", the email, a live countdown of the code's validity and the resend wait, both from the response. (FR-LGN-008, BR-LGN-05, NFR-LGN-01)
 16. WHEN the user chooses "Gửi lại mã" after the wait, THE SYSTEM SHALL call the same request again, clear the code and restart both timers. (FR-LGN-008)
-17. WHEN the user enters 6 digits and a new password, THE SYSTEM SHALL check the password with the BR-ONB-06 rule (the onboarding validator) and then call `POST /v1/auth/password-reset/confirm`; on success, if this device holds a session it is cleared as in criterion 13 (without the logout call), and Login opens as the root with "Đã đổi mật khẩu, vui lòng đăng nhập lại." and the email pre-filled. (FR-LGN-009, BR-LGN-05)
+17. WHEN the user enters 6 digits and a new password, THE SYSTEM SHALL check the password with the BR-ONB-06 rule (the onboarding validator) and then call `POST /v1/auth/password-reset/confirm`; on success (`200 {success: true}`, no token), if this device holds a session it is cleared as in criterion 13 (without the logout call), and Login opens as the root with "Đã đổi mật khẩu, vui lòng đăng nhập lại." and the email pre-filled; the backend has ended every session and lifted `LOGIN_LOCKED` for that email, so the new password signs in at once. (FR-LGN-009, BR-LGN-05)
 18. WHEN confirm fails, THE SYSTEM SHALL stay on the new-password view, keep the code, clear the new password and show the error; `OTP_LOCKED` disables the entry until `locked_until`. (FR-LGN-009)
 19. WHEN the password was reset on another device, THE SYSTEM SHALL handle this device's next `401` per criteria 10–11. (FR-LGN-005, FR-LGN-009)
 
@@ -68,16 +68,17 @@ can reach InnerLamp on my iPhone without help.
 
 22. WHEN an error is shown, THE SYSTEM SHALL use only localized strings, never the backend's `error.message`; `RATE_LIMITED` shows "try again later" with the wait from `retry_after_seconds`. (NFR-LGN-02)
 23. WHEN the app logs requests or errors, THE SYSTEM SHALL never log passwords, codes or tokens. (NFR-LGN-03)
+24. WHEN the app calls any `/v1/auth/*` route, THE SYSTEM SHALL NOT send `X-API-Key` or `X-InnerLamp-Client-IP` (website-only headers; a mobile client sends neither). (platform)
 
 ## Data & API
 
 | Action | Operation | Note |
 |---|---|---|
-| Sign in | `POST /v1/auth/login` | `email` instead of `phone_number` |
-| Refresh | `POST /v1/auth/refresh` | Unchanged |
+| Sign in | `POST /v1/auth/login` | `email` instead of `phone_number`; in `openapi.yaml` 2.1.1 |
+| Refresh | `POST /v1/auth/refresh` | Unchanged; answers `{access_token, refresh_token, expires_in}` |
 | Sign out | `POST /v1/auth/logout` | Unchanged |
-| Ask for a reset code | `POST /v1/auth/password-reset/request-otp` | New |
-| Set a new password | `POST /v1/auth/password-reset/confirm` | New |
+| Ask for a reset code | `POST /v1/auth/password-reset/request-otp` | New; calling it again is the resend (no separate resend route) |
+| Set a new password | `POST /v1/auth/password-reset/confirm` | New; no token in the answer |
 
 Request and response shapes: the contract in the header. This file copies no schema.
 
@@ -88,11 +89,12 @@ Request and response shapes: the contract in the header. This file copies no sch
 | `INVALID_CREDENTIALS` | "Email hoặc mật khẩu không đúng" |
 | `LOGIN_LOCKED` | Lock message with the unlock time |
 | `INVALID_EMAIL` | Error under the email field |
+| `INVALID_PASSWORD` (sign-in, empty) | Not reachable: criterion 2 stops an empty password locally |
 | `INVALID_PASSWORD` (reset) | Error under the new password |
-| `OTP_INVALID` / `OTP_EXPIRED` / `OTP_LOCKED` / `OTP_RESEND_TOO_SOON` / `OTP_SEND_LIMITED` | As the registration code screen (`../Onboarding/requirements.md` Error → UI) |
-| `RATE_LIMITED` | Try again later, with the wait |
+| `OTP_INVALID` / `OTP_EXPIRED` / `OTP_LOCKED` / `OTP_RESEND_TOO_SOON` / `OTP_SEND_LIMITED` | As the registration code screen (`../Onboarding/requirements.md` Error → UI). On confirm, an email with no account also answers `OTP_EXPIRED`: show the expired message |
+| `RATE_LIMITED` | Try again later, with the wait from `details.retry_after_seconds` (same value as the `Retry-After` header); on the per-IP limit of any `/v1/auth/*` route |
 | `REFRESH_TOKEN_INVALID`, `401` after refresh | Session ended (criterion 11) |
-| `INVALID_DEVICE`, 5xx | Generic error |
+| `INVALID_DEVICE` (missing `device` or `device_model`), 5xx, `503 SERVICE_UNAVAILABLE` | Generic error |
 | Offline / timeout | Shared no-internet / retry message |
 
 ## Out of scope

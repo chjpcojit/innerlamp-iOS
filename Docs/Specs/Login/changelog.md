@@ -4,6 +4,22 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v2.2 (2026-10-16)
+
+Aligned with innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 2.1.1, product spec `login` @ v1.4
+(matrix column only, no requirement changed) and backend login spec v2.5. Docs only; no code changed.
+
+- `requirements.md`: header cites openapi 2.1.1 as the contract (the "openapi has no email shapes yet"
+  note is gone); criterion 3 says only `device_model` is required (`platform` optional, iOS still sends it); criterion 10 adds that the backend
+  checks the session on every call (so `401 UNAUTHORIZED` can come at once after sign-out, a reset or a
+  same-device sign-in) and that `503 SERVICE_UNAVAILABLE` is transient, not a session end; criterion 17
+  adds that confirm returns no token and lifts `LOGIN_LOCKED`; new criterion 24 (no `X-API-Key` /
+  `X-InnerLamp-Client-IP` from mobile); Data & API and Error → UI rows updated (`RATE_LIMITED` wait,
+  `INVALID_DEVICE`, confirm `OTP_EXPIRED` for an unknown email).
+- `design.md`: session-renewal flow covers `503` and the refresh answer shape; the "stubbed" note now
+  says the backend work is uncommitted and not yet run against a server.
+- `tasks.md`: new items for the `503` handling and the no-web-headers rule.
+
 ## v2.1 (2026-10-15)
 
 - Docs clean-up done after the four platform specs were approved (Android merged 2026-10-15). Deleted:

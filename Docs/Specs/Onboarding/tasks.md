@@ -1,7 +1,7 @@
 # Tasks — Onboarding
 
-Version: 2.1
-Last updated: 2026-10-15
+Version: 2.2
+Last updated: 2026-10-16
 Status: in-progress (drift) — Phase 1–7 not started for v2.0; items marked `[x]` were read in code on 2026-10-14 and still match
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -20,16 +20,17 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 
 - [ ] `Domain/Validation/ILSignUpRules.swift`: phone normalisation per country, email trim + lowercase + ≤ 254, password 8–64 characters after NFC, full name 1–300, dharma name optional ≤ 255 (criterion 9)
 - [ ] `ILCountry.all` stays the 12 countries of BR-ONB-04 (already exact lengths, Malaysia present) — keep; remove `nationalDigitRange` use for the wire format
-- [ ] `Scripts/sync-product-vectors.sh` (shared with Memorial) copies `../innerlamp-be/docs/product/onboarding/rules/{phone-number,email,password,names}.json` into `InnerLampTests/ProductVectors/onboarding/` with the source commit; `ILOnboardingProductVectorTests` runs every case (criterion 29)
+- [ ] `Scripts/sync-product-vectors.sh` (shared with Memorial) copies `../innerlamp-be/docs/product/onboarding/rules/{phone-number,email,password,names}.json` into `InnerLampTests/ProductVectors/onboarding/` with the source commit; `ILOnboardingProductVectorTests` runs every case (criterion 30)
 
 ## Phase 3 — Registration call
 
 - [ ] `ILSignUpEntity`: `phoneCountry`, `dharmaName?`; `ILSignUpDTO` + `ILSignUpMapper`: `email`, `password`, `phone_country`, `phone_number` (typed digits), `full_name`, `dharma_name?`, `ordination_temple_id?` (criterion 13)
-- [ ] `ILSignUpRepositoryImpl` error mapping per `requirements.md` Error → UI; remove `EMAIL_TAKEN`, `SMS_SEND_FAILED`, `OTP_LOCKED` branches; add `EMAIL_SEND_FAILED`, `RATE_LIMITED` (criteria 13–15, 27)
+- [ ] `ILSignUpRepositoryImpl` error mapping per `requirements.md` Error → UI; remove `EMAIL_TAKEN`, `SMS_SEND_FAILED`, `OTP_LOCKED` branches; add `EMAIL_SEND_FAILED`, `REGISTRATION_IN_PROGRESS` (reads `details.retry_after_seconds`), `RATE_LIMITED` (criteria 13–15, 16a, 27)
 - [ ] `ILSignUpUseCase`: validators via `ILSignUpRules`; dharma name not required, not pre-filled; strength stays advice (criteria 8–10)
 - [x] Submit ignored while one is in flight (`ILSignUpViewModel.handleSubmit`) (criterion 16)
 - [x] Temple picker: `GET /v1/temples/options`, paged, debounced server search, stale answers dropped (`ILOrdinationPlaceFieldView`, `ILSignUpViewModel`) (criterion 17)
-- [ ] Unit tests: request body (no E.164 rebuild, optional fields omitted), every mapped error, `PHONE_TAKEN` keeps values
+- [ ] Auth requests carry no `X-API-Key` / `X-InnerLamp-Client-IP` (criterion 29)
+- [ ] Unit tests: request body (no E.164 rebuild, optional fields omitted), every mapped error incl. `REGISTRATION_IN_PROGRESS`, `PHONE_TAKEN` keeps values
 
 ## Phase 4 — SignUp screen
 
@@ -45,6 +46,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 - [x] Resend wait seeded from the server and restarted after a resend (`ILOtpViewModel`) (criterion 23, timer part)
 - [ ] `ILOtpViewController`: "Đã gửi tới <email>", "Đổi email"; delete `ILOtpVoiceCallBannerView` and its strings (criteria 20, 25)
 - [ ] `ILOtpCoordinator` / `AppCoordinator.showOtp(email:…)`; "Đổi email" and `PENDING_REGISTRATION_EXPIRED` pop to the filled SignUp (criteria 25, 26)
+- [ ] Verify `INVALID_TEMPLE` and `PHONE_TAKEN` pop to SignUp with the field error (Step 4)
 - [ ] Unit tests: verify success stores the session, each error, timers, lock
 
 ## Phase 6 — Temple proposal sent
@@ -56,6 +58,6 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 
 - [ ] `vi.json` (+ `en.json` if present): new copy of product §3.1.1; delete SMS / voice-call / "Đổi số" / email-taken keys (criterion 27)
 - [ ] Check `NetworkLogger` never prints request bodies of `/v1/auth/*` (password, code, tokens) (criterion 28)
-- [ ] Manual run against the backend dev build (fixed dev code): new email, existing email looks the same, phone taken, "Đổi email", expired registration, lock
+- [ ] Manual run against the backend dev build (fixed dev code `111111`; the backend is still uncommitted and untested against a server): new email, existing email looks the same, phone taken, registration in progress, "Đổi email", expired registration, lock
 - [ ] Update the iOS column of product §4.2 when done (tell `ba-writer`)
 - [x] Delete `Docs/Specs/{Splash,SignUp,Otp}/`, `Onboarding/SRS.md` and the related `Docs/Knowledge`, `Docs/Assumptions`, `Docs/Tech-Debt` files in the docs clean-up step (2026-10-15; `TD-SignUp-002`, `-003`, `-004` and `TD-Splash-001`, `-002` kept: they describe code that is still there and close when it changes)

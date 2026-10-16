@@ -4,6 +4,24 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v2.2 (2026-10-16)
+
+_Later the same day: product spec cite raised to @ v1.6 (BR-ONB-08 amended, FR-ONB-003 +2 scenarios); criterion 16a wording confirmed by anh Đức; `AS-Onboarding-001` → Validated._
+
+Aligned with innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 2.1.1, product spec `onboarding`
+@ v1.5 (matrix column only, no requirement changed) and backend onboarding spec v8.3. Docs only; no code
+changed.
+
+- `requirements.md`: header cites openapi 2.1.1 as the contract; new criterion 16a for
+  `409 REGISTRATION_IN_PROGRESS` (wording ⚠️ Not confirmed → `AS-Onboarding-001`); criterion 14 notes
+  that an existing email gets a notice mail and then `OTP_INVALID`; new criterion 29 (no web-only
+  headers), unit-test criterion renumbered 30; Error → UI and Data & API rows updated (`INVALID_TEMPLE`
+  from verify, `RATE_LIMITED` wait, `resend_remaining` unused).
+- `design.md`: Registration flow adds `REGISTRATION_IN_PROGRESS`, the send-limit cycle and `INVALID_TEMPLE`
+  at verify; the "stubbed" note now says the backend work is uncommitted and not yet run against a server.
+- `tasks.md`: error mapping, header and verify-error items added; criterion reference 29 → 30.
+- `Docs/Assumptions/Onboarding/AS-Onboarding-001-registration-in-progress-copy.md` added.
+
 ## v2.1 (2026-10-15)
 
 - Docs clean-up done after the four platform specs were approved (Android merged 2026-10-15). Deleted:
