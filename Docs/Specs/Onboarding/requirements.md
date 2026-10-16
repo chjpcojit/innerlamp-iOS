@@ -4,7 +4,7 @@ Version: 2.2
 Last updated: 2026-10-16
 Status: in-progress (drift) — splash, the three intro steps, the registration form, the code screen and the real register calls are built against the old phone + SMS contract; v2.0 moves registration to an email code (ADR-0003). No code for v2.0 yet (`tasks.md` Phase 1–7). The backend shipped the email contract on 2026-10-16 (uncommitted on its branch, not yet exercised against a running server)
 Feature folder: `InnerLamp/Presentation/Scenes/{Splash,Onboarding,SignUp,Otp,AddTemple}/`
-Product spec: innerlamp-be `docs/product/onboarding/product.md` @ v1.6
+Product spec: innerlamp-be `docs/product/onboarding/product.md` @ v1.7
 Contract: innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 2.1.1 (Auth tag: `register/request-otp`, `register/resend-otp`, `register/verify-otp`, and the "Phiên bị thu hồi" note); backend feature spec `docs/specs/features/onboarding` @ v8.3.
 Architecture: ADR-0003 (accounts identified by email, verified by an email code; SMS removed) — Accepted
 Implements: BR-ONB-01, BR-ONB-02, BR-ONB-03, BR-ONB-04, BR-ONB-05, BR-ONB-06, BR-ONB-07, BR-ONB-08, BR-ONB-09, BR-ONB-10, BR-ONB-11, FR-ONB-001, FR-ONB-002, FR-ONB-003, FR-ONB-004, FR-ONB-005, FR-ONB-006, FR-ONB-007, FR-ONB-008, FR-ONB-009, FR-ONB-010, NFR-ONB-01, NFR-ONB-02, NFR-ONB-03
@@ -69,6 +69,7 @@ email, so that I am signed in and my practice journey is kept on every device.
 24. WHEN the backend answers `OTP_LOCKED` or `OTP_SEND_LIMITED`, THE SYSTEM SHALL show the unlock time from `locked_until` in device local time; `OTP_LOCKED` disables the entry until then, `OTP_SEND_LIMITED` keeps the entry usable for the last code. (FR-ONB-007, FR-ONB-008, BR-ONB-09)
 25. WHEN the user chooses "Đổi email", THE SYSTEM SHALL return to SignUp with every value as left, password included. (FR-ONB-009)
 26. WHEN the backend answers `PENDING_REGISTRATION_EXPIRED`, THE SYSTEM SHALL show "Thời gian đăng ký đã hết. Vui lòng đăng ký lại từ đầu." and return to SignUp with every value as left. (FR-ONB-010)
+26a. WHEN `verify-otp` answers `PHONE_TAKEN` (the number was taken while the code was pending) or `INVALID_TEMPLE` (the picked temple was removed meanwhile), THE SYSTEM SHALL NOT create an account, return from the code screen to SignUp (step 1) with every value kept, and show the error at the related field: "Số điện thoại này đã được đăng ký" beside the phone field, or a request to pick the temple again beside the temple field. (BR-ONB-08, FR-ONB-004, FR-ONB-005; product spec v1.7)
 
 ### General
 
@@ -95,9 +96,9 @@ Request and response shapes: the contract in the header. This file copies no sch
 | Case | What the user sees |
 |---|---|
 | `INVALID_EMAIL` / `INVALID_PHONE` / `INVALID_PASSWORD` / `INVALID_FULL_NAME` / `INVALID_DHARMA_NAME` | Error under that field |
-| `INVALID_TEMPLE` | Error on the temple field, asks to pick again (also from `verify-otp`: the temple was removed meanwhile — back to SignUp with every value kept) |
+| `INVALID_TEMPLE` | Error on the temple field, asks to pick again (also from `verify-otp`: criterion 26a) |
 | `VALIDATION_ERROR` | Generic invalid-input message |
-| `PHONE_TAKEN` | Criterion 15 |
+| `PHONE_TAKEN` | Criterion 15; from `verify-otp`, criterion 26a |
 | `REGISTRATION_IN_PROGRESS` | Criterion 16a |
 | `OTP_RESEND_TOO_SOON` | Resend timer restarted from `details.retry_after_seconds` |
 | `OTP_SEND_LIMITED` | Unlock time; last code still usable (criterion 24) |

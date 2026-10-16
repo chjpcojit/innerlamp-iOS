@@ -46,7 +46,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 - [x] Resend wait seeded from the server and restarted after a resend (`ILOtpViewModel`) (criterion 23, timer part)
 - [ ] `ILOtpViewController`: "Đã gửi tới <email>", "Đổi email"; delete `ILOtpVoiceCallBannerView` and its strings (criteria 20, 25)
 - [ ] `ILOtpCoordinator` / `AppCoordinator.showOtp(email:…)`; "Đổi email" and `PENDING_REGISTRATION_EXPIRED` pop to the filled SignUp (criteria 25, 26)
-- [ ] Verify `INVALID_TEMPLE` and `PHONE_TAKEN` pop to SignUp with the field error (Step 4)
+- [ ] Verify `INVALID_TEMPLE` and `PHONE_TAKEN` pop to SignUp with every value kept and the field error (Step 4, criterion 26a)
 - [ ] Unit tests: verify success stores the session, each error, timers, lock
 
 ## Phase 6 — Temple proposal sent

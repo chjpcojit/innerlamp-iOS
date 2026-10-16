@@ -6,7 +6,7 @@ one spec unit. Newest version first.
 
 ## v2.2 (2026-10-16)
 
-_Later the same day: product spec cite raised to @ v1.6 (BR-ONB-08 amended, FR-ONB-003 +2 scenarios); criterion 16a wording confirmed by anh Đức; `AS-Onboarding-001` → Validated._
+_Later: product spec cite raised to @ v1.6 (BR-ONB-08 amended, FR-ONB-003 +2 scenarios; criterion 16a wording confirmed by anh Đức; `AS-Onboarding-001` → Validated), then @ v1.7 (2026-10-17: `verify-otp` `PHONE_TAKEN` / `INVALID_TEMPLE` return to the form with the field error; new criterion 26a)._
 
 Aligned with innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 2.1.1, product spec `onboarding`
 @ v1.5 (matrix column only, no requirement changed) and backend onboarding spec v8.3. Docs only; no code
