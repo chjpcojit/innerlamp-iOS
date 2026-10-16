@@ -88,3 +88,7 @@ vendor
 .claude/hook_log.jsonl
 .claude/*_retry_count
 .claude/hook.lock
+# Session handoff (local only, never commit)
+Docs/HANDOFF.md
+Docs/HANDOFF.prev.md
+Docs/handoff/
