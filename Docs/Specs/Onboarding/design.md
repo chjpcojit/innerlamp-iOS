@@ -105,8 +105,8 @@ Step 4 — Verify
     - 400 OTP_EXPIRED → expired message, emphasise resend.
     - 429 OTP_LOCKED → unlock time, entry disabled until locked_until.
     - 400 PENDING_REGISTRATION_EXPIRED → Step 5.
-    - 409 PHONE_TAKEN (taken while pending) → back to SignUp with the phone error.
-    - 400 INVALID_TEMPLE (the picked temple was removed) → back to SignUp with the temple field error.
+    - 409 PHONE_TAKEN (taken while pending) → no account; back to SignUp (Step 1) with every value kept and the phone error (criterion 26a).
+    - 400 INVALID_TEMPLE (the picked temple was removed) → no account; back to SignUp (Step 1) with every value kept and the temple field error (criterion 26a).
 
 Step 5 — Registration expired
 - Effect: message of FR-ONB-010; pop to SignUp with every value kept.
