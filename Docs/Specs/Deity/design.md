@@ -1,7 +1,7 @@
 # Design — Deity
 
-Version: 1.1
-Last updated: 2026-10-15
+Version: 1.1.1
+Last updated: 2026-10-16
 Status: in-progress — carousels, catalogue screen, deity page, top/page/detail endpoints and Core Data cache built against the old contract; planned: server paging + `type` filter, vía (a deity's feast day, kept on a lunar date) from the backend with device-date countdown, related sutras endpoint, iconography + name block, single action row, prototype empty state, network-first cache, removal of the bundled catalogue
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -144,7 +144,7 @@ Step 2 — Related sutras (this feature; runs in parallel with Step 1, shown aft
 
 Step 3 — Open a related sutra (SutraDetail feature, out of this feature's scope)
 - Trigger: tap on a row → .openSutra(id) → ILSutraDetailCoordinator, which calls GET /v1/sutras/{id}
-  (see Docs/Specs/SutraDetail/design.md)
+  (see Docs/Specs/Sutra/design.md)
 ```
 
 The Home and Library blocks each make a single call (`GET /v1/deities/top?date=`, network-first, cached

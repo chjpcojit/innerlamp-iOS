@@ -1,6 +1,6 @@
 # Design — Sutra
 
-Version: 1.0
+Version: 1.0.1
 Last updated: 2026-10-16
 Status: in-progress — list (`GET /v1/sutras`, paging, chips, server search) and sutra page (`GET /v1/sutras/{id}`, all fields) built network-only on `ILSutraRepository`; the reading view, its use case and entity are a sample catalogue with a simulated player and are replaced by `GET /v1/sutras/{id}/lines`; planned: product-rule default version, per-version facts and licence labels, linked deities that open the deity page, version switch, shared font size, error / empty / not-found states with retry, 60-minute chip and product labels, day-based quote on Home
 

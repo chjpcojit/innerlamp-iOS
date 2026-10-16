@@ -3,6 +3,12 @@
 Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in this folder. All three
 files share one changelog since they change together as one spec unit. Newest version first.
 
+## v1.1.1 (2026-10-16)
+
+- `requirements.md`, `design.md`, `tasks.md`: links to the sutra page spec now point to `Docs/Specs/Sutra/`
+  (the former `Docs/Specs/SutraDetail/` was merged into it and deleted). No requirement, design or task
+  change; version headers 1.1 -> 1.1.1.
+
 ## v1.1 (2026-10-15)
 
 - Translated to English per the repo Language policy; no requirement, design or task change.

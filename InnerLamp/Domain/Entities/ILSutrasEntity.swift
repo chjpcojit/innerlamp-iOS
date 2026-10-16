@@ -81,7 +81,7 @@ nonisolated enum ILSutraCategory: Equatable, CaseIterable {
 }
 
 /// Bộ lọc theo độ dài (hàng chip thứ hai) — server chỉ hỗ trợ trần `max_minutes`.
-/// @ai: assumption — see Docs/Assumptions/Sutras/AS-Sutras-002-filter-chips-follow-server-enums.md
+/// @ai: chips follow the server enums; the 60-minute chip is pending — see Docs/Specs/Sutra/ (BR-STR-03, tasks.md Phase 3)
 nonisolated enum ILSutraLengthFilter: Equatable, CaseIterable {
     case any
     case upTo5

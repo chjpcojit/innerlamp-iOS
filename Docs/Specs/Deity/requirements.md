@@ -1,7 +1,7 @@
 # Requirements — Deity
 
-Version: 1.1
-Last updated: 2026-10-15
+Version: 1.1.1
+Last updated: 2026-10-16
 Status: in-progress — home / library carousels, catalogue screen and deity page are built against the old contract; product spec v1.0 alignment pending: "Chư Thiên" (devas) label, server pages of 12 + server type filter (instead of loading every page and filtering on the device), vía (a deity's feast day, kept on a lunar date) from the backend (instead of the on-device lunar scan and "Đản/Vía" (birth anniversary / feast day) name match), related sutras from `GET /v1/deities/{id}/sutras` (instead of the hard-coded title table), iconography shown, "Báo thông tin sai" (Report incorrect information) removed, prototype empty / error state, cache that expires, dead bundled catalogue removed (`tasks.md` Phase 2–8). Vía parts are blocked on the backend contract (not yet in `openapi.yaml`).
 Feature folders: `InnerLamp/Presentation/Scenes/Deity/` (deity page), `InnerLamp/Presentation/Scenes/Deities/` (catalogue), the deity carousel of `InnerLamp/Presentation/Scenes/Home/` and `InnerLamp/Presentation/Scenes/Library/`
 Product spec: innerlamp-be `docs/product/deity/product.md` @ v1.0
@@ -137,7 +137,7 @@ Operations are cited, not copied; the contract is innerlamp-be `docs/specs/api/o
 - Search in the catalogue (product §1.2).
 - "Báo thông tin sai", favourite, follow, prayer requests, vía reminders (product §1.2, BR-DTY-08).
 - A dedicated share layout (the prototype's three-card share screen) — the system share sheet is used.
-- The festival calendar and the sutra page themselves — `Docs/Specs/Calendar/`, `Docs/Specs/SutraDetail/`;
+- The festival calendar and the sutra page themselves — `Docs/Specs/Calendar/`, `Docs/Specs/Sutra/`;
   the mala — `Docs/Specs/Mala/`. This feature only opens them.
 - Loading the catalogue content (FR-DTY-011, backend only).
 

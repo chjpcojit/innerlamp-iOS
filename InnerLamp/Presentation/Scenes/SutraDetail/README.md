@@ -47,11 +47,11 @@ phẩm đẩy sang màn Tụng kinh (`reader`), nút ‹ pop về Thư viện.
 ## Known gaps / not implemented yet
 
 - **Reader / Player vẫn dùng catalog mock** và bỏ qua slug của server → mở sai nội dung; ô "Kinh Pháp Cú"
-  của Library không có bản khớp trên server (TD-SutraDetail-003).
+  của Library không có bản khớp trên server. Xử lý trong `Docs/Specs/Sutra/` (tasks.md Phase 2, 5; Library là spec riêng sau).
 - **Không có audio, tiến trình đọc, thời lượng từng phẩm** từ API: CTA luôn là "Đọc kinh", thẻ tiến trình
-  và nút phát luôn ẩn (TD-SutraDetail-002). Đa số kinh có `sections: []` nên Mục lục bị ẩn.
+  và nút phát luôn ẩn — theo thiết kế, `Docs/Specs/Sutra/` BR-STR-12. Đa số kinh có `sections: []` nên Mục lục bị ẩn.
 - **Nút "Tải về máy" chưa làm gì** — màn `downloads` chưa build (TODO trong coordinator).
-- Dòng mô tả / meta / giấy phép là giả định trình bày (AS-SutraDetail-001); chưa có cảnh báo "chưa duyệt".
+- Dòng mô tả / meta / giấy phép là trình bày theo `Docs/Specs/Sutra/` (BR-STR-07, đang chờ làm); chưa có cảnh báo "chưa duyệt".
 - **Hero dùng gradient tối dùng chung** (`darkBackgroundTop` → `darkBackground`) thay vì đúng cặp
   `#2A2620 → #151210` của prototype — chênh lệch không đáng kể.
 - Chưa kiểm tra bằng mắt trên thiết bị (bố cục cuộn, giấy phép dài, dark mode).
@@ -60,3 +60,4 @@ phẩm đẩy sang màn Tụng kinh (`reader`), nút ‹ pop về Thư viện.
 
 - 2026-09-26 — initial build by ui-builder from `Docs/design_handoff_innerlamp` (`detail`): Entity/UseCase/StateModel/ViewModel/Coordinator/ViewController, 2 feature views, `ILTypography.contentHeroTitle`/`scriptureDescription` + `ILColors.goldOnDark`, Library wiring, Reader wiring (DIContainer factories), tests
 - 2026-10-07 — integrated `GET /v1/sutras/{id}`; removed the static catalog and sample progress
+- 2026-10-16 — spec moved to `Docs/Specs/Sutra/` (the old `Docs/Specs/Sutras/`, `SutraDetail/`, `Reader/` and their assumption and tech-debt entries were deleted); no code change.

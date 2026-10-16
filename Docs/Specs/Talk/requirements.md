@@ -1,7 +1,7 @@
 # Requirements — Talk
 
-Version: 1.0
-Last updated: 2026-09-27
+Version: 1.0.1
+Last updated: 2026-10-16
 Status: not started — prospective; Dharma-talk content & audio stream contracts
 unconfirmed
 Feature folder: `InnerLamp/Presentation/Scenes/Talk/`
@@ -39,7 +39,7 @@ chapters, and be offered a short meditation after listening.
 - The Library featured Dharma-talk card that navigates here — owned by the
   Library feature (`Docs/Specs/Library/`).
 - The full-screen Player (speed / sleep timer) and the Reader — separate
-  features (`Docs/Specs/Player/`, `Docs/Specs/Reader/`).
+  features (`Docs/Specs/Player/`, `Docs/Specs/Sutra/` for the reading view).
 - MeditationSetup — a separate feature reached from the follow-up card.
 
 ## Pending (not yet implemented — see `tasks.md`)

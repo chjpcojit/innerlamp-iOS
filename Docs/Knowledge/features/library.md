@@ -103,4 +103,7 @@ coordinator delegate.
 - [Home](home.md) (`InnerLamp/Presentation/Scenes/Home/`) — sibling tab; the two
   share the mock-backed `UseCase` + Entity→StateModel shape.
 - SutraDetail (`InnerLamp/Presentation/Scenes/SutraDetail/`) — the one wired
-  destination for a `.sutra` row; no OKF concept yet.
+  destination for a `.sutra` row; no OKF concept yet. Its behaviour is specified in
+  `Docs/Specs/Sutra/` (v1.0; the former `Sutras`, `SutraDetail` and `Reader` specs were merged into it
+  and deleted on 2026-10-16). The sample sutra ids in this tab's mock catalog (e.g. `sutra.phapcu`)
+  are not server ids and open the not-found state there until the Library spec lands.

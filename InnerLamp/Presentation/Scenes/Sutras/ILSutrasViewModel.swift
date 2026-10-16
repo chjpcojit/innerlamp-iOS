@@ -190,7 +190,7 @@ final class ILSutrasViewModel: ILSutrasViewModelProtocol {
             translatorLine: [sutra.translator, sutra.tradition.map { categoryLabel(.tradition($0)) } ?? ""]
                 .filter { !$0.isEmpty }
                 .joined(separator: "sutras.translatorSeparator".localized),
-            // @ai: the app has no download feature yet — see Docs/Tech-Debt/Sutras/TD-Sutras-002-*.md
+            // @ai: no "downloaded" badge by design — see Docs/Specs/Sutra/ (BR-STR-12)
             isDownloaded: false,
             hasAudio: sutra.hasAudio,
             purposeLabels: (sutra.isDailyChant ? [categoryLabel(.dailyChant)] : [])
