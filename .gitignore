@@ -92,3 +92,6 @@ vendor
 Docs/HANDOFF.md
 Docs/HANDOFF.prev.md
 Docs/handoff/
+
+# Design project exports (local only, never commit)
+Docs/innerlamp-project/
