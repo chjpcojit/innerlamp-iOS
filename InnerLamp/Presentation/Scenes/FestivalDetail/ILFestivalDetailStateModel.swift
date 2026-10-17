@@ -6,8 +6,8 @@
 import Foundation
 
 /// UI state cho màn "Chi tiết ngày lễ" — Presentation layer, do `ILFestivalDetailViewModel` sở
-/// hữu. Không UIKit, không business logic. Mục nào server chưa có dữ liệu vẫn được hiển thị với
-/// `…EmptyText` (không ẩn); ViewController chọn giữa nội dung và `…EmptyText` theo mảng rỗng.
+/// hữu. Không UIKit, không business logic. Mục nào server chưa có nội dung thì bị ẩn
+/// (BR-CAL-14); ViewController ẩn theo chuỗi/mảng rỗng.
 struct ILFestivalDetailStateModel: Equatable {
     // MARK: Hero
     var imageURL: String?
@@ -15,7 +15,7 @@ struct ILFestivalDetailStateModel: Equatable {
     var imageEmptyText: String = ""
 
     // MARK: Header
-    /// "PHẬT GIÁO · VIỆT NAM" — tên nhóm viết hoa, hoặc nhãn "chưa có" khi không có nhóm.
+    /// "LỄ LỚN · PHẬT GIÁO" — nhãn lễ lớn rồi tên nhóm viết hoa; rỗng thì ẩn hàng.
     var kindText: String = ""
     var title: String = ""
     /// "Ngày 15 · Tháng Bảy âm lịch".
@@ -23,7 +23,6 @@ struct ILFestivalDetailStateModel: Equatable {
 
     // MARK: About
     var aboutParagraphs: [String] = []
-    var aboutEmptyText: String = ""
 
     // MARK: Date card
     /// "05" — ngày dương, 2 chữ số.
@@ -38,13 +37,4 @@ struct ILFestivalDetailStateModel: Equatable {
     // MARK: Practices ("Phật tử thường làm gì")
     var practicesTitle: String = ""
     var practices: [String] = []
-    var practicesEmptyText: String = ""
-
-    // MARK: Sutra ("Kinh nên tụng") — chưa có nguồn dữ liệu, ngoài phạm vi (Docs/Specs/Calendar/, BR-CAL-14)
-    var sutraTitle: String = ""
-    var sutraEmptyText: String = ""
-
-    // MARK: Hosts ("Chùa tổ chức") — chưa có nguồn dữ liệu, ngoài phạm vi (Docs/Specs/Calendar/, BR-CAL-14)
-    var hostsTitle: String = ""
-    var hostsEmptyText: String = ""
 }

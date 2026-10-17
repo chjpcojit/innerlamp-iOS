@@ -23,6 +23,8 @@ struct ILFestivalDetailEntity: Equatable {
     let imageURL: String?
     /// Tên các nhóm của sự kiện ("Phật giáo", "Dân gian"…), theo thứ tự hiển thị.
     let groupNames: [String]
+    /// BR-CAL-10: "Lễ lớn" do server đánh dấu.
+    let isMajor: Bool
     /// Ngày dương lịch (đầu ngày) của lần xuất hiện này.
     let date: Date
     let lunarDay: Int

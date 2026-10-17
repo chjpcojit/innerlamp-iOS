@@ -36,6 +36,7 @@ final class ILFestivalsUseCaseImpl: ILFestivalsUseCase {
 
         // Ngày dương và âm lịch của lễ do server tính; client chỉ gom nhóm theo ngày.
         let calendarEvents = try await calendarEventRepository.loadEvents(year: year)
+        let groupNamesByCode = Dictionary(calendarEvents.groups.map { ($0.code, $0.name) }) { first, _ in first }
         let eventsByCode = Dictionary(calendarEvents.events.map { ($0.code, $0) }) { first, _ in first }
         let occurrencesByDay = Dictionary(grouping: calendarEvents.occurrences) {
             calendar.startOfDay(for: $0.solarDate)
@@ -70,7 +71,8 @@ final class ILFestivalsUseCaseImpl: ILFestivalsUseCase {
                         lunarMonth: occurrence.lunarMonth,
                         isLeapMonth: occurrence.isLeapMonth,
                         eventCode: event.code,
-                        isMajor: event.isMajor
+                        isMajor: event.isMajor,
+                        groupNames: event.groupCodes.compactMap { groupNamesByCode[$0] }
                     ),
                     date: day,
                     calendar: calendar,

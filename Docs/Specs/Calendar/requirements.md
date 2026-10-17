@@ -1,6 +1,6 @@
 # Requirements — Calendar
 
-Version: 1.2
+Version: 1.3
 Last updated: 2026-10-17
 Status: in-progress — festival calendar, event detail and Home's events block are built against `GET /v1/calendar/events` (public route, `is_major` / `sort_order` / `recurrence` read; build-verified, tests written but not run); still open: major mark on rows, group filters, 2100 limit, retry rows, device copy, hidden empty sections, the six-month home window, product vectors (`tasks.md` Phase 4–9)
 Feature folders: `InnerLamp/Presentation/Scenes/Festivals/` (festival calendar), `InnerLamp/Presentation/Scenes/FestivalDetail/` (event detail), the events block of `InnerLamp/Presentation/Scenes/Home/`
@@ -146,10 +146,10 @@ schema and error codes stay there. Copy: see the ⚠️ under "Pending".
 Criteria the shipped code does **not** meet yet (drift against product spec v1.1):
 
 - Criteria 3, 10 — the current year comes from the device time zone, and loading goes on to 2200 (`ILFestivalsViewModel.maxYear`) instead of 2100 (FR-CAL-002, FR-CAL-004).
-- Criteria 4, 7–9 — rows show no group names and no major mark (`isMajor` is carried on `ILFestivalDayEntity`, no UI yet); the chips are "Tất cả" / "Lễ lớn" / "Rằm & Mùng Một" — "Lễ lớn" now filters on `is_major` — and there is no chip per group and no count (FR-CAL-003).
+- Criteria 7–9 — the chips are "Tất cả" / "Lễ lớn" / "Rằm & Mùng Một" — "Lễ lớn" filters on `is_major` — with no chip per group and no count (FR-CAL-003). Criterion 4 is met: rows show the major mark and group names.
 - Criterion 6 — the "Rằm & Mùng Một" chip and row tap still key on `kind == .observance` (now `recurrence == lunar_monthly`); a tap opens the detail only when the row has an `eventCode` — verify on device that Rằm / Mùng Một rows are tappable.
 - Criterion 11 — a failed next year is retried silently on the next scroll, with no retry row.
-- Criterion 13 — the about section no longer falls back to the short description (BR-CAL-14); every section still shows a "Chưa có …" text when empty (no image, no group, no description, no guidance), and "Kinh nên tụng" / "Chùa tổ chức" are always shown with their placeholder (BR-CAL-14, FR-CAL-005 drift); no major mark; the default image is ⚠️ product.
+- Criterion 13 — empty kind / about / practices sections are hidden, "Kinh nên tụng" / "Chùa tổ chức" are removed, the major mark leads the kind row; the hero still shows its placeholder text when there is no image (default image is ⚠️ product).
 - Criterion 14 — the not-found state offers "Thử lại".
 - Criteria 16–17 — the block shows the months of the current calendar year only (January to December, not six months from now across the year end) and drops months without occurrences (BR-CAL-15 drift); Buddhist-only selection and the tiers (major, other named, Rằm / Mùng Một) are done in `ILHomeUseCaseImpl`.
 - Criteria 19–20 — no device copy at all: the calendar, the detail and the block need the network (`TD-Home-003`, FR-CAL-007).

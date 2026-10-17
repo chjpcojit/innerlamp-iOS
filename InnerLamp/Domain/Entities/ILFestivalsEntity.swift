@@ -35,6 +35,8 @@ struct ILFestivalDayEntity: Equatable, Identifiable {
     var eventCode: String? = nil
     /// BR-CAL-10: "Lễ lớn" do server đánh dấu — chip "Lễ lớn" lọc theo cờ này.
     var isMajor: Bool = false
+    /// Tên các nhóm của sự kiện ("Phật giáo", "Dân gian"…), theo thứ tự danh mục.
+    var groupNames: [String] = []
 }
 
 /// 1 tháng dương trong màn "Lịch lễ Phật giáo" — các ngày lễ gom theo tháng dương lịch.

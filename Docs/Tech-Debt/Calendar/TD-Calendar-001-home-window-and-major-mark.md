@@ -1,7 +1,7 @@
 ---
 id: TD-Calendar-001
-title: Home six-month window, empty month card and major mark UI not built
-title_vi: Chưa làm cửa sổ 6 tháng ở Home, thẻ tháng trống và dấu "lễ lớn" trên UI
+title: Home six-month window, empty month card and group chips not built
+title_vi: Chưa làm cửa sổ 6 tháng ở Home, thẻ tháng trống và chip theo nhóm
 feature: Calendar
 level: Medium
 status: Open
@@ -16,10 +16,10 @@ files:
 EN: Contract 2.2.0 is read and the data rules are applied (public route, Buddhist-only Home, tiers by
 `is_major` / `recurrence`, "Lễ lớn" chip on `is_major`, no local Rằm / Mùng 1). Not done: BR-CAL-15's
 six-month window across the year end (with per-year failure + retry), the card for a month without
-Buddhist occurrences, the major mark and group names on rows and detail, hiding empty detail sections.
+Buddhist occurrences, group chips with counts and the 429 / retry states.
 `festivals.observance.*` strings are now unused.
 VI: Đã đọc contract 2.2.0 và áp dụng các quy tắc dữ liệu. Chưa làm: cửa sổ 6 tháng qua năm mới,
-thẻ tháng trống, dấu lễ lớn / tên nhóm trên dòng và chi tiết, ẩn mục rỗng ở chi tiết. Các chuỗi
+thẻ tháng trống, chip theo nhóm kèm số đếm, trạng thái 429 / thử lại. Các chuỗi
 `festivals.observance.*` hiện không còn dùng.
 
 ## Why it was taken on / Lý do chấp nhận nợ

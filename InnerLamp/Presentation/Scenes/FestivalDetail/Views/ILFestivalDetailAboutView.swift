@@ -5,10 +5,10 @@
 
 import UIKit
 
-/// EN: "About" block — a hairline divider followed by the description paragraphs. With no paragraphs
-///     it shows `emptyText` in a muted style instead of hiding the block.
-/// VI: Khối giới thiệu — đường kẻ mảnh rồi các đoạn mô tả. Không có đoạn nào thì hiện `emptyText`
-///     (màu nhạt) thay vì ẩn khối.
+/// EN: "About" block — a hairline divider followed by the description paragraphs. The caller hides the
+///     block when there are no paragraphs (BR-CAL-14).
+/// VI: Khối giới thiệu — đường kẻ mảnh rồi các đoạn mô tả. Nơi gọi ẩn khối khi không có đoạn nào
+///     (BR-CAL-14).
 final class ILFestivalDetailAboutView: UIStackView {
 
     // MARK: - UI Elements
@@ -37,19 +37,18 @@ final class ILFestivalDetailAboutView: UIStackView {
     }
 
     // MARK: - Configuration
-    func configure(paragraphs: [String], emptyText: String) {
+    func configure(paragraphs: [String]) {
         paragraphStack.arrangedSubviews.forEach {
             paragraphStack.removeArrangedSubview($0)
             $0.removeFromSuperview()
         }
-        let isEmpty = paragraphs.isEmpty
-        for text in isEmpty ? [emptyText] : paragraphs {
+        for text in paragraphs {
             let label = UILabel()
             label.numberOfLines = 0
             label.attributedText = ILTypography.makeParagraph(
                 text: text,
                 font: ILTypography.postBody,
-                color: isEmpty ? ILColors.inkSubtle : ILColors.inkSecondary,
+                color: ILColors.inkSecondary,
                 cssLineHeight: 1.75
             )
             paragraphStack.addArrangedSubview(label)

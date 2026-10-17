@@ -26,7 +26,7 @@ by `ILHomeCoordinator` (tap an event in the "Sự kiện Phật giáo" carousel)
 
 ## Known gaps
 
-- "Kinh nên tụng" and "Chùa tổ chức" always show "no data" text; both are out of scope and are to be removed, and empty sections hidden (`Docs/Specs/Calendar/`, BR-CAL-14, FR-CAL-005; `tasks.md` Phase 4).
+- Empty kind / about / practices sections are hidden (BR-CAL-14); "Kinh nên tụng" and "Chùa tổ chức" were removed. The hero still shows placeholder text when the event has no image.
 - "Nhắc tôi ngày này" is not built — out of scope for Calendar v1.0, later via ADR-0001 (`Docs/Specs/Calendar/tasks.md` "Deferred").
 - No alternative title line; the kind label shows group names, the major mark is pending (BR-CAL-10; `Docs/Specs/Calendar/tasks.md` Phase 4 and 6).
 

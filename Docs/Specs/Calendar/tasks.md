@@ -1,6 +1,6 @@
 # Tasks — Calendar
 
-Version: 1.2
+Version: 1.3
 Last updated: 2026-10-17
 Status: in-progress — Phase 1–3 built (build-verified, tests not run) except the items left `[ ]`; Phase 4 (product spec v1.1 drift), Phase 5 (device copy) and Phase 7 (product vectors) not started; Phase 6 waits on backend v3.0 (backend `tasks.md` Phase 14–18); Phase 8 (copy) blocked on ⚠️ product
 
@@ -47,10 +47,10 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 - [ ] Current year (calendar) and current month (home block) in `Asia/Ho_Chi_Minh` (criteria 3, 16); tests with a fixed date near midnight
 - [ ] `maxYear` 2100 (FR-CAL-004, criterion 10); update the ViewModel test
 - [ ] Filters (FR-CAL-003, criteria 7–9): `ILFestivalsFilter` (`.all`, `.major`, `.group(code)`), chips built from the response's `groups` in order with counts (⚠️ default format "Lễ lớn (10)"), filter kept and counts updated on load more, empty months hidden; remove `festivals.tab.observance`; ViewModel tests per filter and after load more. "Lễ lớn" filters on `isMajor` (empty until Phase 6)
-- [ ] Rows show the group names and the major mark (criterion 4); `ILFestivalsItemView` layout
+- [x] Rows show the group names and the major mark (criterion 4); `ILFestivalsItemView` layout
 - [ ] Next-year failure → footer retry row, tap retries (FR-CAL-004, FR-CAL-008, criterion 11); test
 - [ ] First-load failure → full-screen state with offline / could-not-load title and "Thử lại", no toast (FR-CAL-008, criterion 21); tests for both errors and a successful retry
-- [ ] Detail (FR-CAL-005, BR-CAL-14, criterion 13): hide empty image text / kind / about / practices sections; remove the "Kinh nên tụng" and "Chùa tổ chức" cards, their state fields and `festivalDetail.sutra.*` / `festivalDetail.hosts.*` / `festivalDetail.*.empty`; major mark in the kind row; tests for an event with empty guidance and no image
+- [x] Detail (FR-CAL-005, BR-CAL-14, criterion 13): hide empty kind / about / practices sections (the hero image text stays until product gives the default image); remove the "Kinh nên tụng" and "Chùa tổ chức" cards, their state fields and `festivalDetail.sutra.*` / `festivalDetail.hosts.*` / `festivalDetail.*.empty`; major mark in the kind row; tests for an event with empty guidance and no image
 - [ ] Detail default image when `imageURL` is `nil` — blocked on ⚠️ product (which image); until then the hero keeps its placeholder background, no text
 - [ ] Detail not-found → no retry, Back only (criterion 14); test
 - [ ] Home block (FR-CAL-006, BR-CAL-15, criteria 16–18): `loadEventBlock(today:)` → six months from the current month, the next year loaded concurrently when the window crosses December, rows and "+N" from `ILCalendarRules.homeBlockMonth` (Buddhist group only), empty-month card; remove `prefix(3)` / `totalEventsCount` from `ILHomeViewModel`; `ILHomeUseCaseTests` for a window inside one year, across the year end, an empty month
@@ -73,7 +73,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 
 - [x] Confirm `is_major`, `sort_order`, `recurrence` and the public route are in innerlamp-be `openapi.yaml`, then bump this spec's `Contract:` line
 - [x] DTO + mapper + entity: `isMajor`, `sortOrder`, `recurrence` (`ILCalendarRecurrence`, unknown → `.other`); mapper tests with and without the fields
-- [ ] Major mark on rows and on the detail (UI not done); DONE: "Lễ lớn" filter on `isMajor`, home tiers live (BR-CAL-10, BR-CAL-15, criteria 4, 8, 13, 16)
+- [x] Major mark on rows and on the detail; also "Lễ lớn" filter on `isMajor`, home tiers live (BR-CAL-10, BR-CAL-15, criteria 4, 8, 13, 16)
 - [x] Public route (FR-CAL-001, criterion 1): `CalendarEventsEndpoint.requiresAuth = false`, no `X-API-Key`; `ILCalendarEventsTests` asserts `requiresAuth == false`; manual QA as a guest and signed in still to do on device
 - [ ] Manual QA on device against the seeded backend: 2026-05-31 lists Lễ Phật đản above Rằm; February's home card per BR-CAL-15 (needs backend Phase 16 seed)
 

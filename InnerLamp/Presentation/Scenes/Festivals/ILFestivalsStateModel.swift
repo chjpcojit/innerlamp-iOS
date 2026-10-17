@@ -26,6 +26,10 @@ struct ILFestivalDayModel: Equatable, Identifiable {
     let countdownText: String
     /// `true` khi là lễ có tên (tô màu nhấn số ngày), `false` với ngày trai giới.
     let isFestival: Bool
+    /// `true` khi là "Lễ lớn" (BR-CAL-10) — hiện nhãn nhấn bên cạnh tiêu đề.
+    let isMajor: Bool
+    /// "Phật giáo · Dân gian" — tên nhóm của sự kiện; rỗng thì ẩn dòng.
+    let groupsText: String
     /// `true` khi countdown là "Hôm nay"/"Ngày mai" (tô màu nhấn chữ đếm ngược).
     let isImminent: Bool
     /// `true` khi diễn ra hôm nay (viền vàng thẻ).

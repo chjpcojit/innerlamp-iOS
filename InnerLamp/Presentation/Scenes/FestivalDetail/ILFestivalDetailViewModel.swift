@@ -106,9 +106,9 @@ final class ILFestivalDetailViewModel: ILFestivalDetailViewModelProtocol {
         model.imageURL = entity.imageURL
         model.imageEmptyText = "festivalDetail.image.empty".localized
 
-        model.kindText = entity.groupNames.isEmpty
-            ? "festivalDetail.kind.empty".localized
-            : entity.groupNames.joined(separator: " · ").uppercased()
+        // BR-CAL-10: major mark first, then the group names; nothing to show → the row is hidden.
+        let kindParts = (entity.isMajor ? ["festivals.tab.major".localized] : []) + entity.groupNames
+        model.kindText = kindParts.joined(separator: " · ").uppercased()
         model.title = entity.name
         model.lunarText = String(
             format: "festivalDetail.lunar.format".localized,
@@ -120,7 +120,6 @@ final class ILFestivalDetailViewModel: ILFestivalDetailViewModelProtocol {
         let longParagraphs = paragraphs(from: entity.longDescription)
         // BR-CAL-14: an empty long description is not replaced by the short one (section hidden).
         model.aboutParagraphs = longParagraphs
-        model.aboutEmptyText = "festivalDetail.about.empty".localized
 
         model.dayText = String(format: "%02d", day)
         let weekdayText = weekday == 1
@@ -132,13 +131,7 @@ final class ILFestivalDetailViewModel: ILFestivalDetailViewModelProtocol {
 
         model.practicesTitle = "festivalDetail.practices.title".localized
         model.practices = paragraphs(from: entity.guidance).map(stripListMarker)
-        model.practicesEmptyText = "festivalDetail.practices.empty".localized
 
-        model.sutraTitle = "festivalDetail.sutra.title".localized
-        model.sutraEmptyText = "festivalDetail.sutra.empty".localized
-
-        model.hostsTitle = "festivalDetail.hosts.title".localized
-        model.hostsEmptyText = "festivalDetail.hosts.empty".localized
 
         return model
     }
