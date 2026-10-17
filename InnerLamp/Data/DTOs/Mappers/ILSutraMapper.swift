@@ -78,7 +78,7 @@ nonisolated enum ILSutraMapper {
         )
     }
 
-    /// @ai: assumption — see Docs/Assumptions/Sutras/AS-Sutras-003-preferred-translation-and-title.md
+    /// @ai: to be replaced — Docs/Specs/Sutra/ BR-STR-05 (Vietnamese-first version rule; tasks.md Phase 2)
     /// The Vietnamese translation when there is one, otherwise the first the server lists.
     private static func preferredTranslation(of dto: ILSutraDTO) -> ILSutraTranslationDTO? {
         dto.translations.first { $0.lang == "vi" } ?? dto.translations.first

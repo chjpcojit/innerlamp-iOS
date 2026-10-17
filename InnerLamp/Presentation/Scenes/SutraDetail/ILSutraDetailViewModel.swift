@@ -123,7 +123,7 @@ final class ILSutraDetailViewModel: ILSutraDetailViewModelProtocol {
             state.title = sutra.title
             state.originalName = sutra.originalTitle
             state.metaText = metaText(for: sutra)
-            // @ai: assumption — see Docs/Assumptions/SutraDetail/AS-SutraDetail-001-metadata-lines-and-license.md
+            // @ai: metadata lines and licence follow Docs/Specs/Sutra/ (BR-STR-07, FR-STR-003)
             state.descriptionText = [sutra.collection, sutra.reference]
                 .filter { !$0.isEmpty }
                 .joined(separator: "sutraDetail.descriptionSeparator".localized)
@@ -133,8 +133,7 @@ final class ILSutraDetailViewModel: ILSutraDetailViewModelProtocol {
                 ? ""
                 : String(format: "sutraDetail.tocCount.chapters".localized, sutra.chapters.count)
             state.chapters = sutra.chapters.map { chapterModel(from: $0) }
-            // @ai: the API has no audio / reading-progress data — see
-            // Docs/Tech-Debt/SutraDetail/TD-SutraDetail-001-*.md
+            // @ai: no audio, play button or progress by design — see Docs/Specs/Sutra/ (BR-STR-12, FR-STR-004)
             state.hasAudio = false
             state.chantButtonTitle = "sutraDetail.read".localized
         }
@@ -173,7 +172,7 @@ final class ILSutraDetailViewModel: ILSutraDetailViewModelProtocol {
     /// Summary → information → translation & license → unreviewed notice. Empty values are dropped and
     /// a section without rows is omitted (the backend asks the client to always show the translator
     /// and license when present).
-    /// @ai: assumption — see Docs/Assumptions/SutraDetail/AS-SutraDetail-002-extra-api-fields-default-labels.md
+    /// @ai: row labels and notice — see Docs/Specs/Sutra/ (BR-STR-07; labels are ⚠️ Not confirmed in requirements.md)
     private static func infoSections(for sutra: ILSutraDetailSutraEntity) -> [ILSutraDetailInfoSectionModel] {
         func row(_ labelKey: String, _ value: String) -> ILSutraDetailInfoRowModel? {
             value.isEmpty ? nil : ILSutraDetailInfoRowModel(label: labelKey.localized, value: value, url: nil)
@@ -268,7 +267,7 @@ final class ILSutraDetailViewModel: ILSutraDetailViewModelProtocol {
             number: chapter.number,
             title: chapter.title,
             subtitle: String(format: "sutraDetail.chapter.lineCount".localized, chapter.lineCount),
-            // @ai: the API has no per-section duration — see TD-SutraDetail-001
+            // @ai: no per-section duration by design — see Docs/Specs/Sutra/ (BR-STR-12)
             durationText: "",
             isCurrent: false
         )

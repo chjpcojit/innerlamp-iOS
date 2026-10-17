@@ -6,7 +6,7 @@
 quick-access tile and the "Kinh sách" view-all link. Sticky header (nav bar + typed search input +
 two chip rows: purpose/sect and length) over a scrolling list of sutra cards; tapping a card opens
 `SutraDetail`. Owned by `ILLibraryCoordinator`; `ILSutrasCoordinator` manages its own stack.
-Spec: `Docs/Specs/Sutras/`.
+Spec: `Docs/Specs/Sutra/` (merged from the former `Docs/Specs/Sutras/`, `SutraDetail/` and `Reader/`).
 
 ## Status
 
@@ -29,7 +29,7 @@ Spec: `Docs/Specs/Sutras/`.
 
 ## Known gaps
 
-- "Có audio" badge follows `audio_url` (no sutra has audio yet); "downloaded" badge never shown (TD-Sutras-002).
+- "Có audio" badge follows `audio_url` (no sutra has audio yet); "downloaded" badge never shown; both badges are to be removed (`Docs/Specs/Sutra/`, BR-STR-12).
 - First load (and any filter/search reload that empties the list) shows `ILSutrasSkeletonView` — card-shaped pulsing placeholders matching `ILSutrasCardView`; later pages use the footer spinner.
 - "Gửi yêu cầu bản kinh" link on the empty state not built (Empty-search screen not built).
 
@@ -38,4 +38,5 @@ Spec: `Docs/Specs/Sutras/`.
 - 2026-10-03 — initial implementation (ui-builder)
 - 2026-10-07 — integrated `GET /v1/sutras` (paging, server filters)
 - 2026-10-07 — search field "×" clear button (`ILSearchInputView.showsClearButton`)
-- 2026-10-07 — server-side search (`q`) + `audio_url` badge; client-side search removed (TD-Sutras-003 resolved)
+- 2026-10-07 — server-side search (`q`) + `audio_url` badge; client-side search removed (old TD-Sutras-003 resolved)
+- 2026-10-16 — spec moved to `Docs/Specs/Sutra/` (the old `Docs/Specs/Sutras/`, `SutraDetail/`, `Reader/` and their assumption and tech-debt entries were deleted); no code change.

@@ -1,5 +1,12 @@
 # Knowledge Bundle Update Log
 
+## 2026-10-16
+
+- `features/library.md`: the Related concepts bullet for SutraDetail now points to `Docs/Specs/Sutra/`
+  (which replaced the deleted `Docs/Specs/Sutras/`, `SutraDetail/` and `Reader/`) and notes that the
+  tab's sample sutra ids open the not-found state until the Library spec lands. No other statement in the
+  concept changed; the Library hub stays, `index.md` is unchanged (no concept added or removed).
+
 ## 2026-10-15
 
 - Deleted `features/{signup,otp,login,forgot-password,onboarding,splash}.md` and `api/{auth-request-otp,

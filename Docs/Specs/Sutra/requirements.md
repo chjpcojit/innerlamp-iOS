@@ -1,6 +1,6 @@
 # Requirements — Sutra
 
-Version: 1.0
+Version: 1.0.1
 Last updated: 2026-10-16
 Status: in-progress — the sutra list (paging, topic + duration chips, server search) and the sutra page (all fields the API returns) are built against the backend; the reading view and the library tiles still run on a sample catalogue and can open the wrong text; product spec v1.0 alignment pending: 60-minute chip and chip / card copy, Vietnamese-first default version (BR-STR-05), licence labels and the short unreviewed notice, per-version facts, linked deities that open the deity page, real text from `/lines` with table of contents, section jump and version switch, four remembered font sizes shared with the settings (three backgrounds dropped), the simulated player removed, error / empty / not-found states with retry, and the quote of the day by date instead of random on Home (`tasks.md` Phase 2–8).
 Feature folders: `InnerLamp/Presentation/Scenes/Sutras/` (list), `InnerLamp/Presentation/Scenes/SutraDetail/` (sutra page), `InnerLamp/Presentation/Scenes/Reader/` (reading view), and the quote code in `InnerLamp/Domain/UseCases/SutraQuote/` used by `InnerLamp/Presentation/Scenes/Home/` and `InnerLamp/Presentation/Scenes/LunarDayDetail/`
@@ -18,7 +18,7 @@ v1.4 (sutra page) and `Docs/Specs/Reader/` v1.1 (reading view), and absorbs thei
 (`AS-Sutras-001…003`, `AS-SutraDetail-001…002`, `AS-Reader-001…003`) and tech debt (`TD-Sutras-001…003`,
 `TD-SutraDetail-001…003`, `TD-Reader-001…003`). It also covers the daily quote (`ILSutraQuoteUseCase`).
 The code folders keep their names (`Sutras`, `SutraDetail`, `Reader`). The old spec folders and entries
-are kept until a separate clean-up change (`tasks.md` Phase 9). `Docs/Specs/Library/`,
+were deleted on 2026-10-16 (`changelog.md` v1.0.1). `Docs/Specs/Library/`,
 `Docs/Specs/Downloads/` and `Docs/Specs/Player/` are separate later specs and are not touched here.
 Product behavior — order, filters, search, Vietnamese-first titles and versions, licence and notice,
 links to Buddhas, the quote rule, reading preferences, no audio, states — lives in the product spec and

@@ -1,6 +1,6 @@
 # Tasks — Sutra
 
-Version: 1.0
+Version: 1.0.1
 Last updated: 2026-10-16
 Implements: `requirements.md` v1.0 · design: `design.md` v1.0
 
@@ -84,6 +84,6 @@ Resolves TD-SutraDetail-003, TD-Reader-001, TD-Reader-002, TD-Reader-003.
 - [ ] Manual QA on device: list, sutra page, reading view, quote
 - [ ] NFR-STR-01 and NFR-STR-02 checks
 - [ ] Update READMEs and the OKF concept
-- [ ] Separate clean-up change: remove `Docs/Specs/Sutras/`, `SutraDetail/`, `Reader/` and their assumption and tech-debt entries
+- [x] Separate clean-up change: remove `Docs/Specs/Sutras/`, `SutraDetail/`, `Reader/` and their assumption and tech-debt entries
 - [ ] Add `Docs/Assumptions/Sutra/` for the platform assumptions
 - [ ] `python3 -I Scripts/doc-check.py --changed` passes

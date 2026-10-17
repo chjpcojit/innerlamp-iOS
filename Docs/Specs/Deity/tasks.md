@@ -1,7 +1,7 @@
 # Tasks — Deity
 
-Version: 1.1
-Last updated: 2026-10-15
+Version: 1.1.1
+Last updated: 2026-10-16
 Status: in-progress — Phase 1 (what is built and still matches product v1.0) done; Phase 2–8 pending; Phase 2 and the vía (a deity's feast day, kept on a lunar date) tasks of Phase 3, 4 and 6 blocked on backend deity v3.0 + `openapi.yaml`; several copy tasks blocked on product ⚠️
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -98,5 +98,5 @@ Status: in-progress — Phase 1 (what is built and still matches product v1.0) d
 ## Deferred (separate features, not blocking Deity)
 
 - Countdown rule `ILCalendarRules` — owned by `Docs/Specs/Calendar/` (used here, created by whichever lands first).
-- Sutra page — `Docs/Specs/SutraDetail/`; mala — `Docs/Specs/Mala/`; festival calendar — `Docs/Specs/Calendar/`.
+- Sutra page — `Docs/Specs/Sutra/`; mala — `Docs/Specs/Mala/`; festival calendar — `Docs/Specs/Calendar/`.
 - Dedicated share layout (prototype share screen) — out of scope (product §1.2).

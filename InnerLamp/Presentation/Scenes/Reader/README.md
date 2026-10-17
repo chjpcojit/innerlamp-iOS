@@ -28,14 +28,13 @@ event is `.back`. Opened by `ILSutraDetailCoordinator` and `ILLibraryCoordinator
 
 ## Known gaps
 
-- Timer-driven highlight, no audio — TD-Reader-001.
-- Duplicated mock catalog / text for 2 sutras only — TD-Reader-002.
-- Preferences not persisted — TD-Reader-003.
+- Timer-driven highlight, no audio; duplicated mock catalog (text for 2 sutras only); preferences not persisted — all replaced by `Docs/Specs/Sutra/` (FR-STR-005, FR-STR-006; `tasks.md` Phase 5).
 - Always starts at line 0 (no chapter/part entry point).
-- Assumptions: AS-Reader-001…003 (`Docs/Assumptions/Reader/`).
+- Spec: `Docs/Specs/Sutra/` (the former `Docs/Specs/Reader/` and `AS-Reader-001…003` / `TD-Reader-001…003` were deleted).
 - Not yet checked on a physical device (layout, dark mode, themes).
 
 ## Changelog
 
 - 2026-09-26 — initial build (verse view + playback bar).
 - 2026-10-03 — redesigned to the scrolling chant view of the refreshed handoff; removed share/download/font-size/player events, `ILReaderVerseView`, `ILReaderPlaybackBarView`.
+- 2026-10-16 — spec moved to `Docs/Specs/Sutra/` (the old `Docs/Specs/Sutras/`, `SutraDetail/`, `Reader/` and their assumption and tech-debt entries were deleted); no code change.
