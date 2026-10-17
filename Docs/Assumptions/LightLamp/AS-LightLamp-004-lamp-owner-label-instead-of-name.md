@@ -4,9 +4,9 @@ title: My lamps are labelled "Của bạn" instead of the user's name
 title_vi: Đèn của tôi gắn nhãn "Của bạn" thay vì tên người dùng
 feature: LightLamp
 level: Low
-status: Unvalidated
+status: Invalidated
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-17
 files:
   - InnerLamp/Presentation/Scenes/LightLamp/ILLampGardenViewModel.swift:122
   - InnerLamp/Resources/Localization/vi.json
@@ -31,5 +31,5 @@ EN: Revisit after the profile/display-name source lands (TD-Home-002); decide wh
 VI: Xem lại sau khi có nguồn tên hiển thị (TD-Home-002); quyết định có lưu tên lúc thắp hay không.
 
 ## Outcome / Kết luận
-EN: _(fill in when Validated/Invalidated: decision, date, who confirmed)_
-VI: _(điền khi Validated/Invalidated: quyết định, ngày, người xác nhận)_
+EN: Invalidated by product decision of 2026-10-16: the lighter is shown by dharma name, else "Vô danh", never "Của bạn" as a name; own lamps carry a separate "Của bạn" label (BR-LMP-09, FR-LMP-008).
+VI: Bị bác bỏ bởi quyết định product 2026-10-16: người thắp hiện bằng pháp danh, không có thì "Vô danh"; đèn của mình có nhãn "Của bạn" riêng (BR-LMP-09, FR-LMP-008).

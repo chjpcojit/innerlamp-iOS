@@ -4,9 +4,9 @@ title: No maximum length on the dedication target and the vow
 title_vi: Chưa giới hạn độ dài của "Dành cho" và lời nguyện
 feature: LightLamp
 level: Low
-status: Unvalidated
+status: Invalidated
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-17
 files:
   - InnerLamp/Presentation/Scenes/LightLamp/ILLightLampViewController.swift:76
   - InnerLamp/Domain/UseCases/LightLamp/ILLightLampUseCase.swift:43
@@ -31,5 +31,5 @@ EN: Ask Product/Backend for the limits.
 VI: Hỏi Product/Backend về giới hạn.
 
 ## Outcome / Kết luận
-EN: _(fill in when Validated/Invalidated: decision, date, who confirmed)_
-VI: _(điền khi Validated/Invalidated: quyết định, ngày, người xác nhận)_
+EN: Invalidated by product decision of 2026-10-16: the recipient is capped at 100 and the prayer at 300 characters (BR-LMP-06, BR-LMP-07).
+VI: Bị bác bỏ bởi quyết định product 2026-10-16: người nhận tối đa 100, lời nguyện tối đa 300 ký tự (BR-LMP-06, BR-LMP-07).

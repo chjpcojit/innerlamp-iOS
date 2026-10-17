@@ -4,9 +4,9 @@ title: A lamp goes out after its chosen number of days
 title_vi: Đèn tắt sau số ngày đã chọn
 feature: LightLamp
 level: Medium
-status: Unvalidated
+status: Invalidated
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-17
 files:
   - InnerLamp/Domain/Entities/ILLampEntity.swift:41
   - InnerLamp/Domain/UseCases/LightLamp/ILLightLampUseCase.swift:50
@@ -31,5 +31,5 @@ EN: Confirm the expiry rule and the day-counting convention with Product.
 VI: Xác nhận quy tắc hết hạn và cách đếm ngày với Product.
 
 ## Outcome / Kết luận
-EN: _(fill in when Validated/Invalidated: decision, date, who confirmed)_
-VI: _(điền khi Validated/Invalidated: quyết định, ngày, người xác nhận)_
+EN: Invalidated by product decision of 2026-10-16: a lamp is lit until the server end moment (lit_at + N×24h), not the calendar day (BR-LMP-02).
+VI: Bị bác bỏ bởi quyết định product 2026-10-16: đèn sáng đến thời điểm kết thúc của server (lit_at + N×24h), không theo ngày dương lịch (BR-LMP-02).

@@ -1,6 +1,6 @@
 # Tasks — LightLamp
 
-Version: 2.0
+Version: 2.0.1
 Last updated: 2026-10-17
 Status: in-progress (drift) — Phase 1 (the built shell) was read in code on 2026-10-17 and still matches; Phase 2–6 (server-driven lamps, guest gate, hide-name switch, new label, vectors) not started. Phase 3 end-to-end items are blocked on contract 3.0.0 (optional recipient, own-lamp flag).
 
@@ -71,7 +71,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 ## Phase 6 — Documentation
 
 - [ ] `InnerLamp/Presentation/Scenes/LightLamp/README.md`: replace "local-only", status table and known gaps with the v2.0 state (it is a `membershipExceptions` entry already)
-- [ ] Close the Assumption and Tech Debt entries of the feature as the code lands — set `status`, `updated` and the Outcome / Resolution; never delete them (`AGENTS.md` §10.3): `AS-LightLamp-001…004` and `006` become Invalidated, `AS-LightLamp-007` and `008` Validated (`005` already Invalidated); `TD-LightLamp-001` and `005` Resolved
+- [ ] Assumptions closed on 2026-10-17 (`AS-LightLamp-001…004`, `006` Invalidated, `007`, `008` Validated, by the product decisions); still open: close the Tech Debt entries as the code lands — set `status`, `updated` and the Outcome / Resolution; never delete them (`AGENTS.md` §10.3): `AS-LightLamp-001…004` and `006` become Invalidated, `AS-LightLamp-007` and `008` Validated (`005` already Invalidated); `TD-LightLamp-001` and `005` Resolved
 - [ ] `Docs/Specs/Profile/` (v1.4 sign-out wording, `AS-Profile-003`) and `Docs/Specs/Donate/design.md` (mentions `ILLightLampCoordinator.startModal()`): update the lamp mentions in their own spec updates
 - [ ] `Docs/Knowledge/features/lightlamp.md` (OKF concept) — hold off until Phase 3–4 are verified end to end against the backend. See `Docs/Specs/OKF.md`.
 

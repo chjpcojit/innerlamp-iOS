@@ -4,9 +4,9 @@ title: Empty garden uses the shared empty state with placeholder copy
 title_vi: Vườn đèn trống dùng trạng thái rỗng dùng chung với nội dung tạm
 feature: LightLamp
 level: Low
-status: Unvalidated
+status: Validated
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-17
 files:
   - InnerLamp/Presentation/Scenes/LightLamp/ILLampGardenViewController.swift:62
 source: Docs/Specs/LightLamp/requirements.md (Pending — empty-garden copy, ⚠️ Not confirmed)
@@ -30,5 +30,5 @@ EN: Get the empty state from Design.
 VI: Xin thiết kế trạng thái rỗng từ Design.
 
 ## Outcome / Kết luận
-EN: _(fill in when Validated/Invalidated: decision, date, who confirmed)_
-VI: _(điền khi Validated/Invalidated: quyết định, ngày, người xác nhận)_
+EN: Validated by the product spec of 2026-10-16 (FR-LMP-012); the exact empty-state copy is tracked in Docs/Specs/LightLamp/requirements.md v2.0.
+VI: Được product spec 2026-10-16 xác nhận (FR-LMP-012); câu chữ empty state cụ thể theo dõi ở Docs/Specs/LightLamp/requirements.md v2.0.
