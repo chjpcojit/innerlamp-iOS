@@ -65,6 +65,28 @@ final class ILFestivalsItemView: UIView {
         return label
     }()
 
+    /// EN: "Lễ lớn" mark (BR-CAL-10), shown only for major events. VI: Nhãn "Lễ lớn" (BR-CAL-10), chỉ hiện với lễ lớn.
+    private lazy var majorLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.captionMedium
+        label.textColor = ILColors.link
+        label.text = "festivals.tab.major".localized
+        label.isHidden = true
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return label
+    }()
+
+    /// EN: Group names of the event. VI: Tên các nhóm của sự kiện.
+    private lazy var groupsLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.label
+        label.textColor = ILColors.inkSubtle
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
+    }()
+
     private lazy var lunarLabel: UILabel = {
         let label = UILabel()
         label.font = ILTypography.label
@@ -99,14 +121,16 @@ final class ILFestivalsItemView: UIView {
 
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         countdownLabel.translatesAutoresizingMaskIntoConstraints = false
-        let titleRow = UIStackView(arrangedSubviews: [titleLabel, countdownLabel])
+        majorLabel.translatesAutoresizingMaskIntoConstraints = false
+        let titleRow = UIStackView(arrangedSubviews: [titleLabel, majorLabel, countdownLabel])
         titleRow.axis = .horizontal
         titleRow.alignment = .center
         titleRow.spacing = 8
 
         lunarLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let textStack = UIStackView(arrangedSubviews: [titleRow, lunarLabel])
+        groupsLabel.translatesAutoresizingMaskIntoConstraints = false
+        let textStack = UIStackView(arrangedSubviews: [titleRow, lunarLabel, groupsLabel])
         textStack.axis = .vertical
         textStack.alignment = .fill
         textStack.spacing = 3
@@ -151,6 +175,9 @@ final class ILFestivalsItemView: UIView {
         countdownLabel.textColor = model.isImminent ? ILColors.link : ILColors.inkSubtle
 
         lunarLabel.text = model.lunarSubtitle
+        majorLabel.isHidden = !model.isMajor
+        groupsLabel.text = model.groupsText
+        groupsLabel.isHidden = model.groupsText.isEmpty
 
         isToday = model.isToday
         applyBorder()

@@ -55,12 +55,13 @@ final class ILFestivalDetailViewModelTests: XCTestCase {
         guidance: String = "- Đi chùa\nTụng kinh",
         imageURL: String? = "https://example.com/vu-lan.jpg",
         groupNames: [String] = ["Phật giáo"],
+        isMajor: Bool = false,
         daysUntil: Int = 3
     ) -> ILFestivalDetailEntity {
         ILFestivalDetailEntity(
             code: "vu-lan", name: "Đại lễ Vu Lan",
             shortDescription: shortDescription, longDescription: longDescription, guidance: guidance,
-            imageURL: imageURL, groupNames: groupNames,
+            imageURL: imageURL, groupNames: groupNames, isMajor: isMajor,
             date: stubDate, lunarDay: 15, lunarMonth: 7, isLeapMonth: false, daysUntil: daysUntil
         )
     }
@@ -89,29 +90,24 @@ final class ILFestivalDetailViewModelTests: XCTestCase {
         XCTAssertEqual(state?.countdownText, String(format: "festivalDetail.countdown.days".localized, 3))
     }
 
-    func test_missingContent_keepsSectionsWithEmptyText() {
+    func test_missingContent_leavesSectionsEmptySoTheyAreHidden() {
         mockUseCase.result = Self.makeEntity(
-            longDescription: "", shortDescription: "", guidance: "", imageURL: nil, groupNames: []
+            longDescription: "", shortDescription: "Mô tả ngắn.", guidance: "", imageURL: nil, groupNames: []
         )
         let output = sut.transform(input: makeInput())
         let state = waitForSuccess(output)
 
-        XCTAssertEqual(state?.aboutParagraphs, [])
+        XCTAssertEqual(state?.aboutParagraphs, [], "BR-CAL-14: the short description never replaces an empty long one")
         XCTAssertEqual(state?.practices, [])
         XCTAssertNil(state?.imageURL)
-        XCTAssertEqual(state?.kindText, "festivalDetail.kind.empty".localized)
-        XCTAssertFalse(state?.aboutEmptyText.isEmpty ?? true)
-        XCTAssertFalse(state?.practicesEmptyText.isEmpty ?? true)
-        XCTAssertFalse(state?.sutraEmptyText.isEmpty ?? true)
-        XCTAssertFalse(state?.hostsEmptyText.isEmpty ?? true)
+        XCTAssertEqual(state?.kindText, "")
     }
 
-    func test_emptyLongDescription_fallsBackToShortDescription() {
-        mockUseCase.result = Self.makeEntity(longDescription: "", shortDescription: "Mô tả ngắn.")
-        let output = sut.transform(input: makeInput())
-        let state = waitForSuccess(output)
+    func test_majorEvent_putsMajorMarkBeforeGroupNames() {
+        mockUseCase.result = Self.makeEntity(groupNames: ["Phật giáo", "Dân gian"], isMajor: true)
+        let state = waitForSuccess(sut.transform(input: makeInput()))
 
-        XCTAssertEqual(state?.aboutParagraphs, ["Mô tả ngắn."])
+        XCTAssertEqual(state?.kindText, "\("festivals.tab.major".localized) · PHẬT GIÁO · DÂN GIAN".uppercased())
     }
 
     func test_countdown_today_tomorrow_past() {

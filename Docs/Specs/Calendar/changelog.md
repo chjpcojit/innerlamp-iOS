@@ -3,6 +3,13 @@
 Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in this folder. All three
 files share one changelog since they change together as one spec unit. Newest version first.
 
+## v1.3 (2026-10-17) — event UI
+
+- `requirements.md` / `tasks.md`: criteria 4 and 13 closed (except the default image); Pending list narrowed.
+- Code: major mark and group names on the festival rows; detail kind row leads with the major mark; empty
+  kind / about / practices sections are hidden; "Kinh nên tụng" and "Chùa tổ chức" removed with their
+  state fields and strings.
+
 ## v1.2 (2026-10-17) — openapi 2.2.0 integration
 
 - `requirements.md`: header cites product spec v1.2 and openapi 2.2.0 @ 3af0844; Pending list drops

@@ -47,6 +47,7 @@ final class ILFestivalDetailUseCaseImpl: ILFestivalDetailUseCase {
             guidance: event.guidance,
             imageURL: event.imageURL,
             groupNames: event.groupCodes.compactMap { groupNamesByCode[$0] },
+            isMajor: event.isMajor,
             date: day,
             lunarDay: occurrence.lunarDay,
             lunarMonth: occurrence.lunarMonth,

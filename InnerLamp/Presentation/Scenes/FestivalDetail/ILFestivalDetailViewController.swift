@@ -82,10 +82,6 @@ final class ILFestivalDetailViewController: BaseViewController {
 
     private lazy var practicesEyebrow = ILSectionEyebrowView()
     private lazy var practicesCard = ILFestivalDetailListCardView()
-    private lazy var sutraEyebrow = ILSectionEyebrowView()
-    private lazy var sutraCard = ILFestivalDetailListCardView()
-    private lazy var hostsEyebrow = ILSectionEyebrowView()
-    private lazy var hostsCard = ILFestivalDetailListCardView()
 
     /// EN: Full-screen states — shown instead of `scrollView` while there is no content.
     /// VI: Trạng thái toàn màn hình — hiện thay `scrollView` khi chưa có nội dung.
@@ -144,7 +140,7 @@ final class ILFestivalDetailViewController: BaseViewController {
 
         [
             heroView, kindRow, titleLabel, lunarLabel, aboutView, dateCard,
-            practicesEyebrow, practicesCard, sutraEyebrow, sutraCard, hostsEyebrow, hostsCard
+            practicesEyebrow, practicesCard
         ].forEach { contentStack.addArrangedSubview($0) }
 
         contentStack.setCustomSpacing(ILMetrics.groupSpacing, after: heroView)
@@ -152,12 +148,11 @@ final class ILFestivalDetailViewController: BaseViewController {
         contentStack.setCustomSpacing(ILMetrics.rowSpacing, after: titleLabel)
         contentStack.setCustomSpacing(ILMetrics.groupSpacing, after: lunarLabel)
         contentStack.setCustomSpacing(Layout.sectionSpacing, after: aboutView)
-        [practicesEyebrow, sutraEyebrow, hostsEyebrow].forEach {
+        [practicesEyebrow].forEach {
             contentStack.setCustomSpacing(ILMetrics.spaceCompact, after: $0)
         }
         contentStack.setCustomSpacing(Layout.sectionSpacing, after: dateCard)
         contentStack.setCustomSpacing(Layout.sectionSpacing, after: practicesCard)
-        contentStack.setCustomSpacing(Layout.sectionSpacing, after: sutraCard)
 
         // Scroll view first so the sticky header band stays on top of scrolled content.
         [scrollView, loadingView, errorView, headerBand].forEach { view.addSubview($0) }
@@ -270,9 +265,11 @@ final class ILFestivalDetailViewController: BaseViewController {
     private func updateUI(with model: ILFestivalDetailStateModel) {
         heroView.configure(imageURL: model.imageURL, emptyText: model.imageEmptyText)
         kindRow.configure(kindText: model.kindText)
+        kindRow.isHidden = model.kindText.isEmpty
         titleLabel.text = model.title
         lunarLabel.text = model.lunarText
-        aboutView.configure(paragraphs: model.aboutParagraphs, emptyText: model.aboutEmptyText)
+        aboutView.configure(paragraphs: model.aboutParagraphs)
+        aboutView.isHidden = model.aboutParagraphs.isEmpty
 
         dateCard.configure(
             day: model.dayText,
@@ -282,10 +279,8 @@ final class ILFestivalDetailViewController: BaseViewController {
         )
 
         practicesEyebrow.title = model.practicesTitle
-        practicesCard.configure(items: model.practices, emptyText: model.practicesEmptyText)
-        sutraEyebrow.title = model.sutraTitle
-        sutraCard.configure(items: [], emptyText: model.sutraEmptyText)
-        hostsEyebrow.title = model.hostsTitle
-        hostsCard.configure(items: [], emptyText: model.hostsEmptyText)
+        practicesCard.configure(items: model.practices)
+        practicesEyebrow.isHidden = model.practices.isEmpty
+        practicesCard.isHidden = model.practices.isEmpty
     }
 }

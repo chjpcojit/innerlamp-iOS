@@ -190,6 +190,8 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
             title: day.title,
             countdownText: countdownText(day.daysUntil),
             isFestival: day.kind == .festival,
+            isMajor: day.isMajor,
+            groupsText: day.groupNames.joined(separator: " · "),
             isImminent: (0...1).contains(day.daysUntil),
             isToday: day.daysUntil == 0,
             lunarSubtitle: lunarSubtitle(

@@ -5,12 +5,10 @@
 
 import UIKit
 
-/// EN: Numbered list card of the festival detail screen ("what Buddhists usually do"). With no items it
-///     shows `emptyText` inside the same card — a section is never hidden. Also used for sections
-///     without a data source yet ("sutras to recite", "hosting temples") with empty `items`.
-/// VI: Thẻ danh sách đánh số của màn "Chi tiết ngày lễ" (mục "Phật tử thường làm gì"). Không có mục
-///     nào thì hiện `emptyText` trong cùng thẻ — mục không bao giờ bị ẩn. Cũng dùng cho các mục
-///     chưa có nguồn dữ liệu ("Kinh nên tụng", "Chùa tổ chức") với `items` rỗng.
+/// EN: Numbered list card of the festival detail screen ("what Buddhists usually do"). The caller hides
+///     the card (and its eyebrow) when there are no items (BR-CAL-14).
+/// VI: Thẻ danh sách đánh số của màn "Chi tiết ngày lễ" (mục "Phật tử thường làm gì"). Nơi gọi ẩn thẻ
+///     (và eyebrow) khi không có mục nào (BR-CAL-14).
 final class ILFestivalDetailListCardView: UIView {
 
     private enum Layout {
@@ -39,14 +37,10 @@ final class ILFestivalDetailListCardView: UIView {
     }
 
     // MARK: - Configuration
-    func configure(items: [String], emptyText: String) {
+    func configure(items: [String]) {
         stack.arrangedSubviews.forEach {
             stack.removeArrangedSubview($0)
             $0.removeFromSuperview()
-        }
-        guard !items.isEmpty else {
-            stack.addArrangedSubview(makeEmptyRow(text: emptyText))
-            return
         }
         for (index, item) in items.enumerated() {
             if index > 0 { stack.addArrangedSubview(makeSeparator()) }
@@ -112,15 +106,6 @@ final class ILFestivalDetailListCardView: UIView {
         row.alignment = .center
         row.spacing = Layout.rowSpacing
         return inset(row)
-    }
-
-    private func makeEmptyRow(text: String) -> UIView {
-        let label = UILabel()
-        label.numberOfLines = 0
-        label.font = ILTypography.bodyCompact
-        label.textColor = ILColors.inkSubtle
-        label.text = text
-        return inset(label)
     }
 
     private func makeSeparator() -> UIView {

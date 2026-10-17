@@ -138,6 +138,7 @@ final class ILFestivalsViewModelTests: XCTestCase {
         let day = receivedState?.months.first?.days.first
         XCTAssertEqual(day?.title, "Đại lễ Phật Đản")
         XCTAssertEqual(day?.isFestival, true)
+        XCTAssertEqual(day?.isMajor, true)
         XCTAssertEqual(day?.isToday, true)
         XCTAssertEqual(day?.countdownText, "festivals.item.countdown.today".localized)
         XCTAssertFalse(day?.lunarSubtitle.isEmpty ?? true)

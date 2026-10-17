@@ -1,6 +1,6 @@
 # Design — Calendar
 
-Version: 1.2
+Version: 1.3
 Last updated: 2026-10-17
 Status: in-progress — festival calendar, event detail and Home's events block built against `GET /v1/calendar/events` (signed-in, network only); planned: server-only Rằm / Mùng Một, filters by group, 2100 limit, retry and device copy, hidden empty sections, home-block window and tiers, shared rule functions + product vectors; public route, `is_major` and `recurrence` wait on backend v3.0
 
