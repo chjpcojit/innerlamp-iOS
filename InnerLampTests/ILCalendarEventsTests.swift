@@ -51,7 +51,8 @@ final class ILCalendarEventsTests: XCTestCase {
       "groups": [{"code": "buddhist", "name": "Phật giáo"}, {"code": "folk", "name": "Dân gian"}],
       "events": [
         {"code": "tet-nguyen-dan", "name": "Tết Nguyên Đán", "short_description": "s", "long_description": "l",
-         "guidance": "g", "image_url": null, "groups": ["vietnam", "folk"], "is_public_holiday": true}
+         "guidance": "g", "image_url": null, "groups": ["vietnam", "folk"], "is_public_holiday": true,
+         "is_major": true, "sort_order": 3, "recurrence": "future_kind"}
       ],
       "occurrences": [
         {"event_code": "tet-nguyen-dan", "solar_date": "2026-02-17",
@@ -64,14 +65,14 @@ final class ILCalendarEventsTests: XCTestCase {
     }}
     """
 
-    func test_loadEvents_sendsYearQuery_toAuthenticatedEndpoint() async throws {
+    func test_loadEvents_sendsYearQuery_toPublicEndpoint() async throws {
         network.result = .success(json)
 
         _ = try await repository.loadEvents(year: 2026)
 
         XCTAssertEqual(network.paths, ["/v1/calendar/events"])
         XCTAssertEqual(network.queries, [["year": "2026"]])
-        XCTAssertEqual(network.requiresAuthFlags, [true])
+        XCTAssertEqual(network.requiresAuthFlags, [false], "FR-CAL-001: guests read the calendar")
     }
 
     func test_loadEvents_mapsEventsAndDropsUnusableOccurrences() async throws {
@@ -85,6 +86,9 @@ final class ILCalendarEventsTests: XCTestCase {
         XCTAssertNil(result.events.first?.imageURL)
         XCTAssertEqual(result.events.first?.groupCodes, ["vietnam", "folk"])
         XCTAssertEqual(result.events.first?.isPublicHoliday, true)
+        XCTAssertEqual(result.events.first?.isMajor, true)
+        XCTAssertEqual(result.events.first?.sortOrder, 3)
+        XCTAssertEqual(result.events.first?.recurrence, .other, "Unknown recurrence decodes as .other")
 
         XCTAssertEqual(result.occurrences.count, 1)
         let occurrence = try XCTUnwrap(result.occurrences.first)
@@ -93,6 +97,26 @@ final class ILCalendarEventsTests: XCTestCase {
         XCTAssertEqual(occurrence.lunarDay, 1)
         XCTAssertEqual(occurrence.lunarMonth, 1)
         XCTAssertFalse(occurrence.isLeapMonth)
+    }
+
+    func test_loadEvents_mapsRateLimited_withRetryAfter() async {
+        network.result = .failure(.apiError(
+            code: "RATE_LIMITED", message: "", type: "",
+            details: ["retry_after_seconds": AnyCodable(value: 30)]
+        ))
+        do {
+            _ = try await repository.loadEvents(year: 2026)
+            XCTFail("Expected .rateLimited")
+        } catch {
+            guard case .rateLimited(let seconds)? = error as? ILCatalogError else { return XCTFail("Got \(error)") }
+            XCTAssertEqual(seconds, 30)
+        }
+    }
+
+    func test_recurrence_decodesKnownValues() {
+        XCTAssertEqual(ILCalendarRecurrence(rawValue: "lunar_monthly"), .lunarMonthly)
+        XCTAssertEqual(ILCalendarRecurrence(rawValue: "solar_term"), .solarTerm)
+        XCTAssertEqual(ILCalendarRecurrence(rawValue: "x"), .other)
     }
 
     func test_loadEvents_mapsOfflineAndServerFailures() async {

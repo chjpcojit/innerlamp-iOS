@@ -68,7 +68,7 @@ final class ILFestivalsViewModelTests: XCTestCase {
                     id: "2026-09-15", date: stubDate, title: "Đại lễ Phật Đản", kind: .festival,
                     daysUntil: 0,
                     lunarDay: 15, lunarMonth: 8, isLeapMonth: false,
-                    eventCode: "phat-dan"
+                    eventCode: "phat-dan", isMajor: true
                 ),
                 ILFestivalDayEntity(
                     id: "2026-09-16", date: stubDate, title: "Vía Văn Thù Bồ Tát", kind: .festival,
@@ -150,9 +150,9 @@ final class ILFestivalsViewModelTests: XCTestCase {
         let receivedState = applyTab(.festivals, output: output)
 
         XCTAssertEqual(receivedState?.selectedTab, .festivals)
-        XCTAssertEqual(receivedState?.months.first?.days.count, 2)
-        XCTAssertEqual(receivedState?.months.first?.days.contains(where: { $0.title.contains("trai giới") }), false)
-        XCTAssertEqual(receivedState?.subtitle, Self.subtitle(total: 2))
+        XCTAssertEqual(receivedState?.months.first?.days.count, 1, "Chip 'Lễ lớn' keeps only is_major events")
+        XCTAssertEqual(receivedState?.months.first?.days.first?.title, "Đại lễ Phật Đản")
+        XCTAssertEqual(receivedState?.subtitle, Self.subtitle(total: 1))
     }
 
     func test_tabSelected_observances_filtersOutFestivals() {

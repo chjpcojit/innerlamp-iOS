@@ -9,7 +9,7 @@ import Foundation
 enum ILFestivalKind: Equatable {
     /// Ngày lễ / vía có tên, lấy từ server (`GET /v1/calendar/events`) — nhấn màu.
     case festival
-    /// Rằm / Mùng Một không có lễ riêng ("ngày trai giới") — chữ thường. Tính từ âm lịch.
+    /// Rằm / Mùng Một ("ngày trai giới", `recurrence == lunar_monthly`) — chữ thường. Từ server.
     case observance
 }
 
@@ -22,17 +22,19 @@ struct ILFestivalDayEntity: Equatable, Identifiable {
     let id: String
     /// Ngày dương lịch ngày lễ diễn ra.
     let date: Date
-    /// Tên lễ — `name` của sự kiện từ server, hoặc "Rằm/Mùng Một tháng X — ngày trai giới".
+    /// Tên lễ — `name` của sự kiện từ server.
     let title: String
     let kind: ILFestivalKind
     /// Số ngày còn lại kể từ hôm nay (0 = hôm nay, 1 = ngày mai, N = còn N ngày).
     let daysUntil: Int
-    /// Ngày âm lịch của `date` — lấy từ server với ngày lễ, tính từ `ILLunarCalendar` với ngày trai giới.
+    /// Ngày âm lịch của `date` — lấy từ server.
     let lunarDay: Int
     let lunarMonth: Int
     let isLeapMonth: Bool
     /// Mã sự kiện trên server — `nil` với ngày trai giới (không có trang chi tiết).
     var eventCode: String? = nil
+    /// BR-CAL-10: "Lễ lớn" do server đánh dấu — chip "Lễ lớn" lọc theo cờ này.
+    var isMajor: Bool = false
 }
 
 /// 1 tháng dương trong màn "Lịch lễ Phật giáo" — các ngày lễ gom theo tháng dương lịch.

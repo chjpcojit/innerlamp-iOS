@@ -20,7 +20,8 @@ final class ILFestivalsUseCaseTests: XCTestCase {
     private func event(_ code: String) -> ILCalendarEventEntity {
         ILCalendarEventEntity(
             code: code, name: "name-\(code)", shortDescription: "", longDescription: "", guidance: "",
-            imageURL: nil, groupCodes: ["buddhist"], isPublicHoliday: false
+            imageURL: nil, groupCodes: ["buddhist"], isPublicHoliday: false,
+            isMajor: false, sortOrder: 0, recurrence: .solar
         )
     }
 
@@ -78,29 +79,56 @@ final class ILFestivalsUseCaseTests: XCTestCase {
         XCTAssertFalse(months.flatMap(\.days).contains { $0.title == "name-ghost" })
     }
 
-    func test_loadMonths_dayWithoutServerEvent_isObservanceForNewAndFullMoon() async throws {
+    func test_loadMonths_lunarMonthlyEvent_isObservance_otherwiseFestival() async throws {
+        var ram = event("ram")
+        ram = ILCalendarEventEntity(
+            code: ram.code, name: ram.name, shortDescription: "", longDescription: "", guidance: "",
+            imageURL: nil, groupCodes: ["buddhist"], isPublicHoliday: false,
+            isMajor: false, sortOrder: 99, recurrence: .lunarMonthly
+        )
         let (sut, _) = makeSUT(
-            events: [event("tet")],
-            occurrences: [occurrence("tet", date(2024, 2, 10), lunarDay: 1, lunarMonth: 1)]
+            events: [event("tet"), ram],
+            occurrences: [
+                occurrence("tet", date(2024, 2, 10), lunarDay: 1, lunarMonth: 1),
+                occurrence("ram", date(2024, 3, 25), lunarDay: 15, lunarMonth: 2)
+            ]
         )
 
-        let months = try await sut.loadMonths(year: 2024, today: date(2024, 2, 1))
+        let days = try await sut.loadMonths(year: 2024, today: date(2024, 2, 1)).flatMap(\.days)
 
-        let march = try XCTUnwrap(months.first { $0.id == "2024-03" })
-        XCTAssertEqual(march.days.first?.kind, .observance) // 1/2
-        XCTAssertEqual(march.days.first?.date, date(2024, 3, 10))
-        XCTAssertEqual(march.days.first?.lunarDay, 1)
-        XCTAssertEqual(march.days.first?.lunarMonth, 2)
-        XCTAssertTrue(march.days.contains { $0.date == date(2024, 3, 25) && $0.kind == .observance }) // 15/2
+        XCTAssertEqual(days.first { $0.eventCode == "tet" }?.kind, .festival)
+        XCTAssertEqual(days.first { $0.eventCode == "ram" }?.kind, .observance)
     }
 
-    func test_loadMonths_noServerEvents_yieldsOnlyObservances() async throws {
+    func test_loadMonths_noServerEvents_yieldsNothing_clientNeverComputesObservances() async throws {
         let (sut, _) = makeSUT()
 
         let months = try await sut.loadMonths(year: 2024, today: date(2024, 2, 1))
 
-        XCTAssertFalse(months.isEmpty)
-        XCTAssertTrue(months.flatMap(\.days).allSatisfy { $0.kind == .observance })
+        XCTAssertTrue(months.isEmpty, "BR-CAL-05: Rằm / Mùng 1 come from the catalogue only")
+    }
+
+    func test_loadMonths_sameDay_ordersBySortOrder_andCarriesIsMajor() async throws {
+        func make(_ code: String, order: Int, major: Bool) -> ILCalendarEventEntity {
+            ILCalendarEventEntity(
+                code: code, name: code, shortDescription: "", longDescription: "", guidance: "",
+                imageURL: nil, groupCodes: ["buddhist"], isPublicHoliday: false,
+                isMajor: major, sortOrder: order, recurrence: .solar
+            )
+        }
+        let day = date(2024, 5, 22)
+        let (sut, _) = makeSUT(
+            events: [make("late", order: 90, major: false), make("early", order: 5, major: true)],
+            occurrences: [
+                occurrence("late", day, lunarDay: 15, lunarMonth: 4),
+                occurrence("early", day, lunarDay: 15, lunarMonth: 4)
+            ]
+        )
+
+        let days = try await sut.loadMonths(year: 2024, today: day).flatMap(\.days)
+
+        XCTAssertEqual(days.map(\.eventCode), ["early", "late"])
+        XCTAssertEqual(days.map(\.isMajor), [true, false])
     }
 
     func test_loadMonths_twoEventsOnSameDay_produceTwoEntriesWithDistinctIDs() async throws {

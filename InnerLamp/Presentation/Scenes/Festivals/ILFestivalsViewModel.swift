@@ -154,7 +154,7 @@ final class ILFestivalsViewModel: ILFestivalsViewModelProtocol {
             let days = month.days.filter { day in
                 switch tab {
                 case .all: return true
-                case .festivals: return day.kind == .festival
+                case .festivals: return day.isMajor
                 case .observances: return day.kind == .observance
                 }
             }

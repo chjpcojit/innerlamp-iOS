@@ -332,9 +332,11 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
         )
     }
 
-    /// Carousel "Sự kiện Phật giáo" — sự kiện của cả năm dương lịch chứa `date` (1/1 → 31/12) từ
-    /// server, gom theo tháng dương lịch theo thứ tự thời gian. Ngày dương và âm lịch đều do server
-    /// tính; client chỉ gom nhóm và đặt nhãn.
+    /// Carousel "Sự kiện Phật giáo" — sự kiện nhóm Phật giáo của cả năm dương lịch chứa `date`
+    /// (1/1 → 31/12) từ server, gom theo tháng dương lịch. Trong mỗi tháng xếp theo BR-CAL-15: lễ lớn
+    /// (`is_major`) trước, rồi sự kiện có tên khác, rồi Rằm/Mùng 1 (`recurrence == lunar_monthly`);
+    /// trong mỗi nhóm theo ngày rồi `sort_order`. Ngày dương và âm lịch đều do server tính.
+    /// @ai: assumption — cửa sổ 6 tháng + thẻ tháng trống của BR-CAL-15 chưa làm, xem Docs/Tech-Debt/Home/.
     func loadBuddhistEventMonths(around date: Date) async throws -> [ILHomeEventMonthEntity] {
         var calendar = Calendar(identifier: .gregorian)
         calendar.firstWeekday = 2
@@ -346,8 +348,17 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
         // Gom theo tháng dương lịch, giữ thứ tự thời gian của tháng xuất hiện đầu tiên.
         var order: [String] = []
         var itemsByMonth: [String: [ILHomeEventItemEntity]] = [:]
-        for occurrence in calendarEvents.occurrences.sorted(by: { $0.solarDate < $1.solarDate }) {
-            guard let event = eventsByCode[occurrence.eventCode] else { continue }
+        let pairs = calendarEvents.occurrences.compactMap { occurrence -> (ILCalendarOccurrenceEntity, ILCalendarEventEntity)? in
+            guard let event = eventsByCode[occurrence.eventCode],
+                  event.groupCodes.contains(Self.buddhistGroupCode) else { return nil }
+            return (occurrence, event)
+        }
+        .sorted { lhs, rhs in
+            let left = (Self.monthKey(for: lhs.0.solarDate, calendar: calendar), Self.tier(of: lhs.1), lhs.0.solarDate, lhs.1.sortOrder)
+            let right = (Self.monthKey(for: rhs.0.solarDate, calendar: calendar), Self.tier(of: rhs.1), rhs.0.solarDate, rhs.1.sortOrder)
+            return left < right
+        }
+        for (occurrence, event) in pairs {
             let key = Self.monthKey(for: occurrence.solarDate, calendar: calendar)
             if itemsByMonth[key] == nil { order.append(key) }
             itemsByMonth[key, default: []].append(
@@ -379,6 +390,15 @@ final class ILHomeUseCaseImpl: ILHomeUseCase {
     /// chung với màn danh sách "Chư Phật & Bồ Tát"; giữ lại hàm này cho call site + test cũ.
     static func primaryMemorialDay(of days: [ILDeityMemorialDayEntity]) -> ILDeityMemorialDayEntity? {
         ILDeityEntity.primaryMemorialDay(of: days)
+    }
+
+    /// Nhóm Phật giáo là nhóm cố định của danh mục (BR-CAL-15 phụ thuộc vào nó).
+    private static let buddhistGroupCode = "buddhist"
+
+    /// Bậc ưu tiên trong thẻ tháng (BR-CAL-15): 0 lễ lớn, 1 sự kiện có tên khác, 2 Rằm/Mùng 1.
+    private static func tier(of event: ILCalendarEventEntity) -> Int {
+        if event.recurrence == .lunarMonthly { return 2 }
+        return event.isMajor ? 0 : 1
     }
 
     /// Khóa tháng dương lịch `yyyy-MM` — dùng để gom và làm id ổn định cho thẻ tháng.

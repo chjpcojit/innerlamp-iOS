@@ -7,8 +7,8 @@ import Foundation
 
 protocol ILFestivalsUseCase {
     /// Các ngày lễ Phật giáo của đúng một năm dương lịch `year` (từ 1/1 đến 31/12) lấy từ server
-    /// (`GET /v1/calendar/events?year=`), cộng Rằm/Mùng Một không có lễ riêng là ngày trai giới,
-    /// gom theo tháng dương. `today` là mốc tính `daysUntil` (ngày đã qua có `daysUntil` âm) và
+    /// (`GET /v1/calendar/events?year=`) — gồm cả Rằm/Mùng Một (`recurrence == lunar_monthly`, ngày
+    /// trai giới; BR-CAL-05, client không tự tính) — gom theo tháng dương. `today` là mốc tính `daysUntil` (ngày đã qua có `daysUntil` âm) và
     /// quyết định nhãn tháng có kèm năm hay không.
     ///
     /// Tháng nào không có ngày lễ thì không xuất hiện trong kết quả. Lỗi mạng/server được ném ra
@@ -48,53 +48,35 @@ final class ILFestivalsUseCaseImpl: ILFestivalsUseCase {
         while day < end {
             let daysUntil = Self.daysBetween(today, day, calendar: calendar)
 
-            if let dayOccurrences = occurrencesByDay[day] {
-                for occurrence in dayOccurrences {
-                    guard let event = eventsByCode[occurrence.eventCode] else { continue }
-                    Self.append(
-                        ILFestivalDayEntity(
-                            id: "\(Self.dayKey(day, calendar: calendar))-\(event.code)",
-                            date: day,
-                            title: event.name,
-                            kind: .festival,
-                            daysUntil: daysUntil,
-                            lunarDay: occurrence.lunarDay,
-                            lunarMonth: occurrence.lunarMonth,
-                            isLeapMonth: occurrence.isLeapMonth,
-                            eventCode: event.code
-                        ),
+            // EN: Every row comes from the server catalogue (BR-CAL-05) — Rằm / Mùng 1 included.
+            // VI: Mọi dòng đều lấy từ danh mục của server (BR-CAL-05) — kể cả Rằm / Mùng 1.
+            let dayOccurrences = (occurrencesByDay[day] ?? []).compactMap { occurrence -> (ILCalendarOccurrenceEntity, ILCalendarEventEntity)? in
+                eventsByCode[occurrence.eventCode].map { (occurrence, $0) }
+            }
+            // EN: Stable sort by the server's in-day order (Rằm / Mùng 1 are always last).
+            // VI: Sắp xếp ổn định theo thứ tự trong ngày của server (Rằm / Mùng 1 luôn ở cuối).
+            let sortedOccurrences = dayOccurrences.enumerated()
+                .sorted { ($0.element.1.sortOrder, $0.offset) < ($1.element.1.sortOrder, $1.offset) }
+                .map(\.element)
+            for (occurrence, event) in sortedOccurrences {
+                Self.append(
+                    ILFestivalDayEntity(
+                        id: "\(Self.dayKey(day, calendar: calendar))-\(event.code)",
                         date: day,
-                        calendar: calendar,
-                        order: &order,
-                        daysByMonth: &daysByMonth
-                    )
-                }
-            } else {
-                // Rằm / Mùng Một không có lễ riêng là ngày trai giới (kể cả trong tháng nhuận).
-                let lunar = ILLunarCalendar.solarToLunar(date: day, calendar: calendar)
-                let observanceKey: String? = switch lunar.day {
-                case 1: "festivals.observance.newMoon"
-                case 15: "festivals.observance.fullMoon"
-                default: nil
-                }
-                if let observanceKey {
-                    Self.append(
-                        ILFestivalDayEntity(
-                            id: Self.dayKey(day, calendar: calendar),
-                            date: day,
-                            title: String(format: observanceKey.localized, Self.lunarMonthName(lunar.month)),
-                            kind: .observance,
-                            daysUntil: daysUntil,
-                            lunarDay: lunar.day,
-                            lunarMonth: lunar.month,
-                            isLeapMonth: lunar.isLeapMonth
-                        ),
-                        date: day,
-                        calendar: calendar,
-                        order: &order,
-                        daysByMonth: &daysByMonth
-                    )
-                }
+                        title: event.name,
+                        kind: event.recurrence == .lunarMonthly ? .observance : .festival,
+                        daysUntil: daysUntil,
+                        lunarDay: occurrence.lunarDay,
+                        lunarMonth: occurrence.lunarMonth,
+                        isLeapMonth: occurrence.isLeapMonth,
+                        eventCode: event.code,
+                        isMajor: event.isMajor
+                    ),
+                    date: day,
+                    calendar: calendar,
+                    order: &order,
+                    daysByMonth: &daysByMonth
+                )
             }
 
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
@@ -125,11 +107,6 @@ final class ILFestivalsUseCaseImpl: ILFestivalsUseCase {
         let monthKey = monthKey(date, calendar: calendar)
         if daysByMonth[monthKey] == nil { order.append(monthKey) }
         daysByMonth[monthKey, default: []].append(entity)
-    }
-
-    /// Tên tháng âm ngắn ("Giêng", "Bảy"…) — tái dùng bộ `lunarCalendar.month.*`.
-    private static func lunarMonthName(_ month: Int) -> String {
-        "lunarCalendar.month.\(max(1, min(12, month)))".localized
     }
 
     private static func daysBetween(_ from: Date, _ to: Date, calendar: Calendar) -> Int {

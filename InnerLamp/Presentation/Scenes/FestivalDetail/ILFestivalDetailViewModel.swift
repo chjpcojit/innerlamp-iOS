@@ -116,9 +116,10 @@ final class ILFestivalDetailViewModel: ILFestivalDetailViewModelProtocol {
             ILLunarCalendar.lunarMonthLabel(entity.lunarMonth, isLeap: entity.isLeapMonth)
         )
 
-        // Mô tả dài; chưa có thì dùng mô tả ngắn.
+        // Mô tả dài, mỗi dòng một đoạn.
         let longParagraphs = paragraphs(from: entity.longDescription)
-        model.aboutParagraphs = longParagraphs.isEmpty ? paragraphs(from: entity.shortDescription) : longParagraphs
+        // BR-CAL-14: an empty long description is not replaced by the short one (section hidden).
+        model.aboutParagraphs = longParagraphs
         model.aboutEmptyText = "festivalDetail.about.empty".localized
 
         model.dayText = String(format: "%02d", day)

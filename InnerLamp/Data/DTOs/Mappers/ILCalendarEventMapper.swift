@@ -20,7 +20,10 @@ nonisolated enum ILCalendarEventMapper {
                 guidance: event.guidance,
                 imageURL: event.imageUrl.flatMap(nonEmpty),
                 groupCodes: event.groups,
-                isPublicHoliday: event.isPublicHoliday
+                isPublicHoliday: event.isPublicHoliday,
+                isMajor: event.isMajor,
+                sortOrder: event.sortOrder,
+                recurrence: ILCalendarRecurrence(rawValue: event.recurrence)
             )
         }
         let knownCodes = Set(events.map(\.code))

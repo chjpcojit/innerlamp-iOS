@@ -1456,6 +1456,7 @@
     "deity.error.offlineTitle": "Mất kết nối",
     "catalog.error.loadFailed": "Không tải được dữ liệu. Vui lòng thử lại.",
     "catalog.error.notFound": "Không tìm thấy nội dung này.",
+    "catalog.error.rateLimited": "Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.",
     "catalog.error.offline": "Không có kết nối mạng. Vui lòng thử lại khi có mạng.",
     "sutraQuote.error.loadFailed": "Không đọc được câu kinh.",
     "sutraQuote.error.seedFailed": "Không nạp được dữ liệu câu kinh.",

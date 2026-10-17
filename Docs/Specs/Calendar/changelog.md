@@ -3,6 +3,19 @@
 Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in this folder. All three
 files share one changelog since they change together as one spec unit. Newest version first.
 
+## v1.2 (2026-10-17) — openapi 2.2.0 integration
+
+- `requirements.md`: header cites product spec v1.2 and openapi 2.2.0 @ 3af0844; Pending list drops
+  criterion 1 (public route) and 5 (local Rằm / Mùng Một), narrows 4/7–9, 13 and 16–17; criterion 22 names
+  `ILCatalogError.rateLimited`.
+- `design.md`: error row and endpoint / DTO rows updated to what is built.
+- `tasks.md`: Phase 6 ticked except the major mark UI and device QA.
+- Code: `CalendarEventsEndpoint.requiresAuth = false`; DTO / entity / mapper read `is_major`, `sort_order`,
+  `recurrence`; Festivals builds every row from the server (no `ILLunarCalendar`), "Lễ lớn" chip filters on
+  `isMajor`; Home block is Buddhist-only with BR-CAL-15 tiers; detail drops the short-description
+  fallback; 429 maps to `ILCatalogError.rateLimited`.
+- Reason: backend session message of 2026-10-17 (contract 2.2.0, backward compatible).
+
 ## v1.1 (2026-10-15) — superseded festival docs removed
 
 - `requirements.md`: no change needed (header re-synced). The resolved questions and Pending items
