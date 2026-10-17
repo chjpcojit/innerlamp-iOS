@@ -8,7 +8,7 @@ import Foundation
 /// Tab lọc của màn "Lịch lễ Phật giáo".
 enum ILFestivalsTab: Int, Equatable, CaseIterable {
     case all = 0
-    /// "Lễ lớn" — mọi ngày lễ / vía có tên, bỏ ngày trai giới.
+    /// "Lễ lớn" — chỉ sự kiện server đánh dấu `is_major` (BR-CAL-10).
     case festivals
     /// "Rằm & Mùng Một" — chỉ các ngày trai giới.
     case observances

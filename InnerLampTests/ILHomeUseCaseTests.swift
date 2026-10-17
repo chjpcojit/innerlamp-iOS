@@ -21,7 +21,8 @@ final class ILHomeUseCaseTests: XCTestCase {
     private func event(_ code: String, name: String, groups: [String] = ["buddhist"]) -> ILCalendarEventEntity {
         ILCalendarEventEntity(
             code: code, name: name, shortDescription: "", longDescription: "", guidance: "",
-            imageURL: nil, groupCodes: groups, isPublicHoliday: false
+            imageURL: nil, groupCodes: groups, isPublicHoliday: false,
+            isMajor: false, sortOrder: 0, recurrence: .solar
         )
     }
 
@@ -78,13 +79,40 @@ final class ILHomeUseCaseTests: XCTestCase {
 
         let months = try await sut.loadBuddhistEventMonths(around: date)
 
-        XCTAssertEqual(months.map(\.id), ["2026-01", "2026-05"])
-        XCTAssertEqual(months[0].events.map(\.title), ["Tết Dương lịch"])
-        XCTAssertEqual(months[0].events.first?.tone, .rose)
-        XCTAssertEqual(months[1].events.map(\.title), ["Rằm", "Phật Đản"])
-        XCTAssertEqual(months[1].events.map(\.tone), [.gold, .gold])
-        XCTAssertEqual(months[1].events.first?.lunarLabel, "lunarCalendar.day.fullMoon".localized + " · " + ILLunarCalendar.lunarMonthLabel(3, isLeap: false))
-        XCTAssertEqual(Set(months[1].events.map(\.id)).count, 2, "Occurrences of the same event must keep distinct ids")
+        XCTAssertEqual(months.map(\.id), ["2026-05"], "BR-CAL-15: Buddhist group only")
+        XCTAssertEqual(months[0].events.map(\.title), ["Rằm", "Phật Đản"])
+        XCTAssertEqual(months[0].events.map(\.tone), [.gold, .gold])
+        XCTAssertEqual(months[0].events.first?.lunarLabel, "lunarCalendar.day.fullMoon".localized + " · " + ILLunarCalendar.lunarMonthLabel(3, isLeap: false))
+        XCTAssertEqual(Set(months[0].events.map(\.id)).count, 2, "Occurrences of the same event must keep distinct ids")
+    }
+
+    func test_loadBuddhistEventMonths_ordersMajorFirst_thenNamed_thenMonthly() async throws {
+        func make(_ code: String, major: Bool, recurrence: ILCalendarRecurrence) -> ILCalendarEventEntity {
+            ILCalendarEventEntity(
+                code: code, name: code, shortDescription: "", longDescription: "", guidance: "",
+                imageURL: nil, groupCodes: ["buddhist"], isPublicHoliday: false,
+                isMajor: major, sortOrder: 0, recurrence: recurrence
+            )
+        }
+        let repository = MockILCalendarEventRepository()
+        repository.result = .success(ILCalendarEventsEntity(
+            year: 2026, groups: [],
+            events: [
+                make("mung-1", major: false, recurrence: .lunarMonthly),
+                make("van-thu", major: false, recurrence: .lunar),
+                make("phat-dan", major: true, recurrence: .lunar)
+            ],
+            occurrences: [
+                occurrence("mung-1", 2026, 5, 1, lunarDay: 15, lunarMonth: 3),
+                occurrence("van-thu", 2026, 5, 10, lunarDay: 24, lunarMonth: 3),
+                occurrence("phat-dan", 2026, 5, 31, lunarDay: 15, lunarMonth: 4)
+            ]
+        ))
+        let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 5, day: 10)))
+
+        let months = try await makeEventsSUT(repository).loadBuddhistEventMonths(around: date)
+
+        XCTAssertEqual(months[0].events.map(\.title), ["phat-dan", "van-thu", "mung-1"])
     }
 
     func test_loadBuddhistEventMonths_propagatesRepositoryFailure() async {

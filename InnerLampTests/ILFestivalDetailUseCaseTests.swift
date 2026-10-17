@@ -33,7 +33,8 @@ final class ILFestivalDetailUseCaseTests: XCTestCase {
     private func event(_ code: String) -> ILCalendarEventEntity {
         ILCalendarEventEntity(
             code: code, name: "Lễ \(code)", shortDescription: "ngắn", longDescription: "dài",
-            guidance: "việc", imageURL: nil, groupCodes: ["buddhist", "unknown"], isPublicHoliday: false
+            guidance: "việc", imageURL: nil, groupCodes: ["buddhist", "unknown"], isPublicHoliday: false,
+            isMajor: false, sortOrder: 0, recurrence: .solar
         )
     }
 

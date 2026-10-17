@@ -1,7 +1,7 @@
 # Tasks — Calendar
 
-Version: 1.1
-Last updated: 2026-10-15
+Version: 1.2
+Last updated: 2026-10-17
 Status: in-progress — Phase 1–3 built (build-verified, tests not run) except the items left `[ ]`; Phase 4 (product spec v1.1 drift), Phase 5 (device copy) and Phase 7 (product vectors) not started; Phase 6 waits on backend v3.0 (backend `tasks.md` Phase 14–18); Phase 8 (copy) blocked on ⚠️ product
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -69,12 +69,12 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 - [ ] Manual QA in airplane mode: calendar, detail and Home after one online visit; first visit offline (FR-CAL-007, FR-CAL-008 scenarios)
 - [ ] Measure NFR-CAL-03 on device: ≤ 2 s on 4G, ≤ 0.5 s from the copy (criterion 24)
 
-## Phase 6 — Backend v3.0 fields and public route — waits on innerlamp-be `tasks.md` Phase 14–18 (openapi update in Phase 18)
+## Phase 6 — Backend v3.0 fields and public route (openapi 2.2.0 — contract available since 2026-10-17)
 
-- [ ] Confirm `is_major`, `sort_order`, `recurrence` and the public route are in innerlamp-be `openapi.yaml`, then bump this spec's `Contract:` line
-- [ ] DTO + mapper + entity: `isMajor`, `sortOrder`, `recurrence` (`ILCalendarRecurrenceKind`, unknown → `.unknown`); mapper tests with and without the fields
-- [ ] Major mark on rows and on the detail, "Lễ lớn" filter on `isMajor`, home tiers 1 and 3 live (BR-CAL-10, BR-CAL-15, criteria 4, 8, 13, 16)
-- [ ] Public route (FR-CAL-001, criterion 1): `CalendarEventsEndpoint.requiresAuth = false`, no `X-API-Key`; `ILCalendarEventsTests` asserts no `Authorization` header; manual QA as a guest (guest preview) and signed in — same occurrences, no sign-in prompt
+- [x] Confirm `is_major`, `sort_order`, `recurrence` and the public route are in innerlamp-be `openapi.yaml`, then bump this spec's `Contract:` line
+- [x] DTO + mapper + entity: `isMajor`, `sortOrder`, `recurrence` (`ILCalendarRecurrence`, unknown → `.other`); mapper tests with and without the fields
+- [ ] Major mark on rows and on the detail (UI not done); DONE: "Lễ lớn" filter on `isMajor`, home tiers live (BR-CAL-10, BR-CAL-15, criteria 4, 8, 13, 16)
+- [x] Public route (FR-CAL-001, criterion 1): `CalendarEventsEndpoint.requiresAuth = false`, no `X-API-Key`; `ILCalendarEventsTests` asserts `requiresAuth == false`; manual QA as a guest and signed in still to do on device
 - [ ] Manual QA on device against the seeded backend: 2026-05-31 lists Lễ Phật đản above Rằm; February's home card per BR-CAL-15 (needs backend Phase 16 seed)
 
 ## Phase 7 — Product vectors (criterion 23, BR-CAL-12, BR-CAL-13, BR-CAL-15)

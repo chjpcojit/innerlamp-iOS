@@ -35,6 +35,34 @@ nonisolated struct ILCalendarEventEntity: Equatable {
     /// Group codes, in display order.
     let groupCodes: [String]
     let isPublicHoliday: Bool
+    /// BR-CAL-10: one of the "Lễ lớn". Data from the server, never a client list.
+    let isMajor: Bool
+    /// Order within one solar day (ascending); Mùng 1 and Rằm are always last.
+    let sortOrder: Int
+    let recurrence: ILCalendarRecurrence
+}
+
+/// How an event repeats. Open set: a value the app does not know decodes as `.other`.
+nonisolated enum ILCalendarRecurrence: Equatable {
+    case solar
+    case lunar
+    /// Mùng 1 and Rằm — every lunar month (BR-CAL-05). The way to recognise them, instead of
+    /// comparing `code` or computing the lunar day locally.
+    case lunarMonthly
+    case lunarLastDay
+    case solarTerm
+    case other
+
+    init(rawValue: String) {
+        switch rawValue {
+        case "solar": self = .solar
+        case "lunar": self = .lunar
+        case "lunar_monthly": self = .lunarMonthly
+        case "lunar_last_day": self = .lunarLastDay
+        case "solar_term": self = .solarTerm
+        default: self = .other
+        }
+    }
 }
 
 /// One event on one solar day, with its lunar date.

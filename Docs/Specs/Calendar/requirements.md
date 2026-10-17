@@ -1,11 +1,11 @@
 # Requirements — Calendar
 
-Version: 1.1
-Last updated: 2026-10-15
-Status: in-progress — festival calendar, event detail and Home's events block are built against `GET /v1/calendar/events` (signed-in only, build-verified, tests not run); product spec v1.1 alignment pending: server-only Rằm / Mùng Một, filters by group, 2100 limit, retry and device copy, hidden empty sections, home-block window and tiers, product vectors; public route and major mark wait on the backend (`tasks.md` Phase 4–9)
+Version: 1.2
+Last updated: 2026-10-17
+Status: in-progress — festival calendar, event detail and Home's events block are built against `GET /v1/calendar/events` (public route, `is_major` / `sort_order` / `recurrence` read; build-verified, tests written but not run); still open: major mark on rows, group filters, 2100 limit, retry rows, device copy, hidden empty sections, the six-month home window, product vectors (`tasks.md` Phase 4–9)
 Feature folders: `InnerLamp/Presentation/Scenes/Festivals/` (festival calendar), `InnerLamp/Presentation/Scenes/FestivalDetail/` (event detail), the events block of `InnerLamp/Presentation/Scenes/Home/`
-Product spec: innerlamp-be `docs/product/calendar/product.md` @ v1.1
-Contract: innerlamp-be `docs/specs/api/openapi.yaml` @ 0eb7d1f (info.version 1.0.0; `GET /v1/calendar/events` last changed in a8a016b — still bearer-only, no `is_major` / `sort_order` / `recurrence`). Planned shape: innerlamp-be `docs/specs/features/calendar/requirements.md` + `design.md` v3.0 (E4, E13, E17, E22, E23), not implemented yet (backend `tasks.md` Phase 14–18; the contract update is Phase 18)
+Product spec: innerlamp-be `docs/product/calendar/product.md` @ v1.2
+Contract: innerlamp-be `docs/specs/api/openapi.yaml` @ 3af0844 (info.version 2.2.0; `GET /v1/calendar/events` is public — no `Authorization`, no `X-API-Key` — per-IP rate limit `429 RATE_LIMITED` with `details.retry_after_seconds`; `CalendarEvent` adds `is_major`, `sort_order`, `recurrence`). Backend feature spec: `docs/specs/features/calendar/` v3.2 (branch `feat/calendar-v3-public-major-via`, not pushed when this was written)
 Implements: BR-CAL-05, BR-CAL-08, BR-CAL-09, BR-CAL-10, BR-CAL-11, BR-CAL-12, BR-CAL-13, BR-CAL-14, BR-CAL-15, FR-CAL-001..008, NFR-CAL-03
 Not on iOS: BR-CAL-01…04, BR-CAL-06, BR-CAL-07, BR-CAL-16, FR-CAL-010, NFR-CAL-01, NFR-CAL-02 (Backend only); FR-CAL-009 (Website only, product §3.6)
 
@@ -104,7 +104,7 @@ mean, so that I can prepare without working out the lunar calendar myself.
 
     > ⚠️ Not confirmed: the home block when only one of its two years fails and has no copy — default: the cards of the year that loaded show their rows, the cards of the failed year show the failure message with retry — blocks nothing.
 
-22. WHEN the server answers 429 (too many requests from this IP), THE SYSTEM SHALL treat it as a failed load (criteria 20–21) and SHALL NOT retry on its own. (FR-CAL-008, platform)
+22. WHEN the server answers 429 (too many requests from this IP), THE SYSTEM SHALL treat it as a failed load (criteria 20–21; `ILCatalogError.rateLimited`, message `catalog.error.rateLimited`) and SHALL NOT retry on its own. (FR-CAL-008, platform)
 
     > ⚠️ Not confirmed: 429 handling — default: the same path as a server error, the user retries; no automatic retry or back-off — blocks nothing.
 
@@ -145,15 +145,13 @@ schema and error codes stay there. Copy: see the ⚠️ under "Pending".
 
 Criteria the shipped code does **not** meet yet (drift against product spec v1.1):
 
-- Criterion 1 — the endpoint keeps `requiresAuth = true`: a guest gets 401 and an empty calendar / block; waits on backend Phase 18 (product matrix FR-CAL-001 iOS `drift`).
 - Criteria 3, 10 — the current year comes from the device time zone, and loading goes on to 2200 (`ILFestivalsViewModel.maxYear`) instead of 2100 (FR-CAL-002, FR-CAL-004).
-- Criteria 4, 7–9 — rows show no group names and no major mark; the chips are "Tất cả" / "Lễ lớn" / "Rằm & Mùng Một", where "Lễ lớn" means every named event (BR-CAL-10 drift) and there is no chip per group and no count (FR-CAL-003). The major mark needs `is_major` (backend v3.0).
-- Criterion 5 — on days with no server occurrence the app adds Rằm / Mùng Một computed with `ILLunarCalendar` (BR-CAL-05 drift, superseded `AS-Festivals-002`).
-- Criterion 6 — Rằm / Mùng Một rows (the locally added ones) cannot be tapped.
+- Criteria 4, 7–9 — rows show no group names and no major mark (`isMajor` is carried on `ILFestivalDayEntity`, no UI yet); the chips are "Tất cả" / "Lễ lớn" / "Rằm & Mùng Một" — "Lễ lớn" now filters on `is_major` — and there is no chip per group and no count (FR-CAL-003).
+- Criterion 6 — the "Rằm & Mùng Một" chip and row tap still key on `kind == .observance` (now `recurrence == lunar_monthly`); a tap opens the detail only when the row has an `eventCode` — verify on device that Rằm / Mùng Một rows are tappable.
 - Criterion 11 — a failed next year is retried silently on the next scroll, with no retry row.
-- Criterion 13 — every section shows a "Chưa có …" text when empty (no image, no group, no description, no guidance), and "Kinh nên tụng" / "Chùa tổ chức" are always shown with their placeholder (BR-CAL-14, FR-CAL-005 drift); no major mark; the default image is ⚠️ product.
+- Criterion 13 — the about section no longer falls back to the short description (BR-CAL-14); every section still shows a "Chưa có …" text when empty (no image, no group, no description, no guidance), and "Kinh nên tụng" / "Chùa tổ chức" are always shown with their placeholder (BR-CAL-14, FR-CAL-005 drift); no major mark; the default image is ⚠️ product.
 - Criterion 14 — the not-found state offers "Thử lại".
-- Criteria 16–17 — the block shows the months of the current calendar year only (January to December, not six months from now across the year end), every group, the first three occurrences of a month by date with no tiering, and drops months without occurrences (BR-CAL-15 drift, superseded `AS-Home-003`). Tiering needs `is_major` and `recurrence` (backend v3.0).
+- Criteria 16–17 — the block shows the months of the current calendar year only (January to December, not six months from now across the year end) and drops months without occurrences (BR-CAL-15 drift); Buddhist-only selection and the tiers (major, other named, Rằm / Mùng Một) are done in `ILHomeUseCaseImpl`.
 - Criteria 19–20 — no device copy at all: the calendar, the detail and the block need the network (`TD-Home-003`, FR-CAL-007).
 - Criterion 21 — the festival calendar shows a transient error toast with no retry when the first load fails; the block disappears on any failure (FR-CAL-008).
 - Criterion 23 — no product vectors run; the countdown is computed in three places (Festivals, FestivalDetail ViewModels) with the list's copy "còn N ngày" in lower case.

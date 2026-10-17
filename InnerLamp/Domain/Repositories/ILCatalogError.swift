@@ -18,6 +18,8 @@ nonisolated enum ILCatalogError: Error, LocalizedError {
     case notFound
     /// The server could not be reached and nothing usable is cached.
     case offline
+    /// `429 RATE_LIMITED` (per IP, public routes): try again after `retryAfterSeconds` when known.
+    case rateLimited(retryAfterSeconds: Int?)
     /// Anything else — server error, malformed payload, Core Data failure.
     case loadFailed(Error)
 
@@ -29,6 +31,8 @@ nonisolated enum ILCatalogError: Error, LocalizedError {
             return "catalog.error.notFound".localized
         case .offline:
             return "catalog.error.offline".localized
+        case .rateLimited:
+            return "catalog.error.rateLimited".localized
         }
     }
 }

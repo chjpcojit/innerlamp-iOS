@@ -23,6 +23,8 @@ nonisolated extension ILCatalogError {
             || code == "ARTICLE_NOT_FOUND" || code == "SUTRA_NOT_FOUND"
             || code == "ADMINISTRATIVE_UNIT_NOT_FOUND":
             return .notFound
+        case .apiError(let code, _, _, let details) where code == "RATE_LIMITED":
+            return .rateLimited(retryAfterSeconds: details?["retry_after_seconds"]?.value as? Int)
         case .noInternetConnection, .timeout:
             return .offline
         default:
