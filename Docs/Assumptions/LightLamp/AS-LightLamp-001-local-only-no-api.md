@@ -4,9 +4,9 @@ title: Lit lamps are stored only on the device (Core Data), no backend
 title_vi: Đèn đã thắp chỉ lưu trên thiết bị (Core Data), chưa có backend
 feature: LightLamp
 level: Medium
-status: Unvalidated
+status: Invalidated
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-17
 files:
   - InnerLamp/Data/Repositories/ILLampRepositoryImpl.swift:9
   - InnerLamp/Data/DataSources/Local/ILLampLocalDataSource.swift:17
@@ -31,5 +31,5 @@ EN: Ask backend for a lamp contract (endpoints, per-account scope, community gar
 VI: Hỏi backend hợp đồng API đèn (endpoint, phạm vi theo tài khoản, quy tắc vườn đèn cộng đồng).
 
 ## Outcome / Kết luận
-EN: _(fill in when Validated/Invalidated: decision, date, who confirmed)_
-VI: _(điền khi Validated/Invalidated: quyết định, ngày, người xác nhận)_
+EN: Invalidated by product decision of 2026-10-16: lamps live on the server (POST/GET /v1/lamps); Core Data lamps are dropped, not uploaded. See Docs/Specs/LightLamp/requirements.md v2.0.
+VI: Bị bác bỏ bởi quyết định product 2026-10-16: đèn lưu trên server (POST/GET /v1/lamps); đèn Core Data bị bỏ, không tải lên. Xem Docs/Specs/LightLamp/requirements.md v2.0.

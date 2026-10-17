@@ -4,9 +4,9 @@ title: "Thỉnh đèn tại chùa" card is not shown on the completion state
 title_vi: Thẻ "Thỉnh đèn tại chùa" không hiện ở trạng thái hoàn tất
 feature: LightLamp
 level: Low
-status: Unvalidated
+status: Validated
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-17
 files:
   - InnerLamp/Presentation/Scenes/LightLamp/ILLightLampViewController.swift:118
 source: Docs/Specs/LightLamp/requirements.md (Pending — temple-lamp card, ⚠️ Not confirmed)
@@ -30,5 +30,5 @@ EN: Revisit when `Offering` is implemented.
 VI: Xem lại khi `Offering` được triển khai.
 
 ## Outcome / Kết luận
-EN: _(fill in when Validated/Invalidated: decision, date, who confirmed)_
-VI: _(điền khi Validated/Invalidated: quyết định, ngày, người xác nhận)_
+EN: Validated by product decision of 2026-10-16: "Thỉnh đèn tại chùa" stays hidden on every platform (scope: light a lamp and the garden only).
+VI: Được quyết định product 2026-10-16 xác nhận: "Thỉnh đèn tại chùa" tiếp tục ẩn trên mọi nền tảng (phạm vi chỉ thắp đèn và vườn đèn).

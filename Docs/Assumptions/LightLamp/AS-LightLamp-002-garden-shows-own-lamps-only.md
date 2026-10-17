@@ -4,9 +4,9 @@ title: The garden lists only the user's own lamps
 title_vi: Vườn đèn chỉ liệt kê đèn của chính người dùng
 feature: LightLamp
 level: Medium
-status: Unvalidated
+status: Invalidated
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-17
 files:
   - InnerLamp/Presentation/Scenes/LightLamp/ILLampGardenViewModel.swift:127
 source: Docs/Specs/LightLamp/requirements.md (Pending — source of community lamps, ⚠️ Not confirmed)
@@ -30,5 +30,5 @@ EN: Confirm with Product whether the garden is personal or community and, if com
 VI: Xác nhận với Product vườn đèn là cá nhân hay cộng đồng; nếu cộng đồng thì cần API/quy tắc kiểm duyệt.
 
 ## Outcome / Kết luận
-EN: _(fill in when Validated/Invalidated: decision, date, who confirmed)_
-VI: _(điền khi Validated/Invalidated: quyết định, ngày, người xác nhận)_
+EN: Invalidated by product decision of 2026-10-16: the garden shows every user's lamps, with the caller's own marked "Của bạn" via is_mine (BR-LMP-10, FR-LMP-008).
+VI: Bị bác bỏ bởi quyết định product 2026-10-16: vườn đèn hiện đèn của mọi người, đèn của mình được gắn "Của bạn" qua is_mine (BR-LMP-10, FR-LMP-008).

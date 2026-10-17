@@ -3,6 +3,11 @@
 Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in this folder. All three
 files share one changelog since they change together as one spec unit. Newest version first.
 
+## v2.0.1 — 2026-10-17
+
+- `tasks.md`: the Assumption part of the last Phase 6 item is done (AS-LightLamp-001…004 and 006 Invalidated, 007 and 008 Validated, each with an Outcome); the Tech Debt part stays open. The legacy `SRS.md` was deleted. `requirements.md`, `design.md`: no change needed, verified.
+- Reason: cleanup change approved by the product owner on 2026-10-17. `Docs/Specs/Profile/` and `AS-Profile-003` still describe lamps being cleared on sign-out; that is still what the shipped code does, so they change together with the code (`tasks.md` Phase 6).
+
 ## v2.0 — 2026-10-17
 
 - Reason: the cross-platform product spec for the lamp feature now exists (innerlamp-be
