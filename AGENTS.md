@@ -279,6 +279,15 @@ State the lane in your first response of a task. The documentation chain is size
 
 **When unsure, choose the full lane.** A skipped light-lane check costs a note; a skipped full-lane step costs a wrong feature.
 
+### 9.6. Response Style — short, definitive
+Requested by the product owner (anh Đức), 2026-10-18. Applies to every reply to the user.
+- Lead with a definitive status: **done** / **not done** / **partially done** (say which part), then the reason in one or two sentences. No preamble, no recap of the request.
+- Every claim is verifiable: name the evidence (build result, test result, file:line). Anything not verified is stated as "not verified", never implied as done.
+- Keep it short by default. Add detail only when it matters to the decision: why something is not done, a blocker, a risk, an assumption or Tech Debt entry created. Then explain it fully, but only that part.
+- No hedging ("should work", "probably") when the outcome is known; no lists of options when a recommendation is enough.
+
+Example: "Task A: **done** — build passes (`xcodebuild build`). Task B: **not done** — the contract for `/events` is unconfirmed, recorded as AS-Calendar-004; needs BE answer before continuing."
+
 ---
 
 ## 10. Golden Rules — Record Tech Debt & Assumptions
