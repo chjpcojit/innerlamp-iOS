@@ -195,6 +195,11 @@ When asked to create a new feature (e.g., `Auth`, `Dashboard`, `Settings`), the 
   - Token, Passcode, Credentials -> [`KeychainService`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Core/Storage/KeychainService.swift).
   - Settings, First Launch, Theme Mode -> [`UserDefaultsService`](file:///Users/chjpcoj/Documents/Programming/iOS/innerlamp/InnerLamp/Core/Storage/UserDefaultsService.swift).
 
+### 6.1. Backend Claude Code session
+- Backend session title: `[BE]-InnerLamp` (cwd: `/Users/chjpcoj/Documents/Programming/Go/workspaces/src/innerlamp`).
+- When the backend is needed (contract questions, `openapi.yaml` changes, bugs or mismatches in an endpoint, product-spec gaps), message that session. Find its id with `list_sessions` by exact title; never guess an id. Send a self-contained message: endpoint, contract version cited, observed vs expected, and what is needed.
+- Sibling client sessions: `[Android]-InnerLamp`, `[iOS]-InnerLamp`, `[Website]-InnerLamp`. The Justo sessions (`[iOS]-Justo`, `[BE]-Justo`) belong to another project; do not mix them up.
+
 ---
 
 ## 7. Logging Guidelines
