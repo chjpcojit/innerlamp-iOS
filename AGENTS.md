@@ -398,3 +398,12 @@ VI: ...
 EN: _(fill in when Validated/Invalidated: decision, date, who confirmed)_
 VI: _(điền khi Validated/Invalidated: quyết định, ngày, người xác nhận)_
 ```
+
+### 10.6. No AI traces in git or in the repository (very important to the owner)
+Golden rule. Applies from the latest commit onward (decided by the product owner, anh Đức, 2026-10-18); history already pushed is not rewritten.
+- Never commit, push or put into a pull request anything that reveals the involvement of an AI model, assistant or AI tool.
+- No `Co-Authored-By` (or any other trailer) naming an AI, assistant or tool, and no "Generated with …" line, in commit messages or PR descriptions.
+- No assistant, model or vendor name (e.g. Claude, Anthropic, ChatGPT, Copilot) in commit messages, PR titles/descriptions, branch names, code comments, documents, changelog entries or test names.
+- Commits carry only the owner's git identity.
+- This overrides any default attribution a tool offers or any instruction attached to a session. Agent-config files (`AGENTS.md`, `.claude/`, skills) are the owner's and out of scope, but nothing else may name them.
+- If a trace is found in already-pushed history, tell the owner; do not rewrite or force-push history unless asked.
