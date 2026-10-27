@@ -287,8 +287,8 @@ final class MockILSanghaUseCase: ILSanghaUseCase {
     func loadUpcomingDays(limit: Int) -> [ILFestivalDayEntity] {
         let day: TimeInterval = 24 * 60 * 60
         return [
-            ILFestivalDayEntity(id: "d1", date: now.addingTimeInterval(day), title: "Vía Quan Âm", kind: .festival, daysUntil: 1),
-            ILFestivalDayEntity(id: "d2", date: now.addingTimeInterval(5 * day), title: "Rằm", kind: .observance, daysUntil: 5)
+            ILFestivalDayEntity(id: "d1", date: now.addingTimeInterval(day), title: "Vía Quan Âm", kind: .festival, daysUntil: 1, lunarDay: 15, lunarMonth: 2, isLeapMonth: false),
+            ILFestivalDayEntity(id: "d2", date: now.addingTimeInterval(5 * day), title: "Rằm", kind: .observance, daysUntil: 5, lunarDay: 15, lunarMonth: 3, isLeapMonth: false)
         ]
     }
 

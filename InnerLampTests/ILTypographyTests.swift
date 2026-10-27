@@ -17,12 +17,14 @@ final class ILTypographyTests: XCTestCase {
 
     // MARK: - PostScript names must resolve
 
-    func test_allLoraPostScriptNames_resolve() {
+    func test_allSerifPostScriptNames_resolve() {
         let names = [
-            ILTypography.loraRegularName,
-            ILTypography.loraMediumName,
-            ILTypography.loraSemiBoldName,
-            ILTypography.loraBoldName
+            ILTypography.cormorantMediumName,
+            ILTypography.cormorantMediumItalicName,
+            ILTypography.cormorantSemiBoldName,
+            ILTypography.cormorantBoldName,
+            ILTypography.literataRegularName,
+            ILTypography.literataItalicName
         ]
 
         for name in names {
@@ -51,9 +53,13 @@ final class ILTypographyTests: XCTestCase {
 
     // MARK: - Presets must not fall back to a system font
 
-    func test_loraResolver_returnsLoraFamily() {
-        XCTAssertTrue(ILTypography.lora(size: 18).familyName.hasPrefix("Lora"))
-        XCTAssertTrue(ILTypography.lora(size: 18, weight: .semibold).familyName.hasPrefix("Lora"))
+    func test_cormorantResolver_returnsCormorantFamily() {
+        XCTAssertTrue(ILTypography.cormorant(size: 18).familyName.hasPrefix("Cormorant Garamond"))
+        XCTAssertTrue(ILTypography.cormorant(size: 18, weight: .semibold).familyName.hasPrefix("Cormorant Garamond"))
+    }
+
+    func test_literataResolver_returnsLiterataFamily() {
+        XCTAssertTrue(ILTypography.literata(size: 16).familyName.hasPrefix("Literata"))
     }
 
     func test_beVietnamProResolver_returnsBeVietnamProFamily() {
