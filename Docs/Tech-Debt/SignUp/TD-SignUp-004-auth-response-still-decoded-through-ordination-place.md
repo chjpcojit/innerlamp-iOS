@@ -4,9 +4,9 @@ title: Login / verify-otp response is still decoded through ordination_place
 title_vi: Phản hồi đăng nhập / verify-otp vẫn giải mã qua ordination_place
 feature: SignUp
 level: Medium
-status: Open
+status: Resolved
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-27
 files:
   - InnerLamp/Data/DTOs/ILLoginDTO.swift:65
   - InnerLamp/Data/DTOs/ILOtpDTO.swift:41
@@ -31,5 +31,5 @@ EN: Add `ordination_temple_id` to the user DTOs/entity (and the Core Data model)
 VI: Thêm `ordination_temple_id` vào DTO/entity user (và model Core Data), rồi lấy tên từ `ordination_temple.name` của `GET /v1/users/me` sau đăng nhập; cập nhật test repository Otp/Login đang assert `ordinationPlace`.
 
 ## Resolution / Kết quả xử lý
-EN: _(fill in when Resolved: date, commit/PR)_
-VI: _(điền khi Resolved: ngày, commit/PR)_
+EN: Resolved 2026-10-27 in the auth email change: `ILLoginUserDTO` / `ILOtpUserDTO` decode `ordination_temple_id` and `ILUserEntity.ordinationTempleID` replaces `ordinationPlace`. The Core Data attribute keeps its old name (`TD-SignUp-005`). Profile already reads the temple name from `GET /v1/users/me`.
+VI: Đã xử lý 2026-10-27 trong thay đổi auth email: `ILLoginUserDTO` / `ILOtpUserDTO` giải mã `ordination_temple_id` và `ILUserEntity.ordinationTempleID` thay cho `ordinationPlace`. Thuộc tính Core Data giữ tên cũ (`TD-SignUp-005`). Profile vốn đã lấy tên chùa từ `GET /v1/users/me`.

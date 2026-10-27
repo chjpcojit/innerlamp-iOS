@@ -63,7 +63,7 @@ struct ILSignUpStateModel {
     /// Chỉ phần số quốc gia người dùng gõ, KHÔNG gồm mã vùng (`nationalDigits()` trong design
     /// handoff) — mã vùng hiển thị riêng ở bộ chọn, ghép lại khi submit/hiển thị OTP.
     var phoneNumber: String = ""
-    /// Bắt buộc — để nhận biên nhận cúng dường. Rỗng/sai định dạng đều chặn submit
+    /// Bắt buộc — dùng để đăng nhập và nhận mã xác thực. Rỗng/sai định dạng đều chặn submit
     /// (`ILSignUpUseCase.validateEmail`); trong lúc gõ chỉ đổi viền live qua `isEmailFormatValid`.
     var email: String = ""
     var password: String = ""
@@ -106,8 +106,10 @@ struct ILSignUpStateModel {
         selectedCountry.isValidNationalDigitCount(nationalDigits.count)
     }
 
-    /// Số điện thoại đầy đủ dạng quốc tế, số cách nhau từng nhóm 3 chữ số — dùng để gửi OTP và
-    /// hiển thị ở màn OTP (`phoneE164()` trong design handoff).
+    /// EN: Display-only international form, digits grouped by three (`phoneE164()` in the design
+    ///     handoff); the request sends `phone_country` + `nationalDigits` instead.
+    /// VI: Chỉ để hiển thị dạng quốc tế, nhóm 3 chữ số (`phoneE164()` trong design handoff); request
+    ///     gửi `phone_country` + `nationalDigits` thay vì chuỗi này.
     var phoneE164: String {
         var groups: [String] = []
         var remaining = Substring(nationalDigits)
@@ -118,11 +120,12 @@ struct ILSignUpStateModel {
         return ([selectedCountry.dialCode] + groups).joined(separator: " ")
     }
 
-    /// Gợi ý định dạng khi chưa đủ số, hoặc xác nhận số sẽ nhận mã khi đã đủ — khớp `phoneHint`
-    /// trong design handoff.
+    /// EN: Format hint while incomplete, the international form once complete; the code goes to the
+    ///     email, not to this number.
+    /// VI: Gợi ý định dạng khi chưa đủ số, hiện dạng quốc tế khi đã đủ; mã gửi tới email, không tới số này.
     var phoneHint: String {
         isPhoneValid
-            ? String(format: "signup.field.phone.hint.willSend".localized, phoneE164)
+            ? String(format: "signup.field.phone.hint.valid".localized, phoneE164)
             : String(format: "signup.field.phone.hint.format".localized, selectedCountry.dialCode)
     }
 

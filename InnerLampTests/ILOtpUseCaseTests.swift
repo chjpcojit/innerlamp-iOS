@@ -47,9 +47,9 @@ final class ILOtpUseCaseTests: XCTestCase {
     // MARK: - getInitialState
 
     func test_getInitialState_seedsCountdownAndExpiryFromServerTiming() {
-        let state = sut.getInitialState(phoneNumber: "0901234567", otpExpiresInSeconds: 90, resendAfterSeconds: 60)
+        let state = sut.getInitialState(email: "an@example.com", otpExpiresInSeconds: 90, resendAfterSeconds: 60)
 
-        XCTAssertEqual(state.phoneNumber, "0901234567")
+        XCTAssertEqual(state.email, "an@example.com")
         XCTAssertEqual(state.otpExpiresInSeconds, 90)
         XCTAssertEqual(state.secondsRemaining, 60)
     }
@@ -65,14 +65,14 @@ final class ILOtpUseCaseTests: XCTestCase {
                 email: "an@example.com",
                 phoneNumber: "+84912345678",
                 dharmaName: "Diệu Tâm",
-                ordinationPlace: "Chùa Linh Ứng"
+                ordinationTempleID: "temple_north_011"
             )
         )
 
-        try await sut.verifyCode(phoneNumber: "+84912345678", code: "123456")
+        try await sut.verifyCode(email: "an@example.com", code: "123456")
 
         XCTAssertTrue(repository.verifyCalled)
-        XCTAssertEqual(repository.verifyPhoneNumber, "+84912345678")
+        XCTAssertEqual(repository.verifyEmail, "an@example.com")
         XCTAssertEqual(repository.verifyCode, "123456")
 
         // The access token must land under the exact key NetworkService reads.
@@ -89,7 +89,7 @@ final class ILOtpUseCaseTests: XCTestCase {
         repository.verifyError = ILOtpError.invalidCode
 
         do {
-            try await sut.verifyCode(phoneNumber: "+84912345678", code: "000000")
+            try await sut.verifyCode(email: "an@example.com", code: "000000")
             XCTFail("Expected invalidCode")
         } catch let error as ILOtpError {
             XCTAssertEqual(error, .invalidCode)
@@ -103,27 +103,14 @@ final class ILOtpUseCaseTests: XCTestCase {
 
     // MARK: - Resend
 
-    func test_resendCode_sms_returnsServerTiming() async throws {
+    func test_resendCode_returnsServerTiming() async throws {
         repository.resendResult = ILOtpTimingEntity(expiresInSeconds: 90, resendAfterSeconds: 60)
 
-        let timing = try await sut.resendCode(phoneNumber: "+84912345678", channel: .sms)
+        let timing = try await sut.resendCode(email: "an@example.com")
 
         XCTAssertEqual(timing, ILOtpTimingEntity(expiresInSeconds: 90, resendAfterSeconds: 60))
         XCTAssertTrue(repository.resendCalled)
-        XCTAssertEqual(repository.resendPhoneNumber, "+84912345678")
-    }
-
-    func test_resendCode_voiceCall_throwsWithoutCallingTheBackend() async {
-        do {
-            _ = try await sut.resendCode(phoneNumber: "+84912345678", channel: .voiceCall)
-            XCTFail("Expected voiceCallUnsupported")
-        } catch let error as ILOtpError {
-            XCTAssertEqual(error, .voiceCallUnsupported)
-        } catch {
-            XCTFail("Expected ILOtpError, got \(error)")
-        }
-
-        XCTAssertFalse(repository.resendCalled)
+        XCTAssertEqual(repository.resendEmail, "an@example.com")
     }
 }
 
@@ -133,20 +120,20 @@ final class MockILOtpRepository: ILOtpRepository {
 
     // MARK: Verify
     var verifyCalled = false
-    var verifyPhoneNumber: String?
+    var verifyEmail: String?
     var verifyCode: String?
     var verifyResult: ILAuthSessionEntity = .empty
     var verifyError: Error?
 
     // MARK: Resend
     var resendCalled = false
-    var resendPhoneNumber: String?
+    var resendEmail: String?
     var resendResult: ILOtpTimingEntity = .empty
     var resendError: Error?
 
-    func verifyRegistrationOTP(phoneNumber: String, code: String) async throws -> ILAuthSessionEntity {
+    func verifyRegistrationOTP(email: String, code: String) async throws -> ILAuthSessionEntity {
         verifyCalled = true
-        verifyPhoneNumber = phoneNumber
+        verifyEmail = email
         self.verifyCode = code
         if let verifyError {
             throw verifyError
@@ -154,9 +141,9 @@ final class MockILOtpRepository: ILOtpRepository {
         return verifyResult
     }
 
-    func resendRegistrationOTP(phoneNumber: String) async throws -> ILOtpTimingEntity {
+    func resendRegistrationOTP(email: String) async throws -> ILOtpTimingEntity {
         resendCalled = true
-        resendPhoneNumber = phoneNumber
+        resendEmail = email
         if let resendError {
             throw resendError
         }

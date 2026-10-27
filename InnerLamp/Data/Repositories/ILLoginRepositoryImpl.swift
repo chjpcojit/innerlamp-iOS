@@ -79,14 +79,18 @@ extension ILLoginError {
             switch code {
             case "INVALID_CREDENTIALS":
                 return .invalidCredentials
-            case "INVALID_PHONE":
-                return .invalidPhone
+            case "INVALID_EMAIL":
+                return .invalidEmail
             case "INVALID_PASSWORD":
                 return .invalidPassword
             case "INVALID_DEVICE":
                 return .invalidDevice
             case "LOGIN_LOCKED":
                 return .loginLocked(lockedUntil: details?["locked_until"]?.value as? String)
+            case "RATE_LIMITED":
+                // EN: Per-IP limit of the `login` group; the wait comes from `details.retry_after_seconds`.
+                // VI: Giới hạn theo IP của nhóm `login`; thời gian chờ lấy từ `details.retry_after_seconds`.
+                return .rateLimited(retryAfterSeconds: details?["retry_after_seconds"]?.value as? Int)
             case "VALIDATION_ERROR", "PAYLOAD_TOO_LARGE":
                 return .invalidInput
             default:

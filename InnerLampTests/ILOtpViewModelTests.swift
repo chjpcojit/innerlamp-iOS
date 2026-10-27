@@ -16,12 +16,11 @@ final class ILOtpViewModelTests: XCTestCase {
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
     private var codeChangedSubject: PassthroughSubject<String, Never>!
     private var backTappedSubject: PassthroughSubject<Void, Never>!
-    private var changeNumberTappedSubject: PassthroughSubject<Void, Never>!
+    private var changeEmailTappedSubject: PassthroughSubject<Void, Never>!
     private var resendTappedSubject: PassthroughSubject<Void, Never>!
-    private var requestVoiceCallTappedSubject: PassthroughSubject<Void, Never>!
     private var verifyTappedSubject: PassthroughSubject<Void, Never>!
 
-    private let phoneNumber = "0901234567"
+    private let email = "an@example.com"
     /// Timing the OTP screen is entered with — as returned by `request-otp`.
     private let initialOtpExpiresInSeconds = 90
     private let initialResendAfterSeconds = 60
@@ -31,7 +30,7 @@ final class ILOtpViewModelTests: XCTestCase {
         mockUseCase = MockILOtpUseCase()
         sut = ILOtpViewModel(
             useCase: mockUseCase,
-            phoneNumber: phoneNumber,
+            email: email,
             otpExpiresInSeconds: initialOtpExpiresInSeconds,
             resendAfterSeconds: initialResendAfterSeconds
         )
@@ -40,9 +39,8 @@ final class ILOtpViewModelTests: XCTestCase {
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
         codeChangedSubject = PassthroughSubject<String, Never>()
         backTappedSubject = PassthroughSubject<Void, Never>()
-        changeNumberTappedSubject = PassthroughSubject<Void, Never>()
+        changeEmailTappedSubject = PassthroughSubject<Void, Never>()
         resendTappedSubject = PassthroughSubject<Void, Never>()
-        requestVoiceCallTappedSubject = PassthroughSubject<Void, Never>()
         verifyTappedSubject = PassthroughSubject<Void, Never>()
     }
 
@@ -51,9 +49,8 @@ final class ILOtpViewModelTests: XCTestCase {
         viewDidLoadSubject = nil
         codeChangedSubject = nil
         backTappedSubject = nil
-        changeNumberTappedSubject = nil
+        changeEmailTappedSubject = nil
         resendTappedSubject = nil
-        requestVoiceCallTappedSubject = nil
         verifyTappedSubject = nil
         sut = nil
         mockUseCase = nil
@@ -65,14 +62,24 @@ final class ILOtpViewModelTests: XCTestCase {
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             codeChanged: codeChangedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
-            changeNumberTapped: changeNumberTappedSubject.eraseToAnyPublisher(),
+            changeEmailTapped: changeEmailTappedSubject.eraseToAnyPublisher(),
             resendTapped: resendTappedSubject.eraseToAnyPublisher(),
-            requestVoiceCallTapped: requestVoiceCallTappedSubject.eraseToAnyPublisher(),
             verifyTapped: verifyTappedSubject.eraseToAnyPublisher()
         ))
     }
 
-    func test_initialState_setsPhoneNumberAndSeedsCountdownFromServerTiming() {
+    /// EN: Rebuilds the SUT with no resend wait so "Gửi lại" is enabled at once.
+    /// VI: Dựng lại SUT không có thời gian chờ để nút "Gửi lại" bật ngay.
+    private func makeSutWithResendAvailable() {
+        sut = ILOtpViewModel(
+            useCase: mockUseCase,
+            email: email,
+            otpExpiresInSeconds: initialOtpExpiresInSeconds,
+            resendAfterSeconds: 0
+        )
+    }
+
+    func test_initialState_setsEmailAndSeedsCountdownFromServerTiming() {
         let output = makeOutput()
         var receivedState: ILOtpStateModel?
         output.state
@@ -82,10 +89,10 @@ final class ILOtpViewModelTests: XCTestCase {
         viewDidLoadSubject.send(())
 
         XCTAssertTrue(mockUseCase.getInitialStateCalled)
-        XCTAssertEqual(mockUseCase.getInitialStatePhoneNumber, phoneNumber)
+        XCTAssertEqual(mockUseCase.getInitialStateEmail, email)
         XCTAssertEqual(mockUseCase.getInitialStateOTPExpiresInSeconds, initialOtpExpiresInSeconds)
         XCTAssertEqual(mockUseCase.getInitialStateResendAfterSeconds, initialResendAfterSeconds)
-        XCTAssertEqual(receivedState?.phoneNumber, phoneNumber)
+        XCTAssertEqual(receivedState?.email, email)
         XCTAssertEqual(receivedState?.secondsRemaining, initialResendAfterSeconds)
         XCTAssertEqual(receivedState?.otpExpiresInSeconds, initialOtpExpiresInSeconds)
         XCTAssertFalse(receivedState?.canResend ?? true)
@@ -130,14 +137,14 @@ final class ILOtpViewModelTests: XCTestCase {
         XCTAssertEqual(receivedEvent, .goBack)
     }
 
-    func test_changeNumberTapped_firesGoBackNavEvent() {
+    func test_changeEmailTapped_firesGoBackNavEvent() {
         var receivedEvent: ILOtpNavEvent?
         sut.navigationEventPublisher
             .sink { receivedEvent = $0 }
             .store(in: &cancellables)
         _ = makeOutput()
 
-        changeNumberTappedSubject.send(())
+        changeEmailTappedSubject.send(())
 
         XCTAssertEqual(receivedEvent, .goBack)
     }
@@ -154,7 +161,8 @@ final class ILOtpViewModelTests: XCTestCase {
         XCTAssertFalse(mockUseCase.resendCodeCalled)
     }
 
-    func test_requestVoiceCallTapped_callsUseCaseWithVoiceChannelAndRestartsCountdownFromServer() {
+    func test_resendTapped_afterWait_callsUseCaseWithEmailAndRestartsCountdownFromServer() {
+        makeSutWithResendAvailable()
         // Resend returns a fresh, different timing — the countdown must adopt it, not a constant.
         mockUseCase.resendCodeTimingToReturn = ILOtpTimingEntity(expiresInSeconds: 45, resendAfterSeconds: 12)
 
@@ -172,19 +180,20 @@ final class ILOtpViewModelTests: XCTestCase {
 
         viewDidLoadSubject.send(())
         codeChangedSubject.send("123456")
-        requestVoiceCallTappedSubject.send(())
+        resendTappedSubject.send(())
 
         wait(for: [expectation], timeout: 2)
 
         XCTAssertTrue(mockUseCase.resendCodeCalled)
-        XCTAssertEqual(mockUseCase.resendCodeChannel, .voiceCall)
+        XCTAssertEqual(mockUseCase.resendCodeEmail, email)
         XCTAssertEqual(receivedState?.code, "")
         XCTAssertEqual(receivedState?.otpExpiresInSeconds, 45)
     }
 
     func test_resendFailed_setsResendErrorAndKeepsCode() {
+        makeSutWithResendAvailable()
         mockUseCase.resendCodeShouldThrow = true
-        mockUseCase.resendCodeThrownError = ILOtpError.voiceCallUnsupported
+        mockUseCase.resendCodeThrownError = ILOtpError.sendLimited(lockedUntil: nil)
 
         let expectation = expectation(description: "resendError set")
         let output = makeOutput()
@@ -200,13 +209,34 @@ final class ILOtpViewModelTests: XCTestCase {
 
         viewDidLoadSubject.send(())
         codeChangedSubject.send("123456")
-        requestVoiceCallTappedSubject.send(())
+        resendTappedSubject.send(())
 
         wait(for: [expectation], timeout: 2)
 
-        XCTAssertEqual(receivedState?.resendError, ILOtpError.voiceCallUnsupported.localizedDescription)
+        XCTAssertEqual(receivedState?.resendError, ILOtpError.sendLimited(lockedUntil: nil).localizedDescription)
         XCTAssertEqual(receivedState?.code, "123456")
         XCTAssertFalse(receivedState?.isResending ?? true)
+    }
+
+    func test_resendTooSoon_restartsTheResendTimerFromTheServerWait() {
+        makeSutWithResendAvailable()
+        mockUseCase.resendCodeShouldThrow = true
+        mockUseCase.resendCodeThrownError = ILOtpError.resendTooSoon(retryAfterSeconds: 25)
+
+        let expectation = expectation(description: "timer restarted from retry_after_seconds")
+        let output = makeOutput()
+        output.state
+            .sink { state in
+                if case .success(let model) = state, model.resendError != nil, model.secondsRemaining == 25 {
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewDidLoadSubject.send(())
+        resendTappedSubject.send(())
+
+        wait(for: [expectation], timeout: 2)
     }
 
     func test_verifyTapped_whenCodeValid_callsUseCaseAndFiresDidVerify() {
@@ -229,7 +259,7 @@ final class ILOtpViewModelTests: XCTestCase {
         wait(for: [expectation], timeout: 2)
 
         XCTAssertTrue(mockUseCase.verifyCodeCalled)
-        XCTAssertEqual(receivedEvent, .didVerify(phoneNumber: phoneNumber))
+        XCTAssertEqual(receivedEvent, .didVerify(email: email))
     }
 
     func test_verifyTapped_whenCodeInvalid_showsCodeError() {
@@ -277,12 +307,12 @@ final class ILOtpViewModelTests: XCTestCase {
 /// behaviour is covered by `ILOtpUseCaseTests` / `ILOtpRepositoryTests`.
 final class MockILOtpUseCase: ILOtpUseCase {
     var getInitialStateCalled = false
-    var getInitialStatePhoneNumber: String?
+    var getInitialStateEmail: String?
     var getInitialStateOTPExpiresInSeconds: Int?
     var getInitialStateResendAfterSeconds: Int?
 
     var resendCodeCalled = false
-    var resendCodeChannel: ILOtpChannel?
+    var resendCodeEmail: String?
     var resendCodeShouldThrow = false
     var resendCodeThrownError: Error = ILOtpError.invalidCode
     var resendCodeTimingToReturn = ILOtpTimingEntity(expiresInSeconds: 90, resendAfterSeconds: 60)
@@ -291,28 +321,28 @@ final class MockILOtpUseCase: ILOtpUseCase {
     var verifyCodeShouldThrow = false
     var verifyCodeThrownError: Error = ILOtpError.invalidCode
 
-    func getInitialState(phoneNumber: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int) -> ILOtpStateModel {
+    func getInitialState(email: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int) -> ILOtpStateModel {
         getInitialStateCalled = true
-        getInitialStatePhoneNumber = phoneNumber
+        getInitialStateEmail = email
         getInitialStateOTPExpiresInSeconds = otpExpiresInSeconds
         getInitialStateResendAfterSeconds = resendAfterSeconds
         var state = ILOtpStateModel.initial
-        state.phoneNumber = phoneNumber
+        state.email = email
         state.otpExpiresInSeconds = otpExpiresInSeconds
         state.secondsRemaining = resendAfterSeconds
         return state
     }
 
-    func resendCode(phoneNumber: String, channel: ILOtpChannel) async throws -> ILOtpTimingEntity {
+    func resendCode(email: String) async throws -> ILOtpTimingEntity {
         resendCodeCalled = true
-        resendCodeChannel = channel
+        resendCodeEmail = email
         if resendCodeShouldThrow {
             throw resendCodeThrownError
         }
         return resendCodeTimingToReturn
     }
 
-    func verifyCode(phoneNumber: String, code: String) async throws {
+    func verifyCode(email: String, code: String) async throws {
         verifyCodeCalled = true
         if verifyCodeShouldThrow {
             throw verifyCodeThrownError

@@ -101,10 +101,10 @@ final class AppCoordinator: Coordinator {
         loginCoordinator.start()
     }
 
-    private func showOtp(phoneNumber: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int) {
+    private func showOtp(email: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int) {
         let otpCoordinator = container.makeOtpCoordinator(
             navigationController: navigationController,
-            phoneNumber: phoneNumber,
+            email: email,
             otpExpiresInSeconds: otpExpiresInSeconds,
             resendAfterSeconds: resendAfterSeconds
         )
@@ -163,12 +163,12 @@ extension AppCoordinator: ILSignUpCoordinatorDelegate {
 
     func signUpDidRequestVerification(
         _ coordinator: ILSignUpCoordinator,
-        phoneNumber: String,
+        email: String,
         otpExpiresInSeconds: Int,
         resendAfterSeconds: Int
     ) {
         showOtp(
-            phoneNumber: phoneNumber,
+            email: email,
             otpExpiresInSeconds: otpExpiresInSeconds,
             resendAfterSeconds: resendAfterSeconds
         )
@@ -177,7 +177,7 @@ extension AppCoordinator: ILSignUpCoordinatorDelegate {
 
 // MARK: - ILOtpCoordinatorDelegate
 extension AppCoordinator: ILOtpCoordinatorDelegate {
-    func otpDidVerify(_ coordinator: ILOtpCoordinator, phoneNumber: String) {
+    func otpDidVerify(_ coordinator: ILOtpCoordinator, email: String) {
         showMain()
     }
 }
@@ -208,13 +208,10 @@ extension AppCoordinator: ILLoginCoordinatorDelegate {
 // MARK: - ILForgotPasswordCoordinatorDelegate
 extension AppCoordinator: ILForgotPasswordCoordinatorDelegate {
     func forgotPasswordDidRequestOtp(_ coordinator: ILForgotPasswordCoordinator, phoneNumber: String) {
-        // ForgotPassword's own OTP request is not implemented yet, so there is no server timing to
-        // pass — fall back to the confirmed server defaults.
-        showOtp(
-            phoneNumber: phoneNumber,
-            otpExpiresInSeconds: ILOtpStateModel.defaultOTPExpirySeconds,
-            resendAfterSeconds: ILOtpStateModel.defaultResendCooldownSeconds
-        )
+        // EN: Reset by phone no longer exists (contract 3.0.0) and the code screen is registration-only,
+        //     so it is not opened here. Reset by email code replaces this flow (Login tasks.md Phase 5).
+        // VI: Đặt lại mật khẩu bằng số điện thoại không còn (contract 3.0.0) và màn nhập mã chỉ dành cho
+        //     đăng ký, nên không mở ở đây. Luồng đặt lại bằng mã email sẽ thay thế (Login tasks.md Phase 5).
     }
 
     func forgotPasswordDidRequestEmailReset(_ coordinator: ILForgotPasswordCoordinator, email: String) {

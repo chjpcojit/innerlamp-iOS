@@ -12,9 +12,11 @@ import Foundation
 /// either — the implementation maps it to `ILOtpError`.
 nonisolated protocol ILOtpRepository {
 
-    /// Verifies `code` for `phoneNumber` and returns the account's first session.
-    func verifyRegistrationOTP(phoneNumber: String, code: String) async throws -> ILAuthSessionEntity
+    /// EN: Verifies `code` for the pending registration of `email` and returns the account's first session.
+    /// VI: Xác minh `code` cho đăng ký đang chờ của `email` và trả về phiên đầu tiên của tài khoản.
+    func verifyRegistrationOTP(email: String, code: String) async throws -> ILAuthSessionEntity
 
-    /// Reissues a registration OTP for `phoneNumber` and returns the new delivery timing.
-    func resendRegistrationOTP(phoneNumber: String) async throws -> ILOtpTimingEntity
+    /// EN: Reissues the registration code for `email` and returns the new delivery timing.
+    /// VI: Gửi lại mã đăng ký cho `email` và trả về timing mới.
+    func resendRegistrationOTP(email: String) async throws -> ILOtpTimingEntity
 }

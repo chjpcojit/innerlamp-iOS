@@ -9,10 +9,12 @@ import Foundation
 /// không business logic). `ViewController` chỉ đọc field lỗi/trạng thái để hiển thị UI, không
 /// tự validate. Owned và mutated exclusively bởi `ILOtpViewModel`.
 struct ILOtpStateModel {
-    var phoneNumber: String = ""
+    /// EN: Where the code was sent ("Đã gửi tới <email>", criterion 20).
+    /// VI: Nơi mã được gửi tới ("Đã gửi tới <email>", tiêu chí 20).
+    var email: String = ""
     var code: String = ""
     var codeError: String?
-    /// Lỗi khi gửi lại mã (vd: kênh gọi thoại chưa hỗ trợ) — hiển thị như alert, tách khỏi
+    /// Lỗi khi gửi lại mã (vd: gửi quá sớm) — hiển thị như alert, tách khỏi
     /// `codeError` để không tô đỏ ô nhập mã.
     var resendError: String?
 

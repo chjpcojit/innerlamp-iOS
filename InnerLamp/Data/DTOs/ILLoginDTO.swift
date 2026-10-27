@@ -15,12 +15,14 @@ import Foundation
 /// Contract: innerlamp-be `docs/specs/api/openapi.yaml` `LoginRequest` / `AuthEnvelope.data`
 /// (= `AuthResult`) — `POST /v1/auth/login`.
 nonisolated struct ILLoginRequestDTO: Encodable {
-    let phoneNumber: String
+    /// EN: Sign-in identifier since contract 3.0.0 (ADR-0003); the server rejects `phone_number` as an unknown field.
+    /// VI: Định danh đăng nhập từ contract 3.0.0 (ADR-0003); server từ chối `phone_number` vì là field lạ.
+    let email: String
     let password: String
     let device: ILLoginDeviceDTO
 
     enum CodingKeys: String, CodingKey {
-        case phoneNumber = "phone_number"
+        case email
         case password
         case device
     }
@@ -62,5 +64,7 @@ nonisolated struct ILLoginUserDTO: Decodable {
     let email: String
     let phoneNumber: String
     let dharmaName: String?
-    let ordinationPlace: String?
+    /// EN: `ordination_temple_id` in `AuthResult.user`; absent when the user picked no temple.
+    /// VI: `ordination_temple_id` trong `AuthResult.user`; vắng khi người dùng chưa chọn chùa.
+    let ordinationTempleId: String?
 }

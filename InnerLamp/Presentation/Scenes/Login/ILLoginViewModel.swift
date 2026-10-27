@@ -31,8 +31,7 @@ final class ILLoginViewModel: ILLoginViewModelProtocol {
     // MARK: - Input / Output
     struct Input {
         let viewDidLoad: AnyPublisher<Void, Never>
-        let phoneChanged: AnyPublisher<String, Never>
-        let countryChanged: AnyPublisher<ILCountry, Never>
+        let emailChanged: AnyPublisher<String, Never>
         let passwordChanged: AnyPublisher<String, Never>
         let submitTapped: AnyPublisher<Void, Never>
         let backTapped: AnyPublisher<Void, Never>
@@ -49,11 +48,6 @@ final class ILLoginViewModel: ILLoginViewModelProtocol {
     var navigationEventPublisher: AnyPublisher<ILLoginNavEvent, Never> {
         navigationEventSubject.eraseToAnyPublisher()
     }
-
-    /// Snapshot đồng bộ — `ILLoginViewController` dùng để khởi tạo `ILCountryPickerViewController`
-    /// (đánh dấu quốc gia đang chọn) ngay tại thời điểm bấm, không dùng để nhận cập nhật liên tục
-    /// (cho việc đó dùng `Output.state`).
-    var state: ILLoginStateModel { currentState }
 
     private let navigationEventSubject = PassthroughSubject<ILLoginNavEvent, Never>()
     private let stateSubject: CurrentValueSubject<ViewState<ILLoginStateModel>, Never>
@@ -75,12 +69,8 @@ final class ILLoginViewModel: ILLoginViewModelProtocol {
             .sink { [weak self] _ in self?.handleViewDidLoad() }
             .store(in: &cancellables)
 
-        input.phoneChanged
-            .sink { [weak self] text in self?.handlePhoneChanged(text) }
-            .store(in: &cancellables)
-
-        input.countryChanged
-            .sink { [weak self] country in self?.handleCountryChanged(country) }
+        input.emailChanged
+            .sink { [weak self] text in self?.handleEmailChanged(text) }
             .store(in: &cancellables)
 
         input.passwordChanged
@@ -119,15 +109,9 @@ final class ILLoginViewModel: ILLoginViewModelProtocol {
 
     /// Không render lại — tránh set lại `ILField.text` trong lúc đang gõ (dễ làm nhảy con trỏ).
     /// Lỗi field liên quan được xóa ngay khi họ sửa lại.
-    private func handlePhoneChanged(_ text: String) {
-        currentState.phone = text
-        currentState.phoneError = nil
-    }
-
-    private func handleCountryChanged(_ country: ILCountry) {
-        guard currentState.selectedCountry != country else { return }
-        currentState.selectedCountry = country
-        stateSubject.send(.success(currentState))
+    private func handleEmailChanged(_ text: String) {
+        currentState.email = text
+        currentState.emailError = nil
     }
 
     private func handlePasswordChanged(_ text: String) {
@@ -139,10 +123,7 @@ final class ILLoginViewModel: ILLoginViewModelProtocol {
     private func handleSubmit() {
         guard !currentState.isSubmitting else { return }
 
-        currentState.phoneError = useCase.validatePhone(
-            nationalDigits: currentState.nationalDigits,
-            country: currentState.selectedCountry
-        )
+        currentState.emailError = useCase.validateEmail(currentState.email)
         currentState.passwordError = useCase.validatePassword(currentState.password)
         currentState.submitError = nil
 
@@ -154,19 +135,26 @@ final class ILLoginViewModel: ILLoginViewModelProtocol {
         currentState.isSubmitting = true
         stateSubject.send(.success(currentState))
 
-        let phone = currentState.phoneE164
+        let email = currentState.trimmedEmail
         let password = currentState.password
 
         Task { [weak self] in
             guard let self else { return }
             do {
-                try await self.useCase.login(ILLoginEntity(phone: phone, password: password))
+                try await self.useCase.login(ILLoginEntity(email: email, password: password))
                 self.currentState.isSubmitting = false
                 self.stateSubject.send(.success(self.currentState))
                 self.navigationEventSubject.send(.didLoginSuccessfully)
             } catch {
+                // EN: Keep the email, clear the password (criterion 3); `INVALID_EMAIL` goes under the email field.
+                // VI: Giữ email, xoá mật khẩu (tiêu chí 3); `INVALID_EMAIL` hiện dưới ô email.
                 self.currentState.isSubmitting = false
-                self.currentState.submitError = error.localizedDescription
+                self.currentState.password = ""
+                if case ILLoginError.invalidEmail = error {
+                    self.currentState.emailError = error.localizedDescription
+                } else {
+                    self.currentState.submitError = error.localizedDescription
+                }
                 self.stateSubject.send(.success(self.currentState))
             }
         }

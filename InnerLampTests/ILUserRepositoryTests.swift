@@ -56,7 +56,7 @@ final class ILUserRepositoryTests: XCTestCase {
             email: "an@example.com",
             phoneNumber: "+84912345678",
             dharmaName: "Diệu Tâm",
-            ordinationPlace: "Chùa Linh Ứng"
+            ordinationTempleID: "temple_north_011"
         )
 
         try await repository.saveUser(saved)
@@ -73,7 +73,7 @@ final class ILUserRepositoryTests: XCTestCase {
             email: "b@example.com",
             phoneNumber: "+84900000001",
             dharmaName: "Tịnh An",
-            ordinationPlace: "Chùa Ba Vàng"
+            ordinationTempleID: "temple_north_012"
         )
 
         try await repository.saveUser(saved)
@@ -84,7 +84,7 @@ final class ILUserRepositoryTests: XCTestCase {
         XCTAssertEqual(loaded.email, "b@example.com")
         XCTAssertEqual(loaded.phoneNumber, "+84900000001")
         XCTAssertEqual(loaded.dharmaName, "Tịnh An")
-        XCTAssertEqual(loaded.ordinationPlace, "Chùa Ba Vàng")
+        XCTAssertEqual(loaded.ordinationTempleID, "temple_north_012")
     }
 
     // MARK: - Upsert
@@ -95,14 +95,14 @@ final class ILUserRepositoryTests: XCTestCase {
             email: "first@example.com",
             phoneNumber: "+84911111111",
             dharmaName: "Minh Đăng",
-            ordinationPlace: "Chùa Một"
+            ordinationTempleID: "temple_one"
         )
         let second = ILUserEntity(
             id: 2,
             email: "second@example.com",
             phoneNumber: "+84922222222",
             dharmaName: "Huệ Nhẫn",
-            ordinationPlace: "Chùa Hai"
+            ordinationTempleID: "temple_two"
         )
 
         try await repository.saveUser(first)

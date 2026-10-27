@@ -4,6 +4,19 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v2.3 (2026-10-27)
+
+Code caught up with the email contract (innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 3.0.0;
+the Auth shapes are the same as in 2.1.1).
+
+- `tasks.md`: Phase 2 (email sign-in) ticked — `ILLoginEntity.email`, `{email, password, device}`,
+  `ordination_temple_id` on the user, `INVALID_EMAIL` and `RATE_LIMITED` (wait from
+  `details.retry_after_seconds`) mapped, phone field / country picker / SMS button removed, password
+  cleared on failure. The "Quên mật khẩu?" label, the banner and root-without-back are split into an
+  open item. Phase 7 strings: sign-in keys done. Build and unit tests not yet run on a Mac.
+- `requirements.md`: status line and contract cite (2.1.1 → 3.0.0).
+- `design.md`: header only.
+
 ## v2.2 (2026-10-16)
 
 Aligned with innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 2.1.1, product spec `login` @ v1.4

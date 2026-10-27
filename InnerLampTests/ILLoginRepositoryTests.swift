@@ -27,8 +27,17 @@ final class ILLoginRepositoryTests: XCTestCase {
         XCTAssertEqual(ILLoginError.from(apiError("INVALID_CREDENTIALS")), .invalidCredentials)
     }
 
-    func test_from_invalidPhone_mapsToInvalidPhone() {
-        XCTAssertEqual(ILLoginError.from(apiError("INVALID_PHONE")), .invalidPhone)
+    func test_from_invalidEmail_mapsToInvalidEmail() {
+        XCTAssertEqual(ILLoginError.from(apiError("INVALID_EMAIL")), .invalidEmail)
+    }
+
+    func test_from_rateLimited_carriesRetryAfterSecondsFromDetails() {
+        let error = ILLoginError.from(apiError(
+            "RATE_LIMITED",
+            details: ["retry_after_seconds": AnyCodable(value: 120)]
+        ))
+
+        XCTAssertEqual(error, .rateLimited(retryAfterSeconds: 120))
     }
 
     func test_from_invalidPassword_mapsToInvalidPassword() {
@@ -89,7 +98,7 @@ final class ILLoginRepositoryTests: XCTestCase {
     // MARK: - Mapper
 
     func test_mapper_mapsEntityAndDeviceToTheRequestDTO() {
-        let entity = ILLoginEntity(phone: "+84 912 345 678", password: "secret12")
+        let entity = ILLoginEntity(email: "an@example.com", password: "secret12")
         let device = ILLoginDeviceDTO(
             platform: "ios",
             deviceModel: "iPhone",
@@ -100,7 +109,7 @@ final class ILLoginRepositoryTests: XCTestCase {
 
         let dto = ILLoginMapper.toDTO(entity, device: device)
 
-        XCTAssertEqual(dto.phoneNumber, "+84 912 345 678")
+        XCTAssertEqual(dto.email, "an@example.com")
         XCTAssertEqual(dto.password, "secret12")
         XCTAssertEqual(dto.device.platform, "ios")
         XCTAssertEqual(dto.device.deviceModel, "iPhone")
@@ -118,7 +127,7 @@ final class ILLoginRepositoryTests: XCTestCase {
                 email: "an@example.com",
                 phoneNumber: "+84912345678",
                 dharmaName: "Diệu Tâm",
-                ordinationPlace: "Chùa Linh Ứng"
+                ordinationTempleId: "temple_north_011"
             )
         )
 
@@ -130,7 +139,7 @@ final class ILLoginRepositoryTests: XCTestCase {
         XCTAssertEqual(entity.user.email, "an@example.com")
         XCTAssertEqual(entity.user.phoneNumber, "+84912345678")
         XCTAssertEqual(entity.user.dharmaName, "Diệu Tâm")
-        XCTAssertEqual(entity.user.ordinationPlace, "Chùa Linh Ứng")
+        XCTAssertEqual(entity.user.ordinationTempleID, "temple_north_011")
     }
 
     func test_mapper_responseWithNilOptionalUserFields_defaultsToEmptyString() {
@@ -142,21 +151,21 @@ final class ILLoginRepositoryTests: XCTestCase {
                 email: "an@example.com",
                 phoneNumber: "+84912345678",
                 dharmaName: nil,
-                ordinationPlace: nil
+                ordinationTempleId: nil
             )
         )
 
         let entity = ILLoginMapper.toDomain(dto)
 
         XCTAssertEqual(entity.user.dharmaName, "")
-        XCTAssertEqual(entity.user.ordinationPlace, "")
+        XCTAssertEqual(entity.user.ordinationTempleID, "")
     }
 
     // MARK: - Wire shapes
 
     func test_requestDTO_encodesExplicitSnakeCaseKeysIncludingNestedDevice() throws {
         let dto = ILLoginRequestDTO(
-            phoneNumber: "+84 912 345 678",
+            email: "an@example.com",
             password: "secret12",
             device: ILLoginDeviceDTO(
                 platform: "ios",
@@ -171,7 +180,7 @@ final class ILLoginRepositoryTests: XCTestCase {
             JSONSerialization.jsonObject(with: try JSONEncoder().encode(dto)) as? [String: Any]
         )
 
-        XCTAssertEqual(json["phone_number"] as? String, "+84 912 345 678")
+        XCTAssertEqual(json["email"] as? String, "an@example.com")
         XCTAssertEqual(json["password"] as? String, "secret12")
         let device = try XCTUnwrap(json["device"] as? [String: Any])
         XCTAssertEqual(device["platform"] as? String, "ios")
@@ -179,12 +188,12 @@ final class ILLoginRepositoryTests: XCTestCase {
         XCTAssertEqual(device["os_version"] as? String, "17.0")
         XCTAssertEqual(device["app_version"] as? String, "1.0.0")
         XCTAssertEqual(device["device_name"] as? String, "An's iPhone")
-        XCTAssertNil(json["phoneNumber"])
+        XCTAssertNil(json["phone_number"])
     }
 
     func test_requestDTO_encodesNilOptionalDeviceFieldsAsNull() throws {
         let dto = ILLoginRequestDTO(
-            phoneNumber: "+84 912 345 678",
+            email: "an@example.com",
             password: "secret12",
             device: ILLoginDeviceDTO(platform: "ios", deviceModel: "iPhone", osVersion: nil, appVersion: nil, deviceName: nil)
         )
@@ -209,7 +218,7 @@ final class ILLoginRepositoryTests: XCTestCase {
                 "email": "an@example.com",
                 "phone_number": "+84912345678",
                 "dharma_name": "Diệu Tâm",
-                "ordination_place": "Chùa Linh Ứng"
+                "ordination_temple_id": "temple_north_011"
             }
         }
         """
@@ -222,11 +231,12 @@ final class ILLoginRepositoryTests: XCTestCase {
         XCTAssertEqual(dto.refreshToken, "refresh-1")
         XCTAssertEqual(dto.user.id, 42)
         XCTAssertEqual(dto.user.dharmaName, "Diệu Tâm")
+        XCTAssertEqual(dto.user.ordinationTempleId, "temple_north_011")
     }
 
     func test_endpoint_isPublicPostWithBodyAndLoginPath() throws {
         let dto = ILLoginRequestDTO(
-            phoneNumber: "+84 912 345 678",
+            email: "an@example.com",
             password: "secret12",
             device: ILLoginDeviceDTO(platform: "ios", deviceModel: "iPhone", osVersion: nil, appVersion: nil, deviceName: nil)
         )

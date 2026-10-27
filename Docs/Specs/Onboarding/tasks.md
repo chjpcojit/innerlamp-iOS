@@ -1,8 +1,8 @@
 # Tasks — Onboarding
 
-Version: 2.2
-Last updated: 2026-10-16
-Status: in-progress (drift) — Phase 1–7 not started for v2.0; items marked `[x]` were read in code on 2026-10-14 and still match
+Version: 2.3
+Last updated: 2026-10-27
+Status: in-progress — registration call and email code screen (Phases 3 and 5, core items) built on 2026-10-27, not yet built or tested on a Mac; Phases 1, 2, 4, 6, 7 and the listed Phase 3/5 items open
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -24,30 +24,35 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 
 ## Phase 3 — Registration call
 
-- [ ] `ILSignUpEntity`: `phoneCountry`, `dharmaName?`; `ILSignUpDTO` + `ILSignUpMapper`: `email`, `password`, `phone_country`, `phone_number` (typed digits), `full_name`, `dharma_name?`, `ordination_temple_id?` (criterion 13)
-- [ ] `ILSignUpRepositoryImpl` error mapping per `requirements.md` Error → UI; remove `EMAIL_TAKEN`, `SMS_SEND_FAILED`, `OTP_LOCKED` branches; add `EMAIL_SEND_FAILED`, `REGISTRATION_IN_PROGRESS` (reads `details.retry_after_seconds`), `RATE_LIMITED` (criteria 13–15, 16a, 27)
-- [ ] `ILSignUpUseCase`: validators via `ILSignUpRules`; dharma name not required, not pre-filled; strength stays advice (criteria 8–10)
+- [x] `ILSignUpEntity`: `phoneCountry`, `dharmaName?`; `ILSignUpDTO` + `ILSignUpMapper`: `email`, `password`, `phone_country`, `phone_number` (typed digits), `full_name`, `dharma_name?`, `ordination_temple_id?` (criterion 13)
+- [x] `ILSignUpRepositoryImpl` error mapping per `requirements.md` Error → UI; remove `EMAIL_TAKEN`, `SMS_SEND_FAILED`, `OTP_LOCKED` branches; add `EMAIL_SEND_FAILED`, `REGISTRATION_IN_PROGRESS` (reads `details.retry_after_seconds`), `RATE_LIMITED` (criteria 13–15, 16a, 27)
+- [x] `ILSignUpUseCase`: dharma name not required, not pre-filled; length limits after NFC (full name ≤ 300, dharma name ≤ 255, email ≤ 254, password 8–64); strength stays advice (criteria 8–10)
+- [ ] Move the validators into `ILSignUpRules` (Phase 2)
 - [x] Submit ignored while one is in flight (`ILSignUpViewModel.handleSubmit`) (criterion 16)
 - [x] Temple picker: `GET /v1/temples/options`, paged, debounced server search, stale answers dropped (`ILOrdinationPlaceFieldView`, `ILSignUpViewModel`) (criterion 17)
 - [ ] Auth requests carry no `X-API-Key` / `X-InnerLamp-Client-IP` (criterion 29)
-- [ ] Unit tests: request body (no E.164 rebuild, optional fields omitted), every mapped error incl. `REGISTRATION_IN_PROGRESS`, `PHONE_TAKEN` keeps values
+- [x] Unit tests: request body (no E.164 rebuild, optional fields omitted), every mapped error incl. `REGISTRATION_IN_PROGRESS` (written, not yet run)
+- [ ] Unit test: `PHONE_TAKEN` keeps values (with criterion 26a)
 
 ## Phase 4 — SignUp screen
 
-- [ ] `ILSignUpViewController` + state: dharma name empty by default, email hint (sign-in + code), button "Đăng ký", phone error with Login link (criteria 7, 15)
+- [x] `ILSignUpViewController` + state: dharma name empty by default, email hint (sign-in + code), button "Đăng ký" (criterion 7)
+- [ ] Phone error with Login link (criterion 15) — `PHONE_TAKEN` shows under the phone field without the link
 - [x] Terms links open the bundled legal sheet without touching the form (`ILSignUpLegalSheetViewController`) — kept as is in v2.0 (criterion 12)
 - [x] Terms unchecked keeps the button disabled (`ILSignUpStateModel.isSubmitEnabled`) (criterion 11)
 - [x] AddTemple: name, province and ward from the administrative-unit list, optional street line (`ILAddTempleUseCase`) (criterion 18)
 
 ## Phase 5 — Email code screen
 
-- [ ] `ILOtpUseCase`, `ILOtpRepositoryImpl`, `ILOtpDTO`, `ILOtpMapper`, `VerifyOTPEndpoint`, `ResendOTPEndpoint`: email instead of phone, resend path `/v1/auth/register/resend-otp`, no `purpose`; user DTO reads `ordination_temple_id` (criteria 21, 23)
+- [x] `ILOtpUseCase`, `ILOtpRepositoryImpl`, `ILOtpDTO`, `ILOtpMapper`, `VerifyOTPEndpoint`, `ResendOTPEndpoint`: email instead of phone, resend path `/v1/auth/register/resend-otp`, no `purpose`; user DTO reads `ordination_temple_id` (criteria 21, 23)
 - [ ] `ILOtpStateModel` / `ILOtpViewModel`: live validity countdown, expired state, lock until `locked_until`, send-limited keeps the entry (criteria 20, 22, 24)
 - [x] Resend wait seeded from the server and restarted after a resend (`ILOtpViewModel`) (criterion 23, timer part)
-- [ ] `ILOtpViewController`: "Đã gửi tới <email>", "Đổi email"; delete `ILOtpVoiceCallBannerView` and its strings (criteria 20, 25)
-- [ ] `ILOtpCoordinator` / `AppCoordinator.showOtp(email:…)`; "Đổi email" and `PENDING_REGISTRATION_EXPIRED` pop to the filled SignUp (criteria 25, 26)
+- [x] `ILOtpViewController`: "Đã gửi tới <email>", "Đổi email"; delete `ILOtpVoiceCallBannerView` and its strings (criteria 20, 25)
+- [x] `ILOtpCoordinator` / `AppCoordinator.showOtp(email:…)`; "Đổi email" pops back to SignUp (criterion 25)
+- [ ] `PENDING_REGISTRATION_EXPIRED` pops to the filled SignUp (criterion 26) — today it shows the error on the code screen
 - [ ] Verify `INVALID_TEMPLE` and `PHONE_TAKEN` pop to SignUp with every value kept and the field error (Step 4, criterion 26a)
-- [ ] Unit tests: verify success stores the session, each error, timers, lock
+- [x] Unit tests: verify success stores the session, each error, resend wait (written, not yet run)
+- [ ] Unit tests: live validity countdown and lock state (with the state-model item above)
 
 ## Phase 6 — Temple proposal sent
 
@@ -56,7 +61,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 
 ## Phase 7 — Strings, logging, QA
 
-- [ ] `vi.json` (+ `en.json` if present): new copy of product §3.1.1; delete SMS / voice-call / "Đổi số" / email-taken keys (criterion 27)
+- [x] `vi.json` (+ `en.json` if present): delete SMS / voice-call / "Đổi số" / email-taken keys; add email, rate-limit and code-screen keys (criterion 27; copy missing from product §3.1.1 is `AS-Onboarding-002`)
 - [ ] Check `NetworkLogger` never prints request bodies of `/v1/auth/*` (password, code, tokens) (criterion 28)
 - [ ] Manual run against the backend dev build (fixed dev code `111111`; the backend is still uncommitted and untested against a server): new email, existing email looks the same, phone taken, registration in progress, "Đổi email", expired registration, lock
 - [ ] Update the iOS column of product §4.2 when done (tell `ba-writer`)

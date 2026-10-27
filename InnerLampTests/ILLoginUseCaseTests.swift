@@ -47,8 +47,16 @@ final class ILLoginUseCaseTests: XCTestCase {
 
     // MARK: - Validation (pure, no repository call)
 
-    func test_validatePhone_empty_returnsRequiredError() {
-        XCTAssertNotNil(sut.validatePhone(nationalDigits: "", country: .default))
+    func test_validateEmail_emptyOrWhitespace_returnsRequiredError() {
+        XCTAssertNotNil(sut.validateEmail(""))
+        XCTAssertNotNil(sut.validateEmail("   "))
+    }
+
+    func test_validateEmail_nonEmpty_passesWithoutFormatCheck() {
+        // EN: Criterion 2 only checks emptiness; the server answers INVALID_EMAIL for a bad format.
+        // VI: Tiêu chí 2 chỉ kiểm tra rỗng; server trả INVALID_EMAIL khi sai định dạng.
+        XCTAssertNil(sut.validateEmail("an@example.com"))
+        XCTAssertNil(sut.validateEmail("not-an-email"))
     }
 
     func test_validatePassword_empty_returnsRequiredError() {
@@ -66,11 +74,11 @@ final class ILLoginUseCaseTests: XCTestCase {
                 email: "an@example.com",
                 phoneNumber: "+84912345678",
                 dharmaName: "Diệu Tâm",
-                ordinationPlace: "Chùa Linh Ứng"
+                ordinationTempleID: "temple_north_011"
             )
         )
 
-        let credential = ILLoginEntity(phone: "+84 912 345 678", password: "secret12")
+        let credential = ILLoginEntity(email: "an@example.com", password: "secret12")
         try await sut.login(credential)
 
         XCTAssertTrue(repository.loginCalled)
@@ -90,7 +98,7 @@ final class ILLoginUseCaseTests: XCTestCase {
         repository.loginError = ILLoginError.invalidCredentials
 
         do {
-            try await sut.login(ILLoginEntity(phone: "+84 912 345 678", password: "wrongpass"))
+            try await sut.login(ILLoginEntity(email: "an@example.com", password: "wrongpass"))
             XCTFail("Expected invalidCredentials")
         } catch let error as ILLoginError {
             XCTAssertEqual(error, .invalidCredentials)

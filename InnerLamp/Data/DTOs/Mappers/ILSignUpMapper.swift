@@ -14,8 +14,11 @@ nonisolated enum ILSignUpMapper {
     static func toDTO(_ entity: ILSignUpEntity) -> ILSignUpRequestOTPRequestDTO {
         ILSignUpRequestOTPRequestDTO(
             fullName: entity.fullName,
-            dharmaName: entity.displayName,
+            // EN: An empty dharma name is omitted from the body rather than sent as "".
+            // VI: Pháp danh rỗng thì bỏ khỏi body thay vì gửi chuỗi rỗng.
+            dharmaName: entity.displayName.isEmpty ? nil : entity.displayName,
             ordinationTempleId: entity.ordinationTempleID,
+            phoneCountry: entity.phoneCountry,
             phoneNumber: entity.phoneNumber,
             email: entity.email,
             password: entity.password

@@ -9,11 +9,11 @@ import Combine
 protocol ILSignUpCoordinatorDelegate: AnyObject {
     /// Người dùng đã có tài khoản, muốn sang luồng Đăng nhập.
     func signUpDidRequestLogin(_ coordinator: ILSignUpCoordinator)
-    /// Đã gửi mã OTP tới `phoneNumber` — điều hướng sang màn xác thực, kèm timing server trả về
+    /// Đã gửi mã tới `email` — điều hướng sang màn xác thực, kèm timing server trả về
     /// (`expires_in_seconds`/`resend_after_seconds`) để màn OTP khởi tạo countdown/hạn mã.
     func signUpDidRequestVerification(
         _ coordinator: ILSignUpCoordinator,
-        phoneNumber: String,
+        email: String,
         otpExpiresInSeconds: Int,
         resendAfterSeconds: Int
     )
@@ -54,12 +54,12 @@ final class ILSignUpCoordinator: Coordinator, ILAddTempleCoordinatorDelegate {
                 case .goToLogin:
                     self.delegate?.signUpDidRequestLogin(self)
                     self.finish()
-                case .didRequestVerification(let phoneNumber, let otpExpiresInSeconds, let resendAfterSeconds):
+                case .didRequestVerification(let email, let otpExpiresInSeconds, let resendAfterSeconds):
                     // Không finish() ở đây kẻo coordinator bị dealloc trong khi VC còn sống, làm
                     // nút back/"Tôi đã có tài khoản" hết tác dụng nếu người dùng quay lại từ OTP.
                     self.delegate?.signUpDidRequestVerification(
                         self,
-                        phoneNumber: phoneNumber,
+                        email: email,
                         otpExpiresInSeconds: otpExpiresInSeconds,
                         resendAfterSeconds: resendAfterSeconds
                     )

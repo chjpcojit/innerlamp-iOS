@@ -79,7 +79,9 @@ nonisolated final class ILUserLocalDataSourceImpl: ILUserLocalDataSource {
         managed.email = entity.email
         managed.phoneNumber = entity.phoneNumber
         managed.dharmaName = entity.dharmaName
-        managed.ordinationPlace = entity.ordinationPlace
+        // EN: The Core Data attribute keeps its old name (no model migration); it now holds the temple id.
+        // VI: Thuộc tính Core Data giữ tên cũ (không cần migrate model); giờ nó lưu id chùa.
+        managed.ordinationPlace = entity.ordinationTempleID
     }
 
     private static func makeEntity(from managed: ILUserMO) -> ILUserEntity {
@@ -88,7 +90,7 @@ nonisolated final class ILUserLocalDataSourceImpl: ILUserLocalDataSource {
             email: managed.email,
             phoneNumber: managed.phoneNumber,
             dharmaName: managed.dharmaName,
-            ordinationPlace: managed.ordinationPlace
+            ordinationTempleID: managed.ordinationPlace
         )
     }
 }

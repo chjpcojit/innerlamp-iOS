@@ -293,10 +293,10 @@ final class DIContainer {
         )
     }
 
-    func makeOtpViewModel(phoneNumber: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int) -> ILOtpViewModel {
+    func makeOtpViewModel(email: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int) -> ILOtpViewModel {
         ILOtpViewModel(
             useCase: makeOtpUseCase(),
-            phoneNumber: phoneNumber,
+            email: email,
             otpExpiresInSeconds: otpExpiresInSeconds,
             resendAfterSeconds: resendAfterSeconds
         )
@@ -304,14 +304,14 @@ final class DIContainer {
 
     func makeOtpCoordinator(
         navigationController: UINavigationController,
-        phoneNumber: String,
+        email: String,
         otpExpiresInSeconds: Int,
         resendAfterSeconds: Int
     ) -> ILOtpCoordinator {
         ILOtpCoordinator(
             navigationController: navigationController,
             container: self,
-            phoneNumber: phoneNumber,
+            email: email,
             otpExpiresInSeconds: otpExpiresInSeconds,
             resendAfterSeconds: resendAfterSeconds
         )

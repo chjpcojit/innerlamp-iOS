@@ -135,7 +135,9 @@ final class ILSignUpViewModelTests: XCTestCase {
         viewDidLoadSubject.send(())
 
         XCTAssertNotNil(receivedState)
-        XCTAssertEqual(receivedState?.displayName, useCase.dharmaNameSuggestions[0])
+        // EN: Criterion 7 — the dharma name starts empty.
+        // VI: Tiêu chí 7 — pháp danh để trống lúc mở.
+        XCTAssertEqual(receivedState?.displayName, "")
         XCTAssertEqual(receivedState?.selectedCountry, .default)
         XCTAssertFalse(receivedState!.isSubmitEnabled)
     }
@@ -150,10 +152,10 @@ final class ILSignUpViewModelTests: XCTestCase {
         viewDidLoadSubject.send(())
         suggestDisplayNameTappedSubject.send(())
 
-        XCTAssertEqual(receivedState?.displayName, useCase.dharmaNameSuggestions[1])
+        XCTAssertEqual(receivedState?.displayName, useCase.dharmaNameSuggestions[0])
 
         suggestDisplayNameTappedSubject.send(())
-        XCTAssertEqual(receivedState?.displayName, useCase.dharmaNameSuggestions[2])
+        XCTAssertEqual(receivedState?.displayName, useCase.dharmaNameSuggestions[1])
     }
 
     func test_countryChanged_updatesSelectedCountryAndClearsPhoneError() {
@@ -314,6 +316,24 @@ final class ILSignUpViewModelTests: XCTestCase {
         wait(for: [expectation], timeout: 1)
 
         XCTAssertEqual(mockRepository.receivedEntity?.fullName, "Nguyễn Bình An")
+        XCTAssertEqual(mockRepository.receivedEntity?.displayName, "")
+    }
+
+    func test_submitTapped_withSuggestedDharmaName_sendsIt() {
+        let output = makeOutput()
+        output.state.sink { _ in }.store(in: &cancellables)
+
+        let expectation = expectation(description: "didRequestVerification")
+        sut.navigationEventPublisher
+            .sink { _ in expectation.fulfill() }
+            .store(in: &cancellables)
+
+        fillValidForm()
+        suggestDisplayNameTappedSubject.send(())
+        submitTappedSubject.send(())
+
+        wait(for: [expectation], timeout: 1)
+
         XCTAssertEqual(mockRepository.receivedEntity?.displayName, useCase.dharmaNameSuggestions[0])
     }
 
@@ -608,6 +628,21 @@ final class ILSignUpViewModelTests: XCTestCase {
         XCTAssertFalse(mockRepository.requestRegistrationOTPCalled)
     }
 
+    func test_submitTapped_withSixtyFiveCharPassword_setsPasswordError() {
+        let output = makeOutput()
+        var receivedState: ILSignUpStateModel?
+        output.state
+            .sink { if case .success(let model) = $0 { receivedState = model } }
+            .store(in: &cancellables)
+
+        fillValidForm()
+        passwordChangedSubject.send(String(repeating: "a", count: 65))
+        submitTappedSubject.send(())
+
+        XCTAssertNotNil(receivedState?.passwordError)
+        XCTAssertFalse(mockRepository.requestRegistrationOTPCalled)
+    }
+
     func test_togglePasswordVisibility_flipsFlag() {
         let output = makeOutput()
         var receivedState: ILSignUpStateModel?
@@ -716,22 +751,25 @@ final class ILSignUpViewModelTests: XCTestCase {
         wait(for: [expectation], timeout: 1)
 
         XCTAssertTrue(mockRepository.requestRegistrationOTPCalled)
-        XCTAssertEqual(mockRepository.receivedEntity?.phoneNumber, "+84 912 345 678")
+        // EN: Criterion 13 — ISO country + national digits, never an E.164 string built on the client.
+        // VI: Tiêu chí 13 — mã quốc gia ISO + phần số quốc gia, client không tự dựng chuỗi E.164.
+        XCTAssertEqual(mockRepository.receivedEntity?.phoneCountry, "VN")
+        XCTAssertEqual(mockRepository.receivedEntity?.phoneNumber, "912345678")
         XCTAssertEqual(receivedEvent, .didRequestVerification(
-            phoneNumber: "+84 912 345 678",
+            email: "phapdanh@email.com",
             otpExpiresInSeconds: 90,
             resendAfterSeconds: 60
         ))
         XCTAssertFalse(receivedState!.isSubmitting)
     }
 
-    func test_submitTapped_whenPhoneAlreadyRegistered_showsErrorAndStaysOnScreen() {
+    func test_submitTapped_whenPhoneAlreadyRegistered_showsErrorUnderThePhoneFieldAndStays() {
         let output = makeOutput()
         var receivedState: ILSignUpStateModel?
-        let expectation = expectation(description: "submitError")
+        let expectation = expectation(description: "phoneNumberError")
         output.state
             .sink {
-                if case .success(let model) = $0, model.submitError != nil {
+                if case .success(let model) = $0, model.phoneNumberError != nil, !model.isSubmitting {
                     receivedState = model
                     expectation.fulfill()
                 }
@@ -750,21 +788,46 @@ final class ILSignUpViewModelTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1)
 
-        XCTAssertEqual(receivedState?.submitError, ILSignUpError.phoneAlreadyRegistered.localizedDescription)
+        XCTAssertEqual(receivedState?.phoneNumberError, ILSignUpError.phoneAlreadyRegistered.localizedDescription)
+        XCTAssertNil(receivedState?.submitError)
         XCTAssertEqual(receivedState?.isSubmitting, false)
         XCTAssertNil(receivedEvent)
+        // EN: Every value is kept (criterion 13).
+        // VI: Mọi giá trị được giữ nguyên (tiêu chí 13).
+        XCTAssertEqual(receivedState?.email, "phapdanh@email.com")
+        XCTAssertEqual(receivedState?.password, "secret12")
     }
 
-    func test_submitTapped_whenEmailTaken_showsErrorAndStaysOnScreen() {
-        assertSubmitFailure(ILSignUpError.emailTaken)
+    func test_submitTapped_whenServerSaysInvalidEmail_showsErrorUnderTheEmailField() {
+        let output = makeOutput()
+        var receivedState: ILSignUpStateModel?
+        let expectation = expectation(description: "emailError")
+        output.state
+            .sink {
+                if case .success(let model) = $0, model.emailError != nil, !model.isSubmitting {
+                    receivedState = model
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        mockRepository.requestRegistrationOTPError = ILSignUpError.invalidEmail
+
+        fillValidForm()
+        submitTappedSubject.send(())
+
+        wait(for: [expectation], timeout: 1)
+
+        XCTAssertEqual(receivedState?.emailError, ILSignUpError.invalidEmail.localizedDescription)
+        XCTAssertNil(receivedState?.submitError)
     }
 
-    func test_submitTapped_whenOtpLocked_showsLockedMessageAndStaysOnScreen() {
-        assertSubmitFailure(ILSignUpError.otpLocked(lockedUntil: "2026-09-22T10:30:00Z"))
+    func test_submitTapped_whenRegistrationInProgress_showsTheServerWaitAndStays() {
+        assertSubmitFailure(ILSignUpError.registrationInProgress(retryAfterSeconds: 412))
     }
 
-    func test_submitTapped_whenOtpResendTooSoon_showsCooldownMessage() {
-        assertSubmitFailure(ILSignUpError.otpResendTooSoon(retryAfterSeconds: 30))
+    func test_submitTapped_whenRateLimited_showsTryLaterMessage() {
+        assertSubmitFailure(ILSignUpError.rateLimited(retryAfterSeconds: 60))
     }
 
     func test_submitTapped_whenOffline_showsNoInternetMessageAndDoesNotNavigate() {

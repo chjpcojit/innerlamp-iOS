@@ -20,7 +20,7 @@ nonisolated enum ILOtpMapper {
                 email: dto.user.email,
                 phoneNumber: dto.user.phoneNumber,
                 dharmaName: dto.user.dharmaName ?? "",
-                ordinationPlace: dto.user.ordinationPlace ?? ""
+                ordinationTempleID: dto.user.ordinationTempleId ?? ""
             )
         )
     }
