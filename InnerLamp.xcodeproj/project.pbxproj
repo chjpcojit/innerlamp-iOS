@@ -11,6 +11,8 @@
 		3FBEC6C6306AB47E00D96CF4 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6C5306AB47E00D96CF4 /* Sentry */; };
 		3FBEC6D6306AB5CD00D96CF4 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 3FBEC6D5306AB5CD00D96CF4 /* SwiftProtobuf */; };
 		3FC1000000000000000000C1 /* GRPCNIOTransportHTTP2 in Frameworks */ = {isa = PBXBuildFile; productRef = 3FC1000000000000000000B1 /* GRPCNIOTransportHTTP2 */; };
+		3FC1000000000000000000C2 /* GRPCProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 3FC1000000000000000000B2 /* GRPCProtobuf */; };
+		3FC1000000000000000000C3 /* GRPCInProcessTransport in Frameworks */ = {isa = PBXBuildFile; productRef = 3FC1000000000000000000B3 /* GRPCInProcessTransport */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -139,6 +141,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3FC1000000000000000000C2 /* GRPCProtobuf in Frameworks */,
+				3FC1000000000000000000C3 /* GRPCInProcessTransport in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -220,6 +224,8 @@
 			);
 			name = InnerLampTests;
 			packageProductDependencies = (
+				3FC1000000000000000000B2 /* GRPCProtobuf */,
+				3FC1000000000000000000B3 /* GRPCInProcessTransport */,
 			);
 			productName = InnerLampTests;
 			productReference = 3F39AA3A305165790008341C /* InnerLampTests.xctest */;
@@ -746,6 +752,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3FC1000000000000000000A1 /* XCRemoteSwiftPackageReference "grpc-swift-nio-transport" */;
 			productName = GRPCNIOTransportHTTP2;
+		};
+		3FC1000000000000000000B2 /* GRPCProtobuf */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3FC1000000000000000000A2 /* XCRemoteSwiftPackageReference "grpc-swift-protobuf" */;
+			productName = GRPCProtobuf;
+		};
+		3FC1000000000000000000B3 /* GRPCInProcessTransport */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3FBE09B2306AC37000D96CF4 /* XCRemoteSwiftPackageReference "grpc-swift-2" */;
+			productName = GRPCInProcessTransport;
 		};
 		3FC1000000000000000000B5 /* GRPCProtobufGenerator */ = {
 			isa = XCSwiftPackageProductDependency;

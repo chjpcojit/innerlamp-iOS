@@ -29,6 +29,7 @@ final class ILHomeViewModelTests: XCTestCase {
     private var templeTappedSubject: PassthroughSubject<String, Never>!
     private var deityTappedSubject: PassthroughSubject<String, Never>!
     private var deitiesViewAllTappedSubject: PassthroughSubject<Void, Never>!
+    private var templesViewAllTappedSubject: PassthroughSubject<Void, Never>!
     private var suggestedSessionTappedSubject: PassthroughSubject<String, Never>!
     private var notificationTappedSubject: PassthroughSubject<Void, Never>!
     private var avatarTappedSubject: PassthroughSubject<Void, Never>!
@@ -56,6 +57,7 @@ final class ILHomeViewModelTests: XCTestCase {
         templeTappedSubject = PassthroughSubject<String, Never>()
         deityTappedSubject = PassthroughSubject<String, Never>()
         deitiesViewAllTappedSubject = PassthroughSubject<Void, Never>()
+        templesViewAllTappedSubject = PassthroughSubject<Void, Never>()
         suggestedSessionTappedSubject = PassthroughSubject<String, Never>()
         notificationTappedSubject = PassthroughSubject<Void, Never>()
         avatarTappedSubject = PassthroughSubject<Void, Never>()
@@ -78,6 +80,7 @@ final class ILHomeViewModelTests: XCTestCase {
         templeTappedSubject = nil
         deityTappedSubject = nil
         deitiesViewAllTappedSubject = nil
+        templesViewAllTappedSubject = nil
         suggestedSessionTappedSubject = nil
         notificationTappedSubject = nil
         avatarTappedSubject = nil
@@ -101,6 +104,7 @@ final class ILHomeViewModelTests: XCTestCase {
             articleTapped: articleTappedSubject.eraseToAnyPublisher(),
             articlesViewAllTapped: articlesViewAllTappedSubject.eraseToAnyPublisher(),
             templeTapped: templeTappedSubject.eraseToAnyPublisher(),
+            templesViewAllTapped: templesViewAllTappedSubject.eraseToAnyPublisher(),
             deityTapped: deityTappedSubject.eraseToAnyPublisher(),
             deitiesViewAllTapped: deitiesViewAllTappedSubject.eraseToAnyPublisher(),
             suggestedSessionTapped: suggestedSessionTappedSubject.eraseToAnyPublisher(),
