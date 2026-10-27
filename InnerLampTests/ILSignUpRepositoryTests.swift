@@ -26,49 +26,43 @@ final class ILSignUpRepositoryTests: XCTestCase {
         XCTAssertEqual(ILSignUpError.from(apiError("PHONE_TAKEN")), .phoneAlreadyRegistered)
     }
 
-    func test_from_emailTaken_mapsToEmailTaken() {
-        XCTAssertEqual(ILSignUpError.from(apiError("EMAIL_TAKEN")), .emailTaken)
-    }
-
-    func test_from_otpLocked_carriesLockedUntilFromDetails() {
+    func test_from_registrationInProgress_carriesRetryAfterSecondsFromDetails() {
         let error = ILSignUpError.from(apiError(
-            "OTP_LOCKED",
-            details: ["locked_until": AnyCodable(value: "2026-09-22T10:30:00Z")]
+            "REGISTRATION_IN_PROGRESS",
+            details: ["retry_after_seconds": AnyCodable(value: 412)]
         ))
 
-        XCTAssertEqual(error, .otpLocked(lockedUntil: "2026-09-22T10:30:00Z"))
+        XCTAssertEqual(error, .registrationInProgress(retryAfterSeconds: 412))
     }
 
-    func test_from_otpSendLimited_carriesLockedUntilFromDetails() {
+    func test_from_rateLimited_carriesRetryAfterSecondsFromDetails() {
         let error = ILSignUpError.from(apiError(
-            "OTP_SEND_LIMITED",
-            details: ["locked_until": AnyCodable(value: "2026-09-22T10:30:00Z")]
+            "RATE_LIMITED",
+            details: ["retry_after_seconds": AnyCodable(value: 60)]
         ))
 
-        XCTAssertEqual(error, .otpSendLimited(lockedUntil: "2026-09-22T10:30:00Z"))
+        XCTAssertEqual(error, .rateLimited(retryAfterSeconds: 60))
     }
 
-    func test_from_otpResendTooSoon_carriesRetryAfterSecondsFromDetails() {
-        let error = ILSignUpError.from(apiError(
-            "OTP_RESEND_TOO_SOON",
-            details: ["retry_after_seconds": AnyCodable(value: 30)]
-        ))
-
-        XCTAssertEqual(error, .otpResendTooSoon(retryAfterSeconds: 30))
+    func test_from_fieldCodes_mapToTheirOwnFieldCases() {
+        XCTAssertEqual(ILSignUpError.from(apiError("INVALID_EMAIL")), .invalidEmail)
+        XCTAssertEqual(ILSignUpError.from(apiError("INVALID_PHONE")), .invalidPhone)
+        XCTAssertEqual(ILSignUpError.from(apiError("INVALID_PASSWORD")), .invalidPassword)
+        XCTAssertEqual(ILSignUpError.from(apiError("INVALID_FULL_NAME")), .invalidFullName)
+        XCTAssertEqual(ILSignUpError.from(apiError("INVALID_DHARMA_NAME")), .invalidDharmaName)
     }
 
-    func test_from_otpLockedWithoutDetails_leavesTimingNil() {
-        XCTAssertEqual(ILSignUpError.from(apiError("OTP_LOCKED")), .otpLocked(lockedUntil: nil))
-    }
-
-    func test_from_smsSendFailed_mapsToSmsSendFailed() {
-        XCTAssertEqual(ILSignUpError.from(apiError("SMS_SEND_FAILED")), .smsSendFailed)
-    }
-
-    func test_from_validationCodes_mapToInvalidInput() {
-        for code in ["VALIDATION_ERROR", "INVALID_EMAIL", "INVALID_PHONE", "INVALID_PASSWORD",
-                     "INVALID_FULL_NAME", "INVALID_DHARMA_NAME", "PAYLOAD_TOO_LARGE"] {
+    func test_from_structuralCodes_mapToInvalidInput() {
+        for code in ["VALIDATION_ERROR", "PAYLOAD_TOO_LARGE"] {
             XCTAssertEqual(ILSignUpError.from(apiError(code)), .invalidInput, "code: \(code)")
+        }
+    }
+
+    func test_from_retiredAndMailCodes_mapToServer() {
+        // EN: `EMAIL_TAKEN` and `SMS_SEND_FAILED` no longer exist; `EMAIL_SEND_FAILED` is a generic error.
+        // VI: `EMAIL_TAKEN` và `SMS_SEND_FAILED` không còn; `EMAIL_SEND_FAILED` là lỗi chung.
+        for code in ["EMAIL_TAKEN", "SMS_SEND_FAILED", "EMAIL_SEND_FAILED"] {
+            XCTAssertEqual(ILSignUpError.from(apiError(code)), .server, "code: \(code)")
         }
     }
 
@@ -93,18 +87,12 @@ final class ILSignUpRepositoryTests: XCTestCase {
 
     // MARK: - Message wording
 
-    func test_otpLocked_withParsableTime_differsFromFallbackMessage() {
-        let withTime = ILSignUpError.otpLocked(lockedUntil: "2026-09-22T10:30:00Z")
-        let withoutTime = ILSignUpError.otpLocked(lockedUntil: nil)
+    func test_registrationInProgress_withSeconds_differsFromFallbackMessage() {
+        let withSeconds = ILSignUpError.registrationInProgress(retryAfterSeconds: 30)
+        let withoutSeconds = ILSignUpError.registrationInProgress(retryAfterSeconds: nil)
 
-        XCTAssertNotNil(withTime.errorDescription)
-        XCTAssertNotEqual(withTime.errorDescription, withoutTime.errorDescription)
-    }
-
-    func test_otpLocked_withUnparsableTime_fallsBackToGenericMessage() {
-        let unparsable = ILSignUpError.otpLocked(lockedUntil: "not-a-date")
-
-        XCTAssertEqual(unparsable.errorDescription, ILSignUpError.otpLocked(lockedUntil: nil).errorDescription)
+        XCTAssertNotNil(withSeconds.errorDescription)
+        XCTAssertNotEqual(withSeconds.errorDescription, withoutSeconds.errorDescription)
     }
 
     // MARK: - Mapper
@@ -114,7 +102,8 @@ final class ILSignUpRepositoryTests: XCTestCase {
             fullName: "Nguyễn Bình An",
             displayName: "Diệu Tâm",
             ordinationTempleID: "temple_north_011",
-            phoneNumber: "+84 912 345 678",
+            phoneCountry: "VN",
+            phoneNumber: "912345678",
             email: "phapdanh@email.com",
             password: "secret12"
         )
@@ -124,9 +113,16 @@ final class ILSignUpRepositoryTests: XCTestCase {
         XCTAssertEqual(dto.fullName, "Nguyễn Bình An")
         XCTAssertEqual(dto.dharmaName, "Diệu Tâm")
         XCTAssertEqual(dto.ordinationTempleId, "temple_north_011")
-        XCTAssertEqual(dto.phoneNumber, "+84 912 345 678")
+        XCTAssertEqual(dto.phoneCountry, "VN")
+        XCTAssertEqual(dto.phoneNumber, "912345678")
         XCTAssertEqual(dto.email, "phapdanh@email.com")
         XCTAssertEqual(dto.password, "secret12")
+    }
+
+    func test_mapper_emptyDharmaName_isOmittedFromTheRequest() {
+        let entity = ILSignUpEntity(fullName: "Nguyễn Bình An", displayName: "", phoneCountry: "VN", phoneNumber: "912345678")
+
+        XCTAssertNil(ILSignUpMapper.toDTO(entity).dharmaName)
     }
 
     func test_mapper_mapsResponseDTOToOTPEntity() {
@@ -145,7 +141,8 @@ final class ILSignUpRepositoryTests: XCTestCase {
             fullName: "Nguyễn Bình An",
             dharmaName: "Diệu Tâm",
             ordinationTempleId: "temple_north_011",
-            phoneNumber: "+84 912 345 678",
+            phoneCountry: "VN",
+            phoneNumber: "912345678",
             email: "phapdanh@email.com",
             password: "secret12"
         )
@@ -159,7 +156,8 @@ final class ILSignUpRepositoryTests: XCTestCase {
         XCTAssertEqual(json["dharma_name"] as? String, "Diệu Tâm")
         XCTAssertEqual(json["ordination_temple_id"] as? String, "temple_north_011")
         XCTAssertNil(json["ordination_place"], "The server rejects the retired field")
-        XCTAssertEqual(json["phone_number"] as? String, "+84 912 345 678")
+        XCTAssertEqual(json["phone_country"] as? String, "VN")
+        XCTAssertEqual(json["phone_number"] as? String, "912345678")
         XCTAssertEqual(json["email"] as? String, "phapdanh@email.com")
         XCTAssertEqual(json["password"] as? String, "secret12")
         XCTAssertNil(json["dharmaName"])
@@ -170,7 +168,8 @@ final class ILSignUpRepositoryTests: XCTestCase {
             fullName: "Nguyễn Bình An",
             dharmaName: "Diệu Tâm",
             ordinationTempleId: nil,
-            phoneNumber: "+84 912 345 678",
+            phoneCountry: "VN",
+            phoneNumber: "912345678",
             email: "phapdanh@email.com",
             password: "secret12"
         )
@@ -180,6 +179,24 @@ final class ILSignUpRepositoryTests: XCTestCase {
         )
 
         XCTAssertNil(json["ordination_temple_id"], "Absent field = no temple; the server also rejects unknown keys")
+    }
+
+    func test_requestDTO_withoutDharmaName_omitsTheDharmaNameField() throws {
+        let dto = ILSignUpRequestOTPRequestDTO(
+            fullName: "Nguyễn Bình An",
+            dharmaName: nil,
+            ordinationTempleId: nil,
+            phoneCountry: "VN",
+            phoneNumber: "912345678",
+            email: "phapdanh@email.com",
+            password: "secret12"
+        )
+
+        let json = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: try JSONEncoder().encode(dto)) as? [String: Any]
+        )
+
+        XCTAssertNil(json["dharma_name"])
     }
 
     func test_responseDTO_decodesSnakeCaseBodyUnderConvertFromSnakeCase() throws {
@@ -199,7 +216,8 @@ final class ILSignUpRepositoryTests: XCTestCase {
             fullName: "Nguyễn Bình An",
             dharmaName: "Diệu Tâm",
             ordinationTempleId: nil,
-            phoneNumber: "+84 912 345 678",
+            phoneCountry: "VN",
+            phoneNumber: "912345678",
             email: "phapdanh@email.com",
             password: "secret12"
         )

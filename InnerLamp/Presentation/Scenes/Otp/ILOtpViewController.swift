@@ -25,9 +25,8 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
     private let codeChangedSubject = PassthroughSubject<String, Never>()
     private let backTappedSubject = PassthroughSubject<Void, Never>()
-    private let changeNumberTappedSubject = PassthroughSubject<Void, Never>()
+    private let changeEmailTappedSubject = PassthroughSubject<Void, Never>()
     private let resendTappedSubject = PassthroughSubject<Void, Never>()
-    private let requestVoiceCallTappedSubject = PassthroughSubject<Void, Never>()
     private let verifyTappedSubject = PassthroughSubject<Void, Never>()
 
     /// Countdown tick lại render mỗi giây trong khi `codeError` vẫn còn set — nhớ lỗi đã
@@ -79,18 +78,18 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
         return label
     }()
 
-    private lazy var changeNumberButton: UIButton = {
+    private lazy var changeEmailButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("otp.changeNumber".localized, for: .normal)
+        button.setTitle("otp.changeEmail".localized, for: .normal)
         button.titleLabel?.font = ILTypography.body
         button.setTitleColor(ILColors.goldDeep, for: .normal)
         button.setContentHuggingPriority(.required, for: .horizontal)
-        button.addTarget(self, action: #selector(handleChangeNumberTapped), for: .touchUpInside)
+        button.addTarget(self, action: #selector(handleChangeEmailTapped), for: .touchUpInside)
         return button
     }()
 
     private lazy var subtitleStack: UIStackView = {
-        let stack = UIStackView(arrangedSubviews: [subtitleLabel, changeNumberButton])
+        let stack = UIStackView(arrangedSubviews: [subtitleLabel, changeEmailButton])
         stack.axis = .horizontal
         stack.spacing = 4
         stack.alignment = .firstBaseline
@@ -112,15 +111,6 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.onResendTapped = { [weak self] in
             self?.handleResendTapped()
-        }
-        return view
-    }()
-
-    private lazy var voiceCallBannerView: ILOtpVoiceCallBannerView = {
-        let view = ILOtpVoiceCallBannerView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.onTap = { [weak self] in
-            self?.requestVoiceCallTappedSubject.send(())
         }
         return view
     }()
@@ -187,7 +177,7 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
 
-        [titleLabel, subtitleStack, codeInputView, resendRowView, voiceCallBannerView].forEach {
+        [titleLabel, subtitleStack, codeInputView, resendRowView].forEach {
             contentView.addSubview($0)
         }
 
@@ -231,11 +221,7 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
             resendRowView.topAnchor.constraint(equalTo: codeInputView.bottomAnchor, constant: ILMetrics.spaceMedium),
             resendRowView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             resendRowView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-
-            voiceCallBannerView.topAnchor.constraint(equalTo: resendRowView.bottomAnchor, constant: ILMetrics.groupSpacing),
-            voiceCallBannerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            voiceCallBannerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            voiceCallBannerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            resendRowView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
 
             // Ghim theo `keyboardLayoutGuide` — tự trồi lên theo bàn phím, không cần
             // NotificationCenter/contentInset thủ công (giống `footerContainer` ở màn Đăng nhập/Đăng ký).
@@ -262,9 +248,8 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             codeChanged: codeChangedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
-            changeNumberTapped: changeNumberTappedSubject.eraseToAnyPublisher(),
+            changeEmailTapped: changeEmailTappedSubject.eraseToAnyPublisher(),
             resendTapped: resendTappedSubject.eraseToAnyPublisher(),
-            requestVoiceCallTapped: requestVoiceCallTappedSubject.eraseToAnyPublisher(),
             verifyTapped: verifyTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
@@ -291,7 +276,7 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
     }
 
     private func updateUI(with model: ILOtpStateModel) {
-        subtitleLabel.text = String(format: "otp.subtitle".localized, model.phoneNumber)
+        subtitleLabel.text = String(format: "otp.subtitle".localized, model.email)
 
         codeInputView.code = model.code
         codeInputView.hasError = model.codeError != nil
@@ -319,7 +304,7 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
         }
     }
 
-    /// Locks back, code input, resend, voice call and change-number while verifying, so the user
+    /// Locks back, code input, resend and change-email while verifying, so the user
     /// cannot leave the screen or alter the request mid-flight.
     private func setInteractionLocked(_ locked: Bool) {
         isVerifying = locked
@@ -328,8 +313,8 @@ final class ILOtpViewController: BaseViewController, TransitionProviding {
     }
 
     // MARK: - Actions
-    @objc private func handleChangeNumberTapped() {
-        changeNumberTappedSubject.send(())
+    @objc private func handleChangeEmailTapped() {
+        changeEmailTappedSubject.send(())
     }
 
     private func handleResendTapped() {

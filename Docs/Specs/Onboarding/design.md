@@ -1,7 +1,7 @@
 # Design — Onboarding
 
-Version: 2.2
-Last updated: 2026-10-16
+Version: 2.3
+Last updated: 2026-10-27
 Status: in-progress (drift) — splash, intro, SignUp and the code screen built on the phone + SMS contract; v2.0 changes are planned (email code, launch routing, website terms pages, temple proposal sent)
 
 > See `changelog.md` in this folder for the version history of this spec.

@@ -1,8 +1,8 @@
 # Tasks — Login
 
-Version: 2.2
-Last updated: 2026-10-16
-Status: in-progress (drift) — Phase 1–7 not started for v2.0; items marked `[x]` were read in code on 2026-10-14 and still match
+Version: 2.3
+Last updated: 2026-10-27
+Status: in-progress — Phase 2 (email sign-in) built on 2026-10-27, not yet built or tested on a Mac; Phases 1 and 3–7 open
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -17,14 +17,16 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 
 ## Phase 2 — Email sign-in
 
-- [ ] `ILLoginEntity.email`; `ILLoginDTO` / `ILLoginRepositoryImpl`: `{email, password, device}`, user DTO `ordination_temple_id` (criterion 3)
-- [ ] `ILLoginUseCase`: email non-empty, password non-empty; errors per Error → UI incl. `RATE_LIMITED` (criteria 2, 4, 22)
-- [ ] `ILLoginStateModel` / `ILLoginViewModel` / `ILLoginViewController`: email field, remove phone + country picker + SMS button, "Quên mật khẩu?", clear password on failure, banner, root without back (criteria 1, 3, 7)
+- [x] `ILLoginEntity.email`; `ILLoginDTO` / `ILLoginRepositoryImpl`: `{email, password, device}`, user DTO `ordination_temple_id` (criterion 3)
+- [x] `ILLoginUseCase`: email non-empty, password non-empty; errors per Error → UI incl. `RATE_LIMITED` (criteria 2, 4, 22)
+- [x] `ILLoginStateModel` / `ILLoginViewModel` / `ILLoginViewController`: email field, remove phone + country picker + SMS button, clear password on failure (criteria 1, 3, 7)
+- [ ] Login view: "Quên mật khẩu?" label (still "Quên?"), banner, root without back (criteria 1, 7)
 - [x] Device object `platform: "ios"`, model, OS and app version (`ILLoginRepositoryImpl`) (criterion 3)
 - [x] Lock message with the unlock time from `locked_until` (`ILLoginError.loginLocked`, `ILUnlockTimeFormatter`) (criterion 5)
 - [x] Second tap ignored while signing in (`ILLoginViewModel.handleSubmit`) (criterion 6)
 - [ ] Auth requests carry no `X-API-Key` / `X-InnerLamp-Client-IP` (criterion 24)
-- [ ] Unit tests: request body, each error, password cleared, banner shown from the coordinator argument
+- [x] Unit tests: request body, each error, password cleared (`ILLoginRepositoryTests`, `ILLoginUseCaseTests`, `ILLoginViewModelTests`; written, not yet run)
+- [ ] Unit test: banner shown from the coordinator argument (with Phase 3)
 
 ## Phase 3 — Session end
 
@@ -57,7 +59,7 @@ Every item traces to a row of `design.md` "Layers & components" or a step of its
 
 ## Phase 7 — Strings, logging, QA
 
-- [ ] `vi.json` (+ `en.json` if present): copy of product §3.1.1; delete phone, SMS and forgot-by-phone keys (criterion 22)
+- [ ] `vi.json` (+ `en.json` if present): copy of product §3.1.1; delete phone, SMS and forgot-by-phone keys (criterion 22) — sign-in keys done 2026-10-27; forgot-password keys wait for Phase 5
 - [ ] Check `NetworkLogger` never prints `/v1/auth/*` bodies or `Authorization` (criterion 23)
 - [ ] Manual run against the backend dev build (still uncommitted and untested against a server on the backend side, 2026-10-16): sign-in, wrong credentials, lock, reset on another device ends this session with the message, guest prompt
 - [ ] Update the iOS column of product §4.2 when done (tell `ba-writer`)

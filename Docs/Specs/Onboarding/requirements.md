@@ -1,11 +1,11 @@
 # Requirements — Onboarding
 
-Version: 2.2
-Last updated: 2026-10-16
-Status: in-progress (drift) — splash, the three intro steps, the registration form, the code screen and the real register calls are built against the old phone + SMS contract; v2.0 moves registration to an email code (ADR-0003). No code for v2.0 yet (`tasks.md` Phase 1–7). The backend shipped the email contract on 2026-10-16 (uncommitted on its branch, not yet exercised against a running server)
+Version: 2.3
+Last updated: 2026-10-27
+Status: in-progress (drift) — splash, the three intro steps, the registration form, the code screen and the real register calls are built against the old phone + SMS contract; v2.0 moves registration to an email code (ADR-0003). The email registration call and the email code screen were built on 2026-10-27 (`tasks.md` Phases 3 and 5, partly), not yet built or tested on a Mac
 Feature folder: `InnerLamp/Presentation/Scenes/{Splash,Onboarding,SignUp,Otp,AddTemple}/`
 Product spec: innerlamp-be `docs/product/onboarding/product.md` @ v1.7
-Contract: innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 2.1.1 (Auth tag: `register/request-otp`, `register/resend-otp`, `register/verify-otp`, and the "Phiên bị thu hồi" note); backend feature spec `docs/specs/features/onboarding` @ v8.3.
+Contract: innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 3.0.0 (Auth tag: `register/request-otp`, `register/resend-otp`, `register/verify-otp`, and the "Phiên bị thu hồi" note); backend feature spec `docs/specs/features/onboarding` @ v8.3.
 Architecture: ADR-0003 (accounts identified by email, verified by an email code; SMS removed) — Accepted
 Implements: BR-ONB-01, BR-ONB-02, BR-ONB-03, BR-ONB-04, BR-ONB-05, BR-ONB-06, BR-ONB-07, BR-ONB-08, BR-ONB-09, BR-ONB-10, BR-ONB-11, FR-ONB-001, FR-ONB-002, FR-ONB-003, FR-ONB-004, FR-ONB-005, FR-ONB-006, FR-ONB-007, FR-ONB-008, FR-ONB-009, FR-ONB-010, NFR-ONB-01, NFR-ONB-02, NFR-ONB-03
 Not on iOS: FR-ONB-003 website row of product §3.6 (signed-in visitor opening the registration page)

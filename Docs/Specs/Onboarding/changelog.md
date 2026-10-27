@@ -4,6 +4,24 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in
 this folder. All three files share one changelog since they change together as
 one spec unit. Newest version first.
 
+## v2.3 (2026-10-27)
+
+Code caught up with the email contract (innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 3.0.0;
+the Auth shapes are the same as in 2.1.1).
+
+- `tasks.md`: ticked — registration body `{email, password, phone_country, phone_number, full_name,
+  dharma_name?, ordination_temple_id?}`; error mapping (`REGISTRATION_IN_PROGRESS`, `RATE_LIMITED`,
+  `EMAIL_SEND_FAILED` → generic; `EMAIL_TAKEN` / `SMS_SEND_FAILED` / `OTP_LOCKED` removed from
+  register); dharma name optional and empty by default; verify and resend by email on
+  `/v1/auth/register/resend-otp` without `purpose`; "Đổi email"; voice-call banner deleted; strings.
+  Split into open items: `ILSignUpRules`, `PHONE_TAKEN` Login link, `PENDING_REGISTRATION_EXPIRED`
+  back to the form, live validity countdown / lock state, criterion 26a. Build and unit tests not
+  yet run on a Mac.
+- `requirements.md`: status line and contract cite (2.1.1 → 3.0.0).
+- `design.md`: header only.
+- New `AS-Onboarding-002` (auth copy not in product §3.1.1); `TD-SignUp-004` resolved; new
+  `TD-SignUp-005`, `TD-SignUp-006`, `TD-Login-001`.
+
 ## v2.2 (2026-10-16)
 
 _Later: product spec cite raised to @ v1.6 (BR-ONB-08 amended, FR-ONB-003 +2 scenarios; criterion 16a wording confirmed by anh Đức; `AS-Onboarding-001` → Validated), then @ v1.7 (2026-10-17: `verify-otp` `PHONE_TAKEN` / `INVALID_TEMPLE` return to the form with the field error; new criterion 26a)._

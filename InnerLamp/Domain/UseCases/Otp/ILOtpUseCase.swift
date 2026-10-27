@@ -13,22 +13,18 @@ enum ILOtpOperation {
     case resend
 }
 
-/// `otp_codes.purpose` values. US-001 implements only `.registration`; the server rejects the
-/// other enum values with `UNSUPPORTED_OTP_PURPOSE`.
-enum ILOtpPurpose {
-    static let registration = "register"
-}
-
 enum ILOtpError: Error, LocalizedError, Equatable {
     case invalidCode
     case codeExpired
     case registrationExpired
     case phoneTaken
-    case emailTaken
+    /// EN: `INVALID_TEMPLE` from `verify-otp` — the picked temple was removed while the code was pending.
+    /// VI: `INVALID_TEMPLE` từ `verify-otp` — chùa đã chọn bị gỡ trong lúc mã đang chờ.
+    case invalidTemple
     case otpLocked(lockedUntil: String?)
     case sendLimited(lockedUntil: String?)
     case resendTooSoon(retryAfterSeconds: Int?)
-    case smsSendFailed
+    case rateLimited(retryAfterSeconds: Int?)
     case invalidInput
     case server
     case networkUnavailable
@@ -36,8 +32,6 @@ enum ILOtpError: Error, LocalizedError, Equatable {
     /// The session returned by a successful `verify-otp` could not be written to the Keychain /
     /// local user store.
     case storageFailed
-    /// The voice-call OTP channel has no confirmed backend contract yet.
-    case voiceCallUnsupported
 
     var errorDescription: String? {
         switch self {
@@ -47,29 +41,29 @@ enum ILOtpError: Error, LocalizedError, Equatable {
             return "otp.error.expiredCode".localized
         case .registrationExpired:
             return "otp.error.registrationExpired".localized
-        // The OTP-related codes below are shared with SignUp's submit call and already have
-        // identical messages under `signup.error.*` — reused rather than duplicated.
+        // The codes below are shared with SignUp's submit call and already have identical
+        // messages under `signup.error.*` — reused rather than duplicated.
         case .phoneTaken:
             return "signup.error.phoneTaken".localized
-        case .emailTaken:
-            return "signup.error.emailTaken".localized
+        case .invalidTemple:
+            return "signup.error.invalidTemple".localized
         case .otpLocked(let lockedUntil):
             guard let formatted = ILUnlockTimeFormatter.displayString(from: lockedUntil) else {
-                return "signup.error.otpLocked".localized
+                return "otp.error.locked".localized
             }
-            return String(format: "signup.error.otpLockedUntil".localized, formatted)
+            return String(format: "otp.error.lockedUntil".localized, formatted)
         case .sendLimited(let lockedUntil):
             guard let formatted = ILUnlockTimeFormatter.displayString(from: lockedUntil) else {
-                return "signup.error.otpSendLimited".localized
+                return "otp.error.sendLimited".localized
             }
-            return String(format: "signup.error.otpSendLimitedUntil".localized, formatted)
+            return String(format: "otp.error.sendLimitedUntil".localized, formatted)
         case .resendTooSoon(let retryAfterSeconds):
             guard let retryAfterSeconds else {
-                return "signup.error.otpResendTooSoon".localized
+                return "otp.error.resendTooSoon".localized
             }
-            return String(format: "signup.error.otpResendTooSoonSeconds".localized, retryAfterSeconds)
-        case .smsSendFailed:
-            return "signup.error.smsSendFailed".localized
+            return String(format: "otp.error.resendTooSoonSeconds".localized, retryAfterSeconds)
+        case .rateLimited(let retryAfterSeconds):
+            return ILRateLimitMessage.text(retryAfterSeconds: retryAfterSeconds)
         case .invalidInput:
             return "signup.error.invalidInput".localized
         case .server:
@@ -80,34 +74,23 @@ enum ILOtpError: Error, LocalizedError, Equatable {
             return "signup.error.timedOut".localized
         case .storageFailed:
             return "otp.error.storageFailed".localized
-        case .voiceCallUnsupported:
-            return "otp.error.voiceCallUnsupported".localized
         }
     }
-}
-
-/// Kênh gửi mã OTP — SMS (mặc định) hoặc cuộc gọi thoại (khi người dùng không nhận được SMS,
-/// xem banner "nhận mã qua cuộc gọi thoại" trong design handoff).
-enum ILOtpChannel {
-    case sms
-    case voiceCall
 }
 
 protocol ILOtpUseCase {
     /// State ban đầu cho màn OTP. `otpExpiresInSeconds`/`resendAfterSeconds` là timing thật từ
     /// server (response của `request-otp`), dùng để khởi tạo countdown "Gửi lại" và câu hiển thị
     /// hạn mã — không còn hardcode như trước.
-    func getInitialState(phoneNumber: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int) -> ILOtpStateModel
+    func getInitialState(email: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int) -> ILOtpStateModel
 
-    /// Gửi lại mã cho `phoneNumber` — trả về timing mới của server để màn hình đếm lại từ đó.
-    ///
-    /// `.voiceCall` **chưa được hỗ trợ**: hợp đồng `resend-otp` đã xác nhận không có tham số kênh,
-    /// nên ném `ILOtpError.voiceCallUnsupported` mà không gọi mạng. Xem `Docs/Specs/Onboarding/`.
-    func resendCode(phoneNumber: String, channel: ILOtpChannel) async throws -> ILOtpTimingEntity
+    /// EN: Resends the code to `email` (`POST /v1/auth/register/resend-otp`) and returns the new timing.
+    /// VI: Gửi lại mã tới `email` (`POST /v1/auth/register/resend-otp`) và trả về timing mới.
+    func resendCode(email: String) async throws -> ILOtpTimingEntity
 
-    /// Xác thực `code` với mã đã gửi cho `phoneNumber`. Thành công lưu luôn phiên đăng nhập
+    /// Xác thực `code` với mã đã gửi tới `email`. Thành công lưu luôn phiên đăng nhập
     /// (token vào Keychain, user vào `ILUserRepository`) — xem `Docs/Specs/Onboarding/design.md`.
-    func verifyCode(phoneNumber: String, code: String) async throws
+    func verifyCode(email: String, code: String) async throws
 }
 
 final class ILOtpUseCaseImpl: ILOtpUseCase {
@@ -126,25 +109,20 @@ final class ILOtpUseCaseImpl: ILOtpUseCase {
         self.userRepository = userRepository
     }
 
-    func getInitialState(phoneNumber: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int) -> ILOtpStateModel {
+    func getInitialState(email: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int) -> ILOtpStateModel {
         var state = ILOtpStateModel.initial
-        state.phoneNumber = phoneNumber
+        state.email = email
         state.otpExpiresInSeconds = otpExpiresInSeconds
         state.secondsRemaining = resendAfterSeconds
         return state
     }
 
-    func resendCode(phoneNumber: String, channel: ILOtpChannel) async throws -> ILOtpTimingEntity {
-        // The confirmed resend-otp contract has no channel field. Refuse rather than silently
-        // sending an SMS for a "call me instead" request — see Docs/Specs/Onboarding/requirements.md.
-        guard channel == .sms else {
-            throw ILOtpError.voiceCallUnsupported
-        }
-        return try await repository.resendRegistrationOTP(phoneNumber: phoneNumber)
+    func resendCode(email: String) async throws -> ILOtpTimingEntity {
+        try await repository.resendRegistrationOTP(email: email)
     }
 
-    func verifyCode(phoneNumber: String, code: String) async throws {
-        let session = try await repository.verifyRegistrationOTP(phoneNumber: phoneNumber, code: code)
+    func verifyCode(email: String, code: String) async throws {
+        let session = try await repository.verifyRegistrationOTP(email: email, code: code)
 
         // Store the session last: the account and pending_registration are already gone
         // server-side, so a storage failure cannot be recovered by retrying this call — it is

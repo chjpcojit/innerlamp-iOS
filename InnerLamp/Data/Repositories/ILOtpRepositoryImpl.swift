@@ -18,8 +18,8 @@ nonisolated final class ILOtpRepositoryImpl: ILOtpRepository {
         self.networkService = networkService
     }
 
-    func verifyRegistrationOTP(phoneNumber: String, code: String) async throws -> ILAuthSessionEntity {
-        let request = ILOtpVerifyRequestDTO(phoneNumber: phoneNumber, otpCode: code)
+    func verifyRegistrationOTP(email: String, code: String) async throws -> ILAuthSessionEntity {
+        let request = ILOtpVerifyRequestDTO(email: email, otpCode: code)
         do {
             let response = try await networkService.request(
                 endpoint: VerifyRegistrationOTPEndpoint(request: request),
@@ -31,8 +31,8 @@ nonisolated final class ILOtpRepositoryImpl: ILOtpRepository {
         }
     }
 
-    func resendRegistrationOTP(phoneNumber: String) async throws -> ILOtpTimingEntity {
-        let request = await ILOtpResendRequestDTO(phoneNumber: phoneNumber, purpose: ILOtpPurpose.registration)
+    func resendRegistrationOTP(email: String) async throws -> ILOtpTimingEntity {
+        let request = ILOtpResendRequestDTO(email: email)
         do {
             let response = try await networkService.request(
                 endpoint: ResendOTPEndpoint(request: request),
@@ -62,14 +62,13 @@ extension ILOtpError {
             switch code {
             case "PHONE_TAKEN":
                 return .phoneTaken
-            case "EMAIL_TAKEN":
-                return .emailTaken
+            case "INVALID_TEMPLE":
+                return .invalidTemple
             case "OTP_LOCKED":
                 return .otpLocked(lockedUntil: details?["locked_until"]?.value as? String)
-            case "SMS_SEND_FAILED":
-                return .smsSendFailed
-            case "VALIDATION_ERROR", "INVALID_EMAIL", "INVALID_PHONE", "INVALID_PASSWORD",
-                 "PAYLOAD_TOO_LARGE":
+            case "RATE_LIMITED":
+                return .rateLimited(retryAfterSeconds: details?["retry_after_seconds"]?.value as? Int)
+            case "VALIDATION_ERROR", "INVALID_EMAIL", "PAYLOAD_TOO_LARGE":
                 return .invalidInput
             default:
                 return operationError(code: code, details: details, operation: operation)

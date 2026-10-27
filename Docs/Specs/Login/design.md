@@ -1,7 +1,7 @@
 # Design — Login
 
-Version: 2.2
-Last updated: 2026-10-16
+Version: 2.3
+Last updated: 2026-10-27
 Status: in-progress (drift) — phone sign-in, session store, refresh and sign-out built; email sign-in, forgot password, session-ended message and guest prompt planned
 
 > See `changelog.md` in this folder for the version history of this spec.

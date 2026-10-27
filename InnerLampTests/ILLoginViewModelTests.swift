@@ -14,8 +14,7 @@ final class ILLoginViewModelTests: XCTestCase {
     private var cancellables: Set<AnyCancellable>!
 
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
-    private var phoneChangedSubject: PassthroughSubject<String, Never>!
-    private var countryChangedSubject: PassthroughSubject<ILCountry, Never>!
+    private var emailChangedSubject: PassthroughSubject<String, Never>!
     private var passwordChangedSubject: PassthroughSubject<String, Never>!
     private var submitTappedSubject: PassthroughSubject<Void, Never>!
     private var backTappedSubject: PassthroughSubject<Void, Never>!
@@ -30,8 +29,7 @@ final class ILLoginViewModelTests: XCTestCase {
         cancellables = []
 
         viewDidLoadSubject = PassthroughSubject<Void, Never>()
-        phoneChangedSubject = PassthroughSubject<String, Never>()
-        countryChangedSubject = PassthroughSubject<ILCountry, Never>()
+        emailChangedSubject = PassthroughSubject<String, Never>()
         passwordChangedSubject = PassthroughSubject<String, Never>()
         submitTappedSubject = PassthroughSubject<Void, Never>()
         backTappedSubject = PassthroughSubject<Void, Never>()
@@ -43,8 +41,7 @@ final class ILLoginViewModelTests: XCTestCase {
     override func tearDown() {
         cancellables = nil
         viewDidLoadSubject = nil
-        phoneChangedSubject = nil
-        countryChangedSubject = nil
+        emailChangedSubject = nil
         passwordChangedSubject = nil
         submitTappedSubject = nil
         backTappedSubject = nil
@@ -59,8 +56,7 @@ final class ILLoginViewModelTests: XCTestCase {
     private func makeOutput() -> ILLoginViewModel.Output {
         sut.transform(input: .init(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
-            phoneChanged: phoneChangedSubject.eraseToAnyPublisher(),
-            countryChanged: countryChangedSubject.eraseToAnyPublisher(),
+            emailChanged: emailChangedSubject.eraseToAnyPublisher(),
             passwordChanged: passwordChangedSubject.eraseToAnyPublisher(),
             submitTapped: submitTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
@@ -80,22 +76,8 @@ final class ILLoginViewModelTests: XCTestCase {
         viewDidLoadSubject.send(())
 
         XCTAssertNotNil(receivedState)
-        XCTAssertEqual(receivedState?.selectedCountry, .default)
+        XCTAssertEqual(receivedState?.email, "")
         XCTAssertTrue(receivedState!.isSubmitEnabled)
-    }
-
-    func test_countryChanged_updatesSelectedCountry() {
-        let output = makeOutput()
-        var receivedState: ILLoginStateModel?
-        output.state
-            .sink { if case .success(let model) = $0 { receivedState = model } }
-            .store(in: &cancellables)
-
-        viewDidLoadSubject.send(())
-        let japan = ILCountry.all.first { $0.iso == "JP" }!
-        countryChangedSubject.send(japan)
-
-        XCTAssertEqual(receivedState?.selectedCountry, japan)
     }
 
     func test_backTapped_firesGoToOnboardingEvent() {
@@ -158,12 +140,12 @@ final class ILLoginViewModelTests: XCTestCase {
             .store(in: &cancellables)
 
         viewDidLoadSubject.send(())
-        phoneChangedSubject.send("091")
+        emailChangedSubject.send("   ")
         passwordChangedSubject.send("")
 
         submitTappedSubject.send(())
 
-        XCTAssertNotNil(receivedState?.phoneError)
+        XCTAssertNotNil(receivedState?.emailError)
         XCTAssertNotNil(receivedState?.passwordError)
         XCTAssertFalse(mockUseCase.loginCalled)
     }
@@ -185,7 +167,7 @@ final class ILLoginViewModelTests: XCTestCase {
             .store(in: &cancellables)
 
         viewDidLoadSubject.send(())
-        phoneChangedSubject.send("0912345678")
+        emailChangedSubject.send("  an@example.com ")
         passwordChangedSubject.send("secret1")
 
         submitTappedSubject.send(())
@@ -193,7 +175,7 @@ final class ILLoginViewModelTests: XCTestCase {
         wait(for: [expectation], timeout: 1)
 
         XCTAssertTrue(mockUseCase.loginCalled)
-        XCTAssertEqual(mockUseCase.loggedInPhone, "+84 912 345 678")
+        XCTAssertEqual(mockUseCase.loggedInEmail, "an@example.com")
         XCTAssertEqual(receivedEvent, .didLoginSuccessfully)
         XCTAssertFalse(receivedState!.isSubmitting)
     }
@@ -213,7 +195,7 @@ final class ILLoginViewModelTests: XCTestCase {
         mockUseCase.loginError = ILLoginError.invalidCredentials
 
         viewDidLoadSubject.send(())
-        phoneChangedSubject.send("0912345678")
+        emailChangedSubject.send("an@example.com")
         passwordChangedSubject.send("wrongpass")
 
         submitTappedSubject.send(())
@@ -226,6 +208,33 @@ final class ILLoginViewModelTests: XCTestCase {
         XCTAssertNotNil(receivedState?.submitError)
         XCTAssertFalse(receivedState!.isSubmitting)
         XCTAssertNil(receivedEvent)
+        // EN: Criterion 3 — keep the email, clear the password.
+        // VI: Tiêu chí 3 — giữ email, xoá mật khẩu.
+        XCTAssertEqual(receivedState?.email, "an@example.com")
+        XCTAssertEqual(receivedState?.password, "")
+    }
+
+    func test_submitTapped_whenServerSaysInvalidEmail_showsItUnderTheEmailField() {
+        let output = makeOutput()
+        var receivedState: ILLoginStateModel?
+        output.state
+            .sink { if case .success(let model) = $0 { receivedState = model } }
+            .store(in: &cancellables)
+
+        mockUseCase.loginError = ILLoginError.invalidEmail
+
+        viewDidLoadSubject.send(())
+        emailChangedSubject.send("not-an-email")
+        passwordChangedSubject.send("secret12")
+
+        submitTappedSubject.send(())
+
+        let waitExpectation = expectation(description: "wait")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { waitExpectation.fulfill() }
+        wait(for: [waitExpectation], timeout: 1)
+
+        XCTAssertEqual(receivedState?.emailError, ILLoginError.invalidEmail.localizedDescription)
+        XCTAssertNil(receivedState?.submitError)
     }
 }
 
@@ -233,15 +242,14 @@ final class ILLoginViewModelTests: XCTestCase {
 final class MockILLoginUseCase: ILLoginUseCase {
     var loginCalled = false
     var loginError: Error?
-    var loggedInPhone: String?
+    var loggedInEmail: String?
 
     func getInitialState() -> ILLoginStateModel {
         ILLoginStateModel.initial
     }
 
-    func validatePhone(nationalDigits: String, country: ILCountry) -> String? {
-        guard !nationalDigits.isEmpty else { return "required" }
-        return country.isValidNationalDigitCount(nationalDigits.count) ? nil : "invalid"
+    func validateEmail(_ value: String) -> String? {
+        value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "required" : nil
     }
 
     func validatePassword(_ value: String) -> String? {
@@ -250,7 +258,7 @@ final class MockILLoginUseCase: ILLoginUseCase {
 
     func login(_ credential: ILLoginEntity) async throws {
         loginCalled = true
-        loggedInPhone = credential.phone
+        loggedInEmail = credential.email
         if let error = loginError {
             throw error
         }

@@ -19,7 +19,7 @@ enum ILSignUpNavEvent: Equatable {
     case goToLogin
     /// Gửi mã OTP thành công — sang màn xác thực. Kèm timing của server để màn OTP khởi tạo
     /// countdown "Gửi lại" và câu hiển thị hạn mã bằng giá trị thật.
-    case didRequestVerification(phoneNumber: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int)
+    case didRequestVerification(email: String, otpExpiresInSeconds: Int, resendAfterSeconds: Int)
     /// "Không thấy chùa của bạn?" — mở màn "Thêm thông tin chùa", điền sẵn từ khoá đang tìm và
     /// kèm danh bạ đã tải để chặn trùng.
     case openAddTemple(prefillName: String, existingPlaces: [ILOrdinationPlaceEntity])
@@ -187,11 +187,13 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
     /// Chuyển sang pháp danh kế tiếp trong `dharmaNameSuggestions` khi bấm chip "Gợi ý"
     /// (`rollName`) — ghi đè giá trị người dùng đang gõ, khác với `handleDisplayNameChanged` chỉ
     /// đồng bộ khi gõ tay.
+    /// EN: The field starts empty, so the first tap shows the first suggestion.
+    /// VI: Ô bắt đầu trống nên lần bấm đầu hiện gợi ý đầu tiên.
     private func handleSuggestDisplayName() {
         let suggestions = useCase.dharmaNameSuggestions
         guard !suggestions.isEmpty else { return }
-        currentState.displayNameSuggestionIndex += 1
         currentState.displayName = suggestions[currentState.displayNameSuggestionIndex % suggestions.count]
+        currentState.displayNameSuggestionIndex += 1
         currentState.displayNameError = nil
         stateSubject.send(.success(currentState))
     }
@@ -364,7 +366,9 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
         )
         currentState.emailError = useCase.validateEmail(currentState.email)
         currentState.passwordError = useCase.validatePassword(currentState.password)
-        currentState.submitError = nil
+        // EN: `ILDharmaNameSuggestionField` has no error line, so a dharma-name error is shown as an alert.
+        // VI: `ILDharmaNameSuggestionField` không có dòng báo lỗi nên lỗi pháp danh hiện bằng alert.
+        currentState.submitError = currentState.displayNameError
 
         guard !currentState.hasValidationError else {
             stateSubject.send(.success(currentState))
@@ -374,33 +378,65 @@ final class ILSignUpViewModel: ILSignUpViewModelProtocol {
         currentState.isSubmitting = true
         stateSubject.send(.success(currentState))
 
-        let fullName = currentState.fullName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let displayName = currentState.displayName
         // Chùa còn chờ duyệt (`proposed-…`) chưa có id thật nên không gửi; server coi là chưa chọn.
         let ordinationTempleID = currentState.selectedOrdinationPlaceID
             .flatMap { $0.hasPrefix(Self.proposedIDPrefix) ? nil : $0 }
-        let phoneE164 = currentState.phoneE164
         let email = currentState.email.trimmingCharacters(in: .whitespacesAndNewlines)
-        let password = currentState.password
+        // EN: Request body per criterion 13 — `phone_country` + national digits (no E.164 rebuild),
+        //     dharma name only when not empty.
+        // VI: Body theo tiêu chí 13 — `phone_country` + phần số quốc gia (không tự dựng E.164),
+        //     pháp danh chỉ gửi khi không rỗng.
+        let entity = ILSignUpEntity(
+            fullName: currentState.fullName.trimmingCharacters(in: .whitespacesAndNewlines),
+            displayName: currentState.displayName.trimmingCharacters(in: .whitespacesAndNewlines),
+            ordinationTempleID: ordinationTempleID,
+            phoneCountry: currentState.selectedCountry.iso,
+            phoneNumber: currentState.nationalDigits,
+            email: email,
+            password: currentState.password
+        )
 
         Task { [weak self] in
             guard let self else { return }
             do {
-                let otp = try await self.useCase.sendVerificationCode(fullName: fullName, displayName: displayName, ordinationTempleID: ordinationTempleID, phoneNumber: phoneE164, email: email, password: password)
+                let otp = try await self.useCase.sendVerificationCode(entity)
                 self.currentState.isSubmitting = false
                 self.stateSubject.send(.success(self.currentState))
                 self.navigationEventSubject.send(.didRequestVerification(
-                    phoneNumber: phoneE164,
+                    email: email,
                     otpExpiresInSeconds: otp.expiresInSeconds,
                     resendAfterSeconds: otp.resendAfterSeconds
                 ))
             } catch {
-                // Kể cả `ILSignUpError.phoneAlreadyRegistered` — chỉ báo lỗi (alert) và ở lại màn
-                // hình, không tự chuyển sang Đăng nhập.
+                // EN: Stay on SignUp with every value kept; a per-field error goes under its field,
+                //     anything else is shown as an alert.
+                // VI: Ở lại màn Đăng ký, giữ mọi giá trị; lỗi theo field hiện dưới field đó, còn lại
+                //     hiện bằng alert.
                 self.currentState.isSubmitting = false
-                self.currentState.submitError = error.localizedDescription
+                self.applySubmitError(error)
                 self.stateSubject.send(.success(self.currentState))
             }
+        }
+    }
+
+    /// EN: Routes a server error to the field it belongs to (Error → UI table), else to `submitError`.
+    /// VI: Đưa lỗi server về đúng field (bảng Error → UI), còn lại vào `submitError`.
+    private func applySubmitError(_ error: Error) {
+        let message = error.localizedDescription
+        switch error as? ILSignUpError {
+        case .phoneAlreadyRegistered?, .invalidPhone?:
+            currentState.phoneNumberError = message
+        case .invalidEmail?:
+            currentState.emailError = message
+        case .invalidPassword?:
+            currentState.passwordError = message
+        case .invalidFullName?:
+            currentState.fullNameError = message
+        case .invalidDharmaName?:
+            currentState.displayNameError = message
+            currentState.submitError = message
+        default:
+            currentState.submitError = message
         }
     }
 }

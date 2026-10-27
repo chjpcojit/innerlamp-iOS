@@ -7,8 +7,8 @@ import UIKit
 import Combine
 
 protocol ILOtpCoordinatorDelegate: AnyObject {
-    /// Xác thực mã thành công cho `phoneNumber`.
-    func otpDidVerify(_ coordinator: ILOtpCoordinator, phoneNumber: String)
+    /// Xác thực mã thành công cho `email`.
+    func otpDidVerify(_ coordinator: ILOtpCoordinator, email: String)
 }
 
 final class ILOtpCoordinator: Coordinator {
@@ -19,7 +19,7 @@ final class ILOtpCoordinator: Coordinator {
     weak var delegate: ILOtpCoordinatorDelegate?
 
     private let container: DIContainer
-    private let phoneNumber: String
+    private let email: String
     private let otpExpiresInSeconds: Int
     private let resendAfterSeconds: Int
     private var cancellables = Set<AnyCancellable>()
@@ -27,20 +27,20 @@ final class ILOtpCoordinator: Coordinator {
     init(
         navigationController: UINavigationController,
         container: DIContainer,
-        phoneNumber: String,
+        email: String,
         otpExpiresInSeconds: Int,
         resendAfterSeconds: Int
     ) {
         self.navigationController = navigationController
         self.container = container
-        self.phoneNumber = phoneNumber
+        self.email = email
         self.otpExpiresInSeconds = otpExpiresInSeconds
         self.resendAfterSeconds = resendAfterSeconds
     }
 
     func start() {
         let viewModel = container.makeOtpViewModel(
-            phoneNumber: phoneNumber,
+            email: email,
             otpExpiresInSeconds: otpExpiresInSeconds,
             resendAfterSeconds: resendAfterSeconds
         )
@@ -54,8 +54,8 @@ final class ILOtpCoordinator: Coordinator {
                     // pop rồi finish() chính coordinator OTP này, không đụng tới SignUp.
                     self.navigationController.popViewController(animated: true)
                     self.finish()
-                case .didVerify(let phoneNumber):
-                    self.delegate?.otpDidVerify(self, phoneNumber: phoneNumber)
+                case .didVerify(let email):
+                    self.delegate?.otpDidVerify(self, email: email)
                     self.finish()
                 }
             }

@@ -14,7 +14,7 @@ nonisolated enum ILLoginMapper {
 
     static func toDTO(_ entity: ILLoginEntity, device: ILLoginDeviceDTO) -> ILLoginRequestDTO {
         ILLoginRequestDTO(
-            phoneNumber: entity.phone,
+            email: entity.email,
             password: entity.password,
             device: device
         )
@@ -29,7 +29,7 @@ nonisolated enum ILLoginMapper {
                 email: dto.user.email,
                 phoneNumber: dto.user.phoneNumber,
                 dharmaName: dto.user.dharmaName ?? "",
-                ordinationPlace: dto.user.ordinationPlace ?? ""
+                ordinationTempleID: dto.user.ordinationTempleId ?? ""
             )
         )
     }

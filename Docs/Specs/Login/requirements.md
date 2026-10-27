@@ -1,11 +1,11 @@
 # Requirements — Login
 
-Version: 2.2
-Last updated: 2026-10-16
-Status: in-progress (drift) — sign-in by phone, Keychain session, single-flight refresh and sign-out are built and call the real backend; v2.0 moves sign-in to email, adds forgot password by email code, explains an ended session and gates account features for guests. No code for v2.0 yet (`tasks.md` Phase 1–7). The backend shipped the email contract on 2026-10-16 (uncommitted on its branch, not yet exercised against a running server)
+Version: 2.3
+Last updated: 2026-10-27
+Status: in-progress (drift) — sign-in by phone, Keychain session, single-flight refresh and sign-out are built and call the real backend; v2.0 moves sign-in to email, adds forgot password by email code, explains an ended session and gates account features for guests. Email sign-in (`tasks.md` Phase 2) built on 2026-10-27, not yet built or tested on a Mac; Phases 1 and 3–7 open
 Feature folder: `InnerLamp/Presentation/Scenes/{Login,ForgotPassword}/`, `Core/Networking/AuthSessionRefresher.swift`, `App/AppCoordinator.swift`, `Domain/UseCases/Profile/ILProfileUseCase.swift` (sign-out)
 Product spec: innerlamp-be `docs/product/login/product.md` @ v1.4
-Contract: innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 2.1.1 (Auth tag: `login`, `refresh`, `password-reset/request-otp`, `password-reset/confirm`, `logout`, and the "Phiên bị thu hồi" note); backend feature spec `docs/specs/features/login` @ v2.5.
+Contract: innerlamp-be `docs/specs/api/openapi.yaml` `info.version` 3.0.0 (Auth tag: `login`, `refresh`, `password-reset/request-otp`, `password-reset/confirm`, `logout`, and the "Phiên bị thu hồi" note); backend feature spec `docs/specs/features/login` @ v2.5.
 Architecture: ADR-0003 — Accepted
 Implements: BR-LGN-01, BR-LGN-02, BR-LGN-03, BR-LGN-04, BR-LGN-05, BR-LGN-06, BR-LGN-07, FR-LGN-001, FR-LGN-002, FR-LGN-003, FR-LGN-004, FR-LGN-005, FR-LGN-006, FR-LGN-008, FR-LGN-009, FR-LGN-010, NFR-LGN-01, NFR-LGN-02, NFR-LGN-03
 Not on iOS: FR-LGN-007 (website only)

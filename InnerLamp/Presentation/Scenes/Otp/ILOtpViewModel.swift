@@ -7,10 +7,10 @@ import Foundation
 import Combine
 
 enum ILOtpNavEvent: Equatable {
-    /// Bấm back trên header hoặc "Đổi số" — quay lại màn trước đó (SignUp) để sửa số.
+    /// Bấm back trên header hoặc "Đổi email" — quay lại màn trước đó (SignUp), giữ nguyên mọi giá trị.
     case goBack
     /// Xác thực mã thành công.
-    case didVerify(phoneNumber: String)
+    case didVerify(email: String)
 }
 
 protocol ILOtpViewModelProtocol: ViewModelType {
@@ -29,9 +29,8 @@ final class ILOtpViewModel: ILOtpViewModelProtocol {
         /// lỗi cũ (nếu có) để người dùng nhập lại.
         let codeChanged: AnyPublisher<String, Never>
         let backTapped: AnyPublisher<Void, Never>
-        let changeNumberTapped: AnyPublisher<Void, Never>
+        let changeEmailTapped: AnyPublisher<Void, Never>
         let resendTapped: AnyPublisher<Void, Never>
-        let requestVoiceCallTapped: AnyPublisher<Void, Never>
         let verifyTapped: AnyPublisher<Void, Never>
     }
 
@@ -57,7 +56,7 @@ final class ILOtpViewModel: ILOtpViewModelProtocol {
     // MARK: - Initializer
     init(
         useCase: ILOtpUseCase,
-        phoneNumber: String,
+        email: String,
         otpExpiresInSeconds: Int,
         resendAfterSeconds: Int
     ) {
@@ -65,7 +64,7 @@ final class ILOtpViewModel: ILOtpViewModelProtocol {
         self.initialOtpExpiresInSeconds = otpExpiresInSeconds
         self.initialResendAfterSeconds = resendAfterSeconds
         let initialState = useCase.getInitialState(
-            phoneNumber: phoneNumber,
+            email: email,
             otpExpiresInSeconds: otpExpiresInSeconds,
             resendAfterSeconds: resendAfterSeconds
         )
@@ -91,16 +90,12 @@ final class ILOtpViewModel: ILOtpViewModelProtocol {
             .sink { [weak self] _ in self?.handleBackTapped() }
             .store(in: &cancellables)
 
-        input.changeNumberTapped
-            .sink { [weak self] _ in self?.handleChangeNumberTapped() }
+        input.changeEmailTapped
+            .sink { [weak self] _ in self?.handleChangeEmailTapped() }
             .store(in: &cancellables)
 
         input.resendTapped
             .sink { [weak self] _ in self?.handleResendTapped() }
-            .store(in: &cancellables)
-
-        input.requestVoiceCallTapped
-            .sink { [weak self] _ in self?.handleRequestVoiceCallTapped() }
             .store(in: &cancellables)
 
         input.verifyTapped
@@ -115,7 +110,7 @@ final class ILOtpViewModel: ILOtpViewModelProtocol {
     /// và bắt đầu đếm ngược.
     private func handleViewDidLoad() {
         currentState = useCase.getInitialState(
-            phoneNumber: currentState.phoneNumber,
+            email: currentState.email,
             otpExpiresInSeconds: initialOtpExpiresInSeconds,
             resendAfterSeconds: initialResendAfterSeconds
         )
@@ -133,32 +128,28 @@ final class ILOtpViewModel: ILOtpViewModelProtocol {
         navigationEventSubject.send(.goBack)
     }
 
-    private func handleChangeNumberTapped() {
+    private func handleChangeEmailTapped() {
         navigationEventSubject.send(.goBack)
-    }
-
-    private func handleRequestVoiceCallTapped() {
-        requestNewCode(channel: .voiceCall)
     }
 
     private func handleResendTapped() {
         guard currentState.canResend else { return }
-        requestNewCode(channel: .sms)
+        requestNewCode()
     }
 
-    private func requestNewCode(channel: ILOtpChannel) {
+    private func requestNewCode() {
         guard !currentState.isResending else { return }
 
         currentState.isResending = true
         currentState.resendError = nil
         stateSubject.send(.success(currentState))
 
-        let phoneNumber = currentState.phoneNumber
+        let email = currentState.email
 
         Task { [weak self] in
             guard let self else { return }
             do {
-                let timing = try await self.useCase.resendCode(phoneNumber: phoneNumber, channel: channel)
+                let timing = try await self.useCase.resendCode(email: email)
                 self.currentState.isResending = false
                 self.currentState.code = ""
                 self.currentState.codeError = nil
@@ -171,6 +162,14 @@ final class ILOtpViewModel: ILOtpViewModelProtocol {
             } catch {
                 self.currentState.isResending = false
                 self.currentState.resendError = error.localizedDescription
+                // EN: `OTP_RESEND_TOO_SOON` restarts the resend timer from the server's wait.
+                // VI: `OTP_RESEND_TOO_SOON` đếm lại nút gửi lại theo thời gian chờ server trả về.
+                if case ILOtpError.resendTooSoon(let retryAfterSeconds?) = error {
+                    self.currentState.secondsRemaining = retryAfterSeconds
+                    self.stateSubject.send(.success(self.currentState))
+                    self.startCountdown()
+                    return
+                }
                 self.stateSubject.send(.success(self.currentState))
             }
         }
@@ -186,16 +185,16 @@ final class ILOtpViewModel: ILOtpViewModelProtocol {
         currentState.resendError = nil
         stateSubject.send(.success(currentState))
 
-        let phoneNumber = currentState.phoneNumber
+        let email = currentState.email
         let code = currentState.code
 
         Task { [weak self] in
             guard let self else { return }
             do {
-                try await self.useCase.verifyCode(phoneNumber: phoneNumber, code: code)
+                try await self.useCase.verifyCode(email: email, code: code)
                 self.currentState.isVerifying = false
                 self.stateSubject.send(.success(self.currentState))
-                self.navigationEventSubject.send(.didVerify(phoneNumber: phoneNumber))
+                self.navigationEventSubject.send(.didVerify(email: email))
             } catch {
                 self.currentState.isVerifying = false
                 self.currentState.codeError = error.localizedDescription

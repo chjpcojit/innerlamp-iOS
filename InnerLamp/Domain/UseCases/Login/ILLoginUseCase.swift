@@ -7,12 +7,17 @@ import Foundation
 
 enum ILLoginError: Error, LocalizedError, Equatable {
     case invalidCredentials
-    case invalidPhone
+    /// EN: `INVALID_EMAIL` — the server could not read the email.
+    /// VI: `INVALID_EMAIL` — server không đọc được email.
+    case invalidEmail
     case invalidPassword
     case invalidDevice
     /// `details.locked_until` from a 429 `LOGIN_LOCKED` — 5 consecutive failed attempts lock the
-    /// number for 15 minutes (innerlamp-be `docs/specs/api/openapi.yaml`).
+    /// email for 15 minutes (innerlamp-be `docs/specs/api/openapi.yaml`).
     case loginLocked(lockedUntil: String?)
+    /// EN: `429 RATE_LIMITED` on the per-IP limit, with `details.retry_after_seconds`.
+    /// VI: `429 RATE_LIMITED` khi vượt giới hạn theo IP, kèm `details.retry_after_seconds`.
+    case rateLimited(retryAfterSeconds: Int?)
     case invalidInput
     case server
     case networkUnavailable
@@ -25,8 +30,8 @@ enum ILLoginError: Error, LocalizedError, Equatable {
         switch self {
         case .invalidCredentials:
             return "login.error.invalidCredentials".localized
-        case .invalidPhone:
-            return "login.error.phoneInvalid".localized
+        case .invalidEmail:
+            return "login.error.emailInvalid".localized
         case .invalidPassword:
             return "login.error.passwordRequired".localized
         case .invalidDevice:
@@ -36,6 +41,8 @@ enum ILLoginError: Error, LocalizedError, Equatable {
                 return "login.error.locked".localized
             }
             return String(format: "login.error.lockedUntil".localized, formatted)
+        case .rateLimited(let retryAfterSeconds):
+            return ILRateLimitMessage.text(retryAfterSeconds: retryAfterSeconds)
         case .invalidInput:
             return "login.error.invalidInput".localized
         case .server:
@@ -53,13 +60,14 @@ enum ILLoginError: Error, LocalizedError, Equatable {
 protocol ILLoginUseCase {
     func getInitialState() -> ILLoginStateModel
 
-    /// Trả về message lỗi (`nil` nếu hợp lệ). Chạy mỗi lần bấm "Đăng nhập", không chạy
-    /// theo từng ký tự gõ. `nationalDigits`/`country` lấy từ `ILLoginStateModel` — cùng quy tắc
-    /// với `ILSignUpUseCase.validatePhoneNumber`.
-    func validatePhone(nationalDigits: String, country: ILCountry) -> String?
+    /// EN: Error message (`nil` when valid), run on each "Đăng nhập" tap. Only emptiness is checked
+    ///     (criterion 2); the server answers `INVALID_EMAIL` for a malformed address.
+    /// VI: Message lỗi (`nil` nếu hợp lệ), chạy mỗi lần bấm "Đăng nhập". Chỉ kiểm tra rỗng
+    ///     (tiêu chí 2); email sai định dạng do server trả `INVALID_EMAIL`.
+    func validateEmail(_ value: String) -> String?
     func validatePassword(_ value: String) -> String?
 
-    /// Đăng nhập bằng số điện thoại + mật khẩu. Thành công lưu luôn phiên đăng nhập (token vào
+    /// Đăng nhập bằng email + mật khẩu. Thành công lưu luôn phiên đăng nhập (token vào
     /// Keychain, user vào `ILUserRepository`) — cùng pattern với `ILOtpUseCase.verifyCode`, xem
     /// `Docs/Specs/Login/design.md`.
     func login(_ credential: ILLoginEntity) async throws
@@ -85,10 +93,9 @@ final class ILLoginUseCaseImpl: ILLoginUseCase {
         ILLoginStateModel.initial
     }
 
-    func validatePhone(nationalDigits: String, country: ILCountry) -> String? {
-        guard !nationalDigits.isEmpty else { return "login.error.phoneRequired".localized }
-        guard country.isValidNationalDigitCount(nationalDigits.count) else {
-            return "login.error.phoneInvalid".localized
+    func validateEmail(_ value: String) -> String? {
+        guard !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return "login.error.emailRequired".localized
         }
         return nil
     }

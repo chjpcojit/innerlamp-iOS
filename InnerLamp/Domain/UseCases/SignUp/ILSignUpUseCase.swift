@@ -7,11 +7,17 @@ import Foundation
 
 enum ILSignUpError: Error, LocalizedError, Equatable {
     case phoneAlreadyRegistered
-    case emailTaken
-    case otpLocked(lockedUntil: String?)
-    case otpSendLimited(lockedUntil: String?)
-    case otpResendTooSoon(retryAfterSeconds: Int?)
-    case smsSendFailed
+    /// EN: `REGISTRATION_IN_PROGRESS` — another pending registration holds this email with a live code
+    ///     and different details; `details.retry_after_seconds` is the wait (criterion 16a).
+    /// VI: `REGISTRATION_IN_PROGRESS` — một đăng ký đang chờ giữ email này với mã còn sống và dữ liệu
+    ///     khác; `details.retry_after_seconds` là thời gian chờ (tiêu chí 16a).
+    case registrationInProgress(retryAfterSeconds: Int?)
+    case rateLimited(retryAfterSeconds: Int?)
+    case invalidEmail
+    case invalidPhone
+    case invalidPassword
+    case invalidFullName
+    case invalidDharmaName
     case invalidInput
     /// The picked ordination temple is unknown to the server (`INVALID_TEMPLE`) — e.g. removed
     /// from the catalog since the list was loaded. The user must pick again.
@@ -24,25 +30,23 @@ enum ILSignUpError: Error, LocalizedError, Equatable {
         switch self {
         case .phoneAlreadyRegistered:
             return "signup.error.phoneTaken".localized
-        case .emailTaken:
-            return "signup.error.emailTaken".localized
-        case .otpLocked(let lockedUntil):
-            guard let formatted = ILUnlockTimeFormatter.displayString(from: lockedUntil) else {
-                return "signup.error.otpLocked".localized
+        case .registrationInProgress(let retryAfterSeconds):
+            guard let retryAfterSeconds, retryAfterSeconds > 0 else {
+                return "signup.error.registrationInProgress".localized
             }
-            return String(format: "signup.error.otpLockedUntil".localized, formatted)
-        case .otpSendLimited(let lockedUntil):
-            guard let formatted = ILUnlockTimeFormatter.displayString(from: lockedUntil) else {
-                return "signup.error.otpSendLimited".localized
-            }
-            return String(format: "signup.error.otpSendLimitedUntil".localized, formatted)
-        case .otpResendTooSoon(let retryAfterSeconds):
-            guard let retryAfterSeconds else {
-                return "signup.error.otpResendTooSoon".localized
-            }
-            return String(format: "signup.error.otpResendTooSoonSeconds".localized, retryAfterSeconds)
-        case .smsSendFailed:
-            return "signup.error.smsSendFailed".localized
+            return String(format: "signup.error.registrationInProgressSeconds".localized, retryAfterSeconds)
+        case .rateLimited(let retryAfterSeconds):
+            return ILRateLimitMessage.text(retryAfterSeconds: retryAfterSeconds)
+        case .invalidEmail:
+            return "signup.error.emailInvalid".localized
+        case .invalidPhone:
+            return "signup.error.phoneInvalid".localized
+        case .invalidPassword:
+            return "signup.error.passwordLength".localized
+        case .invalidFullName:
+            return "signup.error.fullNameInvalid".localized
+        case .invalidDharmaName:
+            return "signup.error.displayNameTooLong".localized
         case .invalidInput:
             return "signup.error.invalidInput".localized
         case .invalidTemple:
@@ -60,34 +64,36 @@ enum ILSignUpError: Error, LocalizedError, Equatable {
 protocol ILSignUpUseCase {
     func getInitialState() -> ILSignUpStateModel
 
-    /// Danh sách pháp danh gợi ý cho nút "Gợi ý" — khớp `NAMES` trong design handoff. Field
-    /// "Pháp danh hoặc tên gọi" chỉ chọn từ danh sách này, không có ô nhập tự do.
+    /// EN: Suggestions for the "Gợi ý" chip (criterion 8); the user may keep, edit or clear the value.
+    /// VI: Danh sách gợi ý cho nút "Gợi ý" (tiêu chí 8); người dùng có thể giữ, sửa hoặc xoá.
     var dharmaNameSuggestions: [String] { get }
 
-    /// Họ và tên bắt buộc — rỗng/chỉ khoảng trắng trả lỗi và chặn submit.
+    /// EN: Full name is required, 1–300 characters after trimming (BR-ONB-07).
+    /// VI: Họ và tên bắt buộc, 1–300 ký tự sau khi cắt khoảng trắng (BR-ONB-07).
     func validateFullName(_ value: String) -> String?
-    /// Trả về message lỗi (`nil` nếu hợp lệ). Chạy mỗi lần bấm "Gửi mã xác thực", không chạy
-    /// theo từng ký tự gõ.
+    /// EN: Dharma name is optional, at most 255 characters after trimming (BR-ONB-07).
+    /// VI: Pháp danh không bắt buộc, tối đa 255 ký tự sau khi cắt khoảng trắng (BR-ONB-07).
     func validateDisplayName(_ value: String) -> String?
     /// `nationalDigits`/`country` lấy từ `ILSignUpStateModel` — số hợp lệ khi đủ chữ số tối
     /// thiểu–tối đa của quốc gia đang chọn (`country.nationalDigitRange`), không còn cố định theo VN.
     func validatePhoneNumber(nationalDigits: String, country: ILCountry) -> String?
-    /// Email bắt buộc — rỗng hoặc sai định dạng đều trả lỗi và chặn submit.
+    /// EN: Email is required: trimmed, at most 254 characters, matched by `ILEmailValidator` (BR-ONB-05).
+    /// VI: Email bắt buộc: cắt khoảng trắng, tối đa 254 ký tự, khớp `ILEmailValidator` (BR-ONB-05).
     func validateEmail(_ value: String) -> String?
     func validatePassword(_ value: String) -> String?
 
     /// `nil` khi password rỗng — chạy theo từng ký tự gõ để cập nhật `ILStrengthMeterView` live.
     func passwordStrength(for value: String) -> ILPasswordStrength?
 
-    /// Gửi mã OTP xác thực số điện thoại qua `POST /v1/auth/register/request-otp`.
+    /// EN: Sends the registration and asks for an email code via `POST /v1/auth/register/request-otp`.
+    /// VI: Gửi đăng ký và yêu cầu mã qua email bằng `POST /v1/auth/register/request-otp`.
     ///
     /// Trả về timing của server (`expires_in_seconds`/`resend_after_seconds`) để màn OTP khởi tạo
     /// countdown và câu hiển thị hạn mã bằng giá trị thật thay vì hardcode.
     ///
-    /// Throws an `ILSignUpError` case — `phoneAlreadyRegistered`/`emailTaken` when the phone or
-    /// email already has an account, the 429 lock/cooldown/cap cases, `smsSendFailed`, the shared
-    /// network/server cases.
-    func sendVerificationCode(fullName: String, displayName: String, ordinationTempleID: String?, phoneNumber: String, email: String, password: String) async throws -> ILSignUpOTPEntity
+    /// Throws an `ILSignUpError` case — `phoneAlreadyRegistered`, `registrationInProgress`,
+    /// `rateLimited`, a per-field invalid case, or the shared network/server cases.
+    func sendVerificationCode(_ entity: ILSignUpEntity) async throws -> ILSignUpOTPEntity
 }
 
 final class ILSignUpUseCaseImpl: ILSignUpUseCase {
@@ -103,21 +109,28 @@ final class ILSignUpUseCaseImpl: ILSignUpUseCase {
         "Thiện Duyên", "Giác Ngộ", "Liên Hoa", "Từ Quang", "An Lạc"
     ]
 
+    static let maximumFullNameLength = 300
+    static let maximumDharmaNameLength = 255
+    static let maximumEmailLength = 254
+
+    /// EN: The dharma name starts empty (criterion 7); "Gợi ý" fills it.
+    /// VI: Pháp danh để trống lúc mở (tiêu chí 7); bấm "Gợi ý" mới điền.
     func getInitialState() -> ILSignUpStateModel {
-        var state = ILSignUpStateModel.initial
-        state.displayName = dharmaNameSuggestions[0]
-        return state
+        ILSignUpStateModel.initial
     }
 
     func validateFullName(_ value: String) -> String? {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines).precomposedStringWithCanonicalMapping
         guard !trimmed.isEmpty else { return "signup.error.fullNameRequired".localized }
+        guard trimmed.count <= Self.maximumFullNameLength else { return "signup.error.fullNameInvalid".localized }
         return nil
     }
 
     func validateDisplayName(_ value: String) -> String? {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return "signup.error.displayNameRequired".localized }
+        guard trimmed.count <= Self.maximumDharmaNameLength else {
+            return "signup.error.displayNameTooLong".localized
+        }
         return nil
     }
 
@@ -132,17 +145,23 @@ final class ILSignUpUseCaseImpl: ILSignUpUseCase {
     func validateEmail(_ value: String) -> String? {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return "signup.error.emailRequired".localized }
-        guard ILEmailValidator.isValid(trimmed) else {
+        guard trimmed.count <= Self.maximumEmailLength, ILEmailValidator.isValid(trimmed) else {
             return "signup.error.emailInvalid".localized
         }
         return nil
     }
 
     static let minimumPasswordLength = 8
+    static let maximumPasswordLength = 64
 
+    /// EN: 8–64 characters after NFC, no trimming, no composition rule (BR-ONB-06).
+    /// VI: 8–64 ký tự sau chuẩn hoá NFC, không cắt khoảng trắng, không luật thành phần (BR-ONB-06).
     func validatePassword(_ value: String) -> String? {
         guard !value.isEmpty else { return "signup.error.passwordRequired".localized }
-        guard value.count >= Self.minimumPasswordLength else { return "signup.error.passwordTooShort".localized }
+        let length = value.precomposedStringWithCanonicalMapping.count
+        guard (Self.minimumPasswordLength...Self.maximumPasswordLength).contains(length) else {
+            return "signup.error.passwordLength".localized
+        }
         return nil
     }
 
@@ -162,15 +181,7 @@ final class ILSignUpUseCaseImpl: ILSignUpUseCase {
         }
     }
 
-    func sendVerificationCode(fullName: String, displayName: String, ordinationTempleID: String?, phoneNumber: String, email: String, password: String) async throws -> ILSignUpOTPEntity {
-        let entity = ILSignUpEntity(
-            fullName: fullName,
-            displayName: displayName,
-            ordinationTempleID: ordinationTempleID,
-            phoneNumber: phoneNumber,
-            email: email,
-            password: password
-        )
-        return try await repository.requestRegistrationOTP(entity)
+    func sendVerificationCode(_ entity: ILSignUpEntity) async throws -> ILSignUpOTPEntity {
+        try await repository.requestRegistrationOTP(entity)
     }
 }

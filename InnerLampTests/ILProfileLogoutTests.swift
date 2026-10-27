@@ -59,7 +59,7 @@ final class ILProfileLogoutTests: XCTestCase {
         try keychainService.save(key: KeychainAuthTokenProviding.accessTokenKey, value: "access-1")
         try keychainService.save(key: KeychainAuthTokenProviding.refreshTokenKey, value: "refresh-1")
         try await userRepository.saveUser(ILUserEntity(
-            id: 42, email: "an@example.com", phoneNumber: "+84912345678", dharmaName: "Diệu Tâm", ordinationPlace: ""
+            id: 42, email: "an@example.com", phoneNumber: "+84912345678", dharmaName: "Diệu Tâm", ordinationTempleID: ""
         ))
         try await memorialDataSource.upsert(ILMemorialTestFactory.entry())
         try await birthProfileDataSource.saveBirthProfile(ILUserBirthProfileEntity(

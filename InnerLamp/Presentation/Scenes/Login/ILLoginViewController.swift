@@ -22,8 +22,7 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
     private var cancellables = Set<AnyCancellable>()
 
     private let viewDidLoadSubject = PassthroughSubject<Void, Never>()
-    private let phoneChangedSubject = PassthroughSubject<String, Never>()
-    private let countryChangedSubject = PassthroughSubject<ILCountry, Never>()
+    private let emailChangedSubject = PassthroughSubject<String, Never>()
     private let passwordChangedSubject = PassthroughSubject<String, Never>()
     private let submitTappedSubject = PassthroughSubject<Void, Never>()
     private let backTappedSubject = PassthroughSubject<Void, Never>()
@@ -83,12 +82,18 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
         return label
     }()
 
-    private lazy var phoneField: ILPhoneField = {
-        let field = ILPhoneField(
-            label: "login.field.phone.label".localized,
-            placeholder: "login.field.phone.placeholder".localized
+    // EN: Email replaces the phone field and country picker (Login criterion 1, ADR-0003).
+    // VI: Ô email thay cho ô số điện thoại và bộ chọn quốc gia (Login tiêu chí 1, ADR-0003).
+    private lazy var emailField: ILField = {
+        let field = ILField(
+            label: "login.field.email.label".localized,
+            placeholder: "login.field.email.placeholder".localized
         )
         field.innerTextField.returnKeyType = .next
+        field.innerTextField.keyboardType = .emailAddress
+        field.innerTextField.textContentType = .username
+        field.innerTextField.autocapitalizationType = .none
+        field.innerTextField.autocorrectionType = .no
         return field
     }()
 
@@ -98,12 +103,13 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
             trailingText: "login.forgot".localized
         )
         field.innerTextField.isSecureTextEntry = true
+        field.innerTextField.textContentType = .password
         field.innerTextField.returnKeyType = .done
         return field
     }()
 
     private lazy var fieldsStack: UIStackView = {
-        let stack = UIStackView(arrangedSubviews: [phoneField, passwordField])
+        let stack = UIStackView(arrangedSubviews: [emailField, passwordField])
         stack.axis = .vertical
         stack.spacing = ILMetrics.rowSpacing
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -116,12 +122,6 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
             variant: .primary,
             loadingTitle: "login.cta.loggingIn".localized
         )
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-
-    private lazy var smsCodeButton: ILButton = {
-        let button = ILButton(title: "login.cta.smsCode".localized, variant: .ghost)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -208,13 +208,10 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
 
         scrollView.addSubview(contentView)
 
-        phoneField.onCountryTap = { [weak self] in
-            self?.handleCountryTap()
+        emailField.onTextChanged = { [weak self] text in
+            self?.emailChangedSubject.send(text)
         }
-        phoneField.onTextChanged = { [weak self] text in
-            self?.phoneChangedSubject.send(text)
-        }
-        phoneField.onReturn = { [weak self] in
+        emailField.onReturn = { [weak self] in
             self?.passwordField.innerTextField.becomeFirstResponder()
         }
 
@@ -232,11 +229,7 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
             self?.handleSubmitTapped()
         }
 
-        smsCodeButton.onTap = { [weak self] in
-            self?.handleSmsCodeTapped()
-        }
-
-        [lampIcon, titleLabel, subtitleLabel, fieldsStack, loginButton, smsCodeButton].forEach {
+        [lampIcon, titleLabel, subtitleLabel, fieldsStack, loginButton].forEach {
             contentView.addSubview($0)
         }
 
@@ -292,11 +285,7 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
             loginButton.topAnchor.constraint(equalTo: fieldsStack.bottomAnchor, constant: ILMetrics.spaceLarge),
             loginButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             loginButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-
-            smsCodeButton.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: ILMetrics.rowSpacing),
-            smsCodeButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            smsCodeButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            smsCodeButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            loginButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
 
             // Ghim theo `keyboardLayoutGuide` — tự trồi lên theo bàn phím, không cần
             // NotificationCenter/contentInset thủ công (giống `footerContainer` ở màn Đăng ký).
@@ -323,8 +312,7 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
 
         let input = ILLoginViewModel.Input(
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
-            phoneChanged: phoneChangedSubject.eraseToAnyPublisher(),
-            countryChanged: countryChangedSubject.eraseToAnyPublisher(),
+            emailChanged: emailChangedSubject.eraseToAnyPublisher(),
             passwordChanged: passwordChangedSubject.eraseToAnyPublisher(),
             submitTapped: submitTappedSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
@@ -358,10 +346,13 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
     }
 
     private func updateUI(with model: ILLoginStateModel) {
-        phoneField.country = model.selectedCountry
-        phoneField.isValid = model.isPhoneValid
-        phoneField.fieldState = model.phoneError.map { .error($0) } ?? .normal
+        emailField.fieldState = model.emailError.map { .error($0) } ?? .normal
 
+        // EN: The ViewModel clears the password after a failed sign-in; mirror it without touching a field being typed in.
+        // VI: ViewModel xoá mật khẩu sau khi đăng nhập lỗi; đồng bộ lại mà không đụng ô đang gõ.
+        if passwordField.innerTextField.text != model.password {
+            passwordField.text = model.password
+        }
         passwordField.fieldState = model.passwordError.map { .error($0) } ?? .normal
 
         loginButton.buttonState = model.isSubmitting ? .loading : (model.isSubmitEnabled ? .normal : .disabled)
@@ -372,7 +363,7 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
         }
     }
 
-    /// Locks back, fields, forgot-password, SMS/sign-up/guest buttons while logging in, so the user
+    /// Locks back, fields, forgot-password, sign-up/guest buttons while logging in, so the user
     /// cannot leave the screen or alter the request mid-flight.
     private func setInteractionLocked(_ locked: Bool) {
         isSubmitting = locked
@@ -382,23 +373,9 @@ final class ILLoginViewController: BaseViewController, TransitionProviding {
     }
 
     // MARK: - Actions
-    private func handleCountryTap() {
-        view.endEditing(true)
-        let picker = ILCountryPickerViewController(selectedCountry: viewModel.state.selectedCountry)
-        picker.onSelect = { [weak self] country in
-            self?.countryChangedSubject.send(country)
-        }
-        present(picker, animated: true)
-    }
-
     private func handleSubmitTapped() {
         view.endEditing(true)
         submitTappedSubject.send(())
-    }
-
-    /// Đăng nhập qua OTP SMS chưa có màn riêng trong scope hiện tại (`otp` trong design handoff).
-    private func handleSmsCodeTapped() {
-        // TODO: điều hướng sang màn Xác thực OTP khi có ILOtpCoordinator.
     }
 
     @objc private func handleGuestPreviewTapped() {

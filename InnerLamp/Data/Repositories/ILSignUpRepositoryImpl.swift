@@ -49,22 +49,29 @@ extension ILSignUpError {
         case .apiError(let code, _, _, let details):
             // `code` is the discriminator — never the human-readable message.
             switch code {
+            // EN: Contract 3.0.0 has no `EMAIL_TAKEN` (an existing email answers 200 like a new one)
+            //     and no SMS; each invalid field has its own code so the error lands under that field.
+            // VI: Contract 3.0.0 không còn `EMAIL_TAKEN` (email đã có tài khoản vẫn nhận 200 như email
+            //     mới) và không còn SMS; mỗi field sai có mã riêng để lỗi hiện dưới đúng field đó.
             case "PHONE_TAKEN":
                 return .phoneAlreadyRegistered
-            case "EMAIL_TAKEN":
-                return .emailTaken
-            case "OTP_LOCKED":
-                return .otpLocked(lockedUntil: details?["locked_until"]?.value as? String)
-            case "OTP_SEND_LIMITED":
-                return .otpSendLimited(lockedUntil: details?["locked_until"]?.value as? String)
-            case "OTP_RESEND_TOO_SOON":
-                return .otpResendTooSoon(retryAfterSeconds: details?["retry_after_seconds"]?.value as? Int)
-            case "SMS_SEND_FAILED":
-                return .smsSendFailed
+            case "REGISTRATION_IN_PROGRESS":
+                return .registrationInProgress(retryAfterSeconds: details?["retry_after_seconds"]?.value as? Int)
+            case "RATE_LIMITED":
+                return .rateLimited(retryAfterSeconds: details?["retry_after_seconds"]?.value as? Int)
             case "INVALID_TEMPLE":
                 return .invalidTemple
-            case "VALIDATION_ERROR", "INVALID_EMAIL", "INVALID_PHONE", "INVALID_PASSWORD",
-                 "INVALID_FULL_NAME", "INVALID_DHARMA_NAME", "PAYLOAD_TOO_LARGE":
+            case "INVALID_EMAIL":
+                return .invalidEmail
+            case "INVALID_PHONE":
+                return .invalidPhone
+            case "INVALID_PASSWORD":
+                return .invalidPassword
+            case "INVALID_FULL_NAME":
+                return .invalidFullName
+            case "INVALID_DHARMA_NAME":
+                return .invalidDharmaName
+            case "VALIDATION_ERROR", "PAYLOAD_TOO_LARGE":
                 return .invalidInput
             default:
                 return .server

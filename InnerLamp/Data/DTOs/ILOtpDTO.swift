@@ -14,11 +14,13 @@ import Foundation
 /// per wire shape.
 
 nonisolated struct ILOtpVerifyRequestDTO: Encodable {
-    let phoneNumber: String
+    /// EN: The email used on `register/request-otp` (contract 3.0.0).
+    /// VI: Email đã dùng ở `register/request-otp` (contract 3.0.0).
+    let email: String
     let otpCode: String
 
     enum CodingKeys: String, CodingKey {
-        case phoneNumber = "phone_number"
+        case email
         case otpCode = "otp_code"
     }
 }
@@ -38,16 +40,18 @@ nonisolated struct ILOtpUserDTO: Decodable {
     let email: String
     let phoneNumber: String
     let dharmaName: String?
-    let ordinationPlace: String?
+    /// EN: `ordination_temple_id` in `AuthResult.user`; absent when the user picked no temple.
+    /// VI: `ordination_temple_id` trong `AuthResult.user`; vắng khi người dùng chưa chọn chùa.
+    let ordinationTempleId: String?
 }
 
+/// EN: Body of `POST /v1/auth/register/resend-otp` — the email only; `purpose` is rejected as an unknown field.
+/// VI: Body của `POST /v1/auth/register/resend-otp` — chỉ có email; `purpose` bị từ chối vì là field lạ.
 nonisolated struct ILOtpResendRequestDTO: Encodable {
-    let phoneNumber: String
-    let purpose: String
+    let email: String
 
     enum CodingKeys: String, CodingKey {
-        case phoneNumber = "phone_number"
-        case purpose
+        case email
     }
 }
 

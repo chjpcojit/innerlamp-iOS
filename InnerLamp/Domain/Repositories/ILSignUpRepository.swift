@@ -18,7 +18,7 @@ import Foundation
 /// above do not know about.
 nonisolated protocol ILSignUpRepository {
 
-    /// Submits the registration payload and asks the server to send a verification code by SMS.
+    /// Submits the registration payload and asks the server to send a verification code by email.
     ///
     /// On the server this only writes to `pending_registration`; the account is created later by
     /// the follow-on `verify-otp` call, which belongs to the OTP feature.
