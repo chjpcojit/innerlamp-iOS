@@ -1,7 +1,7 @@
 # Tasks — Talk
 
-Version: 1.0
-Last updated: 2026-09-27
+Version: 1.1
+Last updated: 2026-11-15
 Status: not started — prospective
 
 > See `changelog.md` in this folder for the version history of this spec.
@@ -31,11 +31,13 @@ Status: not started — prospective
 
 ## Phase 3 — API integration (pending, blocks feature completion)
 
-> Contracts unconfirmed (see `requirements.md` Pending ⚠️).
+> Backend contract confirmed 2026-11-15 (see `requirements.md` → Contract).
 
-- [ ] Define the talk-detail API contract (endpoint, response shape, chapters,
-      error cases)
-- [ ] Resolve the audio-source question (stream URL vs download vs DRM)
+- [x] Talk-detail API contract: `GET /v1/dharma-talks/{id}` returns an absolute
+      `audio_url`, public, with HEAD/Range support; no DRM.
+- [x] Audio source: the absolute `audio_url`, played directly by `AVPlayer` or
+      `AVAudioPlayer`; no signed URL and no client-side host prefix.
+- [ ] Handle an audio `404`/network failure without hiding the talk content.
 - [ ] Create `ILTalkDTO` + `ILTalkMapper` (only after contracts confirmed)
 - [ ] Create the `Endpoint` conformance under `Data/DataSources/Remote/`
 - [ ] Create `ILTalkRepository` protocol + `ILTalkRepositoryImpl`

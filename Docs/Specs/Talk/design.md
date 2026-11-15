@@ -1,8 +1,8 @@
 # Design — Talk
 
-Version: 1.0
-Last updated: 2026-09-27
-Status: not started — prospective; talk API unconfirmed
+Version: 1.1
+Last updated: 2026-11-15
+Status: not started — prospective; backend contract confirmed, iOS data layer and player not built
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -50,9 +50,11 @@ required):
 ## Deliberately stubbed for now
 
 `ILTalkUseCase.getTalk(id:)` is a one-line stub (`print("TODO: …")`) until the
-talk API contract lands — see `requirements.md` Pending. No DTO / Mapper /
-Endpoint / `ILTalkRepositoryImpl` exist yet (`tasks.md` Phase 3). The audio
-playback itself is a separate open item (stream URL vs download).
+iOS data layer lands — the backend contract itself is confirmed (see
+`requirements.md` → Contract). No DTO / Mapper / Endpoint /
+`ILTalkRepositoryImpl` exist yet (`tasks.md` Phase 3). The player will use the
+absolute `audio_url` directly with `AVPlayer`/`AVAudioPlayer`; there is no DRM,
+no signed URL and no client-side host prefix.
 
 ## Design reference
 
