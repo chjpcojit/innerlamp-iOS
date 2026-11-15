@@ -4,6 +4,18 @@ Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in thi
 folder. All three files share one changelog since they change together as one
 spec unit. Newest version first.
 
+## v1.1 — 2026-11-15
+
+- `requirements.md`: the backend contract is confirmed — an absolute public
+  `audio_url`, HEAD/byte-range support, no DRM, and a player-unavailable state
+  when the file is missing. Removes the two ⚠️ Not confirmed audio blockers and
+  adds the matching acceptance criteria.
+- `tasks.md`: Phase 3 marks the contract and audio-source questions resolved;
+  the remaining work is the iOS data layer and the real player.
+- `design.md`: the player uses the absolute `audio_url` via AVFoundation; the
+  stream-vs-download question is resolved.
+- No iOS code changed: the screen is still a static mock.
+
 ## v1.0.1 — 2026-10-16
 
 - `requirements.md`: the link to the reading view now points to `Docs/Specs/Sutra/` (the former
