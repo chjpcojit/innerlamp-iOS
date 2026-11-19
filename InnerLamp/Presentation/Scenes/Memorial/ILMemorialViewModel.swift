@@ -12,8 +12,6 @@ enum ILMemorialNavEvent: Equatable {
     case addEntry
     /// Highlight card or a row — open the form for this entry.
     case editEntry(ILMemorialEntity)
-    /// "Gia phả" link — open the family tree.
-    case openFamilyTree
 }
 
 protocol ILMemorialViewModelProtocol: ViewModelType {
@@ -23,6 +21,10 @@ protocol ILMemorialViewModelProtocol: ViewModelType {
     /// Called by the coordinator when the form closed after a save or delete: reloads the list and
     /// shows `message` as a transient banner.
     func didFinishEditing(message: String)
+
+    /// Opens the entry a local notification was tapped for. Loads the book first when the list has
+    /// not been populated yet (cold start from a notification).
+    func openEntry(id: String)
 }
 
 final class ILMemorialViewModel: ILMemorialViewModelProtocol {
@@ -32,7 +34,6 @@ final class ILMemorialViewModel: ILMemorialViewModelProtocol {
         let backTapped: AnyPublisher<Void, Never>
         let addTapped: AnyPublisher<Void, Never>
         let itemTapped: AnyPublisher<String, Never>
-        let familyTreeTapped: AnyPublisher<Void, Never>
     }
 
     struct Output {
@@ -51,6 +52,7 @@ final class ILMemorialViewModel: ILMemorialViewModelProtocol {
     private let stateSubject = CurrentValueSubject<ViewState<ILMemorialStateModel>, Never>(.success(.initial))
     private var currentState = ILMemorialStateModel.initial
     private var items: [ILMemorialItem] = []
+    private var isFull = false
     private var bannerTask: Task<Void, Never>?
     private let useCase: ILMemorialUseCase
     private let now: () -> Date
@@ -77,15 +79,15 @@ final class ILMemorialViewModel: ILMemorialViewModelProtocol {
             .store(in: &cancellables)
 
         input.addTapped
-            .sink { [weak self] _ in self?.navigationEventSubject.send(.addEntry) }
+            .sink { [weak self] _ in
+                // The button is disabled in the view too; this guard covers a stale tap.
+                guard let self, !self.isFull else { return }
+                self.navigationEventSubject.send(.addEntry)
+            }
             .store(in: &cancellables)
 
         input.itemTapped
             .sink { [weak self] id in self?.handleItemTapped(id) }
-            .store(in: &cancellables)
-
-        input.familyTreeTapped
-            .sink { [weak self] _ in self?.navigationEventSubject.send(.openFamilyTree) }
             .store(in: &cancellables)
 
         return Output(state: stateSubject.eraseToAnyPublisher())
@@ -98,6 +100,21 @@ final class ILMemorialViewModel: ILMemorialViewModelProtocol {
     }
 
     // MARK: - Actions
+    func openEntry(id: String) {
+        if let item = items.first(where: { $0.id == id }) {
+            navigationEventSubject.send(.editEntry(item.entry))
+            return
+        }
+        Task { [weak self] in
+            guard let self else { return }
+            guard let loaded = try? await self.useCase.loadItems(now: self.now()) else { return }
+            self.items = loaded
+            self.applyItems()
+            guard let item = loaded.first(where: { $0.id == id }) else { return }
+            self.navigationEventSubject.send(.editEntry(item.entry))
+        }
+    }
+
     private func reload() {
         Task { [weak self] in
             guard let self else { return }
@@ -135,6 +152,9 @@ final class ILMemorialViewModel: ILMemorialViewModelProtocol {
     private func applyItems() {
         var state = ILMemorialStateModel(bannerText: currentState.bannerText)
         state.isEmpty = items.isEmpty
+        state.isFull = items.count >= 100
+        isFull = state.isFull
+        state.fullNotice = state.isFull ? "memorial.list.full".localized : ""
         state.subtitle = items.isEmpty
             ? "memorial.subtitle.empty".localized
             : String(format: "memorial.subtitle.format".localized, items.count)
@@ -149,7 +169,8 @@ final class ILMemorialViewModel: ILMemorialViewModelProtocol {
                 relationLine: ordinal.isEmpty ? relation : "\(relation) · \(ordinal)",
                 dateLine: ILMemorialFormatter.storedDateLine(top.entry),
                 whenLine: ILMemorialFormatter.solarLine(top.next.date),
-                remindLine: ILMemorialFormatter.reminderLine(top.entry)
+                remindLine: ILMemorialFormatter.reminderLine(top.entry),
+                photoURL: MemorialFeatureFlags.isPhotoEnabled ? top.entry.photoURL?.absoluteString : nil
             )
         }
 
@@ -160,7 +181,8 @@ final class ILMemorialViewModel: ILMemorialViewModelProtocol {
                 subtitle: "\(ILMemorialFormatter.relationshipLabel(item.entry.relationship)) · \(ILMemorialFormatter.storedDateLine(item.entry))",
                 daysText: ILMemorialFormatter.daysLabel(item.next.daysUntil),
                 isSoon: item.next.daysUntil <= 7,
-                reminderTag: item.entry.reminder == nil ? "" : "memorial.reminder.tag".localized
+                reminderTag: item.entry.reminder == nil ? "" : "memorial.reminder.tag".localized,
+                photoURL: MemorialFeatureFlags.isPhotoEnabled ? item.entry.photoURL?.absoluteString : nil
             )
         }
 

@@ -17,6 +17,8 @@ struct ILMemorialHighlightModel: Equatable {
     /// "Thứ Bảy, 15/11/2026"
     let whenLine: String
     let remindLine: String
+    /// Signed URL while the photo flag is on; `nil` shows the initials (D8).
+    let photoURL: String?
 }
 
 /// 1 row of "THEO NGÀY GIỖ SẮP TỚI".
@@ -30,6 +32,8 @@ struct ILMemorialRowModel: Equatable, Identifiable {
     let isSoon: Bool
     /// "Có nhắc", or empty when reminders are off.
     let reminderTag: String
+    /// Signed URL while the photo flag is on; `nil` shows the initials (D8).
+    let photoURL: String?
 }
 
 /// UI state of the list screen ("Sổ giỗ chạp").
@@ -42,6 +46,11 @@ struct ILMemorialStateModel: Equatable {
     var isEmpty: Bool = false
     /// Transient confirmation ("Đã lưu vào sổ giỗ."); empty hides the banner.
     var bannerText: String = ""
+    /// The book holds the server maximum (100): the "Thêm" action is disabled and `fullNotice` is
+    /// shown (P7/AC MEM-API-09).
+    var isFull: Bool = false
+    /// "Sổ giỗ đã đủ 100 người..." when `isFull`; empty otherwise.
+    var fullNotice: String = ""
 
     static let initial = ILMemorialStateModel()
 }

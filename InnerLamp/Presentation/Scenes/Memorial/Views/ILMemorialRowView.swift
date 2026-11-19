@@ -13,10 +13,7 @@ final class ILMemorialRowView: UIControl {
     var onTap: (() -> Void)?
 
     // MARK: - UI Elements
-    private lazy var avatarView: ILAvatarView = {
-        let view = ILAvatarView(initials: "", tone: .gold, size: 46)
-        return view
-    }()
+    private lazy var avatarView = ILMemorialAvatarView(size: 46)
 
     private lazy var nameLabel: UILabel = {
         let label = UILabel()
@@ -61,7 +58,11 @@ final class ILMemorialRowView: UIControl {
 
     // MARK: - Public API
     func configure(with model: ILMemorialRowModel) {
-        avatarView.initials = model.name.first.map { String($0).uppercased() } ?? ""
+        avatarView.configure(
+            initials: ILMemorialFormatter.initials(model.name),
+            photoURLString: model.photoURL,
+            entryID: model.id
+        )
         nameLabel.text = model.name
         subtitleLabel.text = model.subtitle
         daysLabel.text = model.daysText

@@ -27,7 +27,7 @@ is no portrait sync (the API has no photo route). Spec: `Docs/Specs/Memorial/`.
 | Presentation — Formatter | `ILMemorialFormatter.swift` | Done | Shared display strings (days label, eyebrow, ordinal, stored date, reminder line). |
 | Presentation — ViewModel | `ILMemorialViewModel.swift`, `ILMemorialEditViewModel.swift` | Done | Load/sort/banner (list); draft editing, validation, save/delete (form). |
 | Presentation — ViewController | `ILMemorialViewController.swift`, `ILMemorialEditViewController.swift` | Done | Token + component based. Not verified on device. |
-| Presentation — Views | `Views/ILMemorialHighlightCardView`, `ILMemorialRowView`, `ILMemorialChipGroupView`, `ILMemorialPreviewCardView`, `ILMemorialReminderCardView`, `ILMemorialEmptyView` | Done | Feature-scoped. `ILMemorialEmptyView` is the empty state per design `gioEmpty` (lamp, numbered steps card, "Lấy từ gia phả" card); the sticky bottom add button lives in the VC and is shown in every state. |
+| Presentation — Views | `Views/ILMemorialHighlightCardView`, `ILMemorialRowView`, `ILMemorialChipGroupView`, `ILMemorialPreviewCardView`, `ILMemorialReminderCardView`, `ILMemorialEmptyView` | Done | Feature-scoped. `ILMemorialEmptyView` is the empty state per design `gioEmpty` (lamp, headline, numbered steps card); it has no family-tree shortcut. The sticky bottom add button lives in the VC and is shown in every state. |
 | Design system | `ILSegmentedToggleView`, `ILSwitchRowView`, `ILMenuFieldView`, icons `chevronDown` / `checkmark` | Done | Generic pieces added for this screen. Save/delete confirmation uses the shared `ILAlert.success` toast (window level), not an in-screen banner. |
 | Presentation — Coordinator | `ILMemorialCoordinator.swift` | Done | List + form pushes; form save/delete pops and hands the banner message to the list. |
 | Tests | `ILMemorialUseCaseTests`, `ILMemorialViewModelTests`, `ILMemorialEditViewModelTests`, `ILMemorialRepositoryTests`, `ILLunarToSolarTests` | Done (not run) | Build-verified only; XCTest needs a simulator/device. |
@@ -39,7 +39,6 @@ List (`ILMemorialNavEvent`):
 - `.back` — pop and `finish()`.
 - `.addEntry` — push the form in add mode (sticky bottom "Thêm người thân" button; the nav bar has no add action).
 - `.editEntry(ILMemorialEntity)` — push the form for that entry (the entity is passed so the form needs no async load).
-- `.openFamilyTree` — "Xem gia phả" ghost button under the list; the coordinator pushes `ILFamilyTreeCoordinator` as a child (see `Scenes/FamilyTree/`).
 
 Form (`ILMemorialEditNavEvent`):
 - `.back` — pop without saving.
@@ -63,3 +62,5 @@ Form (`ILMemorialEditNavEvent`):
   pieces, tests.
 - 2026-10-03 — added the "Xem gia phả" entry point (`.openFamilyTree`) to the FamilyTree screen.
 - 2026-10-05 — list aligned with the prototype: removed the nav-bar "Thêm" action and the in-content ghost add button; the primary "Thêm người thân" button is now sticky at the bottom in every state ("Xem gia phả" kept).
+- 2026-11-17 — removed the "Xem gia phả" button and `.openFamilyTree` (AC-8): the book has no
+  family-tree control in either state; the tree is reached from Profile only.

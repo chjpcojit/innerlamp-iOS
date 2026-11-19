@@ -7,12 +7,15 @@ import XCTest
 import Combine
 @testable import InnerLamp
 
+// swiftlint:disable type_body_length
 final class ILMemorialEditViewModelTests: XCTestCase {
 
     private typealias Factory = ILMemorialTestFactory
 
     private var mockUseCase: MockILMemorialUseCase!
     private var cancellables: Set<AnyCancellable>!
+    /// The subject-based Input does not retain the view model; keep it alive for the test.
+    private var retainedSUT: [AnyObject] = []
 
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
     private var backTappedSubject: PassthroughSubject<Void, Never>!
@@ -28,7 +31,9 @@ final class ILMemorialEditViewModelTests: XCTestCase {
     private var reminderToggledSubject: PassthroughSubject<Bool, Never>!
     private var leadSelectedSubject: PassthroughSubject<Int, Never>!
     private var timeSelectedSubject: PassthroughSubject<Int, Never>!
-    private var syncToggledSubject: PassthroughSubject<Bool, Never>!
+    private var leapMonthToggledSubject: PassthroughSubject<Bool, Never>!
+    private var photoPickedSubject: PassthroughSubject<Data, Never>!
+    private var photoRemoveTappedSubject: PassthroughSubject<Void, Never>!
 
     override func setUp() {
         super.setUp()
@@ -48,11 +53,14 @@ final class ILMemorialEditViewModelTests: XCTestCase {
         reminderToggledSubject = .init()
         leadSelectedSubject = .init()
         timeSelectedSubject = .init()
-        syncToggledSubject = .init()
+        leapMonthToggledSubject = .init()
+        photoPickedSubject = .init()
+        photoRemoveTappedSubject = .init()
     }
 
     override func tearDown() {
         cancellables = nil
+        retainedSUT.removeAll()
         mockUseCase = nil
         super.tearDown()
     }
@@ -77,18 +85,23 @@ final class ILMemorialEditViewModelTests: XCTestCase {
             reminderToggled: reminderToggledSubject.eraseToAnyPublisher(),
             leadSelected: leadSelectedSubject.eraseToAnyPublisher(),
             timeSelected: timeSelectedSubject.eraseToAnyPublisher(),
-            syncToggled: syncToggledSubject.eraseToAnyPublisher()
+            leapMonthToggled: leapMonthToggledSubject.eraseToAnyPublisher(),
+            photoPicked: photoPickedSubject.eraseToAnyPublisher(),
+            photoRemoveTapped: photoRemoveTappedSubject.eraseToAnyPublisher()
         )
     }
 
     /// Subscribes and returns a box that always holds the latest successful state.
     private func observe(_ sut: ILMemorialEditViewModel) -> StateBox {
+        retainedSUT.append(sut)
         let box = StateBox()
         sut.transform(input: makeInput()).state
             .sink { state in
                 switch state {
                 case .success(let model): box.latest = model
-                case .failure: box.failureCount += 1
+                case .failure(let error):
+                    box.failureCount += 1
+                    box.lastFailure = error
                 default: break
                 }
             }
@@ -99,6 +112,7 @@ final class ILMemorialEditViewModelTests: XCTestCase {
     private final class StateBox {
         var latest = ILMemorialEditStateModel.initial
         var failureCount = 0
+        var lastFailure: Error?
     }
 
     private func settle() {
@@ -137,7 +151,6 @@ final class ILMemorialEditViewModelTests: XCTestCase {
         XCTAssertEqual(state.selectedMonth, 1)
         XCTAssertEqual(state.selectedYear, 0)
         XCTAssertTrue(state.reminderOn)
-        XCTAssertTrue(state.syncOn)
         XCTAssertEqual(state.relationships.first(where: \.isSelected)?.id, 0, "Ông nội is selected by default")
         XCTAssertEqual(state.leadOptions.first(where: \.isSelected)?.id, 1)
         XCTAssertEqual(state.timeOptions.first(where: \.isSelected)?.id, 7)
@@ -147,7 +160,7 @@ final class ILMemorialEditViewModelTests: XCTestCase {
     func test_editMode_prefillsEntry_andOffersDelete() {
         let entry = Factory.entry(
             name: "Trần Thị Bình", relationship: .mother, calendarKind: .solar, day: 5, month: 3,
-            deathYear: 2020, note: "Ghi chú", reminder: nil, syncToReminders: false
+            deathYear: 2020, note: "Ghi chú", reminder: nil
         )
         let box = observe(makeSUT(entry: entry))
         viewDidLoadSubject.send(())
@@ -163,7 +176,6 @@ final class ILMemorialEditViewModelTests: XCTestCase {
         XCTAssertEqual(state.selectedMonth, 3)
         XCTAssertEqual(state.selectedYear, 2020)
         XCTAssertFalse(state.reminderOn)
-        XCTAssertFalse(state.syncOn)
         XCTAssertEqual(state.relationships.first(where: \.isSelected)?.id, ILMemorialRelationship.allCases.firstIndex(of: .mother))
     }
 
@@ -298,13 +310,13 @@ final class ILMemorialEditViewModelTests: XCTestCase {
         XCTAssertEqual(box.latest.timeOptions.first(where: \.isSelected)?.id, 19)
     }
 
-    func test_syncToggle_updatesState() {
+    func test_leapToggle_updatesState() {
         let box = observe(makeSUT(entry: nil))
         viewDidLoad()
 
-        syncToggledSubject.send(false)
+        leapMonthToggledSubject.send(true)
 
-        XCTAssertFalse(box.latest.syncOn)
+        XCTAssertTrue(box.latest.leapMonthOn)
     }
 
     // MARK: - Save
@@ -349,7 +361,7 @@ final class ILMemorialEditViewModelTests: XCTestCase {
         XCTAssertNil(box.latest.nameError)
     }
 
-    func test_save_withValidName_savesEntry_andFiresSavedWithReminderMessage() {
+    func test_save_withValidName_savesEntry_andFiresSavedMessage() {
         let sut = makeSUT(entry: nil)
         _ = observe(sut)
         viewDidLoad()
@@ -360,7 +372,7 @@ final class ILMemorialEditViewModelTests: XCTestCase {
         let event = waitForEvent(sut) { saveTappedSubject.send(()) }
 
         let relationship = "memorial.relationship.father".localized.lowercased()
-        XCTAssertEqual(event, .saved(message: String(format: "memorial.message.savedWithReminder".localized, relationship)))
+        XCTAssertEqual(event, .saved(message: "memorial.message.saved".localized))
         XCTAssertEqual(mockUseCase.savedEntries.count, 1)
         XCTAssertEqual(mockUseCase.savedEntries.first?.name, "Nguyễn Văn An")
         XCTAssertEqual(mockUseCase.savedEntries.first?.note, "Mâm chay")
@@ -380,12 +392,11 @@ final class ILMemorialEditViewModelTests: XCTestCase {
         XCTAssertNil(mockUseCase.savedEntries.first?.reminder)
     }
 
-    func test_save_withSyncOff_firesPlainSavedMessage() {
+    func test_save_firesPlainSavedMessage() {
         let sut = makeSUT(entry: nil)
         _ = observe(sut)
         viewDidLoad()
         nameChangedSubject.send("An")
-        syncToggledSubject.send(false)
 
         let event = waitForEvent(sut) { saveTappedSubject.send(()) }
 
@@ -477,4 +488,108 @@ final class ILMemorialEditViewModelTests: XCTestCase {
     private func viewDidLoad() {
         viewDidLoadSubject.send(())
     }
+
+    // MARK: - Leap month (contract §2.3)
+
+    func test_yearlessLunarEntry_showsLeapMonthSwitch() {
+        let box = observe(makeSUT(entry: nil))
+        viewDidLoadSubject.send(())
+
+        XCTAssertTrue(box.latest.showLeapMonth)
+        XCTAssertFalse(box.latest.leapMonthOn)
+    }
+
+    func test_knownYearOrSolar_hidesLeapMonthSwitch() {
+        let knownYear = observe(makeSUT(entry: Factory.entry(calendarKind: .lunar, deathYear: 2020)))
+        viewDidLoadSubject.send(())
+        XCTAssertFalse(knownYear.latest.showLeapMonth)
+
+        let solar = observe(makeSUT(entry: Factory.entry(calendarKind: .solar, deathYear: nil)))
+        viewDidLoadSubject.send(())
+        XCTAssertFalse(solar.latest.showLeapMonth)
+    }
+
+    func test_leapToggle_updatesDraft() {
+        let box = observe(makeSUT(entry: nil))
+        viewDidLoadSubject.send(())
+
+        leapMonthToggledSubject.send(true)
+
+        XCTAssertTrue(box.latest.leapMonthOn)
+    }
+
+    func test_save_unauthorized_keepsDraftAndReportsSessionExpired() {
+        mockUseCase.saveError = ILMemorialError.unauthorized
+        let sut = makeSUT(entry: nil)
+        let box = observe(sut)
+        viewDidLoad()
+        nameChangedSubject.send("Nguyễn Văn An")
+        noteChangedSubject.send("Mâm chay")
+
+        saveTappedSubject.send(())
+        settle()
+
+        XCTAssertEqual(box.latest.name, "Nguyễn Văn An", "401 must not clear the name field")
+        XCTAssertEqual(box.latest.note, "Mâm chay", "401 must not clear the note field")
+        XCTAssertFalse(box.latest.isSaving)
+        guard case .unauthorized? = box.lastFailure as? ILMemorialError else {
+            return XCTFail("Expected unauthorized, got \(String(describing: box.lastFailure))")
+        }
+    }
+
+    // MARK: - Photo (flag now enabled)
+
+    func test_save_withPickedPhoto_uploadsAfterSave() {
+        let sut = makeSUT(entry: nil)
+        _ = observe(sut)
+        viewDidLoad()
+        nameChangedSubject.send("Nguyễn Văn An")
+        photoPickedSubject.send(Data([0xFF, 0xD8, 0xFF, 0xD9]))
+
+        let event = waitForEvent(sut) { saveTappedSubject.send(()) }
+
+        XCTAssertEqual(event, .saved(message: "memorial.message.saved".localized))
+        XCTAssertEqual(mockUseCase.uploadedPhotoEntryIDs, ["new"])
+    }
+
+    func test_save_afterPhotoRemoved_deletesPhoto() {
+        let entry = Factory.entry(id: "42", photoURL: URL(string: "https://example.com/p.jpg?sig=1"))
+        let sut = makeSUT(entry: entry)
+        _ = observe(sut)
+        viewDidLoad()
+        photoRemoveTappedSubject.send(())
+
+        let event = waitForEvent(sut) { saveTappedSubject.send(()) }
+
+        XCTAssertEqual(event, .saved(message: "memorial.message.saved".localized))
+        XCTAssertEqual(mockUseCase.deletedPhotoEntryIDs, ["42"])
+    }
+
+    func test_save_photoTooLarge_reportsMessageAndKeepsEntrySaved() {
+        mockUseCase.uploadPhotoError = ILMemorialError.photoTooLarge
+        let sut = makeSUT(entry: nil)
+        _ = observe(sut)
+        viewDidLoad()
+        nameChangedSubject.send("Nguyễn Văn An")
+        photoPickedSubject.send(Data([0xFF, 0xD8]))
+
+        let event = waitForEvent(sut) { saveTappedSubject.send(()) }
+
+        let expected = "memorial.message.saved".localized + " " + ILMemorialError.photoTooLarge.errorDescription!
+        XCTAssertEqual(event, .saved(message: expected))
+    }
+
+    func test_save_photo404_reportsEntryGone() {
+        mockUseCase.uploadPhotoError = ILMemorialError.notFound
+        let sut = makeSUT(entry: nil)
+        _ = observe(sut)
+        viewDidLoad()
+        nameChangedSubject.send("Nguyễn Văn An")
+        photoPickedSubject.send(Data([0xFF, 0xD8]))
+
+        let event = waitForEvent(sut) { saveTappedSubject.send(()) }
+
+        XCTAssertEqual(event, .saved(message: "memorial.error.notFound".localized))
+    }
 }
+// swiftlint:enable type_body_length

@@ -95,3 +95,8 @@ Docs/handoff/
 
 # Design project exports (local only, never commit)
 Docs/innerlamp-project/
+
+# P2 deliverables matched by the blanket *.yaml / *.json / *.sh rules above.
+!Docs/spec.config.yaml
+!InnerLampTests/Fixtures/*.json
+!Scripts/sync-product-vectors.sh

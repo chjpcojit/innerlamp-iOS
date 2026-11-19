@@ -37,6 +37,7 @@ final class ILRemoteImageView: UIImageView {
 
     private var loadTask: Task<Void, Never>?
     private var pendingURL: URL?
+    private var pendingCacheKey: String?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -55,16 +56,21 @@ final class ILRemoteImageView: UIImageView {
     /// Loads `urlString`; `nil` or an invalid string just clears the image (placeholder shows).
     /// A view that has no size yet (cards are configured before first layout) waits for its first
     /// layout pass so the image is downsampled to the real pixel size, not the screen size.
-    func setImage(urlString: String?) {
+    /// - Parameter cacheKey: stable identity of the picture (e.g. `memorial.<entryId>.<objectPath>`).
+    ///   When omitted, the full URL is the key. Pass a key that ignores a signed URL's changing
+    ///   query string, otherwise every refresh is a cache miss (G1 item 4).
+    func setImage(urlString: String?, cacheKey: String? = nil) {
         loadTask?.cancel()
         pendingURL = nil
+        pendingCacheKey = nil
         image = nil
 
         guard let urlString, let url = URL(string: urlString) else { return }
         if bounds.isEmpty {
             pendingURL = url
+            pendingCacheKey = cacheKey
         } else {
-            load(url)
+            load(url, cacheKey: cacheKey)
         }
     }
 
@@ -72,13 +78,15 @@ final class ILRemoteImageView: UIImageView {
         super.layoutSubviews()
         guard let url = pendingURL, !bounds.isEmpty else { return }
         pendingURL = nil
-        load(url)
+        load(url, cacheKey: pendingCacheKey)
+        pendingCacheKey = nil
     }
 
-    private func load(_ url: URL) {
+    private func load(_ url: URL, cacheKey: String?) {
         let maxPixelSize = targetMaxPixelSize()
-        let cacheKey = "\(url.absoluteString)#\(Int(maxPixelSize))" as NSString
-        if let cached = Self.memoryCache.object(forKey: cacheKey) {
+        let identity = cacheKey ?? url.absoluteString
+        let key = "\(identity)#\(Int(maxPixelSize))" as NSString
+        if let cached = Self.memoryCache.object(forKey: key) {
             image = cached
             onImageLoaded?()
             return
@@ -90,7 +98,7 @@ final class ILRemoteImageView: UIImageView {
                   let prepared = await Self.decode(data, maxPixelSize: maxPixelSize),
                   !Task.isCancelled
             else { return }
-            Self.memoryCache.setObject(prepared, forKey: cacheKey, cost: prepared.decodedCost)
+            Self.memoryCache.setObject(prepared, forKey: key, cost: prepared.decodedCost)
             self?.display(prepared)
         }
     }

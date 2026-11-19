@@ -20,11 +20,22 @@ final class DIContainer {
         KeychainServiceImpl()
     }()
 
+    /// EN: Memorial rows live in their own store so they — and only they — are excluded from a
+    /// device backup. Rows cached by the single store before the split are moved on first launch.
+    /// VI: Dòng sổ giỗ nằm trong store riêng để chỉ chúng bị loại khỏi backup thiết bị. Các dòng đã
+    /// cache trong store đơn trước khi tách được chuyển sang ở lần chạy đầu.
     lazy var coreDataStack: CoreDataStack = {
-        CoreDataStack()
+        CoreDataStack(separatedStores: [
+            CoreDataStack.SeparatedStore(
+                configurationName: "Memorial",
+                fileName: "InnerLampMemorial.sqlite",
+                excludesFromBackup: true,
+                legacyEntityName: ILMemorialMO.entityName
+            )
+        ])
     }()
 
-    lazy var networkService: NetworkService = {
+    lazy var networkService: NetworkServiceImpl = {
         let authTokenProvider = KeychainAuthTokenProviding(keychainService: keychainService)
         let logger = NetworkLogger(loggingService: loggingService)
         // The refresh call goes through its own transport with no refresher attached, so a 401
@@ -88,6 +99,12 @@ final class DIContainer {
     func makeUserRepository() -> ILUserRepository {
         ILUserRepositoryImpl(localDataSource: userLocalDataSource)
     }
+
+    /// EN: The account that owns account-scoped caches (memorial today).
+    /// VI: Tài khoản sở hữu các cache theo tài khoản (hiện là sổ giỗ).
+    lazy var accountIdentityProvider: ILAccountIdentityProviding = {
+        ILUserAccountIdentityProvider(userRepository: makeUserRepository())
+    }()
 
     // MARK: - BuddhistEvent
     lazy var buddhistEventLocalDataSource: ILBuddhistEventLocalDataSource = {
@@ -768,15 +785,32 @@ final class DIContainer {
 
     // MARK: - Memorial (Sổ giỗ chạp — server `/v1/memorials` + Core Data offline cache)
     lazy var memorialLocalDataSource: ILMemorialLocalDataSource = {
-        ILMemorialLocalDataSourceImpl(stack: coreDataStack)
+        ILMemorialLocalDataSourceImpl(stack: coreDataStack, accountIdentity: accountIdentityProvider)
     }()
 
+    /// D1 cutover point: replace `ILLocalMemorialReminderScheduler()` with
+    /// `ILNoopMemorialReminderScheduler()` once the server sends reminders. One line.
+    lazy var memorialReminderScheduler: ILMemorialReminderScheduling = {
+        ILLocalMemorialReminderScheduler()
+    }()
+
+    func makeMemorialReminderScheduler() -> ILMemorialReminderScheduling {
+        memorialReminderScheduler
+    }
+
     func makeMemorialRepository() -> ILMemorialRepository {
-        ILMemorialRepositoryImpl(networkService: networkService, localDataSource: memorialLocalDataSource)
+        ILMemorialRepositoryImpl(
+            networkService: networkService,
+            multipartUploader: networkService,
+            localDataSource: memorialLocalDataSource
+        )
     }
 
     func makeMemorialUseCase() -> ILMemorialUseCase {
-        ILMemorialUseCaseImpl(repository: makeMemorialRepository())
+        ILMemorialUseCaseImpl(
+            repository: makeMemorialRepository(),
+            reminderScheduler: makeMemorialReminderScheduler()
+        )
     }
 
     func makeMemorialViewModel() -> ILMemorialViewModel {
@@ -788,8 +822,15 @@ final class DIContainer {
         ILMemorialEditViewModel(useCase: makeMemorialUseCase(), entry: entry)
     }
 
-    func makeMemorialCoordinator(navigationController: UINavigationController) -> ILMemorialCoordinator {
-        ILMemorialCoordinator(navigationController: navigationController, container: self)
+    func makeMemorialCoordinator(
+        navigationController: UINavigationController,
+        initialEntryID: String? = nil
+    ) -> ILMemorialCoordinator {
+        ILMemorialCoordinator(
+            navigationController: navigationController,
+            container: self,
+            initialEntryID: initialEntryID
+        )
     }
 
     // MARK: - FamilyTree (Gia phả — no data source yet, see TD-FamilyTree-001)
@@ -957,6 +998,7 @@ final class DIContainer {
             keychainService: keychainService,
             sessionDataCleaner: ILSessionDataCleanerImpl(stack: coreDataStack),
             userDefaultsService: userDefaultsService,
+            memorialReminderScheduler: makeMemorialReminderScheduler(),
             accountScopedDefaultsKeys: [
                 ILSanghaUseCaseImpl.myTempleKey,
                 ILSanghaUseCaseImpl.myTempleSnapshotKey

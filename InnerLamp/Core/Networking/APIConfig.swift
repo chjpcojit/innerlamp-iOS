@@ -14,11 +14,8 @@ import Foundation
 ///
 /// TODO: Thay toàn bộ URL mock bên dưới bằng URL thật trước khi release. `.staging`/`.production`
 /// vẫn trỏ host mock vì backend chưa sẵn sàng cho hai môi trường đó — cùng tình trạng với
-/// `LocalizationConfig.serverBaseURL`. `.dev` hiện trỏ tới backend local của BE-Developer
-/// (`WeeDigitals-MacBook-Pro.local:8080` — the Mac's Bonjour/mDNS hostname, so it follows the Mac
-/// across Wi-Fi networks and IP changes; verified reachable 2026-10-07) để test API thật trên thiết bị
-/// vật lý. Thiết bị và Mac phải cùng mạng; nếu đổi máy BE thì cập nhật hostname ở đây và ở ngoại lệ
-/// ATS trong `Info.plist` (cho phép HTTP thường, server dev chưa có TLS).
+/// `LocalizationConfig.serverBaseURL`. `.dev` points at the deployed dev API on Cloud Run over
+/// HTTPS (client contract 2026-11-16 §1.1), so no ATS exception is needed any more.
 nonisolated enum APIConfig {
 
     /// Môi trường backend đang trỏ tới.
@@ -38,7 +35,9 @@ nonisolated enum APIConfig {
     static var serverBaseURL: String {
         switch current {
         case .dev:
-            return "http://WeeDigitals-MacBook-Pro.local:8080"
+            // EN: Contract 2026-11-16 §1.1 — the deployed dev API, HTTPS.
+            // VI: Contract 2026-11-16 §1.1 — API dev đã deploy, HTTPS.
+            return "https://innerlamp-app-3f53tei42a-as.a.run.app"
         case .staging:
             return "https://mock-api-staging.internal.innerlamp.app"
         case .production:

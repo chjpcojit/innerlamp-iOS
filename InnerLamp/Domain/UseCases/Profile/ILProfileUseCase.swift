@@ -29,6 +29,8 @@ final class ILProfileUseCaseImpl: ILProfileUseCase {
     private let keychainService: KeychainService
     private let sessionDataCleaner: ILSessionDataCleaner
     private let userDefaultsService: UserDefaultsService
+    /// Interim local reminders must stop when the account leaves the device (D1).
+    private let memorialReminderScheduler: ILMemorialReminderScheduling
     /// `UserDefaultsService` keys that hold account-scoped values (e.g. the chosen temple).
     private let accountScopedDefaultsKeys: [String]
 
@@ -38,6 +40,7 @@ final class ILProfileUseCaseImpl: ILProfileUseCase {
         keychainService: KeychainService,
         sessionDataCleaner: ILSessionDataCleaner,
         userDefaultsService: UserDefaultsService,
+        memorialReminderScheduler: ILMemorialReminderScheduling = ILNoopMemorialReminderScheduler(),
         accountScopedDefaultsKeys: [String]
     ) {
         self.accountRepository = accountRepository
@@ -45,6 +48,7 @@ final class ILProfileUseCaseImpl: ILProfileUseCase {
         self.keychainService = keychainService
         self.sessionDataCleaner = sessionDataCleaner
         self.userDefaultsService = userDefaultsService
+        self.memorialReminderScheduler = memorialReminderScheduler
         self.accountScopedDefaultsKeys = accountScopedDefaultsKeys
     }
 
@@ -61,6 +65,7 @@ final class ILProfileUseCaseImpl: ILProfileUseCase {
             try deleteIgnoringMissing(key: KeychainAuthTokenProviding.accessTokenKey)
             try deleteIgnoringMissing(key: KeychainAuthTokenProviding.refreshTokenKey)
             try await sessionDataCleaner.clearUserScopedData()
+            await memorialReminderScheduler.cancelAll()
             accountScopedDefaultsKeys.forEach(userDefaultsService.remove(key:))
         } catch {
             throw ILProfileLogoutError.storageFailed

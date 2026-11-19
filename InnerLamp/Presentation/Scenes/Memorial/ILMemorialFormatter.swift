@@ -35,9 +35,10 @@ enum ILMemorialFormatter {
     static func ordinalText(_ ordinal: Int?) -> String {
         switch ordinal {
         case nil: return ""
+        case 0?: return ""
         case 1?: return "memorial.ordinal.first".localized
         case 2?: return "memorial.ordinal.second".localized
-        case let n?: return String(format: "memorial.ordinal.format".localized, n)
+        case let value?: return String(format: "memorial.ordinal.format".localized, value)
         }
     }
 
@@ -58,16 +59,22 @@ enum ILMemorialFormatter {
         return first.uppercased() + text.dropFirst()
     }
 
-    /// "Trước 1 ngày · 07:00 · có trong Lời nhắc", "Đúng ngày · 07:00", or "Chưa bật".
+    /// "Trước 1 ngày · 07:00", or "Chưa bật". The reminder is local until the server pushes (D1).
     static func reminderLine(_ entry: ILMemorialEntity) -> String {
         guard let reminder = entry.reminder else { return "memorial.reminder.off".localized }
         let lead = leadLabel(reminder.leadDays)
         let time = timeLabel(hour: reminder.hour, minute: reminder.minute)
-        var line = "\(lead) · \(time)"
-        if entry.syncToReminders {
-            line += " · " + "memorial.reminder.inReminders".localized
-        }
-        return line
+        return "\(lead) · \(time)"
+    }
+
+    /// A-6: first letter of the first and the last word, upper-cased, diacritics kept; one word →
+    /// one letter; no word → "?".
+    static func initials(_ name: String) -> String {
+        let words = name.split(whereSeparator: \.isWhitespace)
+        guard let firstWord = words.first, let firstLetter = firstWord.first else { return "?" }
+        let first = String(firstLetter).uppercased()
+        guard words.count > 1, let lastLetter = words.last?.first else { return first }
+        return first + String(lastLetter).uppercased()
     }
 
     /// "Đúng ngày" / "Trước 3 ngày".

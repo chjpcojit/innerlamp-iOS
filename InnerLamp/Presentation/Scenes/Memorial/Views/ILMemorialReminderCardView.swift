@@ -5,15 +5,16 @@
 
 import UIKit
 
-/// "Nhắc nhở" card of the form (design handoff reminder block): the "Nhắc trước ngày giỗ" switch;
-/// while on, the lead-time chips, the hour chips and the "Thêm vào Lời nhắc" switch.
+/// "Nhắc nhở" card of the form: the "Nhắc trước ngày giỗ" switch, then the lead-time chips and the
+/// hour chips. Reminder delivery is local for now (D1); the account setting is shown even when the
+/// system permission was denied, with a link to Settings instead of a dead switch.
 final class ILMemorialReminderCardView: UIView {
 
     // MARK: - Properties
     var onReminderToggled: ((Bool) -> Void)?
     var onLeadSelected: ((Int) -> Void)?
     var onTimeSelected: ((Int) -> Void)?
-    var onSyncToggled: ((Bool) -> Void)?
+    var onOpenSettings: (() -> Void)?
 
     // MARK: - UI Elements
     private lazy var reminderRow: ILSwitchRowView = {
@@ -34,12 +35,31 @@ final class ILMemorialReminderCardView: UIView {
         return group
     }()
 
-    private lazy var syncRow: ILSwitchRowView = {
-        let row = ILSwitchRowView(
-            title: "memorial.edit.sync.title".localized,
-            subtitle: "memorial.edit.sync.subtitle".localized
-        )
-        return row
+    private lazy var permissionLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.subhead
+        label.textColor = ILColors.inkSubtle
+        label.numberOfLines = 0
+        label.text = "memorial.edit.reminder.permissionDenied".localized
+        return label
+    }()
+
+    private lazy var settingsButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("memorial.edit.reminder.openSettings".localized, for: .normal)
+        button.setTitleColor(ILColors.link, for: .normal)
+        button.titleLabel?.font = ILTypography.subheadMedium
+        button.addTarget(self, action: #selector(handleOpenSettings), for: .touchUpInside)
+        return button
+    }()
+
+    private lazy var permissionStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [permissionLabel, settingsButton])
+        stack.axis = .vertical
+        stack.alignment = .leading
+        stack.spacing = ILMetrics.spaceSmall
+        stack.isHidden = true
+        return stack
     }()
 
     private lazy var detailStack: UIStackView = {
@@ -62,10 +82,10 @@ final class ILMemorialReminderCardView: UIView {
     // MARK: - Public API
     func configure(with model: ILMemorialEditStateModel) {
         reminderRow.isOn = model.reminderOn
-        syncRow.isOn = model.syncOn
         leadGroup.configure(options: model.leadOptions)
         timeGroup.configure(options: model.timeOptions)
         detailStack.isHidden = !model.reminderOn
+        permissionStack.isHidden = !(model.reminderOn && model.notificationsDenied)
     }
 
     // MARK: - Setup
@@ -76,7 +96,6 @@ final class ILMemorialReminderCardView: UIView {
         layer.borderColor = ILColors.border.cgColor
 
         reminderRow.onToggle = { [weak self] isOn in self?.onReminderToggled?(isOn) }
-        syncRow.onToggle = { [weak self] isOn in self?.onSyncToggled?(isOn) }
         leadGroup.onSelect = { [weak self] id in self?.onLeadSelected?(id) }
         timeGroup.onSelect = { [weak self] id in self?.onTimeSelected?(id) }
 
@@ -85,8 +104,7 @@ final class ILMemorialReminderCardView: UIView {
         detailStack.addArrangedSubview(leadGroup)
         detailStack.addArrangedSubview(makeCaption("memorial.edit.reminder.time".localized))
         detailStack.addArrangedSubview(timeGroup)
-        detailStack.addArrangedSubview(makeDivider())
-        detailStack.addArrangedSubview(syncRow)
+        detailStack.addArrangedSubview(permissionStack)
 
         let content = UIStackView(arrangedSubviews: [reminderRow, detailStack])
         content.axis = .vertical
@@ -104,6 +122,10 @@ final class ILMemorialReminderCardView: UIView {
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILMemorialReminderCardView, _) in
             view.layer.borderColor = ILColors.border.cgColor
         }
+    }
+
+    @objc private func handleOpenSettings() {
+        onOpenSettings?()
     }
 
     private func makeCaption(_ text: String) -> UILabel {

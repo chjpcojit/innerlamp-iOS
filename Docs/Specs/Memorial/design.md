@@ -1,8 +1,8 @@
 # Design — Memorial
 
-Version: 3.2
-Last updated: 2026-10-14
-Status: in-progress — list, form, server CRUD and offline cache built (build-verified, tests not run); planned: remove the local-reminder stubs and the Reminders-app option, FCM push (registration, permission, deep link), account time zone, leap month, strict date checks, delete confirmation, guest / sign-out / offline / server-error cases, product vectors
+Version: 3.3
+Last updated: 2026-11-16
+Status: implemented — list, form, server CRUD, offline cache, local interim reminders, photo code behind a flag, product vectors. Push/server reminders and photo E2E blocked on the backend.
 
 > See `changelog.md` in this folder for the version history of this spec.
 
@@ -284,3 +284,76 @@ delete without confirmation (BR-MEM-12); guest sees an empty book (FR-MEM-001); 
 to the account, kept after session expiry, not used on server errors, no offline line (FR-MEM-010);
 404 handling on save/delete (FR-MEM-004/005); no length checks (FR-MEM-012/013); copy differs from
 §3.1.1; vectors not run (NFR-MEM-03).
+
+## P4 integration design (2026-11-16)
+
+### Layers
+
+| Layer | Type | Responsibility |
+|---|---|---|
+| Domain | `ILMemorialDateRules` | One anniversary implementation shared by the list, form and reminder planner. |
+| Domain | `ILMemorialReminderPlanner` | Pure plan: fire moment, cap, stable identifier, relationship-only copy. |
+| Domain | `ILMemorialReminderScheduling` | Port for delivery; `ILNoopMemorialReminderScheduler` is the D1 cutover implementation. |
+| Data | `ILLocalMemorialReminderScheduler` | `UNUserNotificationCenter`: 60 pending, category `memorial`, delivered-key catch-up. |
+| Data | `ILMemorialNotificationRouter` | `UNUserNotificationCenterDelegate`, category registration, re-plan on app-active/time-zone change, opens `.memorialEntry(id)`. |
+| Data | `ILMemorialRepositoryImpl` | Server CRUD + photo routes + read cache; maps `error.code` (never `message`). |
+| Core | `MultipartFormData` / `MultipartUploading` | Multipart transport with the same Bearer/401/envelope/logging behaviour as `NetworkService`. |
+| Core | `MemorialFeatureFlags` | `MemorialPhotoEnabled` from `Info.plist`; default false. |
+
+### Date converter note
+
+`ILLunarCalendar` now matches the backend `lunarcal` on the new-moon series (exact lunation settle,
+same 0.0161 sign). The change was required by `death-date-conversion.json` (2026-09-10 is lunar
+29/7, not 30/7) and was verified against the existing lunar/almanac suites, which remain green.
+
+### Security hardening (G1 review, 2026-11-16)
+
+| Item | Implementation |
+|---|---|
+| Backup / encryption | `CoreDataStack` keeps `Memorial` in its own store (`InnerLampMemorial.sqlite`, model 7 `Memorial` configuration) and excludes only that store + `-wal`/`-shm` from backup (`applyStoreProtection`); the default store stays backup-eligible. |
+| Account scope | `ILMemorialMO.ownerAccountID`; `ILMemorialLocalDataSourceImpl` resolves `ILAccountIdentityProviding` and filters every fetch/upsert/delete; `replaceAll` deletes only that owner; empty-owner rows are purged. |
+| Telemetry | `SentryLoggingService.start` sets `sendDefaultPii = false`, `enableNetworkBreadcrumbs = false`, `enableNetworkTracking = false`. |
+| Image cache | `ILRemoteImageView.setImage(urlString:cacheKey:)`; memorial key = `memorial.photo.<entryID><objectPath>` (query stripped). |
+| Notification payload | `makeContent` writes `entryId` only; body is relationship-only. |
+| Reminder cap | AC MEM-RMD-08: at most 60 pending notifications, one per entry, nearest 60 giỗ. |
+
+### Core Data migration
+
+`InnerLamp 6` is a lightweight, inferred migration from `InnerLamp 5`:
+
+- add `deathLeapMonth` (Boolean, default NO),
+- remove `syncToReminders` (FR-MEM-009 removed) and `portraitFileName` (photos are remote, D8).
+
+`ILMemorialMigrationTests` writes a store with the `InnerLamp 5` model and opens it with the current
+stack. If the inferred mapping ever stops working, do not hand-write a mapping model in P4: stop and
+raise it with the coordinator (task breakdown §3, B2).
+
+The split also drains memorial rows out of that pre-split store, and it does not treat the move as
+finished while the old file can still carry the moved text:
+
+- `VACUUM` rewrites the main store so the pages that held the moved row are released, then
+  `PRAGMA wal_checkpoint(TRUNCATE)` empties the write-ahead log that would otherwise keep the same
+  bytes (the main store is backup-eligible, so both files travel in a device backup);
+- the file is re-read with a row count that must be 0;
+- only then is `CoreDataStack.legacySplit.vacuumed.Memorial` written to `UserDefaults`, which is what
+  stops the drain from running again. A step that fails leaves the marker unset and logs why, so the
+  next launch retries; the drained rows are already in the memorial store by then.
+
+`CoreDataStackLegacySplit.compact` is internal so `ILMemorialMigrationTests` can prove, with plain
+SQLite, that a deleted row's text leaves both the store and its `-wal`.
+
+### Photo flag
+
+`MemorialPhotoEnabled = true` in `Info.plist` (Debug and Release use the same plist). The backend
+routes `PUT/DELETE /v1/memorials/{id}/photo` are deployed and hardened (BE main `fe6457`).
+While the flag is off, the form hides the photo block and the list never renders a remote portrait;
+keep that rollback path if the routes regress to 404. The contract remains: one `photo` part,
+JPEG/PNG/WebP, ≤ 5 MiB, 413/415/404 mapped to specific copy, and the signed `photo_url` stays in
+memory only.
+
+### Notification routing
+
+A notification carries `{entryId}` only. `ILMemorialNotificationRouter` finds the top-most
+navigation controller (selecting Home first), starts `ILMemorialCoordinator` with the entry id, and
+the list loads it before pushing the form. This is the smallest path until an app-wide deep-link
+router exists; the flow itself still belongs to the coordinator.

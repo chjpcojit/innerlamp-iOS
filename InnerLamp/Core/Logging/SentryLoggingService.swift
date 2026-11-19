@@ -31,6 +31,14 @@ nonisolated public final class SentryLoggingService: LoggingService {
             options.maxBreadcrumbs = 50
             options.enableAutoBreadcrumbTracking = true
 
+            // EN: G1 item 3 — never let Sentry enrich events with IP/user data, and never record
+            // network requests (they can contain `/v1/memorials/{id}` and signed photo URLs).
+            // VI: G1 mục 3 — không để Sentry tự thêm IP/dữ liệu người dùng và không ghi request
+            // mạng (có thể chứa `/v1/memorials/{id}` và URL ảnh có chữ ký).
+            options.sendDefaultPii = false
+            options.enableNetworkBreadcrumbs = false
+            options.enableNetworkTracking = false
+
             // Bắt buộc tắt — màn hình tại thời điểm crash có thể đang hiển thị dữ liệu nhạy cảm.
             options.attachScreenshot = false
             options.attachViewHierarchy = false

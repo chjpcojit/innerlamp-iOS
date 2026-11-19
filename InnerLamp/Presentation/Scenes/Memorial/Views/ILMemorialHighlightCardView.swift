@@ -20,10 +20,7 @@ final class ILMemorialHighlightCardView: UIControl {
         return label
     }()
 
-    private lazy var avatarView: ILAvatarView = {
-        let view = ILAvatarView(initials: "", tone: .gold, size: 64)
-        return view
-    }()
+    private lazy var avatarView = ILMemorialAvatarView(size: 64)
 
     private lazy var nameLabel: UILabel = {
         let label = UILabel()
@@ -90,7 +87,11 @@ final class ILMemorialHighlightCardView: UIControl {
     // MARK: - Public API
     func configure(with model: ILMemorialHighlightModel) {
         eyebrowLabel.attributedText = ILTypography.makeEyebrow(text: model.eyebrow, color: ILColors.featAccent)
-        avatarView.initials = model.name.first.map { String($0).uppercased() } ?? ""
+        avatarView.configure(
+            initials: ILMemorialFormatter.initials(model.name),
+            photoURLString: model.photoURL,
+            entryID: model.id
+        )
         nameLabel.text = model.name
         relationLabel.text = model.relationLine
         dateValueLabel.text = model.dateLine

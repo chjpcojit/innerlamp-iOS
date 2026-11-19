@@ -47,7 +47,11 @@ enum ILLunarCalendar {
         let F = 21.2964 + 390.67050646 * k - 0.0016528 * T2 - 0.00000239 * T3
 
         var c1 = (0.1734 - 0.000393 * T) * sin(M * dr) + 0.0021 * sin(2 * dr * M)
-        c1 -= 0.4068 * sin(mPr * dr) + 0.0161 * sin(dr * 2 * mPr)
+        // EN: Same sign as the backend `lunarcal.newMoon` (the 0.0161 term is added). The old
+        // plus-then-subtract form moved a new-moon day by one near month boundaries.
+        // VI: Cùng dấu với `lunarcal.newMoon` của BE (cộng hệ số 0.0161). Cách cộng-rồi-trừ cũ
+        // làm lệch một ngày sóc gần ranh giới tháng.
+        c1 -= 0.4068 * sin(mPr * dr) - 0.0161 * sin(dr * 2 * mPr)
         c1 -= 0.0004 * sin(dr * 3 * mPr)
         c1 += 0.0104 * sin(dr * 2 * F) - 0.0051 * sin(dr * (M + mPr))
         c1 -= 0.0074 * sin(dr * (M - mPr)) + 0.0004 * sin(dr * (2 * F + M))
@@ -113,11 +117,15 @@ enum ILLunarCalendar {
 
     nonisolated static func solarToLunar(day: Int, month: Int, year: Int) -> LunarDate {
         let dayNumber = jdFromDate(day: day, month: month, year: year)
-        let k = floor((Double(dayNumber) - 2415021.076998695) / 29.530588853)
-        var monthStart = newMoonDay(k: k + 1)
-        if monthStart > dayNumber {
-            monthStart = newMoonDay(k: k)
-        }
+        // EN: Settle the lunation index exactly, as the backend's `lunarcal` does. The estimate can
+        // be one off near a month boundary (new moons jitter by up to ~14 h), which used to place a
+        // day in the wrong lunar month (e.g. 2026-09-10 is lunar 29/7, not 30/7).
+        // VI: Chốt chính xác chỉ số tuần trăng như `lunarcal` của BE. Ước lượng có thể lệch một
+        // tuần trăng gần ranh giới tháng (sai số tới ~14 giờ), từng đặt một ngày sai tháng âm.
+        var k = Int(floor((Double(dayNumber) - 2415021.076998695) / 29.530588853))
+        while newMoonDay(k: Double(k)) > dayNumber { k -= 1 }
+        while newMoonDay(k: Double(k + 1)) <= dayNumber { k += 1 }
+        let monthStart = newMoonDay(k: Double(k))
 
         var a11 = lunarMonth11(year: year)
         var b11 = a11
@@ -194,6 +202,27 @@ enum ILLunarCalendar {
         let monthLength = nextMonthStart - monthStart
         let resolvedDay = min(day, monthLength)
         return solarDate(fromJulianDay: monthStart + resolvedDay - 1)
+    }
+
+    /// Strict inverse of `solarToLunar` for a date **entered by the user**: unlike
+    /// `lunarToSolar` (which clamps day 30 to 29 in a short month, as the anniversary rule needs),
+    /// this returns `nil` when the lunar date does not exist. Death dates must use this one
+    /// (BR-MEM-03, D6) so a wrong date is never stored.
+    nonisolated static func lunarToSolarExact(
+        day: Int,
+        month: Int,
+        year: Int,
+        isLeap: Bool = false
+    ) -> SolarDate? {
+        guard let solar = lunarToSolar(day: day, month: month, year: year, isLeap: isLeap) else {
+            return nil
+        }
+        let roundTrip = solarToLunar(day: solar.day, month: solar.month, year: solar.year)
+        guard roundTrip.day == day,
+              roundTrip.month == month,
+              roundTrip.year == year,
+              roundTrip.isLeapMonth == isLeap else { return nil }
+        return solar
     }
 
     private nonisolated static func solarDate(fromJulianDay jd: Int) -> SolarDate {

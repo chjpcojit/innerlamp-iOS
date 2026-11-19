@@ -301,3 +301,71 @@ actor NetworkServiceImpl: NetworkService {
         }
     }
 }
+
+// MARK: - Multipart (memorial photo)
+
+extension NetworkServiceImpl: MultipartUploading {
+
+    /// Same lifecycle as `request(endpoint:responseType:)`, with the body and `Content-Type`
+    /// replaced by the multipart form. `Endpoint.buildURLRequest` sets JSON by default, so the
+    /// boundary header is set here, after it.
+    func upload<T: Decodable & Sendable>(
+        endpoint: Endpoint,
+        form: MultipartFormData,
+        responseType: T.Type
+    ) async throws -> T {
+        try await withSessionRefresh(endpoint: endpoint) {
+            try await self.performMultipartUpload(endpoint: endpoint, form: form, responseType: responseType)
+        }
+    }
+
+    private func performMultipartUpload<T: Decodable>(
+        endpoint: Endpoint,
+        form: MultipartFormData,
+        responseType: T.Type
+    ) async throws -> T {
+        var urlRequest = try endpoint.buildURLRequest()
+        urlRequest.httpBody = form.body
+        urlRequest.setValue(form.contentType, forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
+        injectAuthHeader(into: &urlRequest, endpoint: endpoint)
+
+        let method = urlRequest.httpMethod ?? endpoint.method.rawValue
+        let path = endpoint.path
+        let startedAt = Date()
+        var observedStatusCode: Int?
+
+        do {
+            let (data, response) = try await session.data(for: urlRequest)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw NetworkError.unknown(NSError(domain: "Invalid response type", code: -1))
+            }
+            observedStatusCode = httpResponse.statusCode
+
+            let value: T = try decodeSuccessOrThrow(
+                statusCode: httpResponse.statusCode,
+                data: data,
+                envelope: endpoint.responseEnvelope
+            )
+            logger.log(
+                method: method,
+                path: path,
+                statusCode: httpResponse.statusCode,
+                duration: Date().timeIntervalSince(startedAt),
+                failureClassification: nil
+            )
+            return value
+        } catch let error as NetworkError {
+            logFailure(method: method, path: path, statusCode: observedStatusCode, startedAt: startedAt, error: error)
+            throw error
+        } catch let urlError as URLError {
+            let mapped = mapURLError(urlError)
+            logFailure(method: method, path: path, statusCode: observedStatusCode, startedAt: startedAt, error: mapped)
+            throw mapped
+        } catch {
+            let mapped = NetworkError.unknown(error)
+            logFailure(method: method, path: path, statusCode: observedStatusCode, startedAt: startedAt, error: mapped)
+            throw mapped
+        }
+    }
+}

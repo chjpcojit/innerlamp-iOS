@@ -3,6 +3,116 @@
 Tracks version history for `requirements.md`, `design.md`, and `tasks.md` in this folder. All three
 files share one changelog since they change together as one spec unit. Newest version first.
 
+## v3.9 (2026-11-17)
+
+`tasks.md` reconciled with the code and the QA v1 scope: 41 → 46 ticked (35 stay open).
+
+- Ticked the implemented halves that Phase 10 delivered under older `[DEFERRED]` items:
+  product-vector fixtures/test/script, leap-month data path, delete confirmation, per-account
+  offline copy, and the photo picker/upload UI behind `MemorialPhotoEnabled` (all compile-only; the
+  tests are not run).
+- Kept open with the actual remainder: vector `SOURCE` provenance, leap label in display, strict
+  date/limit validation, 1900→now year menu, stale delete drift comment, unused keys/strings,
+  session-expiry cache cleanup, 5xx/offline fallback and copy, PUT 404, nearest-choice save, README
+  refresh, TD-Memorial-001, push, photo E2E and device QA.
+
+## v3.8 (2026-11-17)
+
+Security review I-1 (Medium): the store split no longer counts as done while the old main store can
+still carry a moved row's name or note in its free pages or write-ahead log.
+
+- `CoreDataStackLegacySplit` runs `VACUUM` + `PRAGMA wal_checkpoint(TRUNCATE)` on the main store and
+  re-reads the entity count as 0 before writing its done marker; a failed step leaves the marker
+  unset so the next launch retries.
+- `ILMemorialMigrationTests` asserts the row is in the memorial store, the main store has no memorial
+  row, and the raw bytes of the main store hold neither the name nor the note.
+
+## v3.7 (2026-11-17)
+
+AC-8 follow-up (QA):
+
+- Removed the "Xem gia phả" ghost button from the memorial book: it was still shown when the book
+  had entries. `familyTreeButton`, the `familyTreeTapped` input, `.openFamilyTree` and the
+  memorial coordinator's family-tree push are gone; the tree is reached from Profile only.
+  `ILMemorialScreenTests` asserts no family-tree control in the empty and populated states.
+- Criterion 8 is no longer in the Pending list.
+
+## v3.6 (2026-11-17)
+
+Rework after the impact-drift review (Đạo Sư):
+
+- BR-MEM-13 interim local behaviour: a reminder moment that has passed still fires a catch-up while
+  the giỗ day is open, including a moment that fell the day before (lead 1); once the giỗ day is
+  over the occurrence is dropped and the next year is planned. One notification per entry + giỗ:
+  every accepted plan records its delivered key, not only catch-ups.
+- Memorial rows live in their own Core Data store (`InnerLampMemorial.sqlite`, model 7 `Memorial`
+  configuration) so only that store is excluded from iCloud/iTunes backup; the default store stays
+  backup-eligible. Rows cached in the old single store are moved over on first launch.
+
+## v3.6 (2026-11-17)
+
+- Enabled `MemorialPhotoEnabled` (Debug and Release share `Info.plist`) after the BE photo routes
+  were deployed/hardened (`fe6457`).
+- Completed the iOS portrait flow: pick → HEIC/other to JPEG (long edge 2048, ≤ 5 MiB) → upload on
+  save → replace/delete → display in list/highlight and the edit form. Signed `photo_url` remains
+  memory-only; cache key is entry id + object path.
+- 413/415/404 map to the specific copy; a 404 during a photo upload reports the entry is gone
+  instead of claiming the photo was saved.
+- Tests: repository 404, signed URL not cached, upload-on-save, remove-on-save, 413 and 404 copy.
+- No simulator/test run; photo E2E remains manual on device.
+
+## v3.5 (2026-11-17)
+
+P7 QA follow-up (iOS):
+
+- Empty state: removed the "Lấy từ gia phả" shortcut card; the only action is the sticky "Thêm
+  người thân" button plus the explanatory copy.
+- 100-entry limit: when the loaded book holds 100 entries, `ILMemorialStateModel.isFull` is set,
+  the Add button is disabled, a "Sổ giỗ đã đủ 100 người..." notice is shown, and the ViewModel
+  refuses an add tap even if one slips through.
+- 401 on save: the form is rebuilt from the draft (`publish()`), so name/note stay in the fields and
+  the existing "phiên đăng nhập đã hết hạn" error is shown (Q-4=A).
+
+## v3.4 (2026-11-16)
+
+Security review G1 for iOS (Hộ Pháp), applied before review:
+
+- Core Data store and `-wal`/`-shm` excluded from iCloud/iTunes backup and protected with
+  `completeUntilFirstUserAuthentication`; test asserts the exclusion and a fresh store has no rows.
+- Memorial cache is account-scoped: `ownerAccountID` on the entity, every read/write filtered by
+  `ILAccountIdentityProviding`, `replaceAll` only removes that account's rows, empty-owner rows
+  migrated from model 5 are purged. Switching accounts no longer exposes the previous cache.
+- Sentry: `sendDefaultPii = false`, network breadcrumbs and network tracking disabled.
+- Portrait cache key is entry id + object path (signed query stripped), not the signed URL.
+- Notification content/payload: `entryId` only, relationship-only body, no name.
+- Reminder cap fixed to AC MEM-RMD-08: at most 60 pending notifications, one per entry (nearest
+  60 giỗ), replacing the earlier 3-occurrences-per-entry plan.
+- P6 rework (Tech Lead P1): `ILMemorialMapper.toDomain` no longer falls back to 1/1. A present but
+  invalid `death_date` rejects the row; the year-less form requires both `death_day` and
+  `death_month`, validates the month and the real calendar day (29/2 only in a leap year). Tests
+  cover garbage/impossible dates, missing parts, 31/2, 29/2 leap/common and valid solar/lunar.
+
+## v3.3 (2026-11-16)
+
+P4 integration with the deployed memorial API, contract pinned at `client-contract.md` (2026-11-16)
+and technical decisions D1–D10.
+
+- `requirements.md` / `design.md` / `tasks.md`: status moved from "built, not integrated" to the P4
+  integration; new criteria MEM-API-06/14/15/16, MEM-IMG-01…04/10, MEM-RMD-01/02/07/08/09; one
+  anniversary module (`ILMemorialDateRules`) and the local reminder port documented.
+- Contract copied into the repo (`Docs/Specs/Memorial/client-contract.md`) so Dev never guesses a
+  field; `Docs/spec.config.yaml` added with the iOS gate.
+- Five debt entries added under `Docs/Tech-Debt/Memorial/` (`TD-MEM-CLIENT-01…05`) for the interim
+  local reminder, the web gap, the iOS 60 cap, Android Doze delay and last-write-wins.
+- Code: DTO/mapper contract fixes, GET + photo endpoints, Core Data `InnerLamp 6` lightweight
+  migration, multipart transport, photo repository errors, local reminder planner/scheduler/router,
+  form changes (no Reminders switch, leap month, delete confirmation, photo flag), product vectors.
+- Shared converter: `ILLunarCalendar.solarToLunar` now settles the lunation index and uses the same
+  new-moon sign as the backend `lunarcal` (the 0.0161 term). This fixes a one-day error near the
+  2026 month-7 boundary (2026-09-10 is lunar 29/7), which the death-date vector caught. The legacy
+  calendar suites (`ILLunarCalendarTests`, `ILLunarToSolarTests`, `ILAlmanacUseCaseTests`) still pass.
+- No commit and no push were made; the change stays in the `feat/memorial-integration` worktree.
+
 ## v3.2 (2026-10-14)
 
 - Step 4 of the docs rewrite: `Docs/Assumptions/Memorial/AS-Memorial-001…006` deleted (product spec v2.1 supersedes them). `AGENTS.md` §10.3 says entries are never deleted; anh Đức decided to delete them for this feature on 2026-10-14. Code `@ai` markers, the scene `README.md` and `TD-Memorial-001` now cite the product IDs instead.

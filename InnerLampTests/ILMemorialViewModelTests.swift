@@ -14,12 +14,13 @@ final class ILMemorialViewModelTests: XCTestCase {
     private var mockUseCase: MockILMemorialUseCase!
     private var sut: ILMemorialViewModel!
     private var cancellables: Set<AnyCancellable>!
+    /// The subject-based Input does not retain the view model; keep it alive for the test.
+    private var retainedSUT: [AnyObject] = []
 
     private var viewDidLoadSubject: PassthroughSubject<Void, Never>!
     private var backTappedSubject: PassthroughSubject<Void, Never>!
     private var addTappedSubject: PassthroughSubject<Void, Never>!
     private var itemTappedSubject: PassthroughSubject<String, Never>!
-    private var familyTreeTappedSubject: PassthroughSubject<Void, Never>!
 
     override func setUp() {
         super.setUp()
@@ -30,16 +31,15 @@ final class ILMemorialViewModelTests: XCTestCase {
         backTappedSubject = PassthroughSubject<Void, Never>()
         addTappedSubject = PassthroughSubject<Void, Never>()
         itemTappedSubject = PassthroughSubject<String, Never>()
-        familyTreeTappedSubject = PassthroughSubject<Void, Never>()
     }
 
     override func tearDown() {
         cancellables = nil
+        retainedSUT.removeAll()
         viewDidLoadSubject = nil
         backTappedSubject = nil
         addTappedSubject = nil
         itemTappedSubject = nil
-        familyTreeTappedSubject = nil
         sut = nil
         mockUseCase = nil
         super.tearDown()
@@ -50,8 +50,7 @@ final class ILMemorialViewModelTests: XCTestCase {
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             addTapped: addTappedSubject.eraseToAnyPublisher(),
-            itemTapped: itemTappedSubject.eraseToAnyPublisher(),
-            familyTreeTapped: familyTreeTappedSubject.eraseToAnyPublisher()
+            itemTapped: itemTappedSubject.eraseToAnyPublisher()
         )
     }
 
@@ -171,7 +170,7 @@ final class ILMemorialViewModelTests: XCTestCase {
         XCTAssertEqual(model?.highlight?.whenLine, ILMemorialFormatter.solarLine(Factory.date(2026, 11, 15)))
         XCTAssertEqual(
             model?.highlight?.remindLine,
-            String(format: "memorial.reminder.lead.format".localized, 1) + " · 07:00 · " + "memorial.reminder.inReminders".localized
+            String(format: "memorial.reminder.lead.format".localized, 1) + " · 07:00"
         )
     }
 
@@ -238,14 +237,31 @@ final class ILMemorialViewModelTests: XCTestCase {
         XCTAssertEqual(event, .addEntry)
     }
 
-    func test_familyTreeTapped_firesOpenFamilyTree() {
-        _ = sut.transform(input: makeInput())
-        var event: ILMemorialNavEvent?
-        sut.navigationEventPublisher.sink { event = $0 }.store(in: &cancellables)
+    func test_fullBook_showsNotice_andBlocksAdd() {
+        mockUseCase.loadItemsResult = .success((0..<100).map { Factory.item(id: "\($0)", daysUntil: 30) })
 
-        familyTreeTappedSubject.send(())
+        let model = loadAndWait { $0.isFull }
 
-        XCTAssertEqual(event, .openFamilyTree)
+        XCTAssertEqual(model?.isFull, true)
+        XCTAssertEqual(model?.fullNotice, "memorial.list.full".localized)
+        XCTAssertEqual(model?.subtitle, String(format: "memorial.subtitle.format".localized, 100))
+
+        var events: [ILMemorialNavEvent] = []
+        sut.navigationEventPublisher.sink { events.append($0) }.store(in: &cancellables)
+        addTappedSubject.send(())
+
+        XCTAssertTrue(events.isEmpty, "A full book must not open the add form")
+    }
+
+    func test_belowLimit_allowsAdd() {
+        mockUseCase.loadItemsResult = .success((0..<99).map { Factory.item(id: "\($0)", daysUntil: 30) })
+        XCTAssertEqual(loadAndWait { $0.rows.count == 99 }?.isFull, false)
+
+        var events: [ILMemorialNavEvent] = []
+        sut.navigationEventPublisher.sink { events.append($0) }.store(in: &cancellables)
+        addTappedSubject.send(())
+
+        XCTAssertEqual(events, [.addEntry])
     }
 
     func test_itemTapped_afterLoad_firesEditEntryWithThatEntry() {
@@ -279,7 +295,7 @@ final class ILMemorialViewModelTests: XCTestCase {
         let loadsBefore = mockUseCase.loadItemsCallCount
 
         let output = sut.transform(input: makeInput())
-        let expectation = expectation(description: "banner shown")
+        let expectation = self.expectation(description: "banner shown")
         output.state
             .sink { state in
                 if case .success(let model) = state, model.bannerText == "memorial.message.saved".localized {

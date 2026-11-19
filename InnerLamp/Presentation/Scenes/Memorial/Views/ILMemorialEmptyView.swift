@@ -5,12 +5,10 @@
 
 import UIKit
 
-/// Empty state of "Sổ giỗ chạp" (design handoff `gioEmpty`): lamp illustration, title, hint,
-/// a numbered "how it works" card and the "Lấy từ gia phả" shortcut card.
+/// Empty state of "Sổ giỗ chạp": lamp illustration, title, hint and a numbered "how it works"
+/// card. The v1 empty state has **no** family-tree shortcut (P7/AC: "Lấy từ gia phả" is out of
+/// scope); the only action is the sticky "Thêm người thân" button.
 final class ILMemorialEmptyView: UIView {
-
-    // MARK: - Properties
-    var onFamilyTreeTap: (() -> Void)?
 
     // MARK: - UI Elements
     private lazy var lampView: ILMemorialEmptyLampView = {
@@ -50,23 +48,6 @@ final class ILMemorialEmptyView: UIView {
         return view
     }()
 
-    private lazy var treeCard: UIControl = {
-        let control = UIControl()
-        control.backgroundColor = ILColors.surface
-        control.layer.cornerRadius = ILMetrics.radiusCardRegular
-        control.layer.borderWidth = 1
-        control.layer.borderColor = ILColors.border.cgColor
-        return control
-    }()
-
-    private lazy var treeSealView: UIView = {
-        let view = UIView()
-        view.backgroundColor = ILColors.FamilyTree.seal
-        view.layer.cornerRadius = 10
-        view.isUserInteractionEnabled = false
-        return view
-    }()
-
     // MARK: - Initializer
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -86,9 +67,8 @@ final class ILMemorialEmptyView: UIView {
         header.setCustomSpacing(18, after: lampView)
 
         setupStepsCard()
-        setupTreeCard()
 
-        let stack = UIStackView(arrangedSubviews: [header, stepsCard, treeCard])
+        let stack = UIStackView(arrangedSubviews: [header, stepsCard])
         stack.axis = .vertical
         stack.spacing = 12
         stack.setCustomSpacing(26, after: header)
@@ -104,7 +84,7 @@ final class ILMemorialEmptyView: UIView {
         ])
 
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: ILMemorialEmptyView, _) in
-            [view.stepsCard, view.treeCard].forEach { $0.layer.borderColor = ILColors.border.cgColor }
+            view.stepsCard.layer.borderColor = ILColors.border.cgColor
         }
     }
 
@@ -200,74 +180,6 @@ final class ILMemorialEmptyView: UIView {
         return row
     }
 
-    private func setupTreeCard() {
-        let sealLabel = UILabel()
-        sealLabel.font = ILTypography.treeSealMedium
-        sealLabel.textColor = ILColors.FamilyTree.cream
-        sealLabel.text = "memorial.empty.fromTree.seal".localized
-        sealLabel.translatesAutoresizingMaskIntoConstraints = false
-        treeSealView.addSubview(sealLabel)
-
-        let titleLabel = UILabel()
-        titleLabel.font = ILTypography.bodyMedium
-        titleLabel.textColor = ILColors.ink
-        titleLabel.text = "memorial.empty.fromTree.title".localized
-
-        let subtitleLabel = UILabel()
-        subtitleLabel.font = ILTypography.subhead
-        subtitleLabel.textColor = ILColors.inkTertiary
-        subtitleLabel.numberOfLines = 0
-        subtitleLabel.text = "memorial.empty.fromTree.subtitle".localized
-
-        let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
-        textStack.axis = .vertical
-        textStack.spacing = 2
-
-        let chevron = UILabel()
-        chevron.font = ILTypography.chevron
-        chevron.textColor = ILColors.inkFaint
-        chevron.text = "›"
-        chevron.setContentHuggingPriority(.required, for: .horizontal)
-
-        let row = UIStackView(arrangedSubviews: [treeSealView, textStack, chevron])
-        row.axis = .horizontal
-        row.alignment = .center
-        row.spacing = ILMetrics.spaceMedium
-        row.isUserInteractionEnabled = false
-        row.translatesAutoresizingMaskIntoConstraints = false
-        treeCard.addSubview(row)
-
-        NSLayoutConstraint.activate([
-            treeSealView.widthAnchor.constraint(equalToConstant: 38),
-            treeSealView.heightAnchor.constraint(equalToConstant: 38),
-            sealLabel.centerXAnchor.constraint(equalTo: treeSealView.centerXAnchor),
-            sealLabel.centerYAnchor.constraint(equalTo: treeSealView.centerYAnchor),
-            row.topAnchor.constraint(equalTo: treeCard.topAnchor, constant: ILMetrics.spaceMedium),
-            row.bottomAnchor.constraint(equalTo: treeCard.bottomAnchor, constant: -ILMetrics.spaceMedium),
-            row.leadingAnchor.constraint(equalTo: treeCard.leadingAnchor, constant: 18),
-            row.trailingAnchor.constraint(equalTo: treeCard.trailingAnchor, constant: -18)
-        ])
-
-        treeCard.addTarget(self, action: #selector(handleTreeTouchDown), for: [.touchDown, .touchDragEnter])
-        treeCard.addTarget(self, action: #selector(handleTreeTouchUp), for: [.touchUpInside, .touchCancel, .touchDragExit])
-        treeCard.addTarget(self, action: #selector(handleTreeTap), for: .touchUpInside)
-    }
-
-    @objc private func handleTreeTouchDown() {
-        UIView.animate(withDuration: 0.12, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) {
-            self.treeCard.transform = CGAffineTransform(scaleX: 0.99, y: 0.99)
-        }
-    }
-
-    @objc private func handleTreeTouchUp() {
-        UIView.animate(withDuration: 0.12, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) {
-            self.treeCard.transform = .identity
-        }
-    }
-
-    @objc private func handleTreeTap() {
-        onFamilyTreeTap?()
-    }
 }
 
 /// 112pt lamp of the empty memorial book: warm radial halo, flame, wick and base.
