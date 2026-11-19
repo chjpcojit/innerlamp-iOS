@@ -39,6 +39,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         coordinator.start()
         container.startGRPCClient()
         seedSutraQuotes(container: container)
+
+        // Local memorial reminders: delegate + `memorial` category + re-plan on app active /
+        // time-zone change (D1). Started here because the container exists only at scene connect.
+        ILMemorialNotificationRouter.shared.start(container: container)
     }
 
     /// Imports the bundled sutra quote catalog into Core Data on first launch (a no-op afterwards).

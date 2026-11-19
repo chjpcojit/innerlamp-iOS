@@ -5,6 +5,7 @@
 
 import UIKit
 import Combine
+import PhotosUI
 
 final class ILMemorialEditViewController: BaseViewController {
 
@@ -25,7 +26,15 @@ final class ILMemorialEditViewController: BaseViewController {
     private let reminderToggledSubject = PassthroughSubject<Bool, Never>()
     private let leadSelectedSubject = PassthroughSubject<Int, Never>()
     private let timeSelectedSubject = PassthroughSubject<Int, Never>()
-    private let syncToggledSubject = PassthroughSubject<Bool, Never>()
+    private let leapMonthToggledSubject = PassthroughSubject<Bool, Never>()
+    private let photoPickedSubject = PassthroughSubject<Data, Never>()
+    private let photoRemoveTappedSubject = PassthroughSubject<Void, Never>()
+    /// Picked image shown before the upload; the view model only receives its JPEG data.
+    private var pickedPreview: UIImage?
+    private var currentInitials = ""
+    private var currentPhotoURL: String?
+    private var currentCanRemovePhoto = false
+    private var currentEntryID = ""
 
     // MARK: - UI Elements
     private lazy var headerContainer: UIView = {
@@ -75,6 +84,15 @@ final class ILMemorialEditViewController: BaseViewController {
         "memorial.edit.calendar.lunar".localized,
         "memorial.edit.calendar.solar".localized
     ])
+
+    private lazy var leapMonthRow: ILSwitchRowView = {
+        ILSwitchRowView(
+            title: "memorial.edit.leapMonth.title".localized,
+            subtitle: "memorial.edit.leapMonth.subtitle".localized
+        )
+    }()
+
+    private lazy var photoView = ILMemorialPhotoView()
 
     private lazy var dayField = ILMenuFieldView(caption: "memorial.edit.day".localized)
     private lazy var monthField = ILMenuFieldView(caption: "memorial.edit.month".localized)
@@ -159,13 +177,29 @@ final class ILMemorialEditViewController: BaseViewController {
         reminderCard.onReminderToggled = { [weak self] isOn in self?.reminderToggledSubject.send(isOn) }
         reminderCard.onLeadSelected = { [weak self] id in self?.leadSelectedSubject.send(id) }
         reminderCard.onTimeSelected = { [weak self] id in self?.timeSelectedSubject.send(id) }
-        reminderCard.onSyncToggled = { [weak self] isOn in self?.syncToggledSubject.send(isOn) }
+        leapMonthRow.onToggle = { [weak self] isOn in self?.leapMonthToggledSubject.send(isOn) }
+        photoView.onPick = { [weak self] in self?.presentPhotoPicker() }
+        photoView.onRemove = { [weak self] in
+            self?.pickedPreview = nil
+            self?.currentCanRemovePhoto = false
+            self?.currentPhotoURL = nil
+            self?.refreshPhotoView()
+            self?.photoRemoveTappedSubject.send(())
+        }
         saveButton.onTap = { [weak self] in self?.saveTappedSubject.send(()) }
-        deleteButton.onTap = { [weak self] in self?.deleteTappedSubject.send(()) }
+        deleteButton.onTap = { [weak self] in self?.confirmDelete() }
+        reminderCard.onOpenSettings = { [weak self] in self?.openNotificationSettings() }
 
         let portraitRow = UIStackView(arrangedSubviews: [portraitView])
         portraitRow.alignment = .center
         portraitRow.axis = .vertical
+
+        // EN: Photo block replaces the placeholder when the build flag is on; both stay in the
+        // hierarchy and the flag decides which one is visible.
+        // VI: Khối ảnh thay placeholder khi cờ build bật; cả hai vẫn trong cây view, cờ quyết định.
+        let photoStack = UIStackView(arrangedSubviews: [photoView])
+        photoStack.alignment = .center
+        photoStack.axis = .vertical
 
         let dateRow = UIStackView(arrangedSubviews: [dayField, monthField, yearField])
         dateRow.axis = .horizontal
@@ -176,11 +210,12 @@ final class ILMemorialEditViewController: BaseViewController {
 
         let deathDateSection = makeSection(
             title: "memorial.edit.deathDate".localized,
-            content: [calendarToggle, dateRow, previewCard]
+            content: [calendarToggle, leapMonthRow, dateRow, previewCard]
         )
 
         [
             portraitRow,
+            photoStack,
             nameField,
             makeSection(title: "memorial.edit.relationship".localized, content: [relationshipGroup]),
             deathDateSection,
@@ -256,7 +291,9 @@ final class ILMemorialEditViewController: BaseViewController {
             reminderToggled: reminderToggledSubject.eraseToAnyPublisher(),
             leadSelected: leadSelectedSubject.eraseToAnyPublisher(),
             timeSelected: timeSelectedSubject.eraseToAnyPublisher(),
-            syncToggled: syncToggledSubject.eraseToAnyPublisher()
+            leapMonthToggled: leapMonthToggledSubject.eraseToAnyPublisher(),
+            photoPicked: photoPickedSubject.eraseToAnyPublisher(),
+            photoRemoveTapped: photoRemoveTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
 
@@ -288,7 +325,14 @@ final class ILMemorialEditViewController: BaseViewController {
         deleteButton.isHidden = !model.canDelete
         deleteButton.buttonState = model.isSaving ? .disabled : .normal
 
-        portraitView.initials = model.name.first.map { String($0).uppercased() } ?? ""
+        portraitView.initials = ILMemorialFormatter.initials(model.name)
+        portraitView.isHidden = model.photoEnabled
+        photoView.isHidden = !model.photoEnabled
+        currentInitials = ILMemorialFormatter.initials(model.name)
+        currentPhotoURL = model.photoURL
+        currentCanRemovePhoto = model.canRemovePhoto
+        currentEntryID = model.entryID
+        refreshPhotoView()
         nameField.text = model.name
         nameField.errorText = model.nameError
         noteField.text = model.note
@@ -296,6 +340,8 @@ final class ILMemorialEditViewController: BaseViewController {
         relationshipGroup.configure(options: model.relationships)
 
         calendarToggle.selectedIndex = model.calendarKind == .lunar ? 0 : 1
+        leapMonthRow.isHidden = !model.showLeapMonth
+        leapMonthRow.isOn = model.leapMonthOn
         configure(field: dayField, options: model.dayOptions, selectedID: model.selectedDay)
         configure(field: monthField, options: model.monthOptions, selectedID: model.selectedMonth)
         configure(field: yearField, options: model.yearOptions, selectedID: model.selectedYear)
@@ -309,6 +355,65 @@ final class ILMemorialEditViewController: BaseViewController {
         field.selectedID = selectedID
     }
 
+    // MARK: - Photo
+    private func refreshPhotoView() {
+        photoView.configure(
+            initials: currentInitials,
+            photoURLString: currentPhotoURL,
+            preview: pickedPreview,
+            canRemove: currentCanRemovePhoto || pickedPreview != nil,
+            entryID: currentEntryID
+        )
+    }
+
+    private func presentPhotoPicker() {
+        var configuration = PHPickerConfiguration(photoLibrary: .shared())
+        configuration.filter = .images
+        configuration.selectionLimit = 1
+        let picker = PHPickerViewController(configuration: configuration)
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    private func openNotificationSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+    }
+
+    private func confirmDelete() {
+        let alert = UIAlertController(
+            title: "memorial.delete.title".localized,
+            message: "memorial.delete.message".localized,
+            preferredStyle: .actionSheet
+        )
+        alert.addAction(UIAlertAction(title: "memorial.edit.delete".localized, style: .destructive) { [weak self] _ in
+            self?.deleteTappedSubject.send(())
+        })
+        alert.addAction(UIAlertAction(title: "common.cancel".localized, style: .cancel))
+        alert.popoverPresentationController?.sourceView = deleteButton
+        present(alert, animated: true)
+    }
+
+    /// EN: HEIC/HEIF and anything else becomes JPEG, long edge ≤ 2048 px, quality 0.8, then a
+    /// second pass at 0.5 if it still exceeds the 5 MiB route limit (contract §4).
+    /// VI: HEIC/HEIF và định dạng khác đổi sang JPEG, cạnh dài ≤ 2048 px, chất lượng 0.8; nếu vẫn
+    /// quá 5 MiB thì nén lại 0.5 (contract §4).
+    private static func jpegData(from image: UIImage) -> Data? {
+        let maxDimension: CGFloat = 2048
+        let longest = max(image.size.width, image.size.height)
+        let scale = longest > maxDimension ? maxDimension / longest : 1
+        let target = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let renderer = UIGraphicsImageRenderer(size: target)
+        let resized = renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: target)) }
+
+        let limit = 5 * 1024 * 1024
+        if let data = resized.jpegData(compressionQuality: 0.8), data.count <= limit {
+            return data
+        }
+        guard let data = resized.jpegData(compressionQuality: 0.5), data.count <= limit else { return nil }
+        return data
+    }
+
     // MARK: - Layout helpers
     /// Caps section title above its content, spaced like the design handoff.
     private func makeSection(title: String, content: [UIView]) -> UIStackView {
@@ -319,5 +424,31 @@ final class ILMemorialEditViewController: BaseViewController {
         stack.axis = .vertical
         stack.spacing = ILMetrics.spaceMedium - 4
         return stack
+    }
+}
+
+// MARK: - PHPickerViewControllerDelegate
+extension ILMemorialEditViewController: PHPickerViewControllerDelegate {
+
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        guard let provider = results.first?.itemProvider,
+              provider.canLoadObject(ofClass: UIImage.self) else { return }
+
+        provider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in
+            guard let image = object as? UIImage else { return }
+            Task { @MainActor in
+                guard let self else { return }
+                guard let data = Self.jpegData(from: image) else {
+                    self.showError("memorial.error.photoTooLarge".localized)
+                    return
+                }
+                self.pickedPreview = image
+                self.currentPhotoURL = nil
+                self.currentCanRemovePhoto = true
+                self.refreshPhotoView()
+                self.photoPickedSubject.send(data)
+            }
+        }
     }
 }

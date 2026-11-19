@@ -1,0 +1,33 @@
+# Spec tooling config — InnerLamp iOS (P2, memorial integration).
+# Template: task-breakdown-p4.md §0.1 (iOS). Contract pinned 2026-11-16.
+spec_root: Docs/Specs
+folder_case: PascalCase
+language: en
+architecture_rules: AGENTS.md
+platforms:
+  - { path: ./, profile: ios }
+verify:
+  ios:
+    A: >-
+      xcodebuild build -project InnerLamp.xcodeproj -scheme InnerLamp
+      -destination 'generic/platform=iOS'
+      CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+    B: >-
+      xcodebuild test -project InnerLamp.xcodeproj -scheme InnerLamp
+      -destination 'platform=iOS,id=$IOS_DEVICE_UDID'
+    C: 'open the app on a physical device; memorial book + local reminders'
+    E: 'XCUITest in InnerLampUITests (physical device)'
+    security: 'Audit the diff: no PII in logs, no photo_url persisted, no secret in the repo'
+    pre_push: >-
+      xcodebuild build -project InnerLamp.xcodeproj -scheme InnerLamp
+      -destination 'generic/platform=iOS'
+      CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+implement:
+  base_branch: main
+  max_rounds: 2
+  sensitive_paths:
+    - InnerLamp/InnerLamp.xcdatamodeld/
+    - InnerLamp/Core/Networking/
+    - InnerLamp/App/DIContainer.swift
+upstream:
+  contract: Docs/Specs/Memorial/client-contract.md

@@ -74,12 +74,13 @@ final class ILMemorialUseCaseTests: XCTestCase {
         XCTAssertEqual(fifth.ordinal, 5)
     }
 
-    func test_ordinal_isNil_whenYearUnknownOrNotBeforeNextGio() throws {
+    func test_ordinal_isNilWhenYearUnknown_andZeroWhenDiedThisYear() throws {
         let unknown = try XCTUnwrap(sut.nextAnniversary(for: Factory.entry(calendarKind: .solar, deathYear: nil), now: now))
         let sameYear = try XCTUnwrap(sut.nextAnniversary(for: Factory.entry(calendarKind: .solar, deathYear: 2026), now: now))
 
         XCTAssertNil(unknown.ordinal)
-        XCTAssertNil(sameYear.ordinal)
+        // BR-MEM-09: died this year → ordinal 0, and 0 has no label (vector anniversary-ordinal.json).
+        XCTAssertEqual(sameYear.ordinal, 0)
     }
 
     // MARK: - Lunar entries
@@ -170,7 +171,7 @@ final class ILMemorialUseCaseTests: XCTestCase {
         XCTAssertEqual(entry.month, 1)
         XCTAssertNil(entry.deathYear)
         XCTAssertEqual(entry.reminder, ILMemorialReminder(leadDays: 1, hour: 7, minute: 0))
-        XCTAssertTrue(entry.syncToReminders)
+        XCTAssertFalse(entry.deathLeapMonth)
     }
 
     func test_makeNewEntry_ids_areUnique() {
@@ -192,5 +193,46 @@ final class ILMemorialUseCaseTests: XCTestCase {
 
         XCTAssertEqual(repository.deletedIDs, ["x"])
         XCTAssertTrue(repository.entries.isEmpty)
+    }
+
+    // MARK: - D1 wiring
+
+    func test_loadItems_refreshesTheLocalReminderPlan() async throws {
+        let scheduler = MockMemorialReminderScheduler()
+        let useCase = ILMemorialUseCaseImpl(repository: repository, reminderScheduler: scheduler, calendar: Factory.calendar)
+        repository.entries = [Factory.entry(id: "a"), Factory.entry(id: "b")]
+
+        _ = try await useCase.loadItems(now: now)
+
+        XCTAssertEqual(scheduler.syncedIDs, [["a", "b"]])
+    }
+
+    func test_save_reschedulesOnlyThatEntry() async throws {
+        let scheduler = MockMemorialReminderScheduler()
+        let useCase = ILMemorialUseCaseImpl(repository: repository, reminderScheduler: scheduler, calendar: Factory.calendar)
+
+        let saved = try await useCase.save(Factory.entry(id: "42"))
+
+        XCTAssertEqual(saved.id, "42")
+        XCTAssertEqual(scheduler.rescheduledIDs, ["42"])
+    }
+
+    func test_delete_cancelsThatEntrysReminders() async throws {
+        let scheduler = MockMemorialReminderScheduler()
+        let useCase = ILMemorialUseCaseImpl(repository: repository, reminderScheduler: scheduler, calendar: Factory.calendar)
+
+        try await useCase.delete(id: "42")
+
+        XCTAssertEqual(scheduler.cancelledIDs, ["42"])
+    }
+
+    func test_isNotificationAuthorizationDenied_forwardsToTheScheduler() async {
+        let scheduler = MockMemorialReminderScheduler()
+        scheduler.denied = true
+        let useCase = ILMemorialUseCaseImpl(repository: repository, reminderScheduler: scheduler, calendar: Factory.calendar)
+
+        let denied = await useCase.isNotificationAuthorizationDenied()
+
+        XCTAssertTrue(denied)
     }
 }

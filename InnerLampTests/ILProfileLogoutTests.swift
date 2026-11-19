@@ -29,7 +29,7 @@ final class ILProfileLogoutTests: XCTestCase {
         let stack = CoreDataStack(inMemory: true)
         XCTAssertTrue(stack.isLoaded)
         userRepository = ILUserRepositoryImpl(localDataSource: ILUserLocalDataSourceImpl(stack: stack))
-        memorialDataSource = ILMemorialLocalDataSourceImpl(stack: stack)
+        memorialDataSource = ILMemorialLocalDataSourceImpl(stack: stack, accountIdentity: ILMemorialTestFactory.identity())
         birthProfileDataSource = ILUserBirthProfileLocalDataSourceImpl(stack: stack)
         lampDataSource = ILLampLocalDataSourceImpl(stack: stack)
         defaults = UserDefaultsServiceImpl()

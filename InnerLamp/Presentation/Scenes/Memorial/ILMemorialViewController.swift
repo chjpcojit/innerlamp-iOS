@@ -15,7 +15,6 @@ final class ILMemorialViewController: BaseViewController {
     private let backTappedSubject = PassthroughSubject<Void, Never>()
     private let addTappedSubject = PassthroughSubject<Void, Never>()
     private let itemTappedSubject = PassthroughSubject<String, Never>()
-    private let familyTreeTappedSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Elements
     private lazy var headerContainer: UIView = {
@@ -72,6 +71,16 @@ final class ILMemorialViewController: BaseViewController {
 
     private lazy var emptyStateView = ILMemorialEmptyView()
 
+    /// Shown above the list when the book holds the 100-entry server maximum.
+    private lazy var fullNoticeLabel: UILabel = {
+        let label = UILabel()
+        label.font = ILTypography.note
+        label.textColor = ILColors.inkSubtle
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
+    }()
+
     /// Sticky bottom bar with the primary "Thêm người thân" button (design handoff) — always shown once loaded.
     private lazy var bottomBar: UIView = {
         let bar = UIView()
@@ -81,8 +90,6 @@ final class ILMemorialViewController: BaseViewController {
     }()
 
     private lazy var addButton = ILButton(title: "memorial.list.addPerson".localized, variant: .primary)
-
-    private lazy var familyTreeButton = ILButton(title: "memorial.list.familyTree".localized, variant: .ghost)
 
     // MARK: - Initializer
     init(viewModel: ILMemorialViewModel) {
@@ -141,14 +148,14 @@ final class ILMemorialViewController: BaseViewController {
 
         emptyStateView.isHidden = true
         addButton.onTap = { [weak self] in self?.addTappedSubject.send(()) }
-        familyTreeButton.onTap = { [weak self] in self?.familyTreeTappedSubject.send(()) }
-        emptyStateView.onFamilyTreeTap = { [weak self] in self?.familyTreeTappedSubject.send(()) }
         highlightCard.onTap = { [weak self] in
             guard let id = self?.currentHighlightID else { return }
             self?.itemTappedSubject.send(id)
         }
 
-        [listSection, emptyStateView, familyTreeButton].forEach { contentStack.addArrangedSubview($0) }
+        [fullNoticeLabel, listSection, emptyStateView].forEach {
+            contentStack.addArrangedSubview($0)
+        }
     }
 
     override func setupConstraints() {
@@ -199,8 +206,7 @@ final class ILMemorialViewController: BaseViewController {
             viewDidLoad: viewDidLoadSubject.eraseToAnyPublisher(),
             backTapped: backTappedSubject.eraseToAnyPublisher(),
             addTapped: addTappedSubject.eraseToAnyPublisher(),
-            itemTapped: itemTappedSubject.eraseToAnyPublisher(),
-            familyTreeTapped: familyTreeTappedSubject.eraseToAnyPublisher()
+            itemTapped: itemTappedSubject.eraseToAnyPublisher()
         )
         let output = viewModel.transform(input: input)
 
@@ -230,6 +236,9 @@ final class ILMemorialViewController: BaseViewController {
 
     private func updateUI(with model: ILMemorialStateModel) {
         headerView.subtitle = model.subtitle
+        fullNoticeLabel.text = model.fullNotice
+        fullNoticeLabel.isHidden = model.fullNotice.isEmpty
+        addButton.buttonState = model.isFull ? .disabled : .normal
         showConfirmationIfNeeded(model.bannerText)
 
         currentHighlightID = model.highlight?.id
@@ -238,7 +247,6 @@ final class ILMemorialViewController: BaseViewController {
         }
         listSection.isHidden = model.highlight == nil
         emptyStateView.isHidden = !model.isEmpty
-        familyTreeButton.isHidden = model.isEmpty
         bottomBar.isHidden = false
         view.setNeedsLayout()
         rebuildRows(model.rows)

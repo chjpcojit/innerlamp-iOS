@@ -1,11 +1,11 @@
 # Requirements — Memorial
 
-Version: 3.2
-Last updated: 2026-10-14
-Status: in-progress — list, form, server CRUD and offline read cache are built (build-verified, tests not run); product spec v2.1 alignment pending: remove the local-reminder stubs and the Reminders-app option, push via FCM, account time zone, leap month, year range, delete confirmation, offline / server-error / sign-out edge cases, product vectors (`tasks.md` Phase 6–8)
+Version: 3.3
+Last updated: 2026-11-16
+Status: integrated with the deployed memorial API (contract pinned 2026-11-16). List, form, server CRUD, offline read cache, local interim reminders (D1), photo upload/display enabled (BE routes deployed 2026-11-17) and the product vectors are implemented. Push/server reminders remain blocked on the backend; photo E2E is manual on device.
 Feature folder: `InnerLamp/Presentation/Scenes/Memorial/`
 Product spec: innerlamp-be `docs/product/memorial/product.md` @ v2.1
-Contract: innerlamp-be `docs/specs/api/openapi.yaml` @ bf23f8b (memorial operations unchanged since 5f4ca56; no notification-list, push-token or account time-zone operations yet)
+Contract: `Docs/Specs/Memorial/client-contract.md` @ 2026-11-16 (pinned copy of `client-contract-memorial-v1.md`; backend `openapi.yaml` 3.1.0). No notification-list, push-token or account time-zone operations yet.
 Architecture: ADR-0001 (in-app notification list on every platform, push via FCM on the apps), ADR-0002 (the backend computes and sends memorial reminders) — both Accepted
 Implements: BR-MEM-01, BR-MEM-02, BR-MEM-03, BR-MEM-04, BR-MEM-05, BR-MEM-06, BR-MEM-07, BR-MEM-08, BR-MEM-09, BR-MEM-10, BR-MEM-11, BR-MEM-12, FR-MEM-001..008, FR-MEM-010, FR-MEM-011 (later), FR-MEM-012, FR-MEM-013, NFR-MEM-01, NFR-MEM-02, NFR-MEM-03
 Not on iOS: BR-MEM-13 and NFR-MEM-04 (Backend only); FR-MEM-009 (Removed in product v2.0)
@@ -171,7 +171,6 @@ Criteria the shipped code does **not** meet yet (drift against product spec v2.1
 - Criterion 3 — the Me-tab sign-out already deletes the memorial cache (`ILSessionDataCleanerImpl` includes `ILMemorialMO`), but an expired session (`AppCoordinator.handleSessionExpired`) deletes only the user, and the cache is not tied to an account (criterion 39) (FR-MEM-010, BR-MEM-01).
 - Criteria 4, 29–33 — no push at all: no Firebase SDK, no `aps-environment` entitlement, no permission prompt, no token registration, no deep link (FR-MEM-008, ADR-0001).
 - Criteria 6, 12, 20, 27 — the form still has the "Thêm vào Lời nhắc (Reminders)" switch (default on), the highlight shows "có trong Lời nhắc", and saving with it on reports the Reminders-app message (FR-MEM-009 removed).
-- Criterion 8 — the empty state still shows the "Lấy từ gia phả" card (FR-MEM-002).
 - Criteria 6, 13 — no leap-month choice; the leap marker is always sent as `false` and dropped on load (BR-MEM-04).
 - Criterion 15 — the year menu offers the current year and the 96 before it, not back to 1900 (BR-MEM-03).
 - Criterion 18 — no client length limits; the server's 400 shows one generic message.
@@ -205,3 +204,63 @@ Criteria the shipped code does **not** meet yet (drift against product spec v2.1
 - ~~Year range~~ → product BR-MEM-03 (1900 → current year). Replaces the prototype's 96-year menu. Resolved 2026-10-14.
 - ~~Portrait source/storage~~ → product FR-MEM-011 (planned; JPEG/PNG/WebP ≤ 5 MB, apps convert HEIC to JPEG); deferred until the backend photo route exists (`TD-Memorial-002`). Resolved 2026-10-14.
 - ~~API contract~~ → `/v1/memorials` (innerlamp-be `openapi.yaml`). Resolved 2026-10-07.
+
+## P4 integration — 2026-11-16
+
+The iOS client now implements the pinned client contract. The rules below replace the older
+"server sends everything" assumptions in this file where they differ.
+
+- **Wire model.** `ILMemorialDTO` decodes only contract fields and ignores `reminder.timezone` and
+  `add_to_os_reminder`, so the same binary works against v1 and v4.0. Ids decode as `Int64`.
+  `death_date` must be a real `YYYY-MM-DD`; the year-less form requires both day and month. A bad
+  row fails decoding instead of becoming 1 January.
+  Requests contain no `timezone` and no `add_to_os_reminder`; `death_leap_month` is sent only for a
+  year-less lunar date.
+- **Relationship.** The 10-value enum maps through an explicit two-way table. An unknown server
+  value fails the load with a controlled error; it is never guessed as `OTHER`.
+- **Date.** `ILMemorialDateRules` is the single anniversary module; `ILLunarCalendar` remains the
+  single converter. A known lunar year recovers the leap flag with `solarToLunar`; a year-less date
+  sends the stored flag. `ordinal == 0` is a valid value ("died today", BR-MEM-09).
+- **Endpoints.** `GET /v1/memorials/{id}`, `PUT/DELETE /v1/memorials/{id}/photo` are implemented.
+  Photo calls are only reachable while `MemorialPhotoEnabled` is true (default false).
+- **Cache.** Core Data model `InnerLamp 7` adds the leap flag, removes the dead
+  `syncToReminders`/`portraitFileName` attributes, and moves `Memorial` into its own store. The
+  signed `photo_url` is never cached (D8).
+- **Reminders (interim, D1 + AC MEM-RMD-08).** iOS schedules **60 entries at most, one pending
+  notification each**, nearest giỗ first, category `memorial`, device-local time; content is
+  relationship-only ("Ngày mai là giỗ cha"), never a name (NFR-MEM-02). The notification payload
+  holds `entryId` only. Permission denied keeps the "Có nhắc" state and offers "Mở Cài đặt".
+  Tapping a notification opens the entry through `ILMemorialNotificationRouter`.
+- **Cache protection (G1).** The memorial Core Data store (`InnerLampMemorial.sqlite`) and its
+  `-wal`/`-shm` sidecars are excluded from iCloud/iTunes backup; every store uses
+  `completeUntilFirstUserAuthentication` file protection. Memorial rows carry
+  `ownerAccountID`; every read is filtered by the signed-in account, `replaceAll` only
+  removes that account's rows, and rows migrated with an empty owner are purged.
+- **Third-party telemetry (G1).** Sentry runs with `sendDefaultPii = false` and without network
+  breadcrumbs/tracking, so request paths and signed photo URLs never leave the app.
+- **Image cache (G1).** Portraits are cached by entry id + object path, never by the signed URL, so
+  a refreshed signature reuses the cached bitmap while a replaced photo invalidates it.
+- **Photos (D4).** The form and list can show a signed portrait and the form can upload/delete a
+  JPEG ≤ 5 MiB. The UI is off by default because the routes returned 404 on 2026-11-16.
+- **P7 QA (2026-11-17).** The empty state has no family-tree shortcut. At 100 entries the Add
+  action is disabled with a full-book notice (the server still enforces 409). A 401 during save
+  keeps the form fields and shows "phiên đăng nhập đã hết hạn" (Q-4=A); no draft is lost.
+- **Unchanged.** The existing lunar calendar calculations and their screens are untouched; the
+  vectors are the gate for the memorial conversion only.
+
+### Acceptance criteria added by the integration
+
+| ID | Criterion |
+|---|---|
+| MEM-API-16 | No request carries `reminder.timezone` or `add_to_os_reminder`; a v1 or v4.0 response decodes. |
+| MEM-API-15 | A lunar date with a known year round-trips through `death_date` with its leap flag recovered. |
+| MEM-API-06 | `GET /v1/memorials/{id}` returns one entry; 404 is shown as "mục không còn". |
+| MEM-IMG-01/02/03 | Upload JPEG ≤ 5 MiB → 200; 413 → "ảnh tối đa 5 MB"; 415 → "sai định dạng". |
+| MEM-IMG-04 | Delete removes the portrait and returns to initials; a photo-less delete is still 200. |
+| MEM-IMG-10 | No `photo_url` is written to Core Data or a log. |
+| MEM-RMD-01 | Enabling a reminder schedules local notifications without asking the server to send. |
+| MEM-RMD-02 | Notification text contains the relationship only, never the person's name. |
+| MEM-RMD-07 | Denied notification permission keeps "Có nhắc" and shows "Mở Cài đặt". |
+| MEM-RMD-08 | The plan holds at most 60 pending notifications, 3 per entry. |
+| MEM-RMD-09 | Tapping a notification opens that entry; sign-out cancels every memorial reminder. |
+| MEM-API-14 | A successful create/save/photo response updates the offline copy. |

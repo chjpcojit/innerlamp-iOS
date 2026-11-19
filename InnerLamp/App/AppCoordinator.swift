@@ -40,7 +40,13 @@ final class AppCoordinator: Coordinator {
         childCoordinators.removeAll { $0 is ILMainTabCoordinator }
 
         let userRepository = container.makeUserRepository()
-        Task { try? await userRepository.deleteUser() }
+        let reminderScheduler = container.makeMemorialReminderScheduler()
+        Task {
+            try? await userRepository.deleteUser()
+            // EN: A stranded local reminder would name the previous account's giỗ (privacy, D1).
+            // VI: Nhắc local còn sót sẽ nhắc giỗ của tài khoản trước (riêng tư, D1).
+            await reminderScheduler.cancelAll()
+        }
 
         showLogin()
     }

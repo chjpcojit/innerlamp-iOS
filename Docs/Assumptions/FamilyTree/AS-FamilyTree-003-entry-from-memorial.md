@@ -4,9 +4,9 @@ title: The tree is opened from a "Xem gia phả" button on the Sổ giỗ list
 title_vi: Cây gia phả được mở từ nút "Xem gia phả" trên danh sách Sổ giỗ
 feature: FamilyTree
 level: Medium
-status: Unvalidated
+status: Invalidated
 created: 2026-10-03
-updated: 2026-10-03
+updated: 2026-11-17
 files:
   - InnerLamp/Presentation/Scenes/Memorial/ILMemorialViewController.swift:86
   - InnerLamp/Presentation/Scenes/Memorial/ILMemorialCoordinator.swift:56
@@ -31,5 +31,8 @@ EN: Confirm the final entry point with Product/Design.
 VI: Chốt điểm vào cuối cùng với Product/Design.
 
 ## Outcome / Kết luận
-EN: _(fill in when Validated/Invalidated: decision, date, who confirmed)_
-VI: _(điền khi Validated/Invalidated: quyết định, ngày, người xác nhận)_
+EN: Invalidated on 2026-11-17: AC-8 forbids a family-tree control on the memorial book in both
+states, so the "Xem gia phả" button and `.openFamilyTree` were removed; the tree is opened from
+Profile only.
+VI: Bị bác ngày 2026-11-17: AC-8 cấm nút gia phả trên màn sổ giỗ ở cả hai trạng thái, nên nút
+"Xem gia phả" và `.openFamilyTree` đã bị bỏ; cây gia phả chỉ mở từ Hồ sơ.

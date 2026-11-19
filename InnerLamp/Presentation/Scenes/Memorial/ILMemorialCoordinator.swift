@@ -16,15 +16,19 @@ final class ILMemorialCoordinator: Coordinator {
     weak var parentCoordinator: (any Coordinator)?
 
     private let container: DIContainer
+    /// Set when a local notification opened the flow; the list loads that entry and pushes its form.
+    private let initialEntryID: String?
     private var listViewModel: ILMemorialViewModel?
     private var cancellables = Set<AnyCancellable>()
 
     init(
         navigationController: UINavigationController,
-        container: DIContainer
+        container: DIContainer,
+        initialEntryID: String? = nil
     ) {
         self.navigationController = navigationController
         self.container = container
+        self.initialEntryID = initialEntryID
     }
 
     func start() {
@@ -42,21 +46,16 @@ final class ILMemorialCoordinator: Coordinator {
                     self.showEdit(entry: nil)
                 case .editEntry(let entry):
                     self.showEdit(entry: entry)
-                case .openFamilyTree:
-                    self.showFamilyTree()
                 }
             }
             .store(in: &cancellables)
 
         let viewController = ILMemorialViewController(viewModel: viewModel)
         navigationController.pushViewController(viewController, animated: true)
-    }
 
-    // @ai: assumption — see Docs/Assumptions/FamilyTree/AS-FamilyTree-003-entry-from-memorial.md
-    private func showFamilyTree() {
-        let coordinator = container.makeFamilyTreeCoordinator(navigationController: navigationController)
-        addChild(coordinator)
-        coordinator.start()
+        if let initialEntryID, !initialEntryID.isEmpty {
+            viewModel.openEntry(id: initialEntryID)
+        }
     }
 
     private func showEdit(entry: ILMemorialEntity?) {
